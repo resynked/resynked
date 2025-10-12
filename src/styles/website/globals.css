@@ -45,7 +45,6 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
   outline: none;  -webkit-appearance: none; -moz-appearance: none; appearance: none;    
 }
 
-
 h1, h2, h2, h3, h4, h5, h6 {font-family: var(--font-family1); color: var(--font-color1); font-weight: 600; font-style: normal; text-decoration: none; margin: 0 0  var(--space10) 0; line-height: 1.35em;}
 
 h1 {font-size: var(--h1-size);}
@@ -55,12 +54,3 @@ h1 {font-size: var(--h1-size);}
 .header-holder {position: relative; background: var(--color2); width: 100%; border-bottom: 1px solid var(--border-color);}
 .header-holder .header-content {max-width: var(--max-width); margin: 0 auto; padding: var(--space10); display: flex; align-items: center; gap: var(--space10);}
 .header-holder .header-content .button.login {margin-left: auto;}
-
-
-.content {max-width: var(--max-width-small); margin: 0 auto; padding: var(--space50) var(--space30); box-sizing: border-box;}
-
-.login-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
-.login-wrapper .login-block h1 {text-align: center; margin: 0 0 var(--space20) 0;}
-.login-wrapper .login-block .login-input {margin: 0 0 var(--space10) 0;}
-.login-wrapper .login-block .login-input:focus-visible {border-color: var(--color1);}
-.login-wrapper .login-block .button {width: 100%; display: block; box-sizing: border-box; padding: var(--space15);}

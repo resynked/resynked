@@ -1,37 +1,71 @@
-
-
 import React, { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Content from '../components/website/Content';
+import Modal from '../components/admin/Modal';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const [toast, setToast] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'success' | 'error' | 'warning';
+  }>({ show: false, title: '', message: '', variant: 'info' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const showToast = (title: string, message: string, variant: 'info' | 'success' | 'error' | 'warning') => {
+    setToast({ show: true, title, message, variant });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Dummy validation
+
+    // Validation
     if (!email || !password) {
-      setError('Vul alle velden in.');
+      showToast('Fout', 'Vul alle velden in.', 'error');
       return;
     }
+
     setError('');
-    // Handle login logic here
-    alert('Ingelogd!');
+    setIsLoading(true);
+
+    try {
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (result?.error) {
+        showToast('Fout', 'Ongeldige inloggegevens.', 'error');
+        setIsLoading(false);
+      } else {
+        showToast('Succes', 'Succesvol ingelogd!', 'success');
+        // Redirect to dashboard on successful login
+        setTimeout(() => router.push('/dashboard'), 1000);
+      }
+    } catch (err) {
+      showToast('Fout', 'Er is iets misgegaan. Probeer het opnieuw.', 'error');
+      setIsLoading(false);
+    }
   };
 
   return (
     <Content>
       <div className="login-wrapper">
         <div className="login-block">
-          <h1>Log in to Resynked</h1>
+          <h1>Inloggen bij Resynked</h1>
           <form onSubmit={handleSubmit} className="login-form">
             <input
               id="email"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="login-input"
               required
               placeholder="E-mail"
             />
@@ -40,15 +74,31 @@ export default function Login() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="login-input"
               required
               placeholder="Wachtwoord"
             />
             {error && <div className="login-error">{error}</div>}
-            <button className="button" type="submit">Login</button>
+            <button className="button" type="submit" disabled={isLoading}>
+              {isLoading ? 'Bezig met inloggen...' : 'Login'}
+            </button>
           </form>
+          <div className="register">
+              Nog geen account? <Link href="/register"> Registreer hier </Link>
+          </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+        title={toast.title}
+        type="toast"
+        variant={toast.variant}
+        autoClose={true}
+        autoCloseDuration={5000}
+      >
+        {toast.message}
+      </Modal>
     </Content>
   );
 }

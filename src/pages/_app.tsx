@@ -1,14 +1,17 @@
-
 import type { AppProps } from 'next/app';
+import { SessionProvider } from 'next-auth/react';
 import '../styles/website/globals.css';
+import '../styles/admin/globals.css';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-export default function MyApp({ Component, pageProps }: AppProps) {
+export default function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
-    <div className={inter.variable}>
-      <Component {...pageProps} />
-    </div>
+    <SessionProvider session={session}>
+      <div className={inter.variable}>
+        <Component {...pageProps} />
+      </div>
+    </SessionProvider>
   );
 }
