@@ -37,29 +37,36 @@ export default function Customers() {
     <Layout>
       <div className="page-header">
         <h1>Klanten</h1>
-        <Link href="/dashboard/customers/new" className="button">
+        <Link href="/customers/new" className="button">
           Klant toevoegen
         </Link>
       </div>
 
-      <Table headers={['Naam', 'Email', 'Telefoon', 'Adres', '']}>
-        {customers.map((customer) => (
-          <tr key={customer.id}>
-            <td>{customer.name}</td>
-            <td>{customer.email || '-'}</td>
-            <td>{customer.phone || '-'}</td>
-            <td>{customer.address || '-'}</td>
-            <td className="actions">
-              <Link href={`/dashboard/customers/${customer.id}`} className="edit">
-                <Pencil size={15} />
-              </Link>
-              <Link href="" className="delete" onClick={() => handleDelete(customer.id)}>
-                <Trash size={15} />
-              </Link>
-            </td>
-          </tr>
-        ))}
-      </Table>
+      {customers.length === 0 ? (
+        <div className="empty-state">
+          <h2>Geen klanten</h2>
+          <p>Je hebt nog geen klanten toegevoegd. Begin met het toevoegen van je eerste klant.</p>
+        </div>
+      ) : (
+        <Table headers={['Naam', 'Email', 'Telefoon', 'Adres', '']}>
+          {customers.map((customer) => (
+            <tr key={customer.id}>
+              <td>{customer.name}</td>
+              <td>{customer.email || '-'}</td>
+              <td>{customer.phone || '-'}</td>
+              <td>{customer.address || '-'}</td>
+              <td className="actions">
+                <Link href={`/customers/${customer.id}`} className="edit">
+                  <Pencil size={15} />
+                </Link>
+                <Link href="" className="delete" onClick={() => handleDelete(customer.id)}>
+                  <Trash size={15} />
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </Table>
+      )}
     </Layout>
   );
 }

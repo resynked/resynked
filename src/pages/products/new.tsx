@@ -34,7 +34,7 @@ export default function NewProduct() {
         return;
       }
 
-      router.push('/dashboard/products');
+      router.push('/products');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -45,7 +45,7 @@ export default function NewProduct() {
     <Layout>
       <div className="page-header">
         <h1>Nieuw Product Toevoegen</h1>
-        <Link href="/dashboard/products" className="button button-secondary">
+        <Link href="/products" className="button button-secondary">
           Terug
         </Link>
       </div>
@@ -111,7 +111,7 @@ export default function NewProduct() {
           </div>
 
           <div className="form-actions">
-            <Link href="/dashboard/products" className="button button-secondary">
+            <Link href="/products" className="button button-secondary">
               Annuleren
             </Link>
             <button type="submit" className="button" disabled={isLoading}>

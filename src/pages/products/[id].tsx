@@ -65,7 +65,7 @@ export default function EditProduct() {
         return;
       }
 
-      router.push('/dashboard/products');
+      router.push('/products');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -83,10 +83,15 @@ export default function EditProduct() {
   return (
     <Layout>
       <div className="page-header">
-        <h1>Product Bewerken</h1>
-        <Link href="/dashboard/products" className="button button-secondary">
-          Terug
-        </Link>
+        <h1>Product bewerken</h1>
+        <div className="actions">
+          <Link href="/products" className="button tertiary">
+            Annuleren
+          </Link>
+          <button type="submit" className="button" disabled={isLoading}>
+            {isLoading ? 'Bijwerken...' : 'Product bijwerken'}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -147,15 +152,6 @@ export default function EditProduct() {
               value={formData.image_url}
               onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
             />
-          </div>
-
-          <div className="form-actions">
-            <Link href="/dashboard/products" className="button button-secondary">
-              Annuleren
-            </Link>
-            <button type="submit" className="button" disabled={isLoading}>
-              {isLoading ? 'Bijwerken...' : 'Product Bijwerken'}
-            </button>
           </div>
         </form>
       </div>

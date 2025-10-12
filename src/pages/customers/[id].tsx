@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/admin/Layout';
 import Link from 'next/link';
+import type { Customer } from '@/lib/supabase';
 
-export default function NewCustomer() {
+export default function EditCustomer() {
   const router = useRouter();
+  const { id } = router.query;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +15,34 @@ export default function NewCustomer() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      fetchCustomer();
+    }
+  }, [id]);
+
+  const fetchCustomer = async () => {
+    try {
+      const response = await fetch(`/api/customers/${id}`);
+      if (response.ok) {
+        const customer: Customer = await response.json();
+        setFormData({
+          name: customer.name,
+          email: customer.email || '',
+          phone: customer.phone || '',
+          address: customer.address || '',
+        });
+      } else {
+        setError('Klant niet gevonden');
+      }
+    } catch (err) {
+      setError('Fout bij het laden van klantgegevens');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +50,8 @@ export default function NewCustomer() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/customers', {
-        method: 'POST',
+      const response = await fetch(`/api/customers/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
@@ -33,20 +63,33 @@ export default function NewCustomer() {
         return;
       }
 
-      router.push('/dashboard/customers');
+      router.push('/customers');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
 
+  if (isLoadingData) {
+    return (
+      <Layout>
+        <div className="loading">Laden...</div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="page-header">
-        <h1>Nieuwe Klant Toevoegen</h1>
-        <Link href="/dashboard/customers" className="button button-secondary">
-          Terug
-        </Link>
+        <h1>Klant bewerken</h1>
+        <div className="actions">
+          <Link href="/customers" className="button tertiary">
+            Annuleren
+          </Link>
+          <button type="submit" className="button" disabled={isLoading}>
+            {isLoading ? 'Bijwerken...' : 'Klant bijwerken'}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -94,14 +137,6 @@ export default function NewCustomer() {
             />
           </div>
 
-          <div className="form-actions">
-            <Link href="/dashboard/customers" className="button button-secondary">
-              Annuleren
-            </Link>
-            <button type="submit" className="button" disabled={isLoading}>
-              {isLoading ? 'Toevoegen...' : 'Klant Toevoegen'}
-            </button>
-          </div>
         </form>
       </div>
     </Layout>

@@ -55,30 +55,37 @@ export default function Invoices() {
     <Layout>
       <div className="page-header">
         <h1>Facturen</h1>
-        <Link href="/dashboard/invoices/new" className="button">
+        <Link href="/invoices/new" className="button">
           Factuur maken
         </Link>
       </div>
 
-      <Table headers={['Factuur #', 'Klant', 'Totaal', 'Status', 'Datum', '']}>
-        {invoices.map((invoice) => (
-          <tr key={invoice.id}>
-            <td>#{invoice.id.slice(0, 8)}</td>
-            <td>{invoice.customer.name}</td>
-            <td>€{invoice.total.toFixed(2)}</td>
-            <td>{getStatusBadge(invoice.status)}</td>
-            <td>{new Date(invoice.created_at).toLocaleDateString('nl-NL')}</td>
-            <td className="actions">
-              <Link href={`/dashboard/invoices/${invoice.id}`} className="edit">
-                <Pencil size={15} />
-              </Link>
-              <button className="delete" onClick={() => handleDelete(invoice.id)}>
-                <Trash size={15} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </Table>
+      {invoices.length === 0 ? (
+        <div className="empty-state">
+          <h2>Geen facturen</h2>
+          <p>Je hebt nog geen facturen aangemaakt. Begin met het maken van je eerste factuur.</p>
+        </div>
+      ) : (
+        <Table headers={['Factuur #', 'Klant', 'Totaal', 'Status', 'Datum', '']}>
+          {invoices.map((invoice) => (
+            <tr key={invoice.id}>
+              <td>#{invoice.id.slice(0, 8)}</td>
+              <td>{invoice.customer.name}</td>
+              <td>€{invoice.total.toFixed(2)}</td>
+              <td>{getStatusBadge(invoice.status)}</td>
+              <td>{new Date(invoice.created_at).toLocaleDateString('nl-NL')}</td>
+              <td className="actions">
+                <Link href={`/invoices/${invoice.id}`} className="edit">
+                  <Pencil size={15} />
+                </Link>
+                <Link href="" className="delete" onClick={() => handleDelete(invoice.id)}>
+                  <Trash size={15} />
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </Table>
+      )}
     </Layout>
   );
 }

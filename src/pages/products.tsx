@@ -37,29 +37,36 @@ export default function Products() {
     <Layout>
       <div className="page-header">
         <h1>Producten</h1>
-        <Link href="/dashboard/products/new" className="button">
+        <Link href="/products/new" className="button">
           Product toevoegen
         </Link>
       </div>
 
-      <Table headers={['Naam', 'Beschrijving', 'Prijs', 'Voorraad', '']}>
-        {products.map((product) => (
-          <tr key={product.id}>
-            <td>{product.name}</td>
-            <td>{product.description || '-'}</td>
-            <td>€{product.price.toFixed(2)}</td>
-            <td>{product.stock}</td>
-            <td className="actions">
-              <Link href={`/dashboard/products/${product.id}`} className="edit">
-                <Pencil size={15} />
-              </Link>
-              <button className="delete" onClick={() => handleDelete(product.id)}>
-                <Trash size={15} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </Table>
+      {products.length === 0 ? (
+        <div className="empty-state">
+          <h2>Geen producten</h2>
+          <p>Je hebt nog geen producten toegevoegd. Begin met het toevoegen van je eerste product.</p>
+        </div>
+      ) : (
+        <Table headers={['Naam', 'Beschrijving', 'Prijs', 'Voorraad', '']}>
+          {products.map((product) => (
+            <tr key={product.id}>
+              <td>{product.name}</td>
+              <td>{product.description || '-'}</td>
+              <td>€{product.price.toFixed(2)}</td>
+              <td>{product.stock}</td>
+              <td className="actions">
+                <Link href={`/products/${product.id}`} className="edit">
+                  <Pencil size={15} />
+                </Link>
+                <Link href="" className="delete" onClick={() => handleDelete(product.id)}>
+                  <Trash size={15} />
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </Table>
+      )}
     </Layout>
   );
 }

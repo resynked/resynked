@@ -46,8 +46,8 @@ export default function Login() {
         setIsLoading(false);
       } else {
         showToast('Succes', 'Succesvol ingelogd!', 'success');
-        // Redirect to dashboard on successful login
-        setTimeout(() => router.push('/dashboard'), 1000);
+        // Redirect to home on successful login
+        setTimeout(() => router.push('/home'), 1000);
       }
     } catch (err) {
       showToast('Fout', 'Er is iets misgegaan. Probeer het opnieuw.', 'error');

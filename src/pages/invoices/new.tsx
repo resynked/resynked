@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import Layout from '@/components/admin/Layout';
 import Link from 'next/link';
+import Select from 'react-select';
 import { Search, X } from 'lucide-react';
 import type { Customer, Product } from '@/lib/supabase';
 
@@ -117,6 +118,31 @@ export default function NewInvoice() {
 
   const selectedCustomer = customers.find(c => c.id === formData.customer_id);
 
+  const customerOptions = customers.map(c => ({
+    value: c.id,
+    label: c.name,
+  })) || [];
+
+  const currencyOptions = [
+    { value: 'EUR', label: 'EUR (€)' },
+    { value: 'USD', label: 'USD ($)' },
+    { value: 'GBP', label: 'GBP (£)' },
+  ];
+
+  const taxOptions = [
+    { value: 0, label: '0%' },
+    { value: 9, label: '9%' },
+    { value: 21, label: '21%' },
+  ];
+
+  const discountOptions = [
+    { value: 0, label: '0%' },
+    { value: 5, label: '5%' },
+    { value: 10, label: '10%' },
+    { value: 15, label: '15%' },
+    { value: 20, label: '20%' },
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -143,37 +169,19 @@ export default function NewInvoice() {
         return;
       }
 
-      router.push('/dashboard/invoices');
+      router.push('/invoices');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
 
-  if (customers.length === 0) {
-    return (
-      <Layout>
-        <div className="page-header">
-          <h1>Nieuwe Factuur</h1>
-          <Link href="/dashboard/invoices" className="button button-secondary">
-            Annuleren
-          </Link>
-        </div>
-        <div className="notice">
-          Voeg eerst klanten toe voordat u facturen kunt maken.
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="page-header">
-        <div className="title">
-          <h1>Nieuwe factuur aanmaken</h1>
-        </div>
+        <h1>Nieuwe factuur aanmaken</h1>
         <div className="actions">
-          <button type="button" className="button secondary" onClick={() => router.push('/dashboard/invoices')}>
+          <button type="button" className="button secondary" onClick={() => router.push('/invoices')}>
             Annuleren
           </button>
           <button type="submit" form="invoice-form" className="button" disabled={isLoading || formData.items.length === 0}>
@@ -258,18 +266,15 @@ export default function NewInvoice() {
             <div className="form-section">
               <h3>Klantgegevens</h3>
               <div className="form-group">
-                <select
-                  value={formData.customer_id}
-                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                  required
-                  className="customer-select"
-                >
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={customerOptions.find(o => o.value === formData.customer_id)}
+                  onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
+                  options={customerOptions}
+                  placeholder="Selecteer klant..."
+                  isSearchable
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                />
               </div>
             </div>
 
@@ -279,14 +284,14 @@ export default function NewInvoice() {
 
               <div className="form-group">
                 <label>Valuta</label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                >
-                  <option value="EUR">EUR (€)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
+                <Select
+                  value={currencyOptions.find(o => o.value === formData.currency)}
+                  onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
+                  options={currencyOptions}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  isSearchable
+                />
               </div>
 
               {/* Product Search */}
@@ -326,42 +331,36 @@ export default function NewInvoice() {
 
               {/* Added Items */}
               {formData.items.map((item, index) => (
-                <div key={index} className="invoice-line-item">
-                  <div className="line-item-header">
+                <div key={index} className="form-section">
+                  <div className="form-row invoice-product-line">
+                  
+                  <div className="form-group">
                     <input
                       type="text"
                       value={item.product_name}
                       onChange={(e) => updateItem(index, 'product_name', e.target.value)}
-                      className="line-item-name"
                       placeholder="Product naam"
                     />
-                    <button
-                      type="button"
-                      className="line-item-remove"
-                      onClick={() => removeItem(index)}
-                    >
-                      <X size={16} />
-                    </button>
                   </div>
-                  <div className="line-item-row">
+
+                <div className="form-group">
                     <input
                       type="number"
                       min="1"
                       value={item.quantity}
                       onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
-                      className="line-item-quantity"
                       placeholder="Aantal"
+                      className="center-input"
                     />
-                    <span className="line-item-x">×</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={item.price}
-                      onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value))}
-                      className="line-item-price"
-                      placeholder="Prijs"
-                    />
-                    <span className="line-item-total">= €{(item.quantity * item.price).toFixed(2)}</span>
+                </div>
+
+                  <Link className="action delete" href=""
+                      onClick={() => removeItem(index)}
+                    >
+                      <X size={16} />
+                    </Link>
+
+           
                   </div>
                 </div>
               ))}
@@ -376,30 +375,26 @@ export default function NewInvoice() {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="tax">BTW percentage</label>
-                  <select
-                    id="tax"
-                    value={formData.tax_percentage}
-                    onChange={(e) => setFormData({ ...formData, tax_percentage: parseFloat(e.target.value) })}
-                  >
-                    <option value="0">0%</option>
-                    <option value="9">9%</option>
-                    <option value="21">21%</option>
-                  </select>
+                  <Select
+                    value={taxOptions.find(o => o.value === formData.tax_percentage)}
+                    onChange={(option) => setFormData({ ...formData, tax_percentage: option?.value || 21 })}
+                    options={taxOptions}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    isSearchable
+                  />
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="discount">Kortingspercentage</label>
-                  <select
-                    id="discount"
-                    value={formData.discount_percentage}
-                    onChange={(e) => setFormData({ ...formData, discount_percentage: parseFloat(e.target.value) })}
-                  >
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="10">10%</option>
-                    <option value="15">15%</option>
-                    <option value="20">20%</option>
-                  </select>
+                  <Select
+                    value={discountOptions.find(o => o.value === formData.discount_percentage)}
+                    onChange={(option) => setFormData({ ...formData, discount_percentage: option?.value || 0 })}
+                    options={discountOptions}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    isSearchable
+                  />
                 </div>
               </div>
             </div>
@@ -416,104 +411,94 @@ export default function NewInvoice() {
                 <div>Uw bedrijfsnaam</div>
                 <div>Straatnaam 1</div>
                 <div>1200 AC Amsterdam</div>
-                <div className="invoice-company-details">
+         
                   <div>KvK: 12345678</div>
                   <div>BTW: NL123456789B01:17</div>
                   <div>Bank: NL55 BANK 0123 4567 89</div>
-                </div>
+                
               </div>
             </div>
 
             {/* Customer Info */}
-            <div className="invoice-customer-info">
-              <div>{selectedCustomer?.name || 'Bedrijfsnaam van je klant'}</div>
-              <div>{selectedCustomer?.address?.split('\n')[0] || 'Straatnaam 10'}</div>
-              <div>{selectedCustomer?.address?.split('\n')[1] || '1020 AB Amsterdam'}</div>
-            </div>
+            {selectedCustomer && (
+              <div className="invoice-customer-info">
+                <div>{selectedCustomer.name}</div>
+                {selectedCustomer.address && (
+                  <>
+                    {selectedCustomer.address.split('\n').map((line, i) => (
+                      <div key={i}>{line}</div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Invoice Title */}
             <h1 className="invoice-title">Factuur</h1>
 
             {/* Invoice Meta */}
-            <div className="invoice-meta">
-              <div>Factuurnummer: {formData.invoice_number || '2025.817'}</div>
-              <div>Factuurdatum: {formData.invoice_date ? new Date(formData.invoice_date).toLocaleDateString('nl-NL') : '10-10-2025'}</div>
-              <div>Vervaldatum: {formData.due_date ? new Date(formData.due_date).toLocaleDateString('nl-NL') : '31-03-2025'}</div>
-            </div>
+            {formData.invoice_number && (
+              <div className="invoice-data">
+                {formData.invoice_number && <div>Factuurnummer: {formData.invoice_number}</div>}
+                {formData.invoice_date && <div>Factuurdatum: {new Date(formData.invoice_date).toLocaleDateString('nl-NL')}</div>}
+                {formData.due_date && <div>Vervaldatum: {new Date(formData.due_date).toLocaleDateString('nl-NL')}</div>}
+              </div>
+            )}
 
             {/* Invoice Table */}
-            <table className="invoice-table">
-              <thead>
-                <tr>
-                  <th>Artikelnummer</th>
-                  <th>Omschrijving</th>
-                  <th>Aantal</th>
-                  <th>Prijs per stuk</th>
-                  <th>Totaal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {formData.items.length > 0 ? (
-                  formData.items.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.product_id.slice(0, 8)}</td>
-                      <td>
-                        <div className="invoice-table-product">{item.product_name}</div>
-                        {item.description && <div className="invoice-table-desc">{item.description}</div>}
-                      </td>
-                      <td>{item.quantity}</td>
-                      <td>€ {item.price.toFixed(2)}</td>
-                      <td>€ {(item.quantity * item.price).toFixed(2)}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <>
+            {formData.items.length > 0 && (
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
                     <tr>
-                      <td>ABX-4729</td>
-                      <td>
-                        <div className="invoice-table-product">Stijlvolle LED Tafellamp -</div>
-                        <div className="invoice-table-desc">Minimalistisch Design</div>
-                      </td>
-                      <td>1</td>
-                      <td>€ 15,00</td>
-                      <td>€ 15,00</td>
+                      <th>Artikelnummer</th>
+                      <th>Omschrijving</th>
+                      <th>Aantal</th>
+                      <th>Prijs per stuk</th>
+                      <th>Totaal</th>
                     </tr>
-                    <tr>
-                      <td>ABX-4728</td>
-                      <td>
-                        <div className="invoice-table-product">Stijlvolle LED Tafellamp -</div>
-                        <div className="invoice-table-desc">Minimalistisch Design</div>
-                      </td>
-                      <td>2</td>
-                      <td>€ 20,00</td>
-                      <td>€ 40,00</td>
-                    </tr>
-                  </>
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {formData.items.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.product_id.slice(0, 8)}</td>
+                        <td>
+                          {item.product_name}
+                          {item.description && <div className="invoice-table-desc">{item.description}</div>}
+                        </td>
+                        <td>{item.quantity}</td>
+                        <td>€ {item.price.toFixed(2)}</td>
+                        <td>€ {(item.quantity * item.price).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Totals */}
-            <div className="invoice-totals">
-              <div className="invoice-total-row">
-                <span>Subtotaal</span>
-                <span>€ {calculateSubtotal().toFixed(2)}</span>
-              </div>
-              {formData.discount_percentage > 0 && (
+            {formData.items.length > 0 && (
+              <div className="invoice-total">
                 <div className="invoice-total-row">
-                  <span>Korting ({formData.discount_percentage}%)</span>
-                  <span>- € {calculateDiscount().toFixed(2)}</span>
+                  <span>Subtotaal</span>
+                  <span>€ {calculateSubtotal().toFixed(2)}</span>
                 </div>
-              )}
-              <div className="invoice-total-row">
-                <span>BTW ({formData.tax_percentage}%)</span>
-                <span>€ {calculateTax().toFixed(2)}</span>
+                {formData.discount_percentage > 0 && (
+                  <div className="invoice-total-row">
+                    <span>Korting ({formData.discount_percentage}%)</span>
+                    <span>- € {calculateDiscount().toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="invoice-total-row">
+                  <span>BTW ({formData.tax_percentage}%)</span>
+                  <span>€ {calculateTax().toFixed(2)}</span>
+                </div>
+                <div className="invoice-total-row total-final">
+                  <span>Totaal</span>
+                  <span>€ {calculateTotal().toFixed(2)}</span>
+                </div>
               </div>
-              <div className="invoice-total-row invoice-total-final">
-                <span>Totaal</span>
-                <span>€ {calculateTotal().toFixed(2)}</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

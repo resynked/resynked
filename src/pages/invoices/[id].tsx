@@ -71,7 +71,7 @@ export default function EditInvoice() {
         return;
       }
 
-      router.push('/dashboard/invoices');
+      router.push('/invoices');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -89,10 +89,15 @@ export default function EditInvoice() {
   return (
     <Layout>
       <div className="page-header">
-        <h1>Factuur Bewerken</h1>
-        <Link href="/dashboard/invoices" className="button button-secondary">
-          Terug
-        </Link>
+        <h1>Factuur bewerken</h1>
+        <div className="actions">
+          <Link href="/invoices" className="button tertiary">
+            Annuleren
+          </Link>
+          <button type="submit" className="button" disabled={isLoading}>
+            {isLoading ? 'Bijwerken...' : 'Factuur bijwerken'}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -118,15 +123,6 @@ export default function EditInvoice() {
             <label>Totaal</label>
             <div className="form-display-value">€{formData.total.toFixed(2)}</div>
             <p className="form-help-text">Het totaalbedrag kan niet worden gewijzigd na het aanmaken van de factuur.</p>
-          </div>
-
-          <div className="form-actions">
-            <Link href="/dashboard/invoices" className="button button-secondary">
-              Annuleren
-            </Link>
-            <button type="submit" className="button" disabled={isLoading}>
-              {isLoading ? 'Bijwerken...' : 'Factuur Bijwerken'}
-            </button>
           </div>
         </form>
       </div>

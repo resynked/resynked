@@ -22,19 +22,19 @@ export default function Sidebar() {
         />
       </div>
       <nav className="sidebar-nav">
-        <Link href="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
+        <Link href="/home" className={isActive('/home') ? 'active' : ''}>
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
         </Link>
-        <Link href="/dashboard/customers" className={isActive('/dashboard/customers') ? 'active' : ''}>
+        <Link href="/customers" className={isActive('/customers') || router.pathname.startsWith('/customers') ? 'active' : ''}>
           <Users size={20} />
           <span>Klanten</span>
         </Link>
-        <Link href="/dashboard/products" className={isActive('/dashboard/products') ? 'active' : ''}>
+        <Link href="/products" className={isActive('/products') || router.pathname.startsWith('/products') ? 'active' : ''}>
           <Package size={20} />
           <span>Producten</span>
         </Link>
-        <Link href="/dashboard/invoices" className={isActive('/dashboard/invoices') ? 'active' : ''}>
+        <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''}>
           <FileText size={20} />
           <span>Facturen</span>
         </Link>

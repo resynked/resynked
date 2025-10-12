@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import ResynkedAI from './ResynkedAI';
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,6 +31,7 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </div>
       </main>
+      <ResynkedAI />
     </div>
   );
 }
