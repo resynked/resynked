@@ -1,0 +1,66 @@
+:root {
+  --color1: #000;
+  --color2: #FFF;
+  --color3: #FAFAFA;
+  --font-color1: #000;
+  --font-color2: #666;
+  --border-color: #E6E6E6;
+  --font-family1: "Inter", Helvetica, Arial, sans-serif;
+  --body-fontsize: 14px;
+  --h1-size: 30px;
+  --h2-size: 30px;
+  --h3-size: 20px;
+  --h4-size: 28px;
+  --h5-size: 26px;
+  --max-width: 1500px;
+  --max-width-small: 1200px;
+  --space10: 10px;
+  --space15: 15px;
+  --space20: 20px;
+  --space30: 30px;
+  --space40: 40px;
+  --space50: 50px;
+  --space100: 100px;
+  --border-radius1: 6px;
+}
+
+
+html, body {height: 100%;}
+
+body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--body-fontsize); line-height: 1.85em; margin: 0; padding: 0;}
+
+textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="number"] {
+  background-color: var(--color2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius1);
+  box-shadow: none;
+  color: var(--font-color2);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: normal;
+  padding: var(--space15);
+  box-sizing: border-box;
+  width: 100%;
+  transition: all .3s ease;
+  outline: none;  -webkit-appearance: none; -moz-appearance: none; appearance: none;    
+}
+
+
+h1, h2, h2, h3, h4, h5, h6 {font-family: var(--font-family1); color: var(--font-color1); font-weight: 600; font-style: normal; text-decoration: none; margin: 0 0  var(--space10) 0; line-height: 1.35em;}
+
+h1 {font-size: var(--h1-size);}
+
+.button {outline: 0; background: var(--color1); border-radius: var(--border-radius1); border: 0; line-height: 1; padding: var(--space10); box-sizing: border-box; text-decoration: none; color: var(--color2);}
+
+.header-holder {position: relative; background: var(--color2); width: 100%; border-bottom: 1px solid var(--border-color);}
+.header-holder .header-content {max-width: var(--max-width); margin: 0 auto; padding: var(--space10); display: flex; align-items: center; gap: var(--space10);}
+.header-holder .header-content .button.login {margin-left: auto;}
+
+
+.content {max-width: var(--max-width-small); margin: 0 auto; padding: var(--space50) var(--space30); box-sizing: border-box;}
+
+.login-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
+.login-wrapper .login-block h1 {text-align: center; margin: 0 0 var(--space20) 0;}
+.login-wrapper .login-block .login-input {margin: 0 0 var(--space10) 0;}
+.login-wrapper .login-block .login-input:focus-visible {border-color: var(--color1);}
+.login-wrapper .login-block .button {width: 100%; display: block; box-sizing: border-box; padding: var(--space15);}
