@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import Layout from '@/components/admin/Layout';
+import Layout from '@/components/Layout';
 import Link from 'next/link';
 import Select from 'react-select';
 import { Search, X } from 'lucide-react';
@@ -181,7 +181,7 @@ export default function NewInvoice() {
       <div className="page-header">
         <h1>Nieuwe factuur aanmaken</h1>
         <div className="actions">
-          <button type="button" className="button secondary" onClick={() => router.push('/invoices')}>
+          <button type="button" className="button cancel" onClick={() => router.push('/invoices')}>
             Annuleren
           </button>
           <button type="submit" form="invoice-form" className="button" disabled={isLoading || formData.items.length === 0}>
@@ -192,7 +192,7 @@ export default function NewInvoice() {
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="split-layout">
+      <div className="grid">
         {/* Left Side - Form */}
         <div className="block">
           <form id="invoice-form" onSubmit={handleSubmit}>
@@ -365,7 +365,7 @@ export default function NewInvoice() {
                 </div>
               ))}
 
-              <button type="button" className="button-add-item" onClick={() => setShowProductSearch(true)}>
+              <button type="button" className="button add-item" onClick={() => setShowProductSearch(true)}>
                 + Artikel toevoegen
               </button>
             </div>
@@ -448,7 +448,7 @@ export default function NewInvoice() {
             {/* Invoice Table */}
             {formData.items.length > 0 && (
               <div className="table-container">
-                <table className="data-table">
+                <table className="product-table">
                   <thead>
                     <tr>
                       <th>Artikelnummer</th>

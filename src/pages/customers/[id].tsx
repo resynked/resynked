@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Layout from '@/components/admin/Layout';
+import Layout from '@/components/Layout';
 import Link from 'next/link';
 import type { Customer } from '@/lib/supabase';
 
@@ -83,7 +83,7 @@ export default function EditCustomer() {
       <div className="page-header">
         <h1>Klant bewerken</h1>
         <div className="actions">
-          <Link href="/customers" className="button tertiary">
+          <Link href="/customers" className="button cancel">
             Annuleren
           </Link>
           <button type="submit" className="button" disabled={isLoading}>

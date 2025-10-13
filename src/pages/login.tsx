@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import Content from '../components/website/Content';
-import Modal from '../components/admin/Modal';
+import Modal from '@/components/Modal';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -46,8 +45,8 @@ export default function Login() {
         setIsLoading(false);
       } else {
         showToast('Succes', 'Succesvol ingelogd!', 'success');
-        // Redirect to home on successful login
-        setTimeout(() => router.push('/home'), 1000);
+        // Redirect to dashboard on successful login
+        setTimeout(() => router.push('/'), 1000);
       }
     } catch (err) {
       showToast('Fout', 'Er is iets misgegaan. Probeer het opnieuw.', 'error');
@@ -56,7 +55,7 @@ export default function Login() {
   };
 
   return (
-    <Content>
+    <>
       <div className="login-wrapper">
         <div className="login-block">
           <h1>Inloggen bij Resynked</h1>
@@ -99,6 +98,6 @@ export default function Login() {
       >
         {toast.message}
       </Modal>
-    </Content>
+    </>
   );
 }

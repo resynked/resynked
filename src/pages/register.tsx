@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import Content from '../components/website/Content';
+
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -67,7 +67,7 @@ export default function Register() {
   };
 
   return (
-    <Content>
+    <>
       <div className="register-wrapper">
         <div className="register-block">
           <h1>Maak je account aan</h1>
@@ -122,6 +122,6 @@ export default function Register() {
           </div>
         </div>
       </div>
-    </Content>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import Layout from '@/components/admin/Layout';
+import Layout from '@/components/Layout';
 import Link from 'next/link';
 
 export default function NewProduct() {
@@ -111,7 +111,7 @@ export default function NewProduct() {
           </div>
 
           <div className="form-actions">
-            <Link href="/products" className="button button-secondary">
+            <Link href="/products" className="button cancel">
               Annuleren
             </Link>
             <button type="submit" className="button" disabled={isLoading}>

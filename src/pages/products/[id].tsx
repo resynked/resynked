@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Layout from '@/components/admin/Layout';
+import Layout from '@/components/Layout';
 import Link from 'next/link';
 import type { Product } from '@/lib/supabase';
 
@@ -85,7 +85,7 @@ export default function EditProduct() {
       <div className="page-header">
         <h1>Product bewerken</h1>
         <div className="actions">
-          <Link href="/products" className="button tertiary">
+          <Link href="/products" className="button cancel">
             Annuleren
           </Link>
           <button type="submit" className="button" disabled={isLoading}>
