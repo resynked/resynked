@@ -160,7 +160,7 @@ export async function getInvoice(id: string, tenantId: string) {
 
 export async function createInvoice(
   invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
-  items: Omit<InvoiceItem, 'id' | 'invoice_id'>[]
+  items: any[]
 ) {
   // Create invoice
   const { data: invoiceData, error: invoiceError } = await supabase
@@ -173,9 +173,12 @@ export async function createInvoice(
 
   // Create invoice items
   if (items.length > 0) {
-    const itemsWithInvoiceId = items.map(item => ({
-      ...item,
-      invoice_id: invoiceData.id
+    const itemsWithInvoiceId = items.map((item: any) => ({
+      invoice_id: invoiceData.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+      tenant_id: invoice.tenant_id,
     }));
 
     const { error: itemsError } = await supabase

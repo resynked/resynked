@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 import Select from 'react-select';
@@ -9,7 +8,6 @@ import type { Customer, Product } from '@/lib/supabase';
 
 export default function NewInvoice() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -155,7 +153,13 @@ export default function NewInvoice() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          invoice_number: formData.invoice_number,
+          invoice_date: formData.invoice_date,
+          due_date: formData.due_date,
           customer_id: formData.customer_id,
+          currency: formData.currency,
+          tax_percentage: formData.tax_percentage,
+          discount_percentage: formData.discount_percentage,
           status: 'draft',
           total,
           items: formData.items,

@@ -19,7 +19,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { customer_id, total, status, items } = req.body;
+      const {
+        customer_id,
+        total,
+        status,
+        invoice_number,
+        invoice_date,
+        due_date,
+        currency,
+        tax_percentage,
+        discount_percentage,
+        items,
+      } = req.body;
 
       if (!customer_id || total === undefined) {
         return res.status(400).json({ error: 'Customer ID and total are required' });
@@ -29,6 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         {
           tenant_id: tenantId,
           customer_id,
+          invoice_number,
+          invoice_date,
+          due_date,
+          currency: currency || 'EUR',
+          tax_percentage: tax_percentage || 21,
+          discount_percentage: discount_percentage || 0,
           total: parseFloat(total),
           status: status || 'draft',
         },
@@ -39,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

@@ -86,13 +86,29 @@ export default function Invoices() {
 
   const handleDuplicate = async (invoice: Invoice) => {
     try {
+      // Fetch full invoice details with items
+      const response = await fetch(`/api/invoices/${invoice.id}`);
+      const fullInvoice = await response.json();
+
+      // Create new invoice with same data
       await fetch('/api/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_id: invoice.customer_id,
-          total: invoice.total,
+          customer_id: fullInvoice.customer_id,
+          invoice_number: `${fullInvoice.invoice_number}-kopie`,
+          invoice_date: new Date().toISOString().split('T')[0],
+          due_date: fullInvoice.due_date,
+          currency: fullInvoice.currency,
+          tax_percentage: fullInvoice.tax_percentage,
+          discount_percentage: fullInvoice.discount_percentage,
+          total: fullInvoice.total,
           status: 'draft',
+          items: fullInvoice.invoice_items?.map((item: any) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+          })) || [],
         }),
       });
       fetchInvoices();
