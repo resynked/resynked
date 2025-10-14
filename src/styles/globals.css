@@ -31,7 +31,6 @@
   --right-fr: 1fr;
 }
 
-
 html, body {height: 100%;}
 
 body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color2); font-size: var(--body-fontsize); line-height: 1.85em; margin: 0; padding: 0;}
@@ -95,7 +94,7 @@ button.cancel:hover, .button.cancel:hover {background: var(--color4);}
 .button.add-item:hover {color: var(--font-color1); background-color: var(--color4);}
 
 .checkbox {width: 16px; height: 16px; background: unset; padding: 0; border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
-.checkbox[aria-checked="true"] {background: var(--color1); border-color: var(--color1);}
+.checkbox[aria-checked="true"] {background: var(--color5); border-color: var(--color5);}
 .checkbox[data-state="indeterminate"] {color: var(--color1);}
 
 .login-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
@@ -132,11 +131,7 @@ button.cancel:hover, .button.cancel:hover {background: var(--color4);}
 .dashboard-sidebar .sidebar-profile .profile-dropdown-info {line-height: 1.5em; font-weight: 500; font-size: 12px;}
 .dashboard-sidebar .sidebar-profile .profile-dropdown-info .email {color: var(--font-color2);}
 
-
 .dashboard-sidebar .sidebar-profile .profile-dropdown {position: absolute; bottom: calc(100% + 5px); left: var(--space10); background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); min-width: 280px; z-index: 1; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
-
-
-
 .dashboard-sidebar .sidebar-profile .profile-dropdown .menu {display: flex; flex-direction: column; padding: var(--space5) 0;}
 .dashboard-sidebar .sidebar-profile .profile-dropdown .menu a {padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
 .dashboard-sidebar .sidebar-profile .profile-dropdown .menu a:hover, .dashboard-sidebar .sidebar-profile .profile-dropdown .menu a.active {background-color: #f2f2f2;}
@@ -193,7 +188,6 @@ button.cancel:hover, .button.cancel:hover {background: var(--color4);}
 .invoice-preview .invoice-total .invoice-total-row {display: flex; justify-content: space-between; font-size: 13px;}
 .invoice-preview .invoice-total .invoice-total-row.total-final {border-top: 1px solid var(--border-color); font-weight: 600; font-size: 16px; padding-top: var(--space15); margin-top: var(--space10);}
 .invoice-preview .invoice-company-header {display: flex; justify-content: space-between; margin-bottom: var(--space50);}
-
 
 .product-search-input {position: relative; display: flex; align-items: center;}
 .product-search-input input {padding-left: 40px;}
