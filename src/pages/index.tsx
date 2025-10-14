@@ -35,24 +35,12 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="dashboard-grid">
-        <div className="dashboard-left">
+      <div className="grid">
+        <div className="block chat">
           <ChatAssistant />
         </div>
-        <div className="dashboard-right">
-          <div className="dashboard-section">
+        <div className="block">
             <h2>Omzet</h2>
-            <div className="revenue-chart">
-              {/* Revenue chart will go here */}
-              <p className="coming-soon">Grafiek komt binnenkort</p>
-            </div>
-          </div>
-          <div className="dashboard-section">
-            <h2>Laatste openstaande facturen</h2>
-            <div className="invoices-list">
-              <p className="coming-soon">Factuurlijst komt binnenkort</p>
-            </div>
-          </div>
         </div>
       </div>
     </Layout>

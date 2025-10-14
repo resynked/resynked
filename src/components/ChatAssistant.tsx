@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -105,67 +105,30 @@ export default function ChatAssistant() {
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="chat-welcome">
-            <div className="welcome-title">Hoe kan ik je helpen?</div>
+            <h2>👋 Welkom terug, naam</h2>
           </div>
         )}
 
         {messages.map((message) => (
-          <div key={message.id} className={`chat-message ${message.role}`}>
-            <div className="message-wrapper">
-              <div className="message-avatar">
-                {message.role === 'user' ? (
-                  <div className="avatar-user">U</div>
-                ) : (
-                  <div className="avatar-assistant">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-                        fill="currentColor"
-                      />
-                      <circle cx="12" cy="12" r="4" fill="currentColor" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="message-content">
-                {message.content.split('\n').map((line, i) => (
-                  <div key={i} className="message-line">
-                    {line}
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div key={message.id} className={`message ${message.role}`}>
+                <p>
+                  {message.content}
+                </p>
           </div>
         ))}
 
         {isLoading && (
-          <div className="chat-message assistant">
-            <div className="message-wrapper">
-              <div className="message-avatar">
-                <div className="avatar-assistant">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-                      fill="currentColor"
-                    />
-                    <circle cx="12" cy="12" r="4" fill="currentColor" />
-                  </svg>
-                </div>
-              </div>
-              <div className="message-content">
+          <div className="message assistant">
                 <div className="typing-dots">
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-              </div>
-            </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="chat-input-container">
         <form onSubmit={handleSubmit} className="chat-input-form">
           <textarea
             value={input}
@@ -176,11 +139,11 @@ export default function ChatAssistant() {
             className="chat-textarea"
             rows={1}
           />
-          <button type="submit" disabled={!input.trim() || isLoading} className="chat-send-btn">
-            <Send size={20} />
+          <button type="submit" disabled={!input.trim() || isLoading} className="chat">
+            <ArrowUp size={15} />
           </button>
         </form>
-      </div>
+
     </div>
   );
 }
