@@ -164,18 +164,6 @@ export default function Notes() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="block" style={{ marginBottom: '1rem' }}>
-        <div className="product-search-input">
-          <Search size={16} />
-          <input
-            type="text"
-            placeholder="Zoek notities op titel, inhoud of klantnaam..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
 
       {filteredNotes.length === 0 ? (
         <div className="empty-state">
@@ -214,7 +202,7 @@ export default function Notes() {
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
             'Titel',
-            'Klant',
+            'Bedrijfsnaam',
             'Inhoud',
             'Aangemaakt',
             ''
@@ -238,24 +226,13 @@ export default function Notes() {
                 </button>
               </td>
               <td>
-                <Link href={`/notes/${note.id}`} style={{ fontWeight: 500 }}>
                   {note.title}
-                </Link>
               </td>
               <td>
-                <Link href={`/customers/${note.customer_id}`}>
                   {note.customer?.name || 'Onbekend'}
-                </Link>
               </td>
               <td>
-                <div style={{
-                  maxWidth: '300px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
                   {note.content}
-                </div>
               </td>
               <td>{formatDate(note.created_at)}</td>
               <td className="actions">

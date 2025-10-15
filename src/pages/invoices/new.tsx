@@ -272,8 +272,8 @@ export default function NewInvoice() {
               </div>
 
               {/* Product Search */}
-              <div className="product-search-container">
-                <div className="product-search-input">
+              <div className="search">
+                <div className="search-input">
                   <Search size={16} />
                   <input
                     type="text"
@@ -288,11 +288,11 @@ export default function NewInvoice() {
                 </div>
 
                 {showProductSearch && filteredProducts.length > 0 && (
-                  <div className="product-search-results">
+                  <div className="search-results">
                     {filteredProducts.map((product) => (
                       <div
                         key={product.id}
-                        className="product-search-item"
+                        className="search-item"
                         onClick={() => addProduct(product)}
                       >
                         <div className="product-search-info">

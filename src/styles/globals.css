@@ -212,11 +212,11 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .invoice-preview .invoice-total .invoice-total-row.total-final {border-top: 1px solid var(--border-color); font-weight: 600; font-size: 16px; padding-top: var(--space15); margin-top: var(--space10);}
 .invoice-preview .invoice-company-header {display: flex; justify-content: space-between; margin-bottom: var(--space50);}
 
-.product-search-input {position: relative; display: flex; align-items: center;}
-.product-search-input input {padding-left: 40px;}
-.product-search-input svg {position: absolute; left: var(--space15); color: var(--font-color2);}
+.search-input {position: relative; display: flex; align-items: center;}
+.search-input input {padding-left: 40px;}
+.search-input svg {position: absolute; left: var(--space15); color: var(--font-color2);}
 
-.product-search-results {
+.search-results {
   position: absolute;
   top: 100%;
   left: 0;
@@ -231,7 +231,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
   margin-top: var(--space5);
 }
 
-.product-search-item {
+.search-item {
   display: flex;
   justify-content: space-between;
   padding: var(--space15);
@@ -239,7 +239,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
   transition: background-color 0.2s;
 }
 
-.product-search-item:hover {
+.search-item:hover {
   background-color: var(--color3);
 }
 
@@ -268,7 +268,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-group label {font-size: 13px; font-weight: 500; color: var(--font-color1);}
 .form-section .form-group .center-input {text-align: center;}
 
-.form-section .product-search-container {position: relative; margin: var(--space10) 0 var(--space20) 0;}
+.form-section .search {position: relative; margin: var(--space10) 0 var(--space20) 0;}
 .form-section .react-select__control {border-color: var(--border-color); border-radius: var(--border-radius1);}
 .form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}
 .form-section h2, .form-section h3 {margin: 0;}
