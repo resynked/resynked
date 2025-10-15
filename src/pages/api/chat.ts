@@ -109,7 +109,6 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
         { role: 'system', content: systemMessage } as CoreMessage,
         ...(messages as CoreMessage[]),
       ],
-      maxSteps: 5,
       tools: {
         createCustomer: tool({
           description: 'Maak een nieuwe klant aan in de database',
