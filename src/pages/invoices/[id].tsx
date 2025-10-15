@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import Select from 'react-select';
+import Select from '@/components/Select';
 import { Search, X } from 'lucide-react';
 import type { Customer, Product } from '@/lib/supabase';
 
