@@ -109,7 +109,7 @@ export default function EditQuote() {
       items: [
         ...formData.items,
         {
-          product_id: product.id,
+          product_id: String(product.id),
           product_name: product.name,
           description: product.description || '',
           quantity: 1,

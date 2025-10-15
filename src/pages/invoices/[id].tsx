@@ -106,7 +106,7 @@ export default function EditInvoice() {
       items: [
         ...formData.items,
         {
-          product_id: product.id,
+          product_id: String(product.id),
           product_name: product.name,
           description: product.description || '',
           quantity: 1,
@@ -161,17 +161,17 @@ export default function EditInvoice() {
   ];
 
   const taxOptions = [
-    { value: 0, label: '0%' },
-    { value: 9, label: '9%' },
-    { value: 21, label: '21%' },
+    { value: '0', label: '0%' },
+    { value: '9', label: '9%' },
+    { value: '21', label: '21%' },
   ];
 
   const discountOptions = [
-    { value: 0, label: '0%' },
-    { value: 5, label: '5%' },
-    { value: 10, label: '10%' },
-    { value: 15, label: '15%' },
-    { value: 20, label: '20%' },
+    { value: '0', label: '0%' },
+    { value: '5', label: '5%' },
+    { value: '10', label: '10%' },
+    { value: '15', label: '15%' },
+    { value: '20', label: '20%' },
   ];
 
   const statusOptions = [
@@ -318,11 +318,9 @@ export default function EditInvoice() {
               <div className="form-group">
                 <label htmlFor="status">Status</label>
                 <Select
-                  value={statusOptions.find(o => o.value === formData.status)}
+                  value={statusOptions.find(o => o.value === formData.status) || null}
                   onChange={(option) => setFormData({ ...formData, status: option?.value || 'draft' })}
                   options={statusOptions}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
                 />
               </div>
             </div>
@@ -332,13 +330,10 @@ export default function EditInvoice() {
               <h3>Klantgegevens</h3>
               <div className="form-group">
                 <Select
-                  value={customerOptions.find(o => o.value === formData.customer_id)}
+                  value={customerOptions.find(o => o.value === formData.customer_id) || null}
                   onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
                   options={customerOptions}
                   placeholder="Selecteer klant..."
-                  isSearchable
-                  className="react-select-container"
-                  classNamePrefix="react-select"
                 />
               </div>
             </div>
@@ -350,12 +345,9 @@ export default function EditInvoice() {
               <div className="form-group">
                 <label>Valuta</label>
                 <Select
-                  value={currencyOptions.find(o => o.value === formData.currency)}
+                  value={currencyOptions.find(o => o.value === formData.currency) || null}
                   onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
                   options={currencyOptions}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  isSearchable
                 />
               </div>
 
@@ -438,24 +430,18 @@ export default function EditInvoice() {
                 <div className="form-group">
                   <label htmlFor="tax">BTW percentage</label>
                   <Select
-                    value={taxOptions.find(o => o.value === formData.tax_percentage)}
-                    onChange={(option) => setFormData({ ...formData, tax_percentage: option?.value || 21 })}
+                    value={taxOptions.find(o => o.value === String(formData.tax_percentage)) || null}
+                    onChange={(option) => setFormData({ ...formData, tax_percentage: option?.value ? Number(option.value) : 21 })}
                     options={taxOptions}
-                    className="react-select-container"
-                    classNamePrefix="react-select"
-                    isSearchable
                   />
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="discount">Kortingspercentage</label>
                   <Select
-                    value={discountOptions.find(o => o.value === formData.discount_percentage)}
-                    onChange={(option) => setFormData({ ...formData, discount_percentage: option?.value || 0 })}
+                    value={discountOptions.find(o => o.value === String(formData.discount_percentage)) || null}
+                    onChange={(option) => setFormData({ ...formData, discount_percentage: option?.value ? Number(option.value) : 0 })}
                     options={discountOptions}
-                    className="react-select-container"
-                    classNamePrefix="react-select"
-                    isSearchable
                   />
                 </div>
               </div>
