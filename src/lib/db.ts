@@ -1,5 +1,8 @@
-import { supabase } from './supabase';
+import { supabaseAdmin } from './supabase';
 import type { Customer, Product, Invoice, InvoiceItem, Quote, QuoteItem, Order, OrderItem } from './supabase';
+
+// Use supabaseAdmin for all database operations since we handle auth via NextAuth
+const supabase = supabaseAdmin;
 
 // Helper function to get updated_at timestamp
 const now = () => new Date().toISOString();
@@ -16,7 +19,7 @@ export async function getCustomers(tenantId: string) {
   return data as Customer[];
 }
 
-export async function getCustomer(id: string, tenantId: string) {
+export async function getCustomer(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('customers')
     .select('*')
@@ -39,7 +42,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at
   return data as Customer;
 }
 
-export async function updateCustomer(id: string, tenantId: string, updates: Partial<Customer>) {
+export async function updateCustomer(id: string | number, tenantId: string, updates: Partial<Customer>) {
   const { data, error } = await supabase
     .from('customers')
     .update({ ...updates, updated_at: now() })
@@ -52,7 +55,7 @@ export async function updateCustomer(id: string, tenantId: string, updates: Part
   return data as Customer;
 }
 
-export async function deleteCustomer(id: string, tenantId: string) {
+export async function deleteCustomer(id: string | number, tenantId: string) {
   const { error } = await supabase
     .from('customers')
     .delete()
@@ -75,7 +78,7 @@ export async function getProducts(tenantId: string) {
   return data as Product[];
 }
 
-export async function getProduct(id: string, tenantId: string) {
+export async function getProduct(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -98,7 +101,7 @@ export async function createProduct(product: Omit<Product, 'id' | 'created_at' |
   return data as Product;
 }
 
-export async function updateProduct(id: string, tenantId: string, updates: Partial<Product>) {
+export async function updateProduct(id: string | number, tenantId: string, updates: Partial<Product>) {
   const { data, error } = await supabase
     .from('products')
     .update({ ...updates, updated_at: now() })
@@ -111,7 +114,7 @@ export async function updateProduct(id: string, tenantId: string, updates: Parti
   return data as Product;
 }
 
-export async function deleteProduct(id: string, tenantId: string) {
+export async function deleteProduct(id: string | number, tenantId: string) {
   const { error } = await supabase
     .from('products')
     .delete()
@@ -137,7 +140,7 @@ export async function getInvoices(tenantId: string) {
   return data;
 }
 
-export async function getInvoice(id: string, tenantId: string) {
+export async function getInvoice(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('invoices')
     .select(`
@@ -191,7 +194,7 @@ export async function createInvoice(
   return invoiceData as Invoice;
 }
 
-export async function updateInvoice(id: string, tenantId: string, updates: Partial<Invoice>) {
+export async function updateInvoice(id: string | number, tenantId: string, updates: Partial<Invoice>) {
   const { data, error } = await supabase
     .from('invoices')
     .update({ ...updates, updated_at: now() })
@@ -204,7 +207,7 @@ export async function updateInvoice(id: string, tenantId: string, updates: Parti
   return data as Invoice;
 }
 
-export async function deleteInvoice(id: string, tenantId: string) {
+export async function deleteInvoice(id: string | number, tenantId: string) {
   const { error } = await supabase
     .from('invoices')
     .delete()
@@ -216,7 +219,7 @@ export async function deleteInvoice(id: string, tenantId: string) {
 }
 
 // Invoice Items
-export async function updateInvoiceItem(id: string, updates: Partial<InvoiceItem>) {
+export async function updateInvoiceItem(id: string | number, updates: Partial<InvoiceItem>) {
   const { data, error } = await supabase
     .from('invoice_items')
     .update(updates)
@@ -228,7 +231,7 @@ export async function updateInvoiceItem(id: string, updates: Partial<InvoiceItem
   return data as InvoiceItem;
 }
 
-export async function deleteInvoiceItem(id: string) {
+export async function deleteInvoiceItem(id: string | number) {
   const { error } = await supabase
     .from('invoice_items')
     .delete()
@@ -253,7 +256,7 @@ export async function getQuotes(tenantId: string) {
   return data;
 }
 
-export async function getQuote(id: string, tenantId: string) {
+export async function getQuote(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('quotes')
     .select(`
@@ -306,7 +309,7 @@ export async function createQuote(
   return quoteData as Quote;
 }
 
-export async function updateQuote(id: string, tenantId: string, updates: Partial<Quote>) {
+export async function updateQuote(id: string | number, tenantId: string, updates: Partial<Quote>) {
   const { data, error } = await supabase
     .from('quotes')
     .update({ ...updates, updated_at: now() })
@@ -319,7 +322,7 @@ export async function updateQuote(id: string, tenantId: string, updates: Partial
   return data as Quote;
 }
 
-export async function deleteQuote(id: string, tenantId: string) {
+export async function deleteQuote(id: string | number, tenantId: string) {
   const { error } = await supabase
     .from('quotes')
     .delete()
@@ -345,7 +348,7 @@ export async function getOrders(tenantId: string) {
   return data;
 }
 
-export async function getOrder(id: string, tenantId: string) {
+export async function getOrder(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('orders')
     .select(`
@@ -398,7 +401,7 @@ export async function createOrder(
   return orderData as Order;
 }
 
-export async function updateOrder(id: string, tenantId: string, updates: Partial<Order>) {
+export async function updateOrder(id: string | number, tenantId: string, updates: Partial<Order>) {
   const { data, error } = await supabase
     .from('orders')
     .update({ ...updates, updated_at: now() })
@@ -411,7 +414,7 @@ export async function updateOrder(id: string, tenantId: string, updates: Partial
   return data as Order;
 }
 
-export async function deleteOrder(id: string, tenantId: string) {
+export async function deleteOrder(id: string | number, tenantId: string) {
   const { error } = await supabase
     .from('orders')
     .delete()
@@ -423,7 +426,7 @@ export async function deleteOrder(id: string, tenantId: string) {
 }
 
 // Conversion functions
-export async function convertQuoteToOrder(quoteId: string, tenantId: string) {
+export async function convertQuoteToOrder(quoteId: string | number, tenantId: string) {
   // Get quote with items
   const quote = await getQuote(quoteId, tenantId);
 
@@ -443,7 +446,7 @@ export async function convertQuoteToOrder(quoteId: string, tenantId: string) {
       tax_percentage: quote.tax_percentage,
       discount_percentage: quote.discount_percentage,
       notes: quote.notes,
-      quote_id: quoteId,
+      quote_id: typeof quoteId === 'number' ? quoteId : parseInt(quoteId as string),
     },
     quote.quote_items.map((item: any) => ({
       product_id: item.product.id,
@@ -461,7 +464,7 @@ export async function convertQuoteToOrder(quoteId: string, tenantId: string) {
   return order;
 }
 
-export async function convertOrderToInvoice(orderId: string, tenantId: string) {
+export async function convertOrderToInvoice(orderId: string | number, tenantId: string) {
   // Get order with items
   const order = await getOrder(orderId, tenantId);
 

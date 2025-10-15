@@ -4,8 +4,10 @@ import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import type { Customer } from '@/lib/supabase';
+import { useConfirm } from '@/hooks/useConfirm';
 
 export default function Customers() {
+  const { confirm } = useConfirm();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -36,7 +38,14 @@ export default function Customers() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Weet je zeker dat je deze klant wilt verwijderen?')) return;
+    const confirmed = await confirm({
+      title: 'Klant verwijderen',
+      message: 'Weet je zeker dat je deze klant wilt verwijderen?',
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await fetch(`/api/customers/${id}`, { method: 'DELETE' });
@@ -63,7 +72,14 @@ export default function Customers() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Weet je zeker dat je ${selectedIds.length} klant(en) wilt verwijderen?`)) return;
+    const confirmed = await confirm({
+      title: 'Klanten verwijderen',
+      message: `Weet je zeker dat je ${selectedIds.length} klant(en) wilt verwijderen?`,
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await Promise.all(
@@ -171,7 +187,11 @@ export default function Customers() {
                 </button>
               </td>
               <td>{customer.id}</td>
-              <td>{customer.name}</td>
+              <td>
+                {[customer.first_name, customer.middle_name, customer.last_name]
+                  .filter(Boolean)
+                  .join(' ') || customer.company_name || customer.name}
+              </td>
               <td>{customer.email || '-'}</td>
               <td>{customer.company_name || '-'}</td>
               <td className="actions">

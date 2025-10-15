@@ -47,7 +47,7 @@ export default function ChatAssistant() {
         body: JSON.stringify({
           messages: [...messages, userMessage].map((m) => ({
             role: m.role,
-            content: mcontent,
+            content: m.content,
           })),
         }),
       });
@@ -118,13 +118,13 @@ export default function ChatAssistant() {
           <div key={message.id} className={`message ${message.role}`}>
                 <ReactMarkdown
                   components={{
-                    p: ({node, ...props}) => <p {...props} />,
-                    ul: ({node, ...props}) => <ul {...props} />,
-                    ol: ({node, ...props}) => <ol {...props} />,
-                    li: ({node, ...props}) => <li {...props} />,
+                    p: (props) => <p {...props} />,
+                    ul: (props) => <ul {...props} />,
+                    ol: (props) => <ol {...props} />,
+                    li: (props) => <li {...props} />,
                   }}
                 >
-                  {messagecontent}
+                  {message.content}
                 </ReactMarkdown>
           </div>
         ))}

@@ -4,8 +4,10 @@ import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import type { Product } from '@/lib/supabase';
+import { useConfirm } from '@/hooks/useConfirm';
 
 export default function Products() {
+  const { confirm } = useConfirm();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -36,7 +38,14 @@ export default function Products() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Weet je zeker dat je dit product wilt verwijderen?')) return;
+    const confirmed = await confirm({
+      title: 'Product verwijderen',
+      message: 'Weet je zeker dat je dit product wilt verwijderen?',
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await fetch(`/api/products/${id}`, { method: 'DELETE' });
@@ -63,7 +72,14 @@ export default function Products() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Weet je zeker dat je ${selectedIds.length} product(en) wilt verwijderen?`)) return;
+    const confirmed = await confirm({
+      title: 'Producten verwijderen',
+      message: `Weet je zeker dat je ${selectedIds.length} product(en) wilt verwijderen?`,
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await Promise.all(

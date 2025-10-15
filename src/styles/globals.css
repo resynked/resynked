@@ -80,6 +80,7 @@ h1, h2, h2, h3, h4, h5, h6 {font-family: var(--font-family1); color: var(--font-
 
 h1 {font-size: var(--h1-size);}
 h2 {font-size: var(--h2-size);}
+h3 {font-size: var(--h3-size);}
 
 button {font-family: var(--font-family1); font-size: var(--body-fontsize); background: unset; border: 0; outline: 0; padding: 0; margin: 0; text-align: left; cursor: pointer; transition: .3s all ease;}
 
@@ -97,8 +98,33 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .button.add-item:hover {color: var(--font-color1); background-color: var(--color4);}
 
 .checkbox {width: 16px; height: 16px; background: unset; padding: 0; border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
-.checkbox[aria-checked="true"] {background: var(--color5); border-color: var(--color5);}
+.checkbox[aria-checked="true"] {background: var(--color5); border-color: var(--color5); color: var(--color2);}
 .checkbox[data-state="indeterminate"] {color: var(--color1);}
+
+.select {position: relative; width: 100%;}
+.select .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}
+.select .control .arrow {display: flex; align-items: center; color: var(--font-color2); transition: transform .3s;}
+.select .control.open .arrow {transform: rotate(180deg);}
+.select .menu {position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); max-height: 200px; overflow-y: auto; z-index: 10; display: flex; flex-direction: column; gap: 3px; padding: var(--space5); box-sizing: border-box;}
+.select .menu .option {padding: var(--space5); box-sizing: border-box; cursor: pointer; transition: .3s all ease; font-size: 13px; border-radius: var(--border-radius1); }
+.select .menu .option:hover,
+.select .menu .option.selected {background: var(--color4);}
+
+.datepicker {position: relative; width: 100%;}
+.datepicker .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}
+.datepicker .control .arrow {display: flex; align-items: center; color: var(--font-color2);}
+.datepicker .menu {position: absolute; top: calc(100% + 5px); left: 0; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); padding: var(--space10); z-index: 10; min-width: 280px;}
+.datepicker .header {display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space10);}
+.datepicker .month {font-size: 13px; font-weight: 600; text-transform: capitalize;}
+.datepicker .nav {background: none; border: none; padding: var(--space5); cursor: pointer; display: flex; align-items: center; color: var(--font-color2); border-radius: var(--border-radius1); transition: .3s all ease;}
+.datepicker .nav:hover {background: var(--color3); color: var(--font-color1);}
+.datepicker .weekdays {display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space3); margin-bottom: var(--space8);}
+.datepicker .weekday {text-align: center; font-size: 11px; font-weight: 600; color: var(--font-color2); padding: var(--space5);}
+.datepicker .days {display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space3);}
+.datepicker .day {background: none; border: none; padding: 8px; cursor: pointer; font-size: 12px; border-radius: var(--border-radius1); transition: .3s all ease; color: var(--font-color2); text-align: center;}
+.datepicker .day.empty {cursor: default;}
+.datepicker .day.today {font-weight: 600; color: var(--font-color1);}
+.datepicker .day.selected, .datepicker .day.selected:hover, .datepicker .day:hover:not(.empty) {font-weight: 500; color: var(--color5); background: #d2e1ff;}
 
 .login-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
 .login-wrapper .login-block h1 {text-align: center; margin: 0 0 var(--space20) 0;}
@@ -170,14 +196,14 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 
 .table-container .data-table {width: 100%; border-collapse: collapse;}
 .table-container .data-table th {padding: 7px 10px; box-sizing: border-box; font-size: var(--body-fontsize); text-align: left; font-weight: 500; color: var(--color1); border-bottom: 1px solid var(--border-color);}
-.table-container .data-table tr td {padding: 7px 10px; border-bottom: 1px solid var(--border-color); box-sizing: border-box;}
+.table-container .data-table tr td {padding: 7px 10px; border-bottom: 1px solid var(--border-color); box-sizing: border-box; line-height: 1;}
 .table-container .data-table tr:last-of-type td {border-bottom: 0;}
 .table-container .data-table tr.selected, .table-container .data-table tr:hover {background: var(--color3);}
 
 .table-container .data-table tr td.actions {text-align: right;}
 .table-container .data-table tr td.actions .action-dropdown {position: relative;}
 .table-container .data-table tr td.actions .action-dropdown button {background: var(--color4); border-radius: var(--border-radius1); padding: var(--space5); color: var(--font-color2); line-height: 0;}
-.table-container .data-table tr td.actions .action-dropdown .action-menu {position: absolute; padding: var(--space5); box-sizing: border-box; min-width: 160px; display: flex; flex-direction: column; top: 100%; right: 0; background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); z-index: 1; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
+.table-container .data-table tr td.actions .action-dropdown .action-menu {position: absolute; padding: var(--space5); box-sizing: border-box; min-width: 160px; display: flex; flex-direction: column; top: 100%; right: 0; background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); z-index: 1; line-height: 1.85em; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a {text-align: left; outline: 0; padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: var(--body-fontsize); box-sizing: border-box; border-radius: var(--border-radius1);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a:hover {background: var(--color4);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a.delete {color: var(--color6);}
@@ -207,8 +233,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .product-search-input {position: relative; display: flex; align-items: center;}
 .product-search-input input {padding-left: 40px;}
 .product-search-input svg {position: absolute; left: var(--space15); color: var(--font-color2);}
-
-
 
 .product-search-results {
   position: absolute;
@@ -305,60 +329,14 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .toast .toast-content {line-height: 1.35em; font-size: 12px; font-weight: 500;}
 .toast .toast-content .toast-title {grid-column-start: 2; }
 .toast .toast-content .toast-description {grid-column-start: 2; color: var(--font-color2);}
-
 .toast.error {color: var(--color6);}
 .toast.success {color: var(--color7);}
 
-/* Modal */
 .modal-overlay {position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; z-index: 10; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8.5px); transition: opacity 0.3s ease 0s;}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #1a1a2e;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.modal-close:hover {
-  background-color: #f3f4f6;
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
+.modal {background: var(--color2); border-radius: var(--border-radius2); color: var(--font-color2); width: 100%; max-width: 500px; padding: var(--space15); box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;}
+.modal .modal-title {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space10) 0;}
+.modal .modal-title h3 {margin: 0;}
+.modal .modal-content .buttons {display: flex; gap: var(--space10); justify-content: flex-end; margin: var(--space20) 0 0 0;}
 
 
 

@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from 'react';
-import { CircleCheck, CircleX, CircleAlert, CircleQuestionMark } from 'lucide-react';
+import { CircleCheck, CircleX, CircleAlert, CircleQuestionMark, X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -51,14 +51,14 @@ export default function Modal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{title}</h2>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-title">
+          <h3>{title}</h3>
           <button className="modal-close" onClick={onClose}>
-            ×
+            <X size={16} />
           </button>
         </div>
-        <div className="modal-body">{children}</div>
+        <div className="modal-content">{children}</div>
       </div>
     </div>
   );

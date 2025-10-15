@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../../../auth/[...nextauth]';
-import { supabase } from '@/lib/supabase';
+import { authOptions } from '../../../auth/[...nextauth]';
+import { supabaseAdmin } from '@/lib/supabase';
+
+const supabase = supabaseAdmin;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
