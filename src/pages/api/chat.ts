@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { createGroq } from '@ai-sdk/groq';
-import { streamText, CoreMessage, tool } from 'ai';
+import { streamText, CoreMessage } from 'ai';
 import { supabase } from '@/lib/supabase';
 import { z } from 'zod';
 
@@ -103,6 +103,7 @@ ABSOLUUT VERBODEN:
 
 Wees kort, duidelijk en volg de stappen EXACT.`;
 
+    // @ts-ignore - Complex tool types cause TS issues
     const result = await streamText({
       model: groq('llama-3.3-70b-versatile'),
       messages: [
@@ -110,10 +111,10 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
         ...(messages as CoreMessage[]),
       ],
       tools: {
-        createCustomer: tool({
+        createCustomer: {
           description: 'Maak een nieuwe klant aan in de database',
-          parameters: customerSchema,
-          execute: async ({ name, email, phone, address }) => {
+          inputSchema: customerSchema,
+          execute: async ({ name, email, phone, address }: any) => {
             const { data, error } = await supabase
               .from('customers')
               .insert({ name, email, phone, address, tenant_id: tenantId })
@@ -126,12 +127,11 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
             }
             return { success: true, customer: data };
           },
-        }),
-
-        createProduct: tool({
+        },
+        createProduct: {
           description: 'Maak een nieuw product aan in de database',
-          parameters: productSchema,
-          execute: async ({ name, price, description, stock, image_url }) => {
+          inputSchema: productSchema,
+          execute: async ({ name, price, description, stock, image_url }: any) => {
             const { data, error } = await supabase
               .from('products')
               .insert({
@@ -151,12 +151,11 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
             }
             return { success: true, product: data };
           },
-        }),
-
-        createInvoice: tool({
+        },
+        createInvoice: {
           description: 'Maak een nieuwe factuur aan in de database',
-          parameters: invoiceSchema,
-          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }) => {
+          inputSchema: invoiceSchema,
+          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }: any) => {
             // Calculate total
             const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
             const discount = subtotal * (discount_percentage / 100);
@@ -205,7 +204,7 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
 
             return { success: true, invoice };
           },
-        }),
+        },
       },
     });
 
