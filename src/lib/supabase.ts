@@ -25,18 +25,45 @@ export interface User {
 }
 
 export interface Customer {
-  id: string;
+  id: number;
   tenant_id: string;
   name: string;
+  first_name: string | null;
+  middle_name: string | null;
+  last_name: string | null;
+  gender: string | null;
+  company_name: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
+  street_address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  date_of_birth: string | null;
+  iban: string | null;
+  kvk: string | null;
+  btw_number: string | null;
+  debtor_number: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContactPerson {
+  id: number;
+  tenant_id: string;
+  customer_id: number;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  gender: string | null;
+  email: string | null;
+  phone: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface Product {
-  id: string;
+  id: number;
   tenant_id: string;
   name: string;
   description: string | null;
@@ -48,9 +75,9 @@ export interface Product {
 }
 
 export interface Invoice {
-  id: string;
+  id: number;
   tenant_id: string;
-  customer_id: string;
+  customer_id: number;
   invoice_number?: string;
   invoice_date?: string;
   due_date?: string;
@@ -64,11 +91,65 @@ export interface Invoice {
 }
 
 export interface InvoiceItem {
-  id: string;
-  invoice_id: string;
-  product_id: string;
+  id: number;
+  invoice_id: number;
+  product_id: number;
   quantity: number;
   price: number;
   total?: number;
   tenant_id: string;
+}
+
+export interface Quote {
+  id: number;
+  tenant_id: string;
+  customer_id: number;
+  quote_number: string;
+  quote_date: string;
+  valid_until: string;
+  total: number;
+  status: string; // draft, sent, approved, rejected, expired
+  currency: string;
+  tax_percentage: number;
+  discount_percentage: number;
+  notes?: string | null;
+  converted_to_order_id?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuoteItem {
+  id: number;
+  quote_id: number;
+  product_id: number;
+  quantity: number;
+  price: number;
+  total?: number;
+}
+
+export interface Order {
+  id: number;
+  tenant_id: string;
+  customer_id: number;
+  order_number: string;
+  order_date: string;
+  total: number;
+  status: string; // pending, processing, completed, cancelled
+  currency: string;
+  tax_percentage: number;
+  discount_percentage: number;
+  notes?: string | null;
+  quote_id?: number | null;
+  converted_to_invoice_id?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderItem {
+  id: number;
+  order_id: number;
+  product_id: number;
+  quantity: number;
+  price: number;
+  total?: number;
 }

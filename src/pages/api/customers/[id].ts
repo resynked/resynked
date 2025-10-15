@@ -24,13 +24,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      const { name, email, phone, address } = req.body;
-
-      const customer = await updateCustomer(id, tenantId, {
+      const {
         name,
+        first_name,
+        middle_name,
+        last_name,
+        gender,
+        company_name,
         email,
         phone,
         address,
+        street_address,
+        postal_code,
+        city,
+        date_of_birth,
+        iban,
+        kvk,
+        btw_number,
+        debtor_number,
+      } = req.body;
+
+      const customer = await updateCustomer(id, tenantId, {
+        name,
+        first_name,
+        middle_name,
+        last_name,
+        gender,
+        company_name,
+        email,
+        phone,
+        address,
+        street_address,
+        postal_code,
+        city,
+        date_of_birth,
+        iban,
+        kvk,
+        btw_number,
+        debtor_number,
       });
 
       return res.status(200).json(customer);

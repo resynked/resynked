@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react';
+import { CircleCheck, CircleX, CircleAlert, CircleQuestionMark } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -35,14 +36,15 @@ export default function Modal({
 
   if (type === 'toast') {
     return (
-      <div className={`toast toast-${variant}`}>
-        <div className="toast-header">
-          <h3>{title}</h3>
-          <button className="toast-close" onClick={onClose}>
-            ×
-          </button>
+      <div className={`toast ${variant}`}>
+        {variant === 'success' && <CircleCheck size={16} />}
+        {variant === 'error' && <CircleX size={16} />}
+        {variant === 'warning' && <CircleAlert size={16} />}
+        {variant === 'info' && <CircleQuestionMark size={16} />}
+        <div className="toast-content">
+            <div className="toast-title">{title}</div>
+            <div className="toast-description">{children}</div>
         </div>
-        <div className="toast-body">{children}</div>
       </div>
     );
   }

@@ -6,7 +6,7 @@ import Select from 'react-select';
 import { Search, X } from 'lucide-react';
 import type { Customer, Product } from '@/lib/supabase';
 
-export default function NewInvoice() {
+export default function NewQuote() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -14,14 +14,15 @@ export default function NewInvoice() {
   const [showProductSearch, setShowProductSearch] = useState(false);
 
   const [formData, setFormData] = useState({
-    invoice_number: '',
-    invoice_date: new Date().toISOString().split('T')[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    quote_number: '',
+    quote_date: new Date().toISOString().split('T')[0],
+    valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     customer_id: '',
     currency: 'EUR',
     items: [] as { product_id: string; product_name: string; description: string; quantity: number; price: number }[],
     tax_percentage: 21,
     discount_percentage: 0,
+    notes: '',
   });
 
   const [error, setError] = useState('');
@@ -30,13 +31,13 @@ export default function NewInvoice() {
   useEffect(() => {
     fetchCustomers();
     fetchProducts();
-    generateInvoiceNumber();
+    generateQuoteNumber();
   }, []);
 
-  const generateInvoiceNumber = () => {
+  const generateQuoteNumber = () => {
     const year = new Date().getFullYear();
     const random = Math.floor(Math.random() * 900) + 100;
-    setFormData(prev => ({ ...prev, invoice_number: `${year}.${random}` }));
+    setFormData(prev => ({ ...prev, quote_number: `OFF-${year}-${random}` }));
   };
 
   const fetchCustomers = async () => {
@@ -146,22 +147,25 @@ export default function NewInvoice() {
     setError('');
     setIsLoading(true);
 
-    const total = calculateTotal();
+    if (formData.items.length === 0) {
+      setError('Voeg minimaal één artikel toe');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch('/api/invoices', {
+      const response = await fetch('/api/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoice_number: formData.invoice_number,
-          invoice_date: formData.invoice_date,
-          due_date: formData.due_date,
+          quote_number: formData.quote_number,
+          quote_date: formData.quote_date,
+          valid_until: formData.valid_until,
           customer_id: formData.customer_id,
           currency: formData.currency,
           tax_percentage: formData.tax_percentage,
           discount_percentage: formData.discount_percentage,
-          status: 'draft',
-          total,
+          notes: formData.notes || null,
           items: formData.items,
         }),
       });
@@ -173,7 +177,7 @@ export default function NewInvoice() {
         return;
       }
 
-      router.push('/invoices');
+      router.push('/quotes');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -183,12 +187,12 @@ export default function NewInvoice() {
   return (
     <Layout>
       <div className="page-header">
-        <h1>Nieuwe factuur aanmaken</h1>
+        <h1>Nieuwe offerte aanmaken</h1>
         <div className="actions">
-          <button type="button" className="button cancel" onClick={() => router.push('/invoices')}>
+          <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
             Annuleren
           </button>
-          <button type="submit" form="invoice-form" className="button" disabled={isLoading || formData.items.length === 0}>
+          <button type="submit" form="quote-form" className="button" disabled={isLoading || formData.items.length === 0}>
             {isLoading ? 'Opslaan...' : 'Opslaan'}
           </button>
         </div>
@@ -199,22 +203,22 @@ export default function NewInvoice() {
       <div className="grid">
         {/* Left Side - Form */}
         <div className="block">
-          <form id="invoice-form" onSubmit={handleSubmit}>
+          <form id="quote-form" onSubmit={handleSubmit}>
             {/* Layout Tabs */}
             <div className="tabs">
               <a
                 href="#layout"
                 className="tab active"
-                onClick={(e) => e.preventDefault()} // voorkomt dat de pagina scrollt
+                onClick={(e) => e.preventDefault()}
               >
-                Algemeen
+                Layout
               </a>
               <a
                 href="#algemeen"
                 className="tab"
                 onClick={(e) => e.preventDefault()}
               >
-                Notities
+                Algemeen
               </a>
               <a
                 href="#versturen"
@@ -225,16 +229,15 @@ export default function NewInvoice() {
               </a>
             </div>
 
-
-            {/* Invoice Details */}
+            {/* Quote Details */}
             <div className="form-section">
               <div className="form-group">
                 <input
-                  id="invoice_number"
+                  id="quote_number"
                   type="text"
-                  value={formData.invoice_number}
-                  onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
-                  placeholder="Factuurnummer"
+                  value={formData.quote_number}
+                  onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
+                  placeholder="Offertenummer"
                   required
                 />
               </div>
@@ -243,23 +246,23 @@ export default function NewInvoice() {
             <div className="form-section">
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="invoice_date">Factuurdatum</label>
+                  <label htmlFor="quote_date">Offertedatum</label>
                   <input
-                    id="invoice_date"
+                    id="quote_date"
                     type="date"
-                    value={formData.invoice_date}
-                    onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                    value={formData.quote_date}
+                    onChange={(e) => setFormData({ ...formData, quote_date: e.target.value })}
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="due_date">Vervaldatum</label>
+                  <label htmlFor="valid_until">Geldig tot</label>
                   <input
-                    id="due_date"
+                    id="valid_until"
                     type="date"
-                    value={formData.due_date}
-                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                    value={formData.valid_until}
+                    onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
                     required
                   />
                 </div>
@@ -337,7 +340,7 @@ export default function NewInvoice() {
               {formData.items.map((item, index) => (
                 <div key={index} className="form-section">
                   <div className="form-row invoice-product-line">
-                  
+
                   <div className="form-group">
                     <input
                       type="text"
@@ -364,7 +367,7 @@ export default function NewInvoice() {
                       <X size={16} />
                     </Link>
 
-           
+
                   </div>
                 </div>
               ))}
@@ -402,6 +405,20 @@ export default function NewInvoice() {
                 </div>
               </div>
             </div>
+
+            {/* Notes */}
+            <div className="form-section">
+              <div className="form-group">
+                <label htmlFor="notes">Opmerkingen</label>
+                <textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Eventuele opmerkingen..."
+                  rows={4}
+                />
+              </div>
+            </div>
           </form>
         </div>
 
@@ -415,11 +432,11 @@ export default function NewInvoice() {
                 <div>Uw bedrijfsnaam</div>
                 <div>Straatnaam 1</div>
                 <div>1200 AC Amsterdam</div>
-         
+
                   <div>KvK: 12345678</div>
-                  <div>BTW: NL123456789B01:17</div>
+                  <div>BTW: NL123456789B01</div>
                   <div>Bank: NL55 BANK 0123 4567 89</div>
-                
+
               </div>
             </div>
 
@@ -437,19 +454,19 @@ export default function NewInvoice() {
               </div>
             )}
 
-            {/* Invoice Title */}
-            <h1 className="invoice-title">Factuur</h1>
+            {/* Quote Title */}
+            <h1 className="invoice-title">Offerte</h1>
 
-            {/* Invoice Meta */}
-            {formData.invoice_number && (
+            {/* Quote Meta */}
+            {formData.quote_number && (
               <div className="invoice-data">
-                {formData.invoice_number && <div>Factuurnummer: {formData.invoice_number}</div>}
-                {formData.invoice_date && <div>Factuurdatum: {new Date(formData.invoice_date).toLocaleDateString('nl-NL')}</div>}
-                {formData.due_date && <div>Vervaldatum: {new Date(formData.due_date).toLocaleDateString('nl-NL')}</div>}
+                {formData.quote_number && <div>Offertenummer: {formData.quote_number}</div>}
+                {formData.quote_date && <div>Offertedatum: {new Date(formData.quote_date).toLocaleDateString('nl-NL')}</div>}
+                {formData.valid_until && <div>Geldig tot: {new Date(formData.valid_until).toLocaleDateString('nl-NL')}</div>}
               </div>
             )}
 
-            {/* Invoice Table */}
+            {/* Quote Table */}
             {formData.items.length > 0 && (
               <div className="table-container">
                 <table className="product-table">
@@ -501,6 +518,14 @@ export default function NewInvoice() {
                   <span>Totaal</span>
                   <span>€ {calculateTotal().toFixed(2)}</span>
                 </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {formData.notes && (
+              <div className="invoice-notes">
+                <strong>Opmerkingen:</strong>
+                <p>{formData.notes}</p>
               </div>
             )}
           </div>

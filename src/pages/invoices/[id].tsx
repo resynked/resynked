@@ -255,14 +255,14 @@ export default function EditInvoice() {
                 className="tab active"
                 onClick={(e) => e.preventDefault()}
               >
-                Layout
+                Algemeen
               </a>
               <a
                 href="#algemeen"
                 className="tab"
                 onClick={(e) => e.preventDefault()}
               >
-                Algemeen
+                Notities
               </a>
               <a
                 href="#versturen"

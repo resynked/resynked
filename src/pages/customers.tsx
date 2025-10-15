@@ -7,8 +7,8 @@ import type { Customer } from '@/lib/supabase';
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function Customers() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm('Weet je zeker dat je deze klant wilt verwijderen?')) return;
 
     try {
@@ -54,7 +54,7 @@ export default function Customers() {
     }
   };
 
-  const handleSelectOne = (id: string) => {
+  const handleSelectOne = (id: number) => {
     if (selectedIds.includes(id)) {
       setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
     } else {
@@ -146,10 +146,10 @@ export default function Customers() {
             >
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
+            'ID',
             'Naam',
-            'Email',
-            'Telefoon',
-            'Adres',
+            'E-mailadres',
+            'Bedrijfsnaam',
             ''
           ]}
         >
@@ -170,10 +170,10 @@ export default function Customers() {
                   {selectedIds.includes(customer.id) && <Check size={14} />}
                 </button>
               </td>
+              <td>{customer.id}</td>
               <td>{customer.name}</td>
               <td>{customer.email || '-'}</td>
-              <td>{customer.phone || '-'}</td>
-              <td>{customer.address || '-'}</td>
+              <td>{customer.company_name || '-'}</td>
               <td className="actions">
                 <div className="action-dropdown" ref={openDropdownId === customer.id ? dropdownRef : null}>
                   <button

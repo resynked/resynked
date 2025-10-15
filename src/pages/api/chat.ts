@@ -91,8 +91,9 @@ Stap 3:
 - Als "ja" → Roep createProduct/createCustomer tool AAN (1x)
 - Als "nee" → Vraag wat anders moet, herhaal stap 2
 
-Stap 4: NA tool succesvol uitgevoerd:
-Stuur: "✓ Product succesvol toegevoegd! Kan ik nog iets doen?"
+Stap 4: DIRECT NA tool uitgevoerd - ALTIJD REAGEREN:
+Je MOET een bericht sturen: "✓ [Item naam] is succesvol toegevoegd! Kan ik nog ergens mee helpen?"
+(Dit is VERPLICHT - NOOIT stoppen zonder bevestiging te sturen!)
 
 ABSOLUUT VERBODEN:
 - Na elke vraag vragen "moet ik het nu toevoegen?"
@@ -108,7 +109,7 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
         { role: 'system', content: systemMessage },
         ...messages,
       ],
-      maxSteps: 3, // Reduced to prevent multiple tool calls for same item
+      maxSteps: 5, // Allow AI to respond after tool execution
       tools: {
         createCustomer: {
           description: 'Maak een nieuwe klant aan in de database',

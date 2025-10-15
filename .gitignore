@@ -39,3 +39,6 @@ pnpm-debug.log*
 *.swo
 *.tmp
 *.temp
+
+# Migrations folder
+migrations/

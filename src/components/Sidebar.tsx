@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
-import { LayoutDashboard, Users, Package, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, Package, FileText, FileCheck, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
 
 export default function Sidebar() {
   const router = useRouter();
@@ -65,49 +65,69 @@ export default function Sidebar() {
           <Package size={16} />
           <span>Producten</span>
         </Link>
-        <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''}>
+        <Link href="/quotes" className={isActive('/quotes') || router.pathname.startsWith('/quotes') ? 'active' : ''}>
           <FileText size={16} />
+          <span>Offertes</span>
+        </Link>
+        <Link href="/orders" className={isActive('/orders') || router.pathname.startsWith('/orders') ? 'active' : ''}>
+          <FileCheck size={16} />
+          <span>Orderbevestigingen</span>
+        </Link>
+        <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''}>
+          <ReceiptEuro size={16} />
           <span>Facturen</span>
+        </Link>
+        <Link href="#">
+          <FilePen size={16} />
+          <span>Notities</span>
+        </Link>
+        <Link href="#">
+          <Euro size={16} />
+          <span>Uitgaven</span>
+        </Link>
+        <Link href="#">
+          <Calculator size={16} />
+          <span>BTW-overzicht</span>
         </Link>
       </nav>
 
-        <div className="sidebar-profile" ref={dropdownRef} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-          <div className="profile-avatar">
-            {getInitials(userName)}
-          </div>
-                        <div className="profile-dropdown-info">
-                <div className="name">{userName}</div>
-                <div className="email">{userEmail}</div>
-              </div>
+      <div className="sidebar-profile" ref={dropdownRef} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+        <div className="profile-avatar">
+          {getInitials(userName)}
+        </div>
+        <div className="profile-dropdown-info">
+          <div className="name">{userName}</div>
+          <div className="email">{userEmail}</div>
+        </div>
 
 
-          {isDropdownOpen && (
-            <div className="profile-dropdown">
+        {isDropdownOpen && (
+          <div className="profile-dropdown">
 
 
-              <div className="menu">
-                <Link href="/settings" className="item">
-                  Account instellingen
-                </Link>
+            <div className="menu">
+              <Link href="/settings" className="item">
+                Account instellingen
+              </Link>
 
-                <Link href="/" className="item">
-                  Terug naar website
-                </Link>
-              </div>
+              <Link href="/" className="item">
+                Terug naar website
+              </Link>
+            </div>
 
-              <div className="logout">
-                <button className="secondary"
+            <div className="logout">
+                <button
                   onClick={() => signOut({ callbackUrl: '/login' })}
                 >
                   Uitloggen
                 </button>
 
-              </div>
-
-
             </div>
-          )}
-        </div>
+
+
+          </div>
+        )}
+      </div>
     </div>
   );
 }

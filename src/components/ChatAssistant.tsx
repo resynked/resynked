@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ArrowUp } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { useSession } from 'next-auth/react';
 
 interface Message {
   id: string;
@@ -8,10 +10,13 @@ interface Message {
 }
 
 export default function ChatAssistant() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const firstName = session?.user?.name?.split(' ')[0] || 'daar';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -105,15 +110,22 @@ export default function ChatAssistant() {
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="chat-welcome">
-            <h2>👋 Welkom terug, naam</h2>
+            <h2>👋 Welkom terug, {firstName}</h2>
           </div>
         )}
 
         {messages.map((message) => (
           <div key={message.id} className={`message ${message.role}`}>
-                <p>
+                <ReactMarkdown
+                  components={{
+                    p: ({node, ...props}) => <p {...props} />,
+                    ul: ({node, ...props}) => <ul {...props} />,
+                    ol: ({node, ...props}) => <ol {...props} />,
+                    li: ({node, ...props}) => <li {...props} />,
+                  }}
+                >
                   {message.content}
-                </p>
+                </ReactMarkdown>
           </div>
         ))}
 
@@ -139,7 +151,7 @@ export default function ChatAssistant() {
             className="chat-textarea"
             rows={1}
           />
-          <button type="submit" disabled={!input.trim() || isLoading} className="chat">
+          <button className="button" type="submit" disabled={!input.trim() || isLoading}>
             <ArrowUp size={15} />
           </button>
         </form>

@@ -19,18 +19,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { name, email, phone, address } = req.body;
+      const {
+        name,
+        first_name,
+        middle_name,
+        last_name,
+        gender,
+        company_name,
+        email,
+        phone,
+        address,
+        street_address,
+        postal_code,
+        city,
+        date_of_birth,
+        iban,
+        kvk,
+        btw_number,
+        debtor_number,
+      } = req.body;
 
-      if (!name) {
-        return res.status(400).json({ error: 'Name is required' });
+      if (!name && !first_name && !company_name) {
+        return res.status(400).json({ error: 'Name, first name, or company name is required' });
       }
 
       const customer = await createCustomer({
         tenant_id: tenantId,
         name,
+        first_name: first_name || null,
+        middle_name: middle_name || null,
+        last_name: last_name || null,
+        gender: gender || null,
+        company_name: company_name || null,
         email: email || null,
         phone: phone || null,
         address: address || null,
+        street_address: street_address || null,
+        postal_code: postal_code || null,
+        city: city || null,
+        date_of_birth: date_of_birth || null,
+        iban: iban || null,
+        kvk: kvk || null,
+        btw_number: btw_number || null,
+        debtor_number: debtor_number || null,
       });
 
       return res.status(201).json(customer);
