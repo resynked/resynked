@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Select from 'react-select';
+import { Layers, ContactRound } from 'lucide-react';
+
 
 export default function NewCustomer() {
   const router = useRouter();
@@ -98,32 +101,35 @@ export default function NewCustomer() {
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="grid right-2fr">
-        <div className="block">
-                      <div className="tabs">
-              <a
-                href="#algemeen"
-                className={`tab ${activeTab === 'algemeen' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab('algemeen');
-                }}
-              >
-                Algemeen
-              </a>
-              <a
-                href="#contactpersoon"
-                className={`tab ${activeTab === 'contactpersoon' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab('contactpersoon');
-                }}
-              >
-                Contactpersoon
-              </a>
-            </div>
-
+      <div className="grid">
+        <div className="block page-navigation">
+          <nav>
+            <span className="titel">Algemeen</span>
+            <Link
+              href="#algemeen"
+              className={`${activeTab === 'algemeen' ? 'active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('algemeen');
+              }}
+            >
+              <Layers size={18} />
+              <span>Algemeen</span>
+            </Link>
+            <Link
+              href="#contactpersoon"
+              className={`${activeTab === 'contactpersoon' ? 'active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('contactpersoon');
+              }}
+            >
+              <ContactRound size={18} />
+              <span>Contactpersoon</span>
+            </Link>
+            </nav>
         </div>
+
         <div className="block">
           <form id="customer-form" onSubmit={handleSubmit}>
             {/* Tabs */}
