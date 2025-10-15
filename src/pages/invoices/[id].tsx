@@ -57,7 +57,7 @@ export default function EditInvoice() {
           invoice_number: invoice.invoice_number || '',
           invoice_date: invoice.invoice_date || new Date().toISOString().split('T')[0],
           due_date: invoice.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          customer_id: invoice.customer_id,
+          customer_id: String(invoice.customer_id),
           currency: invoice.currency || 'EUR',
           status: invoice.status,
           items,
@@ -147,10 +147,10 @@ export default function EditInvoice() {
     return calculateSubtotal() - calculateDiscount() + calculateTax();
   };
 
-  const selectedCustomer = customers.find(c => c.id === formData.customer_id);
+  const selectedCustomer = customers.find(c => c.id === Number(formData.customer_id));
 
   const customerOptions = customers.map(c => ({
-    value: c.id,
+    value: String(c.id),
     label: c.name,
   })) || [];
 
