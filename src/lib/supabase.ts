@@ -164,3 +164,13 @@ export interface OrderItem {
   price: number;
   total?: number;
 }
+
+export interface Note {
+  id: number;
+  tenant_id: string;
+  customer_id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}

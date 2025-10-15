@@ -4,10 +4,18 @@ import Link from 'next/link';
 import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
 import Table from '@/components/Table';
-import { Ellipsis, Check, Layers, ContactRound } from 'lucide-react';
+import { Ellipsis, Check, Layers, ContactRound, FileText } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
-import type { Customer, ContactPerson } from '@/lib/supabase';
+import type { Customer, ContactPerson, Note } from '@/lib/supabase';
+import { SkeletonForm } from '@/components/Skeleton';
+
+interface NoteWithCustomer extends Note {
+  customer: {
+    id: number;
+    name: string;
+  };
+}
 
 interface CustomerFormProps {
   mode: 'create' | 'edit';
@@ -42,6 +50,9 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
   // Contact persons state (only for edit mode)
   const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
+
+  // Notes state (only for edit mode)
+  const [notes, setNotes] = useState<NoteWithCustomer[]>([]);
   const [newContactPerson, setNewContactPerson] = useState({
     first_name: '',
     middle_name: '',
@@ -76,11 +87,12 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
     { value: 'Vrouw', label: 'Vrouw' },
   ];
 
-  // Fetch customer data and contact persons (edit mode only)
+  // Fetch customer data, contact persons, and notes (edit mode only)
   useEffect(() => {
     if (mode === 'edit' && customerId) {
       fetchCustomer();
       fetchContactPersons();
+      fetchNotes();
     }
   }, [mode, customerId]);
 
@@ -138,6 +150,18 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
       }
     } catch (err) {
       console.error('Error fetching contact persons:', err);
+    }
+  };
+
+  const fetchNotes = async () => {
+    try {
+      const response = await fetch(`/api/notes?customer_id=${customerId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotes(data);
+      }
+    } catch (err) {
+      console.error('Error fetching notes:', err);
     }
   };
 
@@ -352,7 +376,33 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
   };
 
   if (isLoadingData) {
-    return <div className="loading">Laden...</div>;
+    return (
+      <>
+        <div className="header">
+          <h1>Klant bewerken</h1>
+          <div className="actions">
+            <button type="button" className="button cancel" disabled>
+              Annuleren
+            </button>
+            <button type="submit" className="button" disabled>
+              Bijwerken
+            </button>
+          </div>
+        </div>
+        <div className="grid">
+          <div className="block page-navigation">
+            <nav>
+              <span className="titel">Algemeen</span>
+              <Link href="#algemeen" className="active">
+                <Layers size={18} />
+                <span>Algemeen</span>
+              </Link>
+            </nav>
+          </div>
+          <SkeletonForm />
+        </div>
+      </>
+    );
   }
 
   return (
@@ -397,6 +447,19 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
               <ContactRound size={18} />
               <span>Contactpersoon</span>
             </Link>
+            {mode === 'edit' && (
+              <Link
+                href="#notities"
+                className={`${activeTab === 'notities' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveTab('notities');
+                }}
+              >
+                <FileText size={18} />
+                <span>Notities</span>
+              </Link>
+            )}
           </nav>
         </div>
 
@@ -634,7 +697,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
                     {/* Add Contact Form */}
                     {showAddContact && (
-                      <div className="form-section edit">
+                      <div className="form-section edit-holder">
                         <h4>Nieuwe contactpersoon</h4>
                         <div className="form-row">
                           <div className="form-group">
@@ -714,7 +777,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
                     {/* Edit Contact Form */}
                     {editingContactId && (
-                      <div className="form-section edit">
+                      <div className="form-section edit-holder">
                         <h4>Contactpersoon bewerken</h4>
                         <div className="form-row">
                           <div className="form-group">
@@ -915,6 +978,77 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       </Table>
                     )}
                   </>
+                )}
+              </div>
+            )}
+
+            {/* Notities Tab */}
+            {activeTab === 'notities' && mode === 'edit' && (
+              <div className="form-section">
+                <div className="header">
+                  <h3>Notities</h3>
+                  <div className="actions">
+                    <Link
+                      href={`/notes/new?customer_id=${customerId}&from=customer`}
+                      className="button"
+                    >
+                      Notitie toevoegen
+                    </Link>
+                  </div>
+                </div>
+
+                {notes.length === 0 ? (
+                  <div className="empty-state">
+                    <p>Nog geen notities toegevoegd voor deze klant.</p>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '1rem' }}>
+                    {notes.map((note) => (
+                      <div
+                        key={note.id}
+                        style={{
+                          padding: '1rem',
+                          marginBottom: '1rem',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          backgroundColor: 'var(--surface-color)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                          <Link
+                            href={`/notes/${note.id}`}
+                            style={{
+                              fontSize: '1rem',
+                              fontWeight: 500,
+                              color: 'var(--primary-color)',
+                              textDecoration: 'none'
+                            }}
+                          >
+                            {note.title}
+                          </Link>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            {new Date(note.created_at).toLocaleDateString('nl-NL', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                        <p style={{
+                          margin: 0,
+                          color: 'var(--text-secondary)',
+                          fontSize: '0.875rem',
+                          lineHeight: '1.5',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {note.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

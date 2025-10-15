@@ -38,6 +38,7 @@ export default function Login() {
         redirect: false,
         email,
         password,
+        callbackUrl: '/',
       });
 
       if (result?.error) {

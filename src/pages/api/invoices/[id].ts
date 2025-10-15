@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getInvoice, updateInvoice, deleteInvoice } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Update invoice items if provided
       if (items && Array.isArray(items)) {
         // Delete existing items
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabaseAdmin
           .from('invoice_items')
           .delete()
           .eq('invoice_id', id);
@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             tenant_id: tenantId,
           }));
 
-          const { error: insertError } = await supabase
+          const { error: insertError } = await supabaseAdmin
             .from('invoice_items')
             .insert(itemsWithInvoiceId);
 

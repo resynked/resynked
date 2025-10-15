@@ -204,7 +204,7 @@ export default function Invoices() {
                   {selectedIds.includes(invoice.id) && <Check size={14} />}
                 </button>
               </td>
-              <td>#{invoice.id.slice(0, 8)}</td>
+              <td>#{String(invoice.id).slice(0, 8)}</td>
               <td>{invoice.customer.name}</td>
               <td>€{invoice.total.toFixed(2)}</td>
               <td>{getStatusBadge(invoice.status)}</td>

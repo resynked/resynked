@@ -77,7 +77,7 @@ export default function Sidebar() {
           <ReceiptEuro size={16} />
           <span>Facturen</span>
         </Link>
-        <Link href="#">
+        <Link href="/notes" className={isActive('/notes') || router.pathname.startsWith('/notes') ? 'active' : ''}>
           <FilePen size={16} />
           <span>Notities</span>
         </Link>

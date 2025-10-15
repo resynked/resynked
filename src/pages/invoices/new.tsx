@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Select from '@/components/Select';
 import { Search, X } from 'lucide-react';
 import type { Customer, Product } from '@/lib/supabase';
+import { getCustomerDisplayName } from '@/lib/utils';
 
 export default function NewInvoice() {
   const router = useRouter();
@@ -14,7 +15,6 @@ export default function NewInvoice() {
   const [showProductSearch, setShowProductSearch] = useState(false);
 
   const [formData, setFormData] = useState({
-    invoice_number: '',
     invoice_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     customer_id: '',
@@ -30,14 +30,7 @@ export default function NewInvoice() {
   useEffect(() => {
     fetchCustomers();
     fetchProducts();
-    generateInvoiceNumber();
   }, []);
-
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 900) + 100;
-    setFormData(prev => ({ ...prev, invoice_number: `${year}.${random}` }));
-  };
 
   const fetchCustomers = async () => {
     try {
@@ -118,7 +111,7 @@ export default function NewInvoice() {
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: c.name,
+    label: getCustomerDisplayName(c),
   })) || [];
 
   const currencyOptions = [
@@ -153,7 +146,6 @@ export default function NewInvoice() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoice_number: formData.invoice_number,
           invoice_date: formData.invoice_date,
           due_date: formData.due_date,
           customer_id: formData.customer_id,
@@ -227,19 +219,6 @@ export default function NewInvoice() {
 
 
             {/* Invoice Details */}
-            <div className="form-section">
-              <div className="form-group">
-                <input
-                  id="invoice_number"
-                  type="text"
-                  value={formData.invoice_number}
-                  onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
-                  placeholder="Factuurnummer"
-                  required
-                />
-              </div>
-            </div>
-
             <div className="form-section">
               <div className="form-row">
                 <div className="form-group">
@@ -429,13 +408,11 @@ export default function NewInvoice() {
             <h1 className="invoice-title">Factuur</h1>
 
             {/* Invoice Meta */}
-            {formData.invoice_number && (
-              <div className="invoice-data">
-                {formData.invoice_number && <div>Factuurnummer: {formData.invoice_number}</div>}
-                {formData.invoice_date && <div>Factuurdatum: {new Date(formData.invoice_date).toLocaleDateString('nl-NL')}</div>}
-                {formData.due_date && <div>Vervaldatum: {new Date(formData.due_date).toLocaleDateString('nl-NL')}</div>}
-              </div>
-            )}
+            <div className="invoice-data">
+              <div>Factuurnummer: <em style={{opacity: 0.6}}>Auto-gegenereerd</em></div>
+              {formData.invoice_date && <div>Factuurdatum: {new Date(formData.invoice_date).toLocaleDateString('nl-NL')}</div>}
+              {formData.due_date && <div>Vervaldatum: {new Date(formData.due_date).toLocaleDateString('nl-NL')}</div>}
+            </div>
 
             {/* Invoice Table */}
             {formData.items.length > 0 && (
@@ -453,7 +430,7 @@ export default function NewInvoice() {
                   <tbody>
                     {formData.items.map((item, index) => (
                       <tr key={index}>
-                        <td>{item.product_id.slice(0, 8)}</td>
+                        <td>{String(item.product_id).slice(0, 8)}</td>
                         <td>
                           {item.product_name}
                           {item.description && <div className="invoice-table-desc">{item.description}</div>}

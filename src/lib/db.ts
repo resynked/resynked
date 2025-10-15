@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase';
-import type { Customer, Product, Invoice, InvoiceItem, Quote, QuoteItem, Order, OrderItem } from './supabase';
+import type { Customer, Product, Invoice, InvoiceItem, Quote, QuoteItem, Order, OrderItem, Note } from './supabase';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
 const supabase = supabaseAdmin;
@@ -91,13 +91,19 @@ export async function getProduct(id: string | number, tenantId: string) {
 }
 
 export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) {
+  console.log('Creating product with supabaseAdmin, tenant_id:', product.tenant_id);
+  console.log('Using admin client:', supabase === supabaseAdmin ? 'YES' : 'NO');
+
   const { data, error } = await supabase
     .from('products')
     .insert({ ...product, updated_at: now() })
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Product creation error:', error);
+    throw error;
+  }
   return data as Product;
 }
 
@@ -165,19 +171,34 @@ export async function createInvoice(
   invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
   items: any[]
 ) {
-  // Create invoice
+  // Create invoice without invoice_number first
+  const { invoice_number, ...invoiceWithoutNumber } = invoice as any;
+
   const { data: invoiceData, error: invoiceError } = await supabase
     .from('invoices')
-    .insert({ ...invoice, updated_at: now() })
+    .insert({ ...invoiceWithoutNumber, updated_at: now() })
     .select()
     .single();
 
   if (invoiceError) throw invoiceError;
 
+  // Generate invoice number based on ID: FT{id+10000}
+  const generatedInvoiceNumber = `FT${invoiceData.id + 10000}`;
+
+  // Update invoice with generated number
+  const { data: updatedInvoice, error: updateError } = await supabase
+    .from('invoices')
+    .update({ invoice_number: generatedInvoiceNumber })
+    .eq('id', invoiceData.id)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
+
   // Create invoice items
   if (items.length > 0) {
     const itemsWithInvoiceId = items.map((item: any) => ({
-      invoice_id: invoiceData.id,
+      invoice_id: updatedInvoice.id,
       product_id: item.product_id,
       quantity: item.quantity,
       price: item.price,
@@ -191,7 +212,7 @@ export async function createInvoice(
     if (itemsError) throw itemsError;
   }
 
-  return invoiceData as Invoice;
+  return updatedInvoice as Invoice;
 }
 
 export async function updateInvoice(id: string | number, tenantId: string, updates: Partial<Invoice>) {
@@ -499,4 +520,75 @@ export async function convertOrderToInvoice(orderId: string | number, tenantId: 
   });
 
   return invoice;
+}
+
+// Notes
+export async function getNotes(tenantId: string, customerId?: number) {
+  let query = supabase
+    .from('notes')
+    .select(`
+      *,
+      customer:customers(id, name)
+    `)
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false });
+
+  if (customerId) {
+    query = query.eq('customer_id', customerId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getNote(id: string | number, tenantId: string) {
+  const { data, error } = await supabase
+    .from('notes')
+    .select(`
+      *,
+      customer:customers(id, name, email)
+    `)
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createNote(note: Omit<Note, 'id' | 'created_at' | 'updated_at'>) {
+  const { data, error } = await supabase
+    .from('notes')
+    .insert({ ...note, updated_at: now() })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Note;
+}
+
+export async function updateNote(id: string | number, tenantId: string, updates: Partial<Note>) {
+  const { data, error } = await supabase
+    .from('notes')
+    .update({ ...updates, updated_at: now() })
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Note;
+}
+
+export async function deleteNote(id: string | number, tenantId: string) {
+  const { error } = await supabase
+    .from('notes')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId);
+
+  if (error) throw error;
+  return { success: true };
 }

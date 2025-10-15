@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import type { Customer } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
+import { SkeletonTable } from '@/components/Skeleton';
 
 export default function Customers() {
   const { confirm } = useConfirm();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +36,8 @@ export default function Customers() {
       setCustomers(data);
     } catch (error) {
       console.error('Error fetching customers:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -111,6 +115,22 @@ export default function Customers() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="header">
+          <h1>Klanten</h1>
+          <div className="actions">
+            <Link href="/customers/new" className="button">
+              Klant toevoegen
+            </Link>
+          </div>
+        </div>
+        <SkeletonTable rows={10} columns={6} />
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="header">
@@ -163,9 +183,9 @@ export default function Customers() {
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
             'ID',
-            'Naam',
-            'E-mailadres',
             'Bedrijfsnaam',
+            'E-mailadres',
+            'Naam',
             ''
           ]}
         >
@@ -187,13 +207,13 @@ export default function Customers() {
                 </button>
               </td>
               <td>{customer.id}</td>
+              <td>{customer.company_name || '-'}</td>
+              <td>{customer.email || '-'}</td>
               <td>
                 {[customer.first_name, customer.middle_name, customer.last_name]
                   .filter(Boolean)
                   .join(' ') || customer.company_name || customer.name}
               </td>
-              <td>{customer.email || '-'}</td>
-              <td>{customer.company_name || '-'}</td>
               <td className="actions">
                 <div className="action-dropdown" ref={openDropdownId === customer.id ? dropdownRef : null}>
                   <button

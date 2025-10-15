@@ -507,7 +507,7 @@ export default function EditInvoice() {
                   <tbody>
                     {formData.items.map((item, index) => (
                       <tr key={index}>
-                        <td>{item.product_id.slice(0, 8)}</td>
+                        <td>{String(item.product_id).slice(0, 8)}</td>
                         <td>
                           {item.product_name}
                           {item.description && <div className="invoice-table-desc">{item.description}</div>}

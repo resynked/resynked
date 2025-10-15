@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { createGroq } from '@ai-sdk/groq';
 import { streamText, CoreMessage } from 'ai';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 
 const groq = createGroq({
@@ -28,7 +28,6 @@ const productSchema = z.object({
 
 const invoiceSchema = z.object({
   customer_id: z.string(),
-  invoice_number: z.string(),
   invoice_date: z.string(),
   due_date: z.string(),
   items: z.array(z.object({
@@ -56,9 +55,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Fetch data from Supabase
     const [customers, products, invoices] = await Promise.all([
-      supabase.from('customers').select('*').eq('tenant_id', tenantId),
-      supabase.from('products').select('*').eq('tenant_id', tenantId),
-      supabase.from('invoices').select('*, customer:customers(*)').eq('tenant_id', tenantId),
+      supabaseAdmin.from('customers').select('*').eq('tenant_id', tenantId),
+      supabaseAdmin.from('products').select('*').eq('tenant_id', tenantId),
+      supabaseAdmin.from('invoices').select('*, customer:customers(*)').eq('tenant_id', tenantId),
     ]);
 
     const systemMessage = `Je bent een behulpzame AI assistent voor een facturatie systeem. Je helpt gebruikers met het beheren van klanten, producten en facturen.
@@ -92,14 +91,18 @@ Stap 3:
 - Als "nee" → Vraag wat anders moet, herhaal stap 2
 
 Stap 4: DIRECT NA tool uitgevoerd - ALTIJD REAGEREN:
-Je MOET een bericht sturen: "✓ [Item naam] is succesvol toegevoegd! Kan ik nog ergens mee helpen?"
-(Dit is VERPLICHT - NOOIT stoppen zonder bevestiging te sturen!)
+Je MOET ALTIJD een bevestigingsbericht sturen nadat een tool succesvol is uitgevoerd.
+Format: "✓ [Item naam] is succesvol toegevoegd! Kan ik nog ergens mee helpen?"
+
+KRITIEK: Na ELKE tool execution (createCustomer, createProduct, createInvoice), MOET je een tekstbericht terugsturen.
+De tool geeft je het resultaat, en jij MOET daarop reageren met een bevestiging.
 
 ABSOLUUT VERBODEN:
 - Na elke vraag vragen "moet ik het nu toevoegen?"
 - Tool aanroepen zonder expliciete JA
 - Tool 2x aanroepen
 - Lege berichten sturen
+- Stoppen zonder bevestiging na tool execution
 
 Wees kort, duidelijk en volg de stappen EXACT.`;
 
@@ -115,7 +118,7 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
           description: 'Maak een nieuwe klant aan in de database',
           inputSchema: customerSchema,
           execute: async ({ name, email, phone, address }: any) => {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
               .from('customers')
               .insert({ name, email, phone, address, tenant_id: tenantId })
               .select()
@@ -125,14 +128,14 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
               console.error('Error creating customer:', error);
               throw new Error(`Fout bij aanmaken klant: ${error.message}`);
             }
-            return { success: true, customer: data };
+            return { success: true, customer: data, message: `Klant "${data.name}" succesvol aangemaakt met ID ${data.id}` };
           },
         },
         createProduct: {
           description: 'Maak een nieuw product aan in de database',
           inputSchema: productSchema,
           execute: async ({ name, price, description, stock, image_url }: any) => {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
               .from('products')
               .insert({
                 name,
@@ -149,13 +152,13 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
               console.error('Error creating product:', error);
               throw new Error(`Fout bij aanmaken product: ${error.message}`);
             }
-            return { success: true, product: data };
+            return { success: true, product: data, message: `Product "${data.name}" succesvol aangemaakt met ID ${data.id}` };
           },
         },
         createInvoice: {
           description: 'Maak een nieuwe factuur aan in de database',
           inputSchema: invoiceSchema,
-          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }: any) => {
+          execute: async ({ customer_id, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }: any) => {
             // Calculate total
             const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
             const discount = subtotal * (discount_percentage / 100);
@@ -163,12 +166,12 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
             const tax = taxableAmount * (tax_percentage / 100);
             const total = taxableAmount + tax;
 
-            const { data: invoice, error: invoiceError } = await supabase
+            // Create invoice without invoice_number first
+            const { data: invoiceData, error: invoiceError } = await supabaseAdmin
               .from('invoices')
               .insert({
                 tenant_id: tenantId,
                 customer_id,
-                invoice_number,
                 invoice_date,
                 due_date,
                 currency: 'EUR',
@@ -185,8 +188,24 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
               throw new Error(`Fout bij aanmaken factuur: ${invoiceError.message}`);
             }
 
+            // Generate invoice number based on ID: FT{id+10000}
+            const generatedInvoiceNumber = `FT${invoiceData.id + 10000}`;
+
+            // Update invoice with generated number
+            const { data: invoice, error: updateError } = await supabaseAdmin
+              .from('invoices')
+              .update({ invoice_number: generatedInvoiceNumber })
+              .eq('id', invoiceData.id)
+              .select()
+              .single();
+
+            if (updateError) {
+              console.error('Error updating invoice number:', updateError);
+              throw new Error(`Fout bij updaten factuurnummer: ${updateError.message}`);
+            }
+
             // Insert invoice items
-            const { error: itemsError } = await supabase
+            const { error: itemsError } = await supabaseAdmin
               .from('invoice_items')
               .insert(
                 items.map((item: any) => ({
@@ -202,7 +221,7 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
               throw new Error(`Fout bij aanmaken factuurregels: ${itemsError.message}`);
             }
 
-            return { success: true, invoice };
+            return { success: true, invoice, message: `Factuur ${invoice.invoice_number} succesvol aangemaakt met ID ${invoice.id}` };
           },
         },
       },

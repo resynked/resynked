@@ -4,12 +4,15 @@ import Layout from '@/components/Layout';
 import ChatAssistant from '@/components/ChatAssistant';
 
 export default function Dashboard() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [stats, setStats] = useState({ customers: 0, products: 0, invoices: 0 });
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    // Only fetch stats if authenticated
+    if (status === 'authenticated') {
+      fetchStats();
+    }
+  }, [status]);
 
   const fetchStats = async () => {
     try {

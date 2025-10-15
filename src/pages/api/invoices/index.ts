@@ -23,7 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         customer_id,
         total,
         status,
-        invoice_number,
         invoice_date,
         due_date,
         currency,
@@ -40,7 +39,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         {
           tenant_id: tenantId,
           customer_id,
-          invoice_number,
           invoice_date,
           due_date,
           currency: currency || 'EUR',
@@ -48,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           discount_percentage: discount_percentage || 0,
           total: parseFloat(total),
           status: status || 'draft',
-        },
+        } as any,
         items || []
       );
 
