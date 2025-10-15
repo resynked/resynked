@@ -82,7 +82,7 @@ export default function EditProduct() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Product bewerken</h1>
         <div className="actions">
           <Link href="/products" className="button cancel">

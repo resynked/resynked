@@ -47,7 +47,7 @@ export default function ChatAssistant() {
         body: JSON.stringify({
           messages: [...messages, userMessage].map((m) => ({
             role: m.role,
-            content: m.content,
+            content: mcontent,
           })),
         }),
       });
@@ -124,7 +124,7 @@ export default function ChatAssistant() {
                     li: ({node, ...props}) => <li {...props} />,
                   }}
                 >
-                  {message.content}
+                  {messagecontent}
                 </ReactMarkdown>
           </div>
         ))}

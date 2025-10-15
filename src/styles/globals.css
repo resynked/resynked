@@ -115,42 +115,42 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .register-wrapper .register-block .button {width: 100%; display: block; box-sizing: border-box; padding: var(--space15);}
 .register-wrapper .register-block .login {margin: var(--space20) 0; text-align: center;}
 
-.dashboard-layout {display: flex; min-height: 100vh;}
-.dashboard-main {flex: 1; display: flex; flex-direction: column;}
+.layout {display: flex; min-height: 100vh;}
+.main {flex: 1; display: flex; flex-direction: column;}
 
-.dashboard-sidebar {width: 230px; background-color: var(--color3); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;}
-.dashboard-sidebar .sidebar-header {padding: var(--space10); box-sizing: border-box; border-bottom: 1px solid var(--border-color); line-height: 0;}
+.sidebar {width: 230px; background-color: var(--color3); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;}
+.sidebar .logo {padding: var(--space10); box-sizing: border-box; border-bottom: 1px solid var(--border-color); line-height: 0;}
 
-.dashboard-sidebar .sidebar-nav {flex: 1; padding: var(--space10) 0; display: flex; flex-direction: column; gap: 3px;}
-.dashboard-sidebar .sidebar-nav a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
-.dashboard-sidebar .sidebar-nav a:hover, .dashboard-sidebar .sidebar-nav a.active {background-color: #efefef; color: var(--font-color1);}
+.sidebar .navigation {flex: 1; padding: var(--space10) 0; display: flex; flex-direction: column; gap: 3px;}
+.sidebar .navigation a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
+.sidebar .navigation a:hover, .sidebar .navigation a.active {background-color: #efefef; color: var(--font-color1);}
 
-.dashboard-sidebar .sidebar-footer {padding: var(--space10); box-sizing: border-box;}
-.dashboard-sidebar .sidebar-footer button {width: 100%; display: block;}
+.sidebar .sidebar-footer {padding: var(--space10); box-sizing: border-box;}
+.sidebar .sidebar-footer button {width: 100%; display: block;}
 
-.dashboard-sidebar .sidebar-profile {position: relative; cursor: pointer; padding: var(--space5) var(--space10); margin: var(--space5); box-sizing: border-box; border-radius: var(--border-radius2); display: flex; align-items: center; gap: var(--space10); transition: .3s all ease;}
-.dashboard-sidebar .sidebar-profile:hover {background: #efefef;}
-.dashboard-sidebar .sidebar-profile .profile-avatar {width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; background: var(--color1); display: flex; align-items: center; justify-content: center; color: var(--color2); font-weight: 600; font-size: 12px;}
-.dashboard-sidebar .sidebar-profile .profile-dropdown-info {line-height: 1.5em; font-weight: 500; font-size: 12px;}
-.dashboard-sidebar .sidebar-profile .profile-dropdown-info .email {color: var(--font-color2);}
+.sidebar .profile {position: relative; cursor: pointer; padding: var(--space5) var(--space10); margin: var(--space5); box-sizing: border-box; border-radius: var(--border-radius2); display: flex; align-items: center; gap: var(--space10); transition: .3s all ease;}
+.sidebar .profile:hover {background: #efefef;}
+.sidebar .profile .avatar {width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; background: var(--color1); display: flex; align-items: center; justify-content: center; color: var(--color2); font-weight: 600; font-size: 12px;}
+.sidebar .profile .info {line-height: 1.5em; font-weight: 500; font-size: 12px;}
+.sidebar .profile .info .email {color: var(--font-color2);}
 
-.dashboard-sidebar .sidebar-profile .profile-dropdown {position: absolute; bottom: calc(100% + 5px); left: var(--space10); background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); min-width: 280px; z-index: 1; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
-.dashboard-sidebar .sidebar-profile .profile-dropdown .menu {display: flex; flex-direction: column; padding: var(--space5) 0;}
-.dashboard-sidebar .sidebar-profile .profile-dropdown .menu a {padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
-.dashboard-sidebar .sidebar-profile .profile-dropdown .menu a:hover, .dashboard-sidebar .sidebar-profile .profile-dropdown .menu a.active {background-color: #f2f2f2;}
+.sidebar .profile .profile-dropdown {position: absolute; bottom: calc(100% + 5px); left: var(--space10); background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); min-width: 280px; z-index: 1; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
+.sidebar .profile .profile-dropdown .menu {display: flex; flex-direction: column; padding: var(--space5) 0;}
+.sidebar .profile .profile-dropdown .menu a {padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
+.sidebar .profile .profile-dropdown .menu a:hover, .sidebar .profile .profile-dropdown .menu a.active {background-color: #f2f2f2;}
 
-.dashboard-sidebar .sidebar-profile .profile-dropdown .logout {padding: var(--space10); margin: 0 var(--space5); box-sizing: border-box; border-top: 1px solid var(--border-color);}
-.dashboard-sidebar .sidebar-profile .profile-dropdown .logout button {display: block; width: 100%; text-decoration: none; color: var(--color6);}
+.sidebar .profile .profile-dropdown .logout {padding: var(--space10); margin: 0 var(--space5); box-sizing: border-box; border-top: 1px solid var(--border-color);}
+.sidebar .profile .profile-dropdown .logout button {display: block; width: 100%; text-decoration: none; color: var(--color6);}
 
-.dashboard-content {flex: 1; padding: var(--space20); box-sizing: border-box; overflow-y: auto;}
+.content {flex: 1; padding: var(--space20); box-sizing: border-box; overflow-y: auto;}
 
-.dashboard-content .page-header {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space20) 0;}
-.dashboard-content .page-header h1 {margin: 0;}
-.dashboard-content .page-header .actions {display: flex; gap: var(--space10); align-items: center;}
-.dashboard-content .page-header .selected-count {font-size: 13px; color: var(--font-color2);}
+.content .header {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space20) 0;}
+.content .header h1 {margin: 0;}
+.content .header .actions {display: flex; gap: var(--space10); align-items: center;}
+.content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
-.dashboard-content .block {background: var(--color2); padding: var(--space30); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
-.dashboard-content .block.chat {height: 100%;}
+.content .block {background: var(--color2); padding: var(--space30); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
+.content .block.chat {height: 100%;}
 
 .table-container {background:var(--color2); border-radius: var(--border-radius1); border: 1px solid var(--border-color);}
 .table-container .product-table {width: 100%; border-collapse: collapse;}

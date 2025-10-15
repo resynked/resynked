@@ -130,7 +130,7 @@ export default function Invoices() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Facturen</h1>
         <div className="actions">
           {selectedIds.length > 0 && (

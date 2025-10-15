@@ -251,7 +251,7 @@ export default function EditOrder() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Orderbevestiging bewerken</h1>
         <div className="actions">
           {(formData.status === 'pending' || formData.status === 'processing') && (

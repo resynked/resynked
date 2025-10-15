@@ -43,7 +43,7 @@ export default function NewProduct() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Nieuw Product Toevoegen</h1>
         <Link href="/products" className="button button-secondary">
           Terug

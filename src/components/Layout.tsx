@@ -21,10 +21,10 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="dashboard-layout">
+    <div className="layout">
       <Sidebar />
-      <main className="dashboard-main">
-        <div className="dashboard-content">
+      <main className="main">
+        <div className="content">
           {children}
         </div>
       </main>

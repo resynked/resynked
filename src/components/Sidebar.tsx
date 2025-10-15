@@ -42,8 +42,8 @@ export default function Sidebar() {
   const userEmail = (session?.user as any)?.email || '';
 
   return (
-    <div className="dashboard-sidebar">
-      <div className="sidebar-header">
+    <div className="sidebar">
+      <div className="logo">
         <Image
           src="/logo.svg"
           alt="Resynked Logo"
@@ -52,7 +52,7 @@ export default function Sidebar() {
           className="sidebar-logo"
         />
       </div>
-      <nav className="sidebar-nav">
+      <nav className="navigation">
         <Link href="/" className={isActive('/') ? 'active' : ''}>
           <LayoutDashboard size={16} />
           <span>Dashboard</span>
@@ -91,11 +91,11 @@ export default function Sidebar() {
         </Link>
       </nav>
 
-      <div className="sidebar-profile" ref={dropdownRef} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-        <div className="profile-avatar">
+      <div className="profile" ref={dropdownRef} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+        <div className="avatar">
           {getInitials(userName)}
         </div>
-        <div className="profile-dropdown-info">
+        <div className="info">
           <div className="name">{userName}</div>
           <div className="email">{userEmail}</div>
         </div>

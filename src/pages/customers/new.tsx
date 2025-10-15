@@ -84,7 +84,7 @@ export default function NewCustomer() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Nieuwe klant toevoegen</h1>
         <div className="actions">
           <button type="button" className="button cancel" onClick={() => router.push('/customers')}>
@@ -98,11 +98,9 @@ export default function NewCustomer() {
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="grid left-2fr">
+      <div className="grid right-2fr">
         <div className="block">
-          <form id="customer-form" onSubmit={handleSubmit}>
-            {/* Tabs */}
-            <div className="tabs">
+                      <div className="tabs">
               <a
                 href="#algemeen"
                 className={`tab ${activeTab === 'algemeen' ? 'active' : ''}`}
@@ -124,6 +122,11 @@ export default function NewCustomer() {
                 Contactpersoon
               </a>
             </div>
+
+        </div>
+        <div className="block">
+          <form id="customer-form" onSubmit={handleSubmit}>
+            {/* Tabs */}
 
             {/* Algemeen Tab */}
             {activeTab === 'algemeen' && (

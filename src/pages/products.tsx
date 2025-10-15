@@ -97,7 +97,7 @@ export default function Products() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Producten</h1>
         <div className="actions">
           {selectedIds.length > 0 && (

@@ -212,7 +212,7 @@ export default function EditCustomer() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Klant bewerken</h1>
         <div className="actions">
           <button type="button" className="button cancel" onClick={() => router.push('/customers')}>

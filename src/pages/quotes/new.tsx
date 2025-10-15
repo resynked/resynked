@@ -186,7 +186,7 @@ export default function NewQuote() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Nieuwe offerte aanmaken</h1>
         <div className="actions">
           <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>

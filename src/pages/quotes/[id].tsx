@@ -255,7 +255,7 @@ export default function EditQuote() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Offerte bewerken</h1>
         <div className="actions">
           {(formData.status === 'draft' || formData.status === 'sent') && (

@@ -184,7 +184,7 @@ export default function NewOrder() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="header">
         <h1>Nieuwe orderbevestiging aanmaken</h1>
         <div className="actions">
           <button type="button" className="button cancel" onClick={() => router.push('/orders')}>
