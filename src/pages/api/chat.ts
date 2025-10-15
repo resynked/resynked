@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { createGroq } from '@ai-sdk/groq';
-import { streamText, CoreMessage } from 'ai';
+import { streamText, CoreMessage, tool } from 'ai';
 import { supabase } from '@/lib/supabase';
 import { z } from 'zod';
 
@@ -111,10 +111,10 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
       ],
       maxSteps: 5,
       tools: {
-        createCustomer: {
+        createCustomer: tool({
           description: 'Maak een nieuwe klant aan in de database',
           parameters: customerSchema,
-          execute: async ({ name, email, phone, address }: z.infer<typeof customerSchema>) => {
+          execute: async ({ name, email, phone, address }) => {
             const { data, error } = await supabase
               .from('customers')
               .insert({ name, email, phone, address, tenant_id: tenantId })
@@ -127,12 +127,12 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
             }
             return { success: true, customer: data };
           },
-        },
+        }),
 
-        createProduct: {
+        createProduct: tool({
           description: 'Maak een nieuw product aan in de database',
           parameters: productSchema,
-          execute: async ({ name, price, description, stock, image_url }: z.infer<typeof productSchema>) => {
+          execute: async ({ name, price, description, stock, image_url }) => {
             const { data, error } = await supabase
               .from('products')
               .insert({
@@ -152,12 +152,12 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
             }
             return { success: true, product: data };
           },
-        },
+        }),
 
-        createInvoice: {
+        createInvoice: tool({
           description: 'Maak een nieuwe factuur aan in de database',
           parameters: invoiceSchema,
-          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }: z.infer<typeof invoiceSchema>) => {
+          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }) => {
             // Calculate total
             const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
             const discount = subtotal * (discount_percentage / 100);
@@ -206,7 +206,7 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
 
             return { success: true, invoice };
           },
-        },
+        }),
       },
     });
 
