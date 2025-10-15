@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { createGroq } from '@ai-sdk/groq';
-import { streamText } from 'ai';
+import { streamText, CoreMessage } from 'ai';
 import { supabase } from '@/lib/supabase';
 import { z } from 'zod';
 
@@ -103,18 +103,18 @@ ABSOLUUT VERBODEN:
 
 Wees kort, duidelijk en volg de stappen EXACT.`;
 
-    const result = streamText({
+    const result = await streamText({
       model: groq('llama-3.3-70b-versatile'),
       messages: [
-        { role: 'system', content: systemMessage },
-        ...messages,
+        { role: 'system', content: systemMessage } as CoreMessage,
+        ...(messages as CoreMessage[]),
       ],
-      maxSteps: 5, // Allow AI to respond after tool execution
+      maxSteps: 5,
       tools: {
         createCustomer: {
           description: 'Maak een nieuwe klant aan in de database',
-          inputSchema: customerSchema,
-          execute: async ({ name, email, phone, address }: any) => {
+          parameters: customerSchema,
+          execute: async ({ name, email, phone, address }: z.infer<typeof customerSchema>) => {
             const { data, error } = await supabase
               .from('customers')
               .insert({ name, email, phone, address, tenant_id: tenantId })
@@ -131,8 +131,8 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
 
         createProduct: {
           description: 'Maak een nieuw product aan in de database',
-          inputSchema: productSchema,
-          execute: async ({ name, price, description, stock, image_url }: any) => {
+          parameters: productSchema,
+          execute: async ({ name, price, description, stock, image_url }: z.infer<typeof productSchema>) => {
             const { data, error } = await supabase
               .from('products')
               .insert({
@@ -156,8 +156,8 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
 
         createInvoice: {
           description: 'Maak een nieuwe factuur aan in de database',
-          inputSchema: invoiceSchema,
-          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }: any) => {
+          parameters: invoiceSchema,
+          execute: async ({ customer_id, invoice_number, invoice_date, due_date, items, tax_percentage = 21, discount_percentage = 0 }: z.infer<typeof invoiceSchema>) => {
             // Calculate total
             const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
             const discount = subtotal * (discount_percentage / 100);
