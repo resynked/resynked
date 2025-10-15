@@ -115,10 +115,10 @@ export default function NewQuote() {
     return calculateSubtotal() - calculateDiscount() + calculateTax();
   };
 
-  const selectedCustomer = customers.find(c => c.id === formData.customer_id);
+  const selectedCustomer = customers.find(c => String(c.id) === formData.customer_id);
 
   const customerOptions = customers.map(c => ({
-    value: c.id,
+    value: String(c.id),
     label: c.name,
   })) || [];
 

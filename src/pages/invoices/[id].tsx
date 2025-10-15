@@ -147,7 +147,7 @@ export default function EditInvoice() {
     return calculateSubtotal() - calculateDiscount() + calculateTax();
   };
 
-  const selectedCustomer = customers.find(c => c.id === Number(formData.customer_id));
+  const selectedCustomer = customers.find(c => String(c.id) === formData.customer_id);
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),

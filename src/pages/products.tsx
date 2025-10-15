@@ -59,7 +59,7 @@ export default function Products() {
     if (selectedIds.length === products.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(products.map(p => p.id));
+      setSelectedIds(products.map(p => String(p.id)));
     }
   };
 
@@ -172,18 +172,18 @@ export default function Products() {
           {products.map((product) => (
             <tr
               key={product.id}
-              className={selectedIds.includes(product.id) ? 'selected' : ''}
+              className={selectedIds.includes(String(product.id)) ? 'selected' : ''}
             >
               <td>
                 <button
                   type="button"
                   role="checkbox"
-                  aria-checked={selectedIds.includes(product.id)}
+                  aria-checked={selectedIds.includes(String(product.id))}
                   aria-label={`Select row ${product.name}`}
-                  onClick={() => handleSelectOne(product.id)}
+                  onClick={() => handleSelectOne(String(product.id))}
                   className="checkbox"
                 >
-                  {selectedIds.includes(product.id) && <Check size={14} />}
+                  {selectedIds.includes(String(product.id)) && <Check size={14} />}
                 </button>
               </td>
               <td>{product.name}</td>
@@ -191,14 +191,14 @@ export default function Products() {
               <td>€{product.price.toFixed(2)}</td>
               <td>{product.stock}</td>
               <td className="actions">
-                <div className="action-dropdown" ref={openDropdownId === product.id ? dropdownRef : null}>
+                <div className="action-dropdown" ref={openDropdownId === String(product.id) ? dropdownRef : null}>
                   <button
                     className="action-trigger"
-                    onClick={() => setOpenDropdownId(openDropdownId === product.id ? null : product.id)}
+                    onClick={() => setOpenDropdownId(openDropdownId === String(product.id) ? null : String(product.id))}
                   >
                      <Ellipsis size={18} />
                   </button>
-                  {openDropdownId === product.id && (
+                  {openDropdownId === String(product.id) && (
                     <div className="action-menu">
                       <Link href={`/products/${product.id}`} className="edit">
                         Bewerken
@@ -211,7 +211,7 @@ export default function Products() {
                         className="delete"
                         onClick={() => {
                           setOpenDropdownId(null);
-                          handleDelete(product.id);
+                          handleDelete(String(product.id));
                         }}
                       >
                         Verwijderen
