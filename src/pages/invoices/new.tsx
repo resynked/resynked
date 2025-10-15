@@ -45,7 +45,7 @@ export default function NewInvoice() {
       const data = await res.json();
       setCustomers(data);
       if (data.length > 0) {
-        setFormData(prev => ({ ...prev, customer_id: data[0].id }));
+        setFormData(prev => ({ ...prev, customer_id: String(data[0].id) }));
       }
     } catch (error) {
       console.error('Error fetching customers:', error);

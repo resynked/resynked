@@ -44,10 +44,15 @@ export default function NewProduct() {
   return (
     <Layout>
       <div className="header">
-        <h1>Nieuw Product Toevoegen</h1>
-        <Link href="/products" className="button button-secondary">
-          Terug
-        </Link>
+        <h1>Nieuw product toevoegen</h1>
+        <div className="actions">
+            <Link href="/products" className="button cancel">
+              Annuleren
+            </Link>
+            <button type="submit" className="button" disabled={isLoading}>
+              {isLoading ? 'Toevoegen...' : 'Product toevoegen'}
+            </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -108,15 +113,6 @@ export default function NewProduct() {
               value={formData.image_url}
               onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
             />
-          </div>
-
-          <div className="form-actions">
-            <Link href="/products" className="button cancel">
-              Annuleren
-            </Link>
-            <button type="submit" className="button" disabled={isLoading}>
-              {isLoading ? 'Toevoegen...' : 'Product Toevoegen'}
-            </button>
           </div>
         </form>
       </div>

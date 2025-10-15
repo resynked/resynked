@@ -45,7 +45,7 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
   font-family: inherit;
   font-size: inherit;
   line-height: normal;
-  padding: var(--space10);
+  padding: var(--space10) 12px;
   box-sizing: border-box;
   width: 100%;
   transition: all .3s ease;
@@ -53,24 +53,6 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
 }
 
 input:focus {border-color: var(--color1); color: var(--font-color1);}
-
-select {
-  font-family: inherit;
-  font-size: inherit;
-  border-radius: var(--border-radius1);
-  border: 1px solid var(--border-color);
-  color: var(--font-color2);
-  background: #fff no-repeat right center;
-  padding: 10px;
-  vertical-align: top;
-  box-sizing: border-box;
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23666666" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-  margin:0;
-  line-height: normal;
-  outline: none;
-  -webkit-appearance: none; -moz-appearance: none; appearance: none;
-  cursor: pointer;
-}
 
 a {color: var(--color5); transition: .3s all ease;}
 
@@ -102,16 +84,16 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .checkbox[data-state="indeterminate"] {color: var(--color1);}
 
 .select {position: relative; width: 100%;}
-.select .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}
+.select .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10) 12px; box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}
 .select .control .arrow {display: flex; align-items: center; color: var(--font-color2); transition: transform .3s;}
 .select .control.open .arrow {transform: rotate(180deg);}
 .select .menu {position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); max-height: 200px; overflow-y: auto; z-index: 10; display: flex; flex-direction: column; gap: 3px; padding: var(--space5); box-sizing: border-box;}
-.select .menu .option {padding: var(--space5); box-sizing: border-box; cursor: pointer; transition: .3s all ease; font-size: 13px; border-radius: var(--border-radius1); }
+.select .menu .option {padding: var(--space5) 7px; box-sizing: border-box; cursor: pointer; transition: .3s all ease; font-size: 13px; border-radius: var(--border-radius1); }
 .select .menu .option:hover,
 .select .menu .option.selected {background: var(--color4);}
 
 .datepicker {position: relative; width: 100%;}
-.datepicker .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}
+.datepicker .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10) 12px; box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}
 .datepicker .control .arrow {display: flex; align-items: center; color: var(--font-color2);}
 .datepicker .menu {position: absolute; top: calc(100% + 5px); left: 0; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); padding: var(--space10); z-index: 10; min-width: 280px;}
 .datepicker .header {display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space10);}
@@ -291,6 +273,8 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}
 .form-section h2, .form-section h3 {margin: 0;}
 
+.edit {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
+
 .empty-state {text-align: center; padding: var(--space100) 0; max-width: 600px; margin: 0 auto;}
 .empty-state p {color: var(--font-color2);}
 .empty-state .button {display: inline-block;}
@@ -303,7 +287,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .chat-container .chat-messages .message.user p {margin: 0;}
 
 .chat-container .chat-input-form {display: flex; align-items: center; gap: var(--space10); border-radius: var(--border-radius2); padding: var(--space20); box-sizing: border-box; background: var(--color3); border: 1px solid var(--border-color); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
-.chat-container .chat-input-form .chat-textarea {flex: 1; border: none; background: transparent; resize: none; outline: none; font-family: inherit; color: var(--font-color1); max-height: 200px; min-height: 80px; box-shadow: none; padding: 8px;}
+.chat-container .chat-input-form .chat-textarea {flex: 1; border: none; background: transparent; resize: none; outline: none; font-family: inherit; color: var(--font-color1); max-height: 200px; min-height: 80px; box-shadow: none; padding: 0;}
 .chat-container .chat-input-form .chat-textarea:disabled {opacity: 0.6; cursor: not-allowed;}
 .chat-container .chat-input-form .button {border-radius: 100%; line-height: 0; padding: 8px; margin: auto 0 0 0;}
 .chat-container .chat-input-form .button:hover:not(:disabled) {opacity: 0.9;}

@@ -402,29 +402,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
         <div className="block">
           <form id="customer-form" onSubmit={handleSubmit}>
-            {/* Tabs */}
-            <div className="tabs">
-              <a
-                href="#algemeen"
-                className={`tab ${activeTab === 'algemeen' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab('algemeen');
-                }}
-              >
-                Algemeen
-              </a>
-              <a
-                href="#contactpersoon"
-                className={`tab ${activeTab === 'contactpersoon' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab('contactpersoon');
-                }}
-              >
-                Contactpersoon
-              </a>
-            </div>
 
             {/* Algemeen Tab */}
             {activeTab === 'algemeen' && (
@@ -492,15 +469,26 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                 {/* Company */}
                 <div className="form-section">
                   <h3>Bedrijfsgegevens</h3>
-                  <div className="form-group">
-                    <label htmlFor="company_name">Bedrijfsnaam *</label>
-                    <input
-                      id="company_name"
-                      type="text"
-                      value={formData.company_name}
-                      onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                      required={!formData.first_name && !formData.last_name}
-                    />
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="company_name">Bedrijfsnaam *</label>
+                      <input
+                        id="company_name"
+                        type="text"
+                        value={formData.company_name}
+                        onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                        required={!formData.first_name && !formData.last_name}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="debtor_number">Debiteurnummer</label>
+                      <input
+                        id="debtor_number"
+                        type="text"
+                        value={formData.debtor_number}
+                        onChange={(e) => setFormData({ ...formData, debtor_number: e.target.value })}
+                      />
+                    </div>
                   </div>
 
                   <div className="form-row">
@@ -521,6 +509,16 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                         type="text"
                         value={formData.btw_number}
                         onChange={(e) => setFormData({ ...formData, btw_number: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="iban">IBAN</label>
+                      <input
+                        id="iban"
+                        type="text"
+                        value={formData.iban}
+                        onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
                       />
                     </div>
                   </div>
@@ -587,32 +585,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                     </div>
                   </div>
                 </div>
-
-                {/* Financial */}
-                <div className="form-section">
-                  <h3>Financiële gegevens</h3>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="iban">IBAN</label>
-                      <input
-                        id="iban"
-                        type="text"
-                        value={formData.iban}
-                        onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="debtor_number">Debiteurnummer</label>
-                      <input
-                        id="debtor_number"
-                        type="text"
-                        value={formData.debtor_number}
-                        onChange={(e) => setFormData({ ...formData, debtor_number: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
               </>
             )}
 
@@ -626,7 +598,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                   </div>
                 ) : (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div className="header">
                       <h3>Contactpersonen</h3>
                       <div className="actions">
                         {selectedContactIds.length > 0 && (
@@ -655,14 +627,14 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                             }
                           }}
                         >
-                          {showAddContact ? 'Annuleren' : '+ Contactpersoon toevoegen'}
+                          {showAddContact ? 'Annuleren' : 'Contactpersoon toevoegen'}
                         </button>
                       </div>
                     </div>
 
                     {/* Add Contact Form */}
                     {showAddContact && (
-                      <div className="form-section" style={{ background: '#f9f9f9', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+                      <div className="form-section edit">
                         <h4>Nieuwe contactpersoon</h4>
                         <div className="form-row">
                           <div className="form-group">
@@ -742,7 +714,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
                     {/* Edit Contact Form */}
                     {editingContactId && (
-                      <div className="form-section" style={{ background: '#f0f7ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #2563eb' }}>
+                      <div className="form-section edit">
                         <h4>Contactpersoon bewerken</h4>
                         <div className="form-row">
                           <div className="form-group">
@@ -873,7 +845,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                           </button>,
                           'ID',
                           'Naam',
-                          'Geslacht',
                           'E-mailadres',
                           'Telefoonnummer',
                           ''
@@ -902,7 +873,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                               </td>
                               <td>{contact.id}</td>
                               <td>{fullName}</td>
-                              <td>{contact.gender || '-'}</td>
                               <td>{contact.email || '-'}</td>
                               <td>{contact.phone || '-'}</td>
                               <td className="actions">
