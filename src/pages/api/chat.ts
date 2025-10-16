@@ -83,6 +83,15 @@ Voor KLANT: "Oké! Wat is de bedrijfsnaam? Wat is de naam van de contactpersoon?
 Voor PRODUCT: "Oké! Wat is de naam? Wat is de prijs? Wat is de beschrijving? Hoeveel voorraad?"
 (Wacht op antwoord, vraag NIET of je het moet toevoegen!)
 
+NAAM PARSING - BELANGRIJK:
+Wanneer de gebruiker een naam geeft (bijv. "Khasem Abdulrazak" of "Robin van Persie"):
+- 2 woorden: first_name = eerste woord, last_name = tweede woord
+  Voorbeeld: "Khasem Abdulrazak" → first_name: "Khasem", last_name: "Abdulrazak"
+- 3+ woorden: first_name = eerste woord, middle_name = middelste woord(en), last_name = laatste woord
+  Voorbeeld: "Robin van Persie" → first_name: "Robin", middle_name: "van", last_name: "Persie"
+  Voorbeeld: "Jan van der Berg" → first_name: "Jan", middle_name: "van der", last_name: "Berg"
+Je MOET de naam opsplitsen in deze velden (first_name, middle_name, last_name)!
+
 ADRES PARSING - BELANGRIJK:
 Wanneer de gebruiker een adres geeft in het formaat "Ambachtsweg 55D 1271 AL Huizen":
 - Alles tot en met de laatste letter/cijfer van het huisnummer = street_address ("Ambachtsweg 55D")
@@ -90,11 +99,13 @@ Wanneer de gebruiker een adres geeft in het formaat "Ambachtsweg 55D 1271 AL Hui
 - Het laatste woord = city ("Huizen")
 Je MOET het adres opsplitsen in deze 3 velden!
 
-Stap 2: Als gebruiker ALLE antwoorden geeft - Parseer het adres en toon samenvatting:
+Stap 2: Als gebruiker ALLE antwoorden geeft - Parseer de naam en het adres en toon samenvatting:
 Voor KLANT:
 "Ik heb het volgende:
 - Bedrijfsnaam: [X]
-- Naam contactpersoon: [X]
+- Voornaam: [X]
+- Tussenvoegsel: [X] (alleen als aanwezig)
+- Achternaam: [X]
 - E-mail: [X]
 - Telefoonnummer: [X]
 - Straat en huisnummer: [X]
@@ -143,7 +154,11 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
         createCustomer: {
           description: 'Maak een nieuwe klant aan in de database',
           inputSchema: customerSchema,
-          execute: async ({ company_name, name, email, phone, street_address, postal_code, city }: any) => {
+          execute: async ({ company_name, first_name, middle_name, last_name, email, phone, street_address, postal_code, city }: any) => {
+            // Construct full name from parts
+            const nameParts = [first_name, middle_name, last_name].filter(Boolean);
+            const fullName = nameParts.join(' ');
+
             // Construct full address for the address field
             const addressParts = [street_address, postal_code, city].filter(Boolean);
             const fullAddress = addressParts.join(', ');
@@ -152,7 +167,10 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
               .from('customers')
               .insert({
                 company_name,
-                name,
+                name: fullName,
+                first_name: first_name || null,
+                middle_name: middle_name || null,
+                last_name: last_name || null,
                 email,
                 phone,
                 address: fullAddress || null,
