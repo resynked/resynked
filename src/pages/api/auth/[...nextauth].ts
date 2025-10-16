@@ -1,7 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Query user from Supabase
-          const { data: user, error } = await supabase
+          const { data: user, error } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('email', credentials.email)
