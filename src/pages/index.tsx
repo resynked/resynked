@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import ChatAssistant from '@/components/ChatAssistant';
+import OmzetChart from '@/components/OmzetChart';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -43,7 +44,7 @@ export default function Dashboard() {
           <ChatAssistant />
         </div>
         <div className="block">
-            <h2>Omzet</h2>
+          <OmzetChart />
         </div>
       </div>
     </Layout>
