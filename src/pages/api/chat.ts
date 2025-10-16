@@ -12,10 +12,15 @@ const groq = createGroq({
 
 // Define schemas outside to avoid TypeScript type instantiation issues
 const customerSchema = z.object({
-  name: z.string(),
+  company_name: z.string(),
+  first_name: z.string(),
+  middle_name: z.string().optional(),
+  last_name: z.string(),
   email: z.string().optional(),
   phone: z.string().optional(),
-  address: z.string().optional(),
+  street_address: z.string().optional(),
+  postal_code: z.string().optional(),
+  city: z.string().optional(),
 });
 
 const productSchema = z.object({
@@ -63,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const systemMessage = `Je bent een behulpzame AI assistent voor een facturatie systeem. Je helpt gebruikers met het beheren van klanten, producten en facturen.
 
 Beschikbare klanten:
-${customers.data?.map(c => `- ${c.name} (ID: ${c.id}, Email: ${c.email || 'geen'})`).join('\n') || 'Geen klanten'}
+${customers.data?.map(c => `- ${c.company_name || c.name} (Naam: ${c.name}, ID: ${c.id}, Email: ${c.email || 'geen'})`).join('\n') || 'Geen klanten'}
 
 Beschikbare producten:
 ${products.data?.map(p => `- ${p.name} (ID: ${p.id}, Prijs: €${p.price}, Voorraad: ${p.stock || 0})`).join('\n') || 'Geen producten'}
@@ -74,10 +79,31 @@ ${invoices.data?.slice(0, 5).map(i => `- Factuur voor ${i.customer?.name || 'Onb
 TOEVOEGEN WORKFLOW - VOLG EXACT:
 
 Stap 1: Als gebruiker zegt "voeg toe" - Vraag ALLE vragen IN ÉÉN BERICHT:
-"Oké! Wat is de naam? Wat is de prijs? Wat is de beschrijving? Hoeveel voorraad?"
+Voor KLANT: "Oké! Wat is de bedrijfsnaam? Wat is de naam van de contactpersoon? Wat is het e-mailadres? Wat is het telefoonnummer? Wat is het adres (formaat: straatnaam huisnummer postcode plaats)?"
+Voor PRODUCT: "Oké! Wat is de naam? Wat is de prijs? Wat is de beschrijving? Hoeveel voorraad?"
 (Wacht op antwoord, vraag NIET of je het moet toevoegen!)
 
-Stap 2: Als gebruiker ALLE antwoorden geeft - Toon samenvatting:
+ADRES PARSING - BELANGRIJK:
+Wanneer de gebruiker een adres geeft in het formaat "Ambachtsweg 55D 1271 AL Huizen":
+- Alles tot en met de laatste letter/cijfer van het huisnummer = street_address ("Ambachtsweg 55D")
+- De postcode (2 groepen met spatie) = postal_code ("1271 AL")
+- Het laatste woord = city ("Huizen")
+Je MOET het adres opsplitsen in deze 3 velden!
+
+Stap 2: Als gebruiker ALLE antwoorden geeft - Parseer het adres en toon samenvatting:
+Voor KLANT:
+"Ik heb het volgende:
+- Bedrijfsnaam: [X]
+- Naam contactpersoon: [X]
+- E-mail: [X]
+- Telefoonnummer: [X]
+- Straat en huisnummer: [X]
+- Postcode: [X]
+- Plaats: [X]
+
+Wil je dit toevoegen? (ja/nee)"
+
+Voor PRODUCT:
 "Ik heb het volgende:
 - Naam: [X]
 - Prijs: €[X]
@@ -117,10 +143,24 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
         createCustomer: {
           description: 'Maak een nieuwe klant aan in de database',
           inputSchema: customerSchema,
-          execute: async ({ name, email, phone, address }: any) => {
+          execute: async ({ company_name, name, email, phone, street_address, postal_code, city }: any) => {
+            // Construct full address for the address field
+            const addressParts = [street_address, postal_code, city].filter(Boolean);
+            const fullAddress = addressParts.join(', ');
+
             const { data, error } = await supabaseAdmin
               .from('customers')
-              .insert({ name, email, phone, address, tenant_id: tenantId })
+              .insert({
+                company_name,
+                name,
+                email,
+                phone,
+                address: fullAddress || null,
+                street_address: street_address || null,
+                postal_code: postal_code || null,
+                city: city || null,
+                tenant_id: tenantId
+              })
               .select()
               .single();
 
@@ -128,7 +168,7 @@ Wees kort, duidelijk en volg de stappen EXACT.`;
               console.error('Error creating customer:', error);
               throw new Error(`Fout bij aanmaken klant: ${error.message}`);
             }
-            return { success: true, customer: data, message: `Klant "${data.name}" succesvol aangemaakt met ID ${data.id}` };
+            return { success: true, customer: data, message: `Klant "${data.company_name}" succesvol aangemaakt met ID ${data.id}` };
           },
         },
         createProduct: {
