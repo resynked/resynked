@@ -150,7 +150,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .sidebar .profile .profile-dropdown .logout {padding: var(--space10); margin: 0 var(--space5); box-sizing: border-box; border-top: 1px solid var(--border-color);}
 .sidebar .profile .profile-dropdown .logout button {display: block; width: 100%; text-decoration: none; color: var(--color6);}
 
-.content {flex: 1; padding: var(--space20); box-sizing: border-box; overflow-y: auto;}
+.content {flex: 1; padding: var(--space20); box-sizing: border-box; overflow: hidden; width: 100%; max-width: var(--max-width); margin: 0 auto;}
 
 .content .header {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space20) 0;}
 .content .header h1 {margin: 0;}
@@ -321,19 +321,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .modal .modal-title {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space10) 0;}
 .modal .modal-title h3 {margin: 0;}
 .modal .modal-content .buttons {display: flex; gap: var(--space10); justify-content: flex-end; margin: var(--space20) 0 0 0;}
-
-
-
-
-/* Loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  font-size: 1.5rem;
-  color: #6b7280;
-}
 
 @keyframes slideIn {
   from {
