@@ -138,15 +138,6 @@ export default function NewNote() {
                 placeholder="Notitie inhoud..."
                 rows={10}
                 required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  fontSize: '0.875rem',
-                  fontFamily: 'inherit',
-                  resize: 'vertical'
-                }}
               />
             </div>
           </div>

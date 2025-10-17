@@ -49,6 +49,7 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
   box-sizing: border-box;
   width: 100%;
   transition: all .3s ease;
+  resize: vertical;
   outline: none;  -webkit-appearance: none; -moz-appearance: none; appearance: none;
 }
 
