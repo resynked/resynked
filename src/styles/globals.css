@@ -270,6 +270,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-row {display: flex; gap: var(--space20);}
 .form-section .form-group {display: flex; flex-direction: column; flex: 1;}
 .form-section .form-group label {font-size: 13px; font-weight: 500; color: var(--font-color1);}
+.form-section .form-group textarea {min-height: 180px;}
 .form-section .form-group .center-input {text-align: center;}
 
 .form-section .search {position: relative; margin: var(--space10) 0 var(--space20) 0;}
