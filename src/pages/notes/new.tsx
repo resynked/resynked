@@ -136,7 +136,6 @@ export default function NewNote() {
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 placeholder="Notitie inhoud..."
-                rows={10}
                 required
               />
             </div>
