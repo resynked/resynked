@@ -266,8 +266,8 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
   color: var(--color5);
 }
 
-.form-section {margin: 0 0 var(--space20) 0; display: flex ; flex-direction: column; gap: 15px;}
-.form-section .form-row {display: flex; gap: var(--space20);}
+.form-section {margin: 0 0 var(--space30) 0; display: flex ; flex-direction: column; gap: var(--space10);}
+.form-section .form-row {display: flex; gap: var(--space10);}
 .form-section .form-group {display: flex; flex-direction: column; flex: 1;}
 .form-section .form-group label {font-size: 13px; font-weight: 500; color: var(--font-color1);}
 .form-section .form-group textarea {min-height: 180px;}
