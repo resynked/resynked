@@ -88,7 +88,7 @@ export default function EditProduct() {
           <Link href="/products" className="button cancel">
             Annuleren
           </Link>
-          <button type="submit" className="button" disabled={isLoading}>
+          <button type="submit" form="product-form" className="button" disabled={isLoading}>
             {isLoading ? 'Bijwerken...' : 'Product bijwerken'}
           </button>
         </div>
@@ -97,7 +97,7 @@ export default function EditProduct() {
       {error && <div className="error-message">{error}</div>}
 
       <div className="form-container">
-        <form onSubmit={handleSubmit} className="form">
+        <form id="product-form" onSubmit={handleSubmit} className="form">
           <div className="form-group">
             <label htmlFor="name">Naam *</label>
             <input
