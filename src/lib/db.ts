@@ -57,52 +57,77 @@ export async function updateCustomer(id: string | number, tenantId: string, upda
 
 export async function deleteCustomer(id: string | number, tenantId: string) {
   // Check for related records
-  const { data: invoices } = await supabase
+  const { data: invoices, error: invoicesError } = await supabase
     .from('invoices')
     .select('id')
     .eq('customer_id', id)
     .eq('tenant_id', tenantId)
     .limit(1);
 
+  if (invoicesError) {
+    console.error('Error checking invoices:', invoicesError);
+    throw invoicesError;
+  }
+
   if (invoices && invoices.length > 0) {
     throw new Error('Cannot delete customer with existing invoices');
   }
 
-  const { data: quotes } = await supabase
+  const { data: quotes, error: quotesError } = await supabase
     .from('quotes')
     .select('id')
     .eq('customer_id', id)
     .eq('tenant_id', tenantId)
     .limit(1);
 
+  if (quotesError) {
+    console.error('Error checking quotes:', quotesError);
+    throw quotesError;
+  }
+
   if (quotes && quotes.length > 0) {
     throw new Error('Cannot delete customer with existing quotes');
   }
 
-  const { data: orders } = await supabase
+  const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select('id')
     .eq('customer_id', id)
     .eq('tenant_id', tenantId)
     .limit(1);
 
+  if (ordersError) {
+    console.error('Error checking orders:', ordersError);
+    throw ordersError;
+  }
+
   if (orders && orders.length > 0) {
     throw new Error('Cannot delete customer with existing orders');
   }
 
   // Delete related contact persons
-  await supabase
+  const { error: contactPersonsError } = await supabase
     .from('contact_persons')
     .delete()
     .eq('customer_id', id)
     .eq('tenant_id', tenantId);
 
+  if (contactPersonsError) {
+    console.error('Error deleting contact persons:', contactPersonsError);
+    throw contactPersonsError;
+  }
+
   // Delete related notes
-  await supabase
+  const { error: notesError } = await supabase
     .from('notes')
     .delete()
     .eq('customer_id', id)
     .eq('tenant_id', tenantId);
+
+  if (notesError) {
+    console.error('Error deleting notes:', notesError);
+    throw notesError;
+  }
 
   // Now delete the customer
   const { error } = await supabase
@@ -111,7 +136,10 @@ export async function deleteCustomer(id: string | number, tenantId: string) {
     .eq('id', id)
     .eq('tenant_id', tenantId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error deleting customer:', error);
+    throw error;
+  }
   return { success: true };
 }
 
@@ -171,36 +199,53 @@ export async function updateProduct(id: string | number, tenantId: string, updat
 
 export async function deleteProduct(id: string | number, tenantId: string) {
   // Check for related records in invoice_items
-  const { data: invoiceItems } = await supabase
+  const { data: invoiceItems, error: invoiceItemsError } = await supabase
     .from('invoice_items')
     .select('id')
     .eq('product_id', id)
     .eq('tenant_id', tenantId)
     .limit(1);
 
+  if (invoiceItemsError) {
+    console.error('Error checking invoice items:', invoiceItemsError);
+    throw invoiceItemsError;
+  }
+
   if (invoiceItems && invoiceItems.length > 0) {
     throw new Error('Cannot delete product used in invoices');
   }
 
-  // Check for related records in quote_items
-  const { data: quoteItems } = await supabase
-    .from('quote_items')
-    .select('id')
-    .eq('product_id', id)
+  // Check for related records in quote_items by joining with quotes
+  const { data: quotesWithProduct, error: quotesError } = await supabase
+    .from('quotes')
+    .select('id, quote_items!inner(id)')
+    .eq('tenant_id', tenantId)
+    .eq('quote_items.product_id', id)
     .limit(1);
 
-  if (quoteItems && quoteItems.length > 0) {
+  if (quotesError) {
+    console.error('Error checking quotes with product:', quotesError);
+    throw quotesError;
+  }
+
+  if (quotesWithProduct && quotesWithProduct.length > 0) {
     throw new Error('Cannot delete product used in quotes');
   }
 
-  // Check for related records in order_items
-  const { data: orderItems } = await supabase
-    .from('order_items')
-    .select('id')
-    .eq('product_id', id)
+  // Check for related records in order_items by joining with orders
+  const { data: ordersWithProduct, error: ordersError } = await supabase
+    .from('orders')
+    .select('id, order_items!inner(id)')
+    .eq('tenant_id', tenantId)
+    .eq('order_items.product_id', id)
     .limit(1);
 
-  if (orderItems && orderItems.length > 0) {
+  if (ordersError) {
+    console.error('Error checking orders with product:', ordersError);
+    throw ordersError;
+  }
+
+  if (ordersWithProduct && ordersWithProduct.length > 0) {
     throw new Error('Cannot delete product used in orders');
   }
 
@@ -211,7 +256,10 @@ export async function deleteProduct(id: string | number, tenantId: string) {
     .eq('id', id)
     .eq('tenant_id', tenantId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
   return { success: true };
 }
 
