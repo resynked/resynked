@@ -40,11 +40,16 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="grid">
-        <div className="block chat">
-          <ChatAssistant />
-        </div>
         <div className="block">
           <OmzetChart />
+        </div>
+      </div>
+      <div className="grid two">
+        <div className="block">
+          <h2>Notities</h2>
+        </div>
+        <div className="block chat">
+          <ChatAssistant />
         </div>
       </div>
     </Layout>

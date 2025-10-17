@@ -190,13 +190,16 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .table-container .data-table tr td.actions .action-dropdown .action-menu a:hover {background: var(--color4);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a.delete {color: var(--color6);}
 
-.grid {display: grid; grid-template-columns: var(--left-fr) var(--right-fr); gap: var(--space30); align-items: start; height: 100%;}
+.grid {display: grid; grid-template-columns: 1fr; gap: var(--space20);}
+.grid.two {grid-template-columns: var(--left-fr) var(--right-fr);}
 .grid.left-2fr {--left-fr: 2fr;}
 .grid.right-2fr {--right-fr: 2fr;}
 .grid.left-3fr {--left-fr: 3fr;}
 .grid.right-3fr {--right-fr: 3fr;}
 .grid.left-4fr {--left-fr: 4fr;}
 .grid.right-4fr {--right-fr: 4fr;}
+
+.grid + .grid {margin: var(--space20) 0 0 0;}
 
 .tabs {background: var(--color4); border-radius: var(--border-radius1); padding: var(--space5); box-sizing: border-box; display: inline-flex; margin: 0 0 var(--space30) 0;}
 .tabs a {text-align: center; text-decoration: none; color: inherit; font-size: 13px; border-radius: var(--border-radius1); padding: 2px var(--space30); box-sizing: border-box;}
