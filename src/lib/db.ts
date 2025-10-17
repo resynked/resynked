@@ -56,6 +56,55 @@ export async function updateCustomer(id: string | number, tenantId: string, upda
 }
 
 export async function deleteCustomer(id: string | number, tenantId: string) {
+  // Check for related records
+  const { data: invoices } = await supabase
+    .from('invoices')
+    .select('id')
+    .eq('customer_id', id)
+    .eq('tenant_id', tenantId)
+    .limit(1);
+
+  if (invoices && invoices.length > 0) {
+    throw new Error('Cannot delete customer with existing invoices');
+  }
+
+  const { data: quotes } = await supabase
+    .from('quotes')
+    .select('id')
+    .eq('customer_id', id)
+    .eq('tenant_id', tenantId)
+    .limit(1);
+
+  if (quotes && quotes.length > 0) {
+    throw new Error('Cannot delete customer with existing quotes');
+  }
+
+  const { data: orders } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('customer_id', id)
+    .eq('tenant_id', tenantId)
+    .limit(1);
+
+  if (orders && orders.length > 0) {
+    throw new Error('Cannot delete customer with existing orders');
+  }
+
+  // Delete related contact persons
+  await supabase
+    .from('contact_persons')
+    .delete()
+    .eq('customer_id', id)
+    .eq('tenant_id', tenantId);
+
+  // Delete related notes
+  await supabase
+    .from('notes')
+    .delete()
+    .eq('customer_id', id)
+    .eq('tenant_id', tenantId);
+
+  // Now delete the customer
   const { error } = await supabase
     .from('customers')
     .delete()
@@ -121,6 +170,41 @@ export async function updateProduct(id: string | number, tenantId: string, updat
 }
 
 export async function deleteProduct(id: string | number, tenantId: string) {
+  // Check for related records in invoice_items
+  const { data: invoiceItems } = await supabase
+    .from('invoice_items')
+    .select('id')
+    .eq('product_id', id)
+    .eq('tenant_id', tenantId)
+    .limit(1);
+
+  if (invoiceItems && invoiceItems.length > 0) {
+    throw new Error('Cannot delete product used in invoices');
+  }
+
+  // Check for related records in quote_items
+  const { data: quoteItems } = await supabase
+    .from('quote_items')
+    .select('id')
+    .eq('product_id', id)
+    .limit(1);
+
+  if (quoteItems && quoteItems.length > 0) {
+    throw new Error('Cannot delete product used in quotes');
+  }
+
+  // Check for related records in order_items
+  const { data: orderItems } = await supabase
+    .from('order_items')
+    .select('id')
+    .eq('product_id', id)
+    .limit(1);
+
+  if (orderItems && orderItems.length > 0) {
+    throw new Error('Cannot delete product used in orders');
+  }
+
+  // Now delete the product
   const { error } = await supabase
     .from('products')
     .delete()
