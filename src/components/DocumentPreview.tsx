@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import { Skeleton } from '@/components/Skeleton';
-import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
+import type { BlockKind, Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import {
   calculateBlockTotals,
   calculateDocumentTotal,
@@ -23,6 +23,8 @@ interface DocumentPreviewProps {
   activeSlot?: string | null;
   /** Aangeroepen als er in het document op een onderdeel geklikt wordt */
   onSelect?: (slot: string) => void;
+  /** Voegt een leeg blok toe vanuit het document zelf */
+  onAddBlock?: (kind: BlockKind) => void;
 }
 
 /** Elk aanklikbaar onderdeel hoort bij een paneel met de bijbehorende velden. */
@@ -77,6 +79,35 @@ export function FormattedText({ text }: { text: string }) {
   flushBullets('ul-last');
 
   return <>{blocks}</>;
+}
+
+/** Knoppen om op een lege plek een blok toe te voegen. */
+function AddBlockButtons({ onAdd }: { onAdd: (kind: BlockKind) => void }) {
+  return (
+    <div className="form-row">
+      <button
+        type="button"
+        className="button add-item"
+        onClick={(event) => {
+          event.stopPropagation();
+          onAdd('prijsopgave');
+        }}
+      >
+        + Prijstabel
+      </button>
+
+      <button
+        type="button"
+        className="button add-item"
+        onClick={(event) => {
+          event.stopPropagation();
+          onAdd('tekst');
+        }}
+      >
+        + Tekst
+      </button>
+    </div>
+  );
 }
 
 /** De blokken met hun regels en subtotalen. Wordt in beide weergaven gebruikt. */
@@ -180,6 +211,7 @@ export default function DocumentPreview({
   notes,
   activeSlot,
   onSelect,
+  onAddBlock,
 }: DocumentPreviewProps) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoadingTenant, setIsLoadingTenant] = useState(true);
@@ -301,13 +333,26 @@ export default function DocumentPreview({
             </>
           ),
           brief: introText ? <FormattedText text={introText} /> : null,
-          blokken: <BlocksView blocks={blocks} currency={currency} />,
+          blokken:
+            blocks.length === 0 && onAddBlock ? (
+              <AddBlockButtons onAdd={onAddBlock} />
+            ) : (
+              <BlocksView blocks={blocks} currency={currency} />
+            ),
           // Losse slots zodat een sjabloon de werkomschrijving en de
           // prijsopgave op eigen pagina's kan zetten
-          tekstblokken: (
-            <BlocksView blocks={blocks.filter(b => b.kind === 'tekst')} currency={currency} />
-          ),
-          prijsblokken: <BlocksView blocks={priceBlocks} currency={currency} />,
+          tekstblokken:
+            !blocks.some(b => b.kind === 'tekst') && onAddBlock ? (
+              <AddBlockButtons onAdd={onAddBlock} />
+            ) : (
+              <BlocksView blocks={blocks.filter(b => b.kind === 'tekst')} currency={currency} />
+            ),
+          prijsblokken:
+            priceBlocks.length === 0 && onAddBlock ? (
+              <AddBlockButtons onAdd={onAddBlock} />
+            ) : (
+              <BlocksView blocks={priceBlocks} currency={currency} />
+            ),
           totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
           opmerkingen: notes ? <p>{notes}</p> : null,
           voorwaarden: tenant?.quote_conditions ? (
@@ -354,7 +399,11 @@ export default function DocumentPreview({
       </Region>
 
       <Region slot="blokken">
-        <BlocksView blocks={blocks} currency={currency} />
+        {blocks.length === 0 && onAddBlock ? (
+          <AddBlockButtons onAdd={onAddBlock} />
+        ) : (
+          <BlocksView blocks={blocks} currency={currency} />
+        )}
 
         {priceBlocks.length > 1 && (
           <div className="invoice-total">

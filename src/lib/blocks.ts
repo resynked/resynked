@@ -38,6 +38,18 @@ export const emptyTextBlock = (): DocumentBlock => ({
   items: [],
 });
 
+/** Maakt een kopie van één blok, inclusief alle regels. */
+export function duplicateBlock(block: DocumentBlock): DocumentBlock {
+  return {
+    title: block.title,
+    kind: block.kind,
+    body: block.body,
+    tax_percentage: block.tax_percentage,
+    discount_percentage: block.discount_percentage,
+    items: block.items.map(item => ({ ...item, id: undefined })),
+  };
+}
+
 /**
  * Maakt van opgehaalde blokken een schone kopie zonder database-ids,
  * zodat ze als nieuw document opgeslagen kunnen worden.

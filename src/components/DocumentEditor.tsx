@@ -1,7 +1,8 @@
 import { ReactNode, useState } from 'react';
 import { X } from 'lucide-react';
 import DocumentPreview, { SLOT_PANELS } from '@/components/DocumentPreview';
-import type { Customer, DocumentBlock } from '@/lib/supabase';
+import { emptyBlock, emptyTextBlock } from '@/lib/blocks';
+import type { BlockKind, Customer, DocumentBlock } from '@/lib/supabase';
 
 interface DocumentEditorProps {
   title: 'Offerte' | 'Factuur';
@@ -13,6 +14,8 @@ interface DocumentEditorProps {
   notes?: string;
   /** De velden per onderdeel, met dezelfde sleutels als SLOT_PANELS */
   panels: Record<string, { title: string; content: ReactNode }>;
+  /** Zet de blokken opnieuw, als er vanuit het document een blok bijkomt */
+  onBlocksChange?: (blocks: DocumentBlock[]) => void;
 }
 
 /**
@@ -29,6 +32,7 @@ export default function DocumentEditor({
   introText,
   notes,
   panels,
+  onBlocksChange,
 }: DocumentEditorProps) {
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
 
@@ -36,6 +40,14 @@ export default function DocumentEditor({
   const panel = panelKey ? panels[panelKey] : null;
 
   const close = () => setActiveSlot(null);
+
+  // Een blok toevoegen vanuit het document opent meteen het paneel,
+  // zodat je er direct in kunt typen
+  const addBlock = (kind: BlockKind) => {
+    if (!onBlocksChange) return;
+    onBlocksChange([...blocks, kind === 'tekst' ? emptyTextBlock() : emptyBlock()]);
+    setActiveSlot('blokken');
+  };
 
   return (
     <>
@@ -51,6 +63,7 @@ export default function DocumentEditor({
             notes={notes}
             activeSlot={activeSlot}
             onSelect={setActiveSlot}
+            onAddBlock={onBlocksChange ? addBlock : undefined}
           />
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentEditor from '@/components/DocumentEditor';
@@ -26,6 +27,7 @@ const statusOptions = [
 ];
 
 export default function EditQuote() {
+  const toast = useToast();
   const router = useRouter();
   const { confirm } = useConfirm();
   const { id } = router.query;
@@ -45,7 +47,6 @@ export default function EditQuote() {
     notes: '',
   });
 
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
 
@@ -59,7 +60,7 @@ export default function EditQuote() {
     try {
       const response = await fetch(`/api/quotes/${id}`);
       if (!response.ok) {
-        setError('Offerte niet gevonden');
+        toast.error('Fout', 'Offerte niet gevonden');
         return;
       }
 
@@ -92,7 +93,7 @@ export default function EditQuote() {
       });
     } catch (err) {
       console.error('Error loading quote:', err);
-      setError('Fout bij het laden van offertegegevens');
+      toast.error('Fout', 'Fout bij het laden van offertegegevens');
     } finally {
       setIsLoadingData(false);
     }
@@ -116,11 +117,10 @@ export default function EditQuote() {
   }));
 
   const handleSubmit = async () => {
-    setError('');
 
     const problem = validateBlocks(formData.blocks);
     if (problem) {
-      setError(problem);
+      toast.error('Fout', problem);
       return;
     }
 
@@ -145,14 +145,14 @@ export default function EditQuote() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Er is iets misgegaan');
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
         setIsLoading(false);
         return;
       }
 
       router.push('/quotes');
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -173,14 +173,14 @@ export default function EditQuote() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Er is iets misgegaan bij het omzetten');
+        toast.error('Fout', data.error || 'Er is iets misgegaan bij het omzetten');
         setIsConverting(false);
         return;
       }
 
       router.push(`/invoices/${data.id}`);
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsConverting(false);
     }
   };
@@ -219,8 +219,6 @@ export default function EditQuote() {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-
       <DocumentEditor
         title="Offerte"
         meta={[
@@ -233,6 +231,7 @@ export default function EditQuote() {
         currency={formData.currency}
         introText={formData.intro_text}
         notes={formData.notes}
+        onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         panels={{
           customer: {
             title: 'Klant',

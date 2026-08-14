@@ -52,7 +52,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
   const [notes, setNotes] = useState<NoteWithCustomer[]>([]);
 
   // Loading states
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(mode === 'edit');
 
@@ -94,10 +93,10 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
           customer_number: customer.customer_number || '',
         });
       } else {
-        setError('Klant niet gevonden');
+        toast.error('Fout', 'Klant niet gevonden');
       }
     } catch (err) {
-      setError('Fout bij het laden van klantgegevens');
+      toast.error('Fout', 'Fout bij het laden van klantgegevens');
     } finally {
       setIsLoadingData(false);
     }
@@ -117,7 +116,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     // Construct full name from parts
@@ -152,7 +150,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Er is iets misgegaan');
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
         toast.error('Fout', data.error || 'Er is iets misgegaan');
         setIsLoading(false);
         return;
@@ -165,7 +163,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
       toast.success('Gelukt', successMessage);
       router.push('/customers');
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
@@ -214,8 +212,6 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
           </button>
         </div>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
 
       <div className="grid">
         <div className="block page-navigation">

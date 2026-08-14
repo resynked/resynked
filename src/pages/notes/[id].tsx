@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
+import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import type { Customer, Note } from '@/lib/supabase';
 import { getCustomerDisplayName } from '@/lib/utils';
@@ -15,6 +16,7 @@ interface NoteWithCustomer extends Note {
 }
 
 export default function EditNote() {
+  const toast = useToast();
   const router = useRouter();
   const { id } = router.query;
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -24,7 +26,6 @@ export default function EditNote() {
     title: '',
     content: '',
   });
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -50,7 +51,7 @@ export default function EditNote() {
       setIsFetching(false);
     } catch (error) {
       console.error('Error fetching note:', error);
-      setError('Notitie niet gevonden');
+      toast.error('Fout', 'Notitie niet gevonden');
       setIsFetching(false);
     }
   };
@@ -67,7 +68,6 @@ export default function EditNote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
@@ -79,14 +79,14 @@ export default function EditNote() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Er is iets misgegaan');
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
         setIsLoading(false);
         return;
       }
 
       router.push('/notes');
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -121,7 +121,9 @@ export default function EditNote() {
         <div className="header">
           <h1>Notitie niet gevonden</h1>
         </div>
-        <div className="error-message">{error}</div>
+        <div className="empty-state">
+          <p>Deze notitie bestaat niet of is verwijderd.</p>
+        </div>
       </Layout>
     );
   }
@@ -148,8 +150,6 @@ export default function EditNote() {
           </button>
         </div>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
 
       <div className="block">
         <form id="note-form" onSubmit={handleSubmit}>

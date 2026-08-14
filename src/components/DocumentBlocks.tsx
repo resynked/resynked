@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { X } from 'lucide-react';
+import { X, Copy } from 'lucide-react';
 import Select from '@/components/Select';
 import { UNITS } from '@/lib/constants';
-import { emptyBlock, emptyHeading, emptyItem, emptyTextBlock } from '@/lib/blocks';
+import { duplicateBlock, emptyBlock, emptyHeading, emptyItem, emptyTextBlock } from '@/lib/blocks';
 import type { DocumentBlock, LineItem } from '@/lib/supabase';
 
 interface DocumentBlocksProps {
@@ -44,6 +44,12 @@ export default function DocumentBlocks({ blocks, onChange }: DocumentBlocksProps
     onChange(blocks.filter((_, i) => i !== index));
   };
 
+  // De kopie komt direct onder het origineel te staan
+  const copyBlock = (index: number) => {
+    const copy = duplicateBlock(blocks[index]);
+    onChange([...blocks.slice(0, index + 1), copy, ...blocks.slice(index + 1)]);
+  };
+
   const updateItem = (blockIndex: number, itemIndex: number, changes: Partial<LineItem>) => {
     const block = blocks[blockIndex];
     updateBlock(blockIndex, {
@@ -78,8 +84,21 @@ export default function DocumentBlocks({ blocks, onChange }: DocumentBlocksProps
               </div>
 
               <Link
+                className="action copy"
+                href=""
+                title="Blok dupliceren"
+                onClick={(e) => {
+                  e.preventDefault();
+                  copyBlock(blockIndex);
+                }}
+              >
+                <Copy size={16} />
+              </Link>
+
+              <Link
                 className="action delete"
                 href=""
+                title="Blok verwijderen"
                 onClick={(e) => {
                   e.preventDefault();
                   removeBlock(blockIndex);
@@ -248,7 +267,7 @@ export default function DocumentBlocks({ blocks, onChange }: DocumentBlocksProps
           className="button add-item"
           onClick={() => onChange([...blocks, emptyBlock()])}
         >
-          + Blok met bedragen
+          + Prijstabel
         </button>
 
         <button
@@ -256,7 +275,7 @@ export default function DocumentBlocks({ blocks, onChange }: DocumentBlocksProps
           className="button add-item"
           onClick={() => onChange([...blocks, emptyTextBlock()])}
         >
-          + Tekstblok
+          + Tekst
         </button>
       </div>
     </>

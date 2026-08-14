@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
+import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import type { Customer } from '@/lib/supabase';
 import { getCustomerDisplayName } from '@/lib/utils';
 
 export default function NewNote() {
+  const toast = useToast();
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [formData, setFormData] = useState({
@@ -13,7 +15,6 @@ export default function NewNote() {
     title: '',
     content: '',
   });
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if customer_id was passed via query params
@@ -45,7 +46,6 @@ export default function NewNote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
@@ -57,7 +57,7 @@ export default function NewNote() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Er is iets misgegaan');
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
         setIsLoading(false);
         return;
       }
@@ -69,7 +69,7 @@ export default function NewNote() {
         router.push('/notes');
       }
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -101,8 +101,6 @@ export default function NewNote() {
           </button>
         </div>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
 
       <div className="block">
         <form id="note-form" onSubmit={handleSubmit}>

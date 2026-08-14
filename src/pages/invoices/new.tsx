@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
+import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentEditor from '@/components/DocumentEditor';
@@ -15,6 +16,7 @@ const currencyOptions = [
 ];
 
 export default function NewInvoice() {
+  const toast = useToast();
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
 
@@ -28,7 +30,6 @@ export default function NewInvoice() {
     notes: '',
   });
 
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -56,16 +57,15 @@ export default function NewInvoice() {
   }));
 
   const handleSubmit = async () => {
-    setError('');
 
     if (!formData.customer_id) {
-      setError('Selecteer een klant');
+      toast.error('Fout', 'Selecteer een klant');
       return;
     }
 
     const problem = validateBlocks(formData.blocks);
     if (problem) {
-      setError(problem);
+      toast.error('Fout', problem);
       return;
     }
 
@@ -89,14 +89,14 @@ export default function NewInvoice() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Er is iets misgegaan');
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
         setIsLoading(false);
         return;
       }
 
       router.push('/invoices');
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -115,8 +115,6 @@ export default function NewInvoice() {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-
       <DocumentEditor
         title="Factuur"
         meta={[
@@ -129,6 +127,7 @@ export default function NewInvoice() {
         currency={formData.currency}
         introText={formData.intro_text}
         notes={formData.notes}
+        onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         panels={{
           customer: {
             title: 'Klant',

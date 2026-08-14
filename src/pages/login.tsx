@@ -2,35 +2,24 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import Modal from '@/components/Modal';
+import { useToast } from '@/components/Toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const [toast, setToast] = useState<{
-    show: boolean;
-    title: string;
-    message: string;
-    variant: 'info' | 'success' | 'error' | 'warning';
-  }>({ show: false, title: '', message: '', variant: 'info' });
-
-  const showToast = (title: string, message: string, variant: 'info' | 'success' | 'error' | 'warning') => {
-    setToast({ show: true, title, message, variant });
-  };
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
     if (!email || !password) {
-      showToast('Fout', 'Vul alle velden in.', 'error');
+      toast.error('Fout', 'Vul alle velden in.');
       return;
     }
 
-    setError('');
     setIsLoading(true);
 
     try {
@@ -42,15 +31,15 @@ export default function Login() {
       });
 
       if (result?.error) {
-        showToast('Fout', 'Ongeldige inloggegevens.', 'error');
+        toast.error('Fout', 'Ongeldige inloggegevens.');
         setIsLoading(false);
       } else {
-        showToast('Succes', 'Succesvol ingelogd!', 'success');
+        toast.success('Gelukt', 'Succesvol ingelogd!');
         // Redirect to dashboard on successful login
         setTimeout(() => router.push('/'), 1000);
       }
     } catch (err) {
-      showToast('Fout', 'Er is iets misgegaan. Probeer het opnieuw.', 'error');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -77,7 +66,6 @@ export default function Login() {
               required
               placeholder="Wachtwoord"
             />
-            {error && <div className="login-error">{error}</div>}
             <button className="button" type="submit" disabled={isLoading}>
               {isLoading ? 'Bezig met inloggen...' : 'Login'}
             </button>
@@ -87,18 +75,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-
-      <Modal
-        isOpen={toast.show}
-        onClose={() => setToast({ ...toast, show: false })}
-        title={toast.title}
-        type="toast"
-        variant={toast.variant}
-        autoClose={true}
-        autoCloseDuration={5000}
-      >
-        {toast.message}
-      </Modal>
     </>
   );
 }

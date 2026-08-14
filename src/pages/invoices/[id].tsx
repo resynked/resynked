@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentEditor from '@/components/DocumentEditor';
@@ -24,6 +25,7 @@ const statusOptions = [
 ];
 
 export default function EditInvoice() {
+  const toast = useToast();
   const router = useRouter();
   const { id } = router.query;
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -42,7 +44,6 @@ export default function EditInvoice() {
     notes: '',
   });
 
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function EditInvoice() {
     try {
       const response = await fetch(`/api/invoices/${id}`);
       if (!response.ok) {
-        setError('Factuur niet gevonden');
+        toast.error('Fout', 'Factuur niet gevonden');
         return;
       }
 
@@ -88,7 +89,7 @@ export default function EditInvoice() {
       });
     } catch (err) {
       console.error('Error loading invoice:', err);
-      setError('Fout bij het laden van factuurgegevens');
+      toast.error('Fout', 'Fout bij het laden van factuurgegevens');
     } finally {
       setIsLoadingData(false);
     }
@@ -112,11 +113,10 @@ export default function EditInvoice() {
   }));
 
   const handleSubmit = async () => {
-    setError('');
 
     const problem = validateBlocks(formData.blocks);
     if (problem) {
-      setError(problem);
+      toast.error('Fout', problem);
       return;
     }
 
@@ -141,14 +141,14 @@ export default function EditInvoice() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Er is iets misgegaan');
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
         setIsLoading(false);
         return;
       }
 
       router.push('/invoices');
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -183,8 +183,6 @@ export default function EditInvoice() {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-
       <DocumentEditor
         title="Factuur"
         meta={[
@@ -197,6 +195,7 @@ export default function EditInvoice() {
         currency={formData.currency}
         introText={formData.intro_text}
         notes={formData.notes}
+        onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         panels={{
           customer: {
             title: 'Klant',

@@ -13,7 +13,6 @@ export default function Register() {
     name: '',
     tenantName: '',
   });
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -22,21 +21,20 @@ export default function Register() {
 
     // Validation
     if (!formData.email || !formData.password || !formData.name || !formData.tenantName) {
-      setError('Vul alle velden in.');
+      toast.error('Fout', 'Vul alle velden in.');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Wachtwoorden komen niet overeen.');
+      toast.error('Fout', 'Wachtwoorden komen niet overeen.');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Wachtwoord moet minimaal 6 karakters bevatten.');
+      toast.error('Fout', 'Wachtwoord moet minimaal 6 karakters bevatten.');
       return;
     }
 
-    setError('');
     setIsLoading(true);
 
     try {
@@ -54,7 +52,7 @@ export default function Register() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Er is iets misgegaan.');
+        toast.error('Fout', data.error || 'Er is iets misgegaan.');
         setIsLoading(false);
         return;
       }
@@ -63,7 +61,7 @@ export default function Register() {
       toast.success('Account aangemaakt', 'Je kunt nu inloggen.');
       router.push('/login');
     } catch (err) {
-      setError('Er is iets misgegaan. Probeer het opnieuw.');
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
     }
   };
@@ -114,7 +112,6 @@ export default function Register() {
               required
               placeholder="Bevestig wachtwoord"
             />
-            {error && <div className="register-error">{error}</div>}
             <button className="button" type="submit" disabled={isLoading}>
               {isLoading ? 'Bezig met registreren...' : 'Registreer'}
             </button>
