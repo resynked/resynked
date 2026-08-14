@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useConfirm } from '@/hooks/useConfirm';
+import { useToast } from '@/components/Toast';
 
 interface Quote {
   id: string;
@@ -27,6 +30,9 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Quotes() {
+  const router = useRouter();
+  const { confirm } = useConfirm();
+  const toast = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -57,7 +63,14 @@ export default function Quotes() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Weet je zeker dat je deze offerte wilt verwijderen?')) return;
+    const confirmed = await confirm({
+      title: 'Offerte verwijderen',
+      message: 'Weet je zeker dat je deze offerte wilt verwijderen?',
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
@@ -84,7 +97,14 @@ export default function Quotes() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Weet je zeker dat je ${selectedIds.length} offerte(s) wilt verwijderen?`)) return;
+    const confirmed = await confirm({
+      title: 'Offertes verwijderen',
+      message: `Weet je zeker dat je ${selectedIds.length} offerte(s) wilt verwijderen?`,
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await Promise.all(
@@ -132,7 +152,14 @@ export default function Quotes() {
   };
 
   const handleConvertToInvoice = async (quoteId: string) => {
-    if (!confirm('Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.')) return;
+    const confirmed = await confirm({
+      title: 'Omzetten naar factuur',
+      message: 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.',
+      confirmText: 'Omzetten',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/quotes/${quoteId}/convert-to-invoice`, {
@@ -141,14 +168,14 @@ export default function Quotes() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || 'Er ging iets mis bij het omzetten van de offerte.');
+        toast.error('Omzetten mislukt', data.error || 'Er ging iets mis bij het omzetten van de offerte.');
         return;
       }
 
-      window.location.href = `/invoices/${data.id}`;
+      router.push(`/invoices/${data.id}`);
     } catch (error) {
       console.error('Error converting quote to invoice:', error);
-      alert('Er ging iets mis bij het omzetten van de offerte.');
+      toast.error('Omzetten mislukt', 'Er ging iets mis bij het omzetten van de offerte.');
     }
   };
 

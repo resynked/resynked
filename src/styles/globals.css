@@ -139,9 +139,10 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 
 .sidebar .profile {position: relative; cursor: pointer; padding: var(--space5) var(--space10); margin: var(--space5); box-sizing: border-box; border-radius: var(--border-radius2); display: flex; align-items: center; gap: var(--space10); transition: .3s all ease;}
 .sidebar .profile:hover {background: #efefef;}
-.sidebar .profile .avatar {width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; background: var(--color1); display: flex; align-items: center; justify-content: center; color: var(--color2); font-weight: 600; font-size: 12px;}
-.sidebar .profile .info {line-height: 1.5em; font-weight: 500; font-size: 12px;}
-.sidebar .profile .info .email {color: var(--font-color2);}
+.sidebar .profile .avatar {width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; aspect-ratio: 1; background: var(--color1); display: flex; align-items: center; justify-content: center; color: var(--color2); font-weight: 600; font-size: 12px;}
+.sidebar .profile .info {line-height: 1.5em; font-weight: 500; font-size: 12px; overflow: hidden;}
+.sidebar .profile .info .name {white-space: nowrap; text-overflow: ellipsis; overflow: hidden;}
+.sidebar .profile .info .email {color: var(--font-color2); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;}
 
 .sidebar .profile .profile-dropdown {position: absolute; bottom: calc(100% + 5px); left: var(--space10); background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); min-width: 280px; z-index: 1; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
 .sidebar .profile .profile-dropdown .menu {display: flex; flex-direction: column; padding: var(--space5) 0;}
@@ -158,12 +159,12 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .header .actions {display: flex; gap: var(--space10); align-items: center;}
 .content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
-.content .block {background: var(--color2); padding: var(--space30); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
+.content .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 
 .content .grid:has(.block.page-navigation) {grid-template-columns: 300px 1fr;}
 .content .block.page-navigation {padding: 0;}
 
-.content .block.page-navigation nav {display: flex; flex-direction: column; gap: 3px; padding: var(--space30); box-sizing: border-box; border-bottom: 1px solid var(--border-color);}
+.content .block.page-navigation nav {display: flex; flex-direction: column; gap: 3px; padding: var(--space20); box-sizing: border-box; border-bottom: 1px solid var(--border-color);}
 .content .block.page-navigation nav a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; border-radius: var(--border-radius1);}
 .content .block.page-navigation nav a:hover, .content .block.page-navigation nav a.active {background-color: #efefef; color: var(--font-color1);}
 .content .block.page-navigation .titel {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}

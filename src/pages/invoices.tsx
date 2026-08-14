@@ -4,6 +4,7 @@ import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useConfirm } from '@/hooks/useConfirm';
 
 interface Invoice {
   id: string;
@@ -24,6 +25,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Invoices() {
+  const { confirm } = useConfirm();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -54,7 +56,14 @@ export default function Invoices() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) return;
+    const confirmed = await confirm({
+      title: 'Factuur verwijderen',
+      message: 'Weet je zeker dat je deze factuur wilt verwijderen?',
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await fetch(`/api/invoices/${id}`, { method: 'DELETE' });
@@ -81,7 +90,14 @@ export default function Invoices() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Weet je zeker dat je ${selectedIds.length} factu(u)r(en) wilt verwijderen?`)) return;
+    const confirmed = await confirm({
+      title: 'Facturen verwijderen',
+      message: `Weet je zeker dat je ${selectedIds.length} factu(u)r(en) wilt verwijderen?`,
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     try {
       await Promise.all(

@@ -19,12 +19,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Check if user already exists
-    const { data: existingUser } = await supabaseAdmin
+    // Check if user already exists. maybeSingle geeft geen fout bij nul rijen,
+    // zodat een echte databasefout hier niet in de ruis verdwijnt.
+    const { data: existingUser, error: lookupError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error('User lookup error:', lookupError);
+      return res.status(500).json({ error: `Database niet bereikbaar: ${lookupError.message}` });
+    }
 
     if (existingUser) {
       return res.status(400).json({ error: 'User with this email already exists' });
@@ -43,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (tenantError) {
       console.error('Tenant creation error:', tenantError);
-      return res.status(500).json({ error: 'Failed to create tenant' });
+      return res.status(500).json({ error: `Aanmaken account mislukt: ${tenantError.message}` });
     }
 
     // Create user with tenant_id
@@ -63,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('User creation error:', userError);
       // Clean up tenant if user creation fails
       await supabaseAdmin.from('tenants').delete().eq('id', tenant.id);
-      return res.status(500).json({ error: 'Failed to create user' });
+      return res.status(500).json({ error: `Aanmaken gebruiker mislukt: ${userError.message}` });
     }
 
     return res.status(201).json({

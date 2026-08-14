@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
 
 
 export default function Register() {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -58,7 +60,7 @@ export default function Register() {
       }
 
       // Registration successful, redirect to login
-      alert('Account succesvol aangemaakt! U kunt nu inloggen.');
+      toast.success('Account aangemaakt', 'Je kunt nu inloggen.');
       router.push('/login');
     } catch (err) {
       setError('Er is iets misgegaan. Probeer het opnieuw.');

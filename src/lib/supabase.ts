@@ -7,13 +7,30 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // Client for browser usage (with RLS)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Een mislukte fetch komt bij supabase-js binnen als kaal 'TypeError: fetch failed'.
+// De werkelijke reden (ENOTFOUND bij een verkeerde URL, ECONNREFUSED bij een
+// gepauzeerd project) zit in error.cause; die loggen we voordat hij verdwijnt.
+const loggingFetch: typeof fetch = async (input, init) => {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    const cause = (error as { cause?: { code?: string; message?: string } }).cause;
+    console.error(
+      `Supabase onbereikbaar op ${supabaseUrl} —`,
+      cause?.code || cause?.message || error
+    );
+    throw error;
+  }
+};
+
 // Admin client for server-side usage (bypasses RLS)
 // Use this in API routes since we're handling authorization via NextAuth
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
-  }
+  },
+  global: { fetch: loggingFetch }
 });
 
 // Database types

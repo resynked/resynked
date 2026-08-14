@@ -253,3 +253,24 @@ ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+-- ------------------------------------------------------------
+-- Rechten voor de service role
+--
+-- Zelf aangemaakte tabellen krijgen in een nieuw Supabase-project geen
+-- rechten meer toebedeeld. Zonder deze grants antwoordt de API met
+-- 42501 "permission denied", ook op een sleutel die RLS mag omzeilen.
+-- De sequences horen erbij: zonder USAGE daarop mislukt elke insert
+-- in een tabel met een BIGSERIAL-id.
+--
+-- anon en authenticated krijgen bewust niets: de app praat uitsluitend
+-- via de service role, en zonder rechten komt de publieke sleutel
+-- nergens bij.
+-- ------------------------------------------------------------
+GRANT USAGE ON SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- Ook voor tabellen die je hierna nog toevoegt
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;

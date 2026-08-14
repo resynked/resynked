@@ -7,6 +7,7 @@ import LineItems from '@/components/LineItems';
 import DocumentPreview from '@/components/DocumentPreview';
 import type { Customer, LineItem } from '@/lib/supabase';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { useConfirm } from '@/hooks/useConfirm';
 
 const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
@@ -38,6 +39,7 @@ const statusOptions = [
 
 export default function EditQuote() {
   const router = useRouter();
+  const { confirm } = useConfirm();
   const { id } = router.query;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -163,7 +165,14 @@ export default function EditQuote() {
   };
 
   const handleConvertToInvoice = async () => {
-    if (!confirm('Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.')) return;
+    const confirmed = await confirm({
+      title: 'Omzetten naar factuur',
+      message: 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.',
+      confirmText: 'Omzetten',
+      cancelText: 'Annuleren'
+    });
+
+    if (!confirmed) return;
 
     setIsConverting(true);
     try {
