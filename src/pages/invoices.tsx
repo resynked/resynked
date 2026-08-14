@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
+import { copyBlocks } from '@/lib/blocks';
 
 interface Invoice {
   id: string;
@@ -125,16 +126,10 @@ export default function Invoices() {
           invoice_date: new Date().toISOString().split('T')[0],
           due_date: fullInvoice.due_date,
           currency: fullInvoice.currency,
-          tax_percentage: fullInvoice.tax_percentage,
-          discount_percentage: fullInvoice.discount_percentage,
+          intro_text: fullInvoice.intro_text,
           notes: fullInvoice.notes,
           status: 'draft',
-          items: fullInvoice.invoice_items?.map((item: any) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            price: item.price,
-          })) || [],
+          blocks: copyBlocks(fullInvoice.blocks),
         }),
       });
       fetchInvoices();

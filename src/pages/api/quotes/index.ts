@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getQuotes, createQuote } from '@/lib/db';
-import { calculateTotals } from '@/lib/utils';
+import { calculateDocumentTotal } from '@/lib/utils';
+import { validateBlocks } from '@/lib/blocks';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -26,27 +27,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         quote_date,
         valid_until,
         currency,
-        tax_percentage,
-        discount_percentage,
+        intro_text,
         notes,
-        items,
+        blocks,
       } = req.body;
 
       if (!customer_id || !quote_number || !quote_date || !valid_until) {
         return res.status(400).json({ error: 'Vul offertenummer, datum, geldigheidsdatum en klant in' });
       }
 
-      if (!Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ error: 'Voeg minimaal één regel toe' });
+      const problem = validateBlocks(blocks);
+      if (problem) {
+        return res.status(400).json({ error: problem });
       }
-
-      if (items.some((item: any) => !item.description?.trim())) {
-        return res.status(400).json({ error: 'Elke regel heeft een omschrijving nodig' });
-      }
-
-      const taxPercentage = tax_percentage ?? 21;
-      const discountPercentage = discount_percentage ?? 0;
-      const { total } = calculateTotals(items, taxPercentage, discountPercentage);
 
       const quote = await createQuote(
         {
@@ -55,14 +48,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           quote_number,
           quote_date,
           valid_until,
-          total,
+          total: calculateDocumentTotal(blocks),
           status: 'draft',
           currency: currency || 'EUR',
-          tax_percentage: taxPercentage,
-          discount_percentage: discountPercentage,
+          intro_text: intro_text || null,
           notes: notes || null,
         },
-        items
+        blocks
       );
 
       return res.status(201).json(quote);

@@ -27,9 +27,23 @@ $$ LANGUAGE plpgsql;
 -- ------------------------------------------------------------
 -- Tenants: één per aannemer
 -- ------------------------------------------------------------
+-- De bedrijfsgegevens en vaste teksten staan hier, zodat de offerte ze
+-- per aannemer ophaalt in plaats van dat ze in de code staan.
 CREATE TABLE tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
+  company_name TEXT,
+  street_address TEXT,
+  postal_code TEXT,
+  city TEXT,
+  email TEXT,
+  phone TEXT,
+  kvk TEXT,
+  btw_number TEXT,
+  iban TEXT,
+  logo_url TEXT,
+  quote_conditions TEXT,        -- garanties, betalingsvoorwaarden, verzekering
+  terms_and_conditions TEXT,    -- algemene voorwaarden
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -129,8 +143,7 @@ CREATE TABLE quotes (
   status TEXT NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft', 'sent', 'approved', 'rejected', 'expired')),
   currency TEXT NOT NULL DEFAULT 'EUR',
-  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
-  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  intro_text TEXT,
   notes TEXT,
   converted_to_invoice_id BIGINT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -145,14 +158,37 @@ CREATE TRIGGER update_quotes_updated_at
   BEFORE UPDATE ON quotes
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Offerteregels: vrije omschrijving, geen artikelbestand
-CREATE TABLE quote_items (
+-- Een offerte bestaat uit blokken. Een tekstblok bevat een vrij verhaal
+-- (bijvoorbeeld de omschrijving van de werkzaamheden), een prijsblok bevat
+-- regels met bedragen en heeft een eigen BTW-tarief. Zo staan 9% schilderwerk
+-- en 21% overig werk naast elkaar in dezelfde offerte, elk met eigen subtotaal.
+CREATE TABLE quote_blocks (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   quote_id BIGINT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'prijsopgave'
+    CHECK (kind IN ('tekst', 'prijsopgave')),
+  body TEXT,
+  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
+  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX quote_blocks_tenant_id_idx ON quote_blocks(tenant_id);
+CREATE INDEX quote_blocks_quote_id_idx ON quote_blocks(quote_id);
+
+-- Offerteregels: vrije omschrijving, geen artikelbestand.
+-- Een regel met is_heading is een tussenkop zonder bedrag.
+CREATE TABLE quote_items (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  block_id BIGINT NOT NULL REFERENCES quote_blocks(id) ON DELETE CASCADE,
   description TEXT NOT NULL,
+  is_heading BOOLEAN NOT NULL DEFAULT false,
   quantity NUMERIC(12,2) NOT NULL DEFAULT 1,
-  unit TEXT NOT NULL DEFAULT 'stuks',
+  unit TEXT,
   price NUMERIC(12,2) NOT NULL DEFAULT 0,
   total NUMERIC(12,2) NOT NULL DEFAULT 0,
   position INTEGER NOT NULL DEFAULT 0,
@@ -160,7 +196,7 @@ CREATE TABLE quote_items (
 );
 
 CREATE INDEX quote_items_tenant_id_idx ON quote_items(tenant_id);
-CREATE INDEX quote_items_quote_id_idx ON quote_items(quote_id);
+CREATE INDEX quote_items_block_id_idx ON quote_items(block_id);
 
 -- ------------------------------------------------------------
 -- Facturen
@@ -176,8 +212,7 @@ CREATE TABLE invoices (
   status TEXT NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft', 'sent', 'paid', 'cancelled')),
   currency TEXT NOT NULL DEFAULT 'EUR',
-  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
-  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  intro_text TEXT,
   notes TEXT,
   quote_id BIGINT REFERENCES quotes(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -192,14 +227,33 @@ CREATE TRIGGER update_invoices_updated_at
   BEFORE UPDATE ON invoices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Factuurregels: zelfde opzet als de offerteregels
-CREATE TABLE invoice_items (
+-- Factuurblokken: zelfde opzet als bij de offerte, zodat een offerte met
+-- twee BTW-tarieven die splitsing meeneemt naar de factuur
+CREATE TABLE invoice_blocks (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   invoice_id BIGINT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'prijsopgave'
+    CHECK (kind IN ('tekst', 'prijsopgave')),
+  body TEXT,
+  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
+  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX invoice_blocks_tenant_id_idx ON invoice_blocks(tenant_id);
+CREATE INDEX invoice_blocks_invoice_id_idx ON invoice_blocks(invoice_id);
+
+CREATE TABLE invoice_items (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  block_id BIGINT NOT NULL REFERENCES invoice_blocks(id) ON DELETE CASCADE,
   description TEXT NOT NULL,
+  is_heading BOOLEAN NOT NULL DEFAULT false,
   quantity NUMERIC(12,2) NOT NULL DEFAULT 1,
-  unit TEXT NOT NULL DEFAULT 'stuks',
+  unit TEXT,
   price NUMERIC(12,2) NOT NULL DEFAULT 0,
   total NUMERIC(12,2) NOT NULL DEFAULT 0,
   position INTEGER NOT NULL DEFAULT 0,
@@ -207,7 +261,7 @@ CREATE TABLE invoice_items (
 );
 
 CREATE INDEX invoice_items_tenant_id_idx ON invoice_items(tenant_id);
-CREATE INDEX invoice_items_invoice_id_idx ON invoice_items(invoice_id);
+CREATE INDEX invoice_items_block_id_idx ON invoice_items(block_id);
 
 -- Een omgezette offerte wijst naar zijn factuur; deze koppeling kan pas
 -- gelegd worden nu beide tabellen bestaan
@@ -249,8 +303,10 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_persons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quote_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 

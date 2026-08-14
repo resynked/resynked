@@ -1,14 +1,14 @@
 :root {
   --color1: #000;
   --color2: #fff;
-  --color3: #fafafa;
+  --color3: #fcfcfc;
   --color4: #f4f4f4;
   --color5: #006bff;
   --color6: #E7000B;
   --color7: #00A63E;
   --font-color1: #000;
   --font-color2: #7f7f7f;
-  --border-color: #e6e6e6;
+  --border-color: #efefef;
   --font-family1: "Inter", Helvetica, Arial, sans-serif;
   --body-fontsize: 14px;
   --h1-size: 20px;
@@ -34,7 +34,7 @@
 
 html, body {height: 100%;}
 
-body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color2); font-size: var(--body-fontsize); line-height: 1.85em; margin: 0; padding: 0;}
+body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--body-fontsize); line-height: 1.85em; margin: 0; padding: 0;}
 
 textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="number"], input[type="date" i] {
   background-color: var(--color2);

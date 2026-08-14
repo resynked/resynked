@@ -3,9 +3,10 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
-import LineItems from '@/components/LineItems';
+import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentPreview from '@/components/DocumentPreview';
-import type { Customer, LineItem } from '@/lib/supabase';
+import type { Customer, DocumentBlock } from '@/lib/supabase';
+import { validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 
@@ -13,20 +14,6 @@ const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
   { value: 'USD', label: 'USD ($)' },
   { value: 'GBP', label: 'GBP (£)' },
-];
-
-const taxOptions = [
-  { value: '0', label: '0%' },
-  { value: '9', label: '9%' },
-  { value: '21', label: '21%' },
-];
-
-const discountOptions = [
-  { value: '0', label: '0%' },
-  { value: '5', label: '5%' },
-  { value: '10', label: '10%' },
-  { value: '15', label: '15%' },
-  { value: '20', label: '20%' },
 ];
 
 const statusOptions = [
@@ -52,9 +39,8 @@ export default function EditQuote() {
     customer_id: '',
     currency: 'EUR',
     status: 'draft',
-    items: [] as LineItem[],
-    tax_percentage: 21,
-    discount_percentage: 0,
+    blocks: [] as DocumentBlock[],
+    intro_text: '',
     notes: '',
   });
 
@@ -86,14 +72,21 @@ export default function EditQuote() {
         customer_id: String(quote.customer_id),
         currency: quote.currency || 'EUR',
         status: quote.status,
-        items: (quote.quote_items || []).map((item: any) => ({
-          description: item.description || '',
-          quantity: Number(item.quantity) || 0,
-          unit: item.unit || 'stuks',
-          price: Number(item.price) || 0,
+        blocks: (quote.blocks || []).map((block: any) => ({
+          title: block.title || '',
+          kind: block.kind || 'prijsopgave',
+          body: block.body || '',
+          tax_percentage: Number(block.tax_percentage) || 0,
+          discount_percentage: Number(block.discount_percentage) || 0,
+          items: (block.items || []).map((item: any) => ({
+            description: item.description || '',
+            is_heading: !!item.is_heading,
+            quantity: Number(item.quantity) || 0,
+            unit: item.unit || null,
+            price: Number(item.price) || 0,
+          })),
         })),
-        tax_percentage: quote.tax_percentage ?? 21,
-        discount_percentage: quote.discount_percentage ?? 0,
+        intro_text: quote.intro_text || '',
         notes: quote.notes || '',
       });
     } catch (err) {
@@ -125,8 +118,9 @@ export default function EditQuote() {
     e.preventDefault();
     setError('');
 
-    if (formData.items.some(item => !item.description.trim())) {
-      setError('Elke regel heeft een omschrijving nodig');
+    const problem = validateBlocks(formData.blocks);
+    if (problem) {
+      setError(problem);
       return;
     }
 
@@ -143,10 +137,9 @@ export default function EditQuote() {
           customer_id: formData.customer_id,
           status: formData.status,
           currency: formData.currency,
-          tax_percentage: formData.tax_percentage,
-          discount_percentage: formData.discount_percentage,
+          intro_text: formData.intro_text || null,
           notes: formData.notes || null,
-          items: formData.items,
+          blocks: formData.blocks,
         }),
       });
 
@@ -167,7 +160,7 @@ export default function EditQuote() {
   const handleConvertToInvoice = async () => {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
-      message: 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.',
+      message: 'Deze offerte omzetten naar een factuur? Alle blokken en regels worden overgenomen.',
       confirmText: 'Omzetten',
       cancelText: 'Annuleren'
     });
@@ -292,7 +285,20 @@ export default function EditQuote() {
             </div>
 
             <div className="form-section">
-              <h3>Werkzaamheden en materialen</h3>
+              <div className="form-group">
+                <label htmlFor="intro_text">Begeleidende tekst</label>
+                <textarea
+                  id="intro_text"
+                  value={formData.intro_text}
+                  onChange={(e) => setFormData({ ...formData, intro_text: e.target.value })}
+                  placeholder="Geachte heer/mevrouw, hartelijk dank voor het vertrouwen..."
+                  rows={6}
+                />
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h3>Blokken</h3>
 
               <div className="form-group">
                 <label>Valuta</label>
@@ -302,34 +308,12 @@ export default function EditQuote() {
                   options={currencyOptions}
                 />
               </div>
-
-              <LineItems
-                items={formData.items}
-                onChange={(items) => setFormData({ ...formData, items })}
-              />
             </div>
 
-            <div className="form-section">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="tax">BTW percentage</label>
-                  <Select
-                    value={taxOptions.find(o => o.value === String(formData.tax_percentage)) || null}
-                    onChange={(option) => setFormData({ ...formData, tax_percentage: Number(option?.value ?? 21) })}
-                    options={taxOptions}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="discount">Kortingspercentage</label>
-                  <Select
-                    value={discountOptions.find(o => o.value === String(formData.discount_percentage)) || null}
-                    onChange={(option) => setFormData({ ...formData, discount_percentage: Number(option?.value ?? 0) })}
-                    options={discountOptions}
-                  />
-                </div>
-              </div>
-            </div>
+            <DocumentBlocks
+              blocks={formData.blocks}
+              onChange={(blocks) => setFormData({ ...formData, blocks })}
+            />
 
             <div className="form-section">
               <div className="form-group">
@@ -355,10 +339,9 @@ export default function EditQuote() {
               { label: 'Geldig tot', value: formatDate(formData.valid_until) },
             ]}
             customer={selectedCustomer}
-            items={formData.items}
+            blocks={formData.blocks}
             currency={formData.currency}
-            taxPercentage={formData.tax_percentage}
-            discountPercentage={formData.discount_percentage}
+            introText={formData.intro_text}
             notes={formData.notes}
           />
         </div>

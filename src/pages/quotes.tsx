@@ -7,6 +7,7 @@ import { Ellipsis, Check } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/components/Toast';
+import { copyBlocks } from '@/lib/blocks';
 
 interface Quote {
   id: string;
@@ -119,7 +120,7 @@ export default function Quotes() {
 
   const handleDuplicate = async (quote: Quote) => {
     try {
-      // Fetch full quote details with items
+      // Fetch full quote details with blocks
       const response = await fetch(`/api/quotes/${quote.id}`);
       const fullQuote = await response.json();
 
@@ -133,15 +134,9 @@ export default function Quotes() {
           quote_date: new Date().toISOString().split('T')[0],
           valid_until: fullQuote.valid_until,
           currency: fullQuote.currency,
-          tax_percentage: fullQuote.tax_percentage,
-          discount_percentage: fullQuote.discount_percentage,
+          intro_text: fullQuote.intro_text,
           notes: fullQuote.notes,
-          items: fullQuote.quote_items?.map((item: any) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            price: item.price,
-          })) || [],
+          blocks: copyBlocks(fullQuote.blocks),
         }),
       });
       fetchQuotes();

@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase';
-import type { Customer, Invoice, Quote, LineItem, Note } from './supabase';
-import { calculateTotals } from './utils';
+import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note } from './supabase';
+import { calculateDocumentTotal, lineTotal } from './utils';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
 const supabase = supabaseAdmin;
@@ -8,23 +8,122 @@ const supabase = supabaseAdmin;
 // Helper function to get updated_at timestamp
 const now = () => new Date().toISOString();
 
-/** Normaliseer binnenkomende regels naar wat er in de database gaat. */
-function normalizeItems(items: any[], tenantId: string, parentKey: 'quote_id' | 'invoice_id', parentId: number | string) {
-  return items.map((item: any, index: number) => {
-    const quantity = Number(item.quantity) || 0;
-    const price = Number(item.price) || 0;
+/**
+ * Slaat de blokken van een offerte of factuur op. De bestaande blokken gaan
+ * er eerst uit; regels verdwijnen met hun blok mee door de cascade. Daarna
+ * worden de blokken teruggeschreven met hun regels eraan.
+ */
+async function saveBlocks(
+  blocksTable: 'quote_blocks' | 'invoice_blocks',
+  itemsTable: 'quote_items' | 'invoice_items',
+  parentKey: 'quote_id' | 'invoice_id',
+  parentId: number | string,
+  tenantId: string,
+  blocks: DocumentBlock[]
+) {
+  const { error: deleteError } = await supabase
+    .from(blocksTable)
+    .delete()
+    .eq(parentKey, parentId)
+    .eq('tenant_id', tenantId);
 
-    return {
-      [parentKey]: parentId,
+  if (deleteError) throw deleteError;
+
+  if (blocks.length === 0) return;
+
+  const rows = blocks.map((block, index) => ({
+    [parentKey]: parentId,
+    tenant_id: tenantId,
+    title: (block.title || '').trim(),
+    kind: block.kind === 'tekst' ? 'tekst' : 'prijsopgave',
+    body: block.kind === 'tekst' ? block.body || null : null,
+    tax_percentage: Number(block.tax_percentage) || 0,
+    discount_percentage: Number(block.discount_percentage) || 0,
+    position: index,
+  }));
+
+  const { data: savedBlocks, error: insertError } = await supabase
+    .from(blocksTable)
+    .insert(rows)
+    .select('id, position');
+
+  if (insertError) throw insertError;
+
+  // De ids komen niet gegarandeerd in dezelfde volgorde terug, dus koppelen
+  // we op position — die hebben we hierboven zelf gezet
+  const idByPosition = new Map<number, number>(
+    (savedBlocks || []).map((block: any) => [block.position, block.id])
+  );
+
+  const itemRows = blocks.flatMap((block, blockIndex) => {
+    if (block.kind === 'tekst') return [];
+
+    const blockId = idByPosition.get(blockIndex);
+    if (!blockId) return [];
+
+    return block.items.map((item, itemIndex) => ({
+      block_id: blockId,
       tenant_id: tenantId,
       description: (item.description || '').trim(),
-      quantity,
-      unit: item.unit || 'stuks',
-      price,
-      total: quantity * price,
-      position: index,
-    };
+      is_heading: !!item.is_heading,
+      quantity: item.is_heading ? 0 : Number(item.quantity) || 0,
+      unit: item.is_heading ? null : item.unit || null,
+      price: item.is_heading ? 0 : Number(item.price) || 0,
+      total: lineTotal(item),
+      position: itemIndex,
+    }));
   });
+
+  if (itemRows.length > 0) {
+    const { error: itemsError } = await supabase.from(itemsTable).insert(itemRows);
+    if (itemsError) throw itemsError;
+  }
+}
+
+/** Zet de genest opgehaalde blokken en regels in de juiste volgorde. */
+function sortBlocks(blocks: any[] | null | undefined) {
+  if (!blocks) return [];
+
+  return [...blocks]
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .map((block) => ({
+      ...block,
+      items: [...(block.items || [])].sort(
+        (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0)
+      ),
+    }));
+}
+
+// Uitgeschreven per tabel: de typegenerator van supabase-js leest deze
+// strings letterlijk en kan er niets in laten invullen
+const QUOTE_BLOCK_SELECT =
+  'id, title, kind, body, tax_percentage, discount_percentage, position, items:quote_items(id, description, is_heading, quantity, unit, price, total, position)';
+
+const INVOICE_BLOCK_SELECT =
+  'id, title, kind, body, tax_percentage, discount_percentage, position, items:invoice_items(id, description, is_heading, quantity, unit, price, total, position)';
+
+// Tenants: bedrijfsgegevens van de aannemer zelf
+export async function getTenant(tenantId: string) {
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('id', tenantId)
+    .single();
+
+  if (error) throw error;
+  return data as Tenant;
+}
+
+export async function updateTenant(tenantId: string, updates: Partial<Tenant>) {
+  const { data, error } = await supabase
+    .from('tenants')
+    .update({ ...updates, updated_at: now() })
+    .eq('id', tenantId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Tenant;
 }
 
 // Customers
@@ -147,27 +246,20 @@ export async function getQuotes(tenantId: string) {
 export async function getQuote(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('quotes')
-    .select(`
-      *,
-      customer:customers(*),
-      quote_items(id, description, quantity, unit, price, total, position)
-    `)
+    .select(`*, customer:customers(*), blocks:quote_blocks(${QUOTE_BLOCK_SELECT})`)
     .eq('id', id)
     .eq('tenant_id', tenantId)
     .single();
 
   if (error) throw error;
 
-  if (data?.quote_items) {
-    data.quote_items.sort((a: LineItem, b: LineItem) => (a.position ?? 0) - (b.position ?? 0));
-  }
-
-  return data;
+  const quote = data as any;
+  return { ...quote, blocks: sortBlocks(quote?.blocks) };
 }
 
 export async function createQuote(
   quote: Omit<Quote, 'id' | 'created_at' | 'updated_at'>,
-  items: any[]
+  blocks: DocumentBlock[]
 ) {
   const { data: quoteData, error: quoteError } = await supabase
     .from('quotes')
@@ -177,13 +269,7 @@ export async function createQuote(
 
   if (quoteError) throw quoteError;
 
-  if (items.length > 0) {
-    const { error: itemsError } = await supabase
-      .from('quote_items')
-      .insert(normalizeItems(items, quote.tenant_id, 'quote_id', quoteData.id));
-
-    if (itemsError) throw itemsError;
-  }
+  await saveBlocks('quote_blocks', 'quote_items', 'quote_id', quoteData.id, quote.tenant_id, blocks);
 
   return quoteData as Quote;
 }
@@ -192,7 +278,7 @@ export async function updateQuote(
   id: string | number,
   tenantId: string,
   updates: Partial<Quote>,
-  items?: any[]
+  blocks?: DocumentBlock[]
 ) {
   const { data, error } = await supabase
     .from('quotes')
@@ -204,23 +290,9 @@ export async function updateQuote(
 
   if (error) throw error;
 
-  // Regels worden in hun geheel vervangen als ze meegestuurd zijn
-  if (Array.isArray(items)) {
-    const { error: deleteError } = await supabase
-      .from('quote_items')
-      .delete()
-      .eq('quote_id', id)
-      .eq('tenant_id', tenantId);
-
-    if (deleteError) throw deleteError;
-
-    if (items.length > 0) {
-      const { error: insertError } = await supabase
-        .from('quote_items')
-        .insert(normalizeItems(items, tenantId, 'quote_id', id));
-
-      if (insertError) throw insertError;
-    }
+  // Blokken worden in hun geheel vervangen als ze meegestuurd zijn
+  if (Array.isArray(blocks)) {
+    await saveBlocks('quote_blocks', 'quote_items', 'quote_id', id, tenantId, blocks);
   }
 
   return data as Quote;
@@ -255,27 +327,20 @@ export async function getInvoices(tenantId: string) {
 export async function getInvoice(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('invoices')
-    .select(`
-      *,
-      customer:customers(*),
-      invoice_items(id, description, quantity, unit, price, total, position)
-    `)
+    .select(`*, customer:customers(*), blocks:invoice_blocks(${INVOICE_BLOCK_SELECT})`)
     .eq('id', id)
     .eq('tenant_id', tenantId)
     .single();
 
   if (error) throw error;
 
-  if (data?.invoice_items) {
-    data.invoice_items.sort((a: LineItem, b: LineItem) => (a.position ?? 0) - (b.position ?? 0));
-  }
-
-  return data;
+  const invoice = data as any;
+  return { ...invoice, blocks: sortBlocks(invoice?.blocks) };
 }
 
 export async function createInvoice(
   invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
-  items: any[]
+  blocks: DocumentBlock[]
 ) {
   // Het factuurnummer wordt uit het id afgeleid, dus eerst invoegen
   const { invoice_number, ...invoiceWithoutNumber } = invoice as any;
@@ -297,13 +362,14 @@ export async function createInvoice(
 
   if (updateError) throw updateError;
 
-  if (items.length > 0) {
-    const { error: itemsError } = await supabase
-      .from('invoice_items')
-      .insert(normalizeItems(items, invoice.tenant_id, 'invoice_id', updatedInvoice.id));
-
-    if (itemsError) throw itemsError;
-  }
+  await saveBlocks(
+    'invoice_blocks',
+    'invoice_items',
+    'invoice_id',
+    updatedInvoice.id,
+    invoice.tenant_id,
+    blocks
+  );
 
   return updatedInvoice as Invoice;
 }
@@ -312,7 +378,7 @@ export async function updateInvoice(
   id: string | number,
   tenantId: string,
   updates: Partial<Invoice>,
-  items?: any[]
+  blocks?: DocumentBlock[]
 ) {
   const { data, error } = await supabase
     .from('invoices')
@@ -324,22 +390,8 @@ export async function updateInvoice(
 
   if (error) throw error;
 
-  if (Array.isArray(items)) {
-    const { error: deleteError } = await supabase
-      .from('invoice_items')
-      .delete()
-      .eq('invoice_id', id)
-      .eq('tenant_id', tenantId);
-
-    if (deleteError) throw deleteError;
-
-    if (items.length > 0) {
-      const { error: insertError } = await supabase
-        .from('invoice_items')
-        .insert(normalizeItems(items, tenantId, 'invoice_id', id));
-
-      if (insertError) throw insertError;
-    }
+  if (Array.isArray(blocks)) {
+    await saveBlocks('invoice_blocks', 'invoice_items', 'invoice_id', id, tenantId, blocks);
   }
 
   return data as Invoice;
@@ -364,14 +416,23 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
     throw new Error('Deze offerte is al omgezet naar een factuur');
   }
 
-  const items = (quote.quote_items || []).map((item: LineItem) => ({
-    description: item.description,
-    quantity: item.quantity,
-    unit: item.unit,
-    price: item.price,
+  // Alle blokken gaan mee, inclusief hun eigen BTW-tarief, zodat de
+  // splitsing tussen bijvoorbeeld 9% en 21% op de factuur intact blijft
+  const blocks: DocumentBlock[] = (quote.blocks || []).map((block: any) => ({
+    title: block.title,
+    kind: block.kind,
+    body: block.body,
+    tax_percentage: block.tax_percentage,
+    discount_percentage: block.discount_percentage,
+    items: (block.items || []).map((item: any) => ({
+      description: item.description,
+      is_heading: item.is_heading,
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+    })),
   }));
 
-  const { total } = calculateTotals(items, quote.tax_percentage, quote.discount_percentage);
   const today = new Date();
 
   const invoice = await createInvoice(
@@ -380,15 +441,14 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
       customer_id: quote.customer_id,
       invoice_date: today.toISOString().split('T')[0],
       due_date: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      total,
+      total: calculateDocumentTotal(blocks),
       status: 'draft',
       currency: quote.currency,
-      tax_percentage: quote.tax_percentage,
-      discount_percentage: quote.discount_percentage,
+      intro_text: quote.intro_text,
       notes: quote.notes,
       quote_id: typeof quoteId === 'number' ? quoteId : parseInt(quoteId as string, 10),
     } as Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
-    items
+    blocks
   );
 
   await updateQuote(quoteId, tenantId, {

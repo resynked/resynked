@@ -37,6 +37,18 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 export interface Tenant {
   id: string;
   name: string;
+  company_name: string | null;
+  street_address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  email: string | null;
+  phone: string | null;
+  kvk: string | null;
+  btw_number: string | null;
+  iban: string | null;
+  logo_url: string | null;
+  quote_conditions: string | null;
+  terms_and_conditions: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -90,15 +102,37 @@ export interface ContactPerson {
   updated_at: string;
 }
 
-/** Eén vrije regel op een offerte of factuur. */
+/**
+ * Eén regel binnen een blok. Een regel met is_heading is een tussenkop
+ * zonder bedrag, bijvoorbeeld "Dakwerkzaamheden".
+ */
 export interface LineItem {
   id?: number;
   description: string;
+  is_heading: boolean;
   quantity: number;
-  unit: string;
+  unit: string | null;
   price: number;
   total?: number;
   position?: number;
+}
+
+/**
+ * Een offerte of factuur bestaat uit blokken. Een tekstblok bevat een vrij
+ * verhaal, een prijsblok bevat regels en heeft een eigen BTW-tarief — zo
+ * staan 9% en 21% naast elkaar met elk een eigen subtotaal.
+ */
+export type BlockKind = 'tekst' | 'prijsopgave';
+
+export interface DocumentBlock {
+  id?: number;
+  title: string;
+  kind: BlockKind;
+  body: string | null;
+  tax_percentage: number;
+  discount_percentage: number;
+  position?: number;
+  items: LineItem[];
 }
 
 export interface Invoice {
@@ -109,19 +143,13 @@ export interface Invoice {
   invoice_date?: string;
   due_date?: string;
   currency?: string;
-  tax_percentage?: number;
-  discount_percentage?: number;
   total: number;
   status: string; // draft, sent, paid, cancelled
+  intro_text?: string | null;
   notes?: string | null;
   quote_id?: number | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface InvoiceItem extends LineItem {
-  invoice_id: number;
-  tenant_id: string;
 }
 
 export interface Quote {
@@ -134,17 +162,11 @@ export interface Quote {
   total: number;
   status: string; // draft, sent, approved, rejected, expired
   currency: string;
-  tax_percentage: number;
-  discount_percentage: number;
+  intro_text?: string | null;
   notes?: string | null;
   converted_to_invoice_id?: number | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface QuoteItem extends LineItem {
-  quote_id: number;
-  tenant_id: string;
 }
 
 export interface Note {

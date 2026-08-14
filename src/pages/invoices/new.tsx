@@ -2,29 +2,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
-import LineItems, { emptyLineItem } from '@/components/LineItems';
+import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentPreview from '@/components/DocumentPreview';
-import type { Customer, LineItem } from '@/lib/supabase';
+import type { Customer, DocumentBlock } from '@/lib/supabase';
+import { emptyBlock, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
 
 const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
   { value: 'USD', label: 'USD ($)' },
   { value: 'GBP', label: 'GBP (£)' },
-];
-
-const taxOptions = [
-  { value: '0', label: '0%' },
-  { value: '9', label: '9%' },
-  { value: '21', label: '21%' },
-];
-
-const discountOptions = [
-  { value: '0', label: '0%' },
-  { value: '5', label: '5%' },
-  { value: '10', label: '10%' },
-  { value: '15', label: '15%' },
-  { value: '20', label: '20%' },
 ];
 
 export default function NewInvoice() {
@@ -36,9 +23,8 @@ export default function NewInvoice() {
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     customer_id: '',
     currency: 'EUR',
-    items: [emptyLineItem()] as LineItem[],
-    tax_percentage: 21,
-    discount_percentage: 0,
+    blocks: [emptyBlock()] as DocumentBlock[],
+    intro_text: '',
     notes: '',
   });
 
@@ -78,8 +64,9 @@ export default function NewInvoice() {
       return;
     }
 
-    if (formData.items.length === 0 || formData.items.some(item => !item.description.trim())) {
-      setError('Elke regel heeft een omschrijving nodig');
+    const problem = validateBlocks(formData.blocks);
+    if (problem) {
+      setError(problem);
       return;
     }
 
@@ -94,11 +81,10 @@ export default function NewInvoice() {
           due_date: formData.due_date,
           customer_id: formData.customer_id,
           currency: formData.currency,
-          tax_percentage: formData.tax_percentage,
-          discount_percentage: formData.discount_percentage,
+          intro_text: formData.intro_text || null,
           notes: formData.notes || null,
           status: 'draft',
-          items: formData.items,
+          blocks: formData.blocks,
         }),
       });
 
@@ -174,7 +160,20 @@ export default function NewInvoice() {
             </div>
 
             <div className="form-section">
-              <h3>Werkzaamheden en materialen</h3>
+              <div className="form-group">
+                <label htmlFor="intro_text">Begeleidende tekst</label>
+                <textarea
+                  id="intro_text"
+                  value={formData.intro_text}
+                  onChange={(e) => setFormData({ ...formData, intro_text: e.target.value })}
+                  placeholder="Eventuele begeleidende tekst..."
+                  rows={6}
+                />
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h3>Blokken</h3>
 
               <div className="form-group">
                 <label>Valuta</label>
@@ -184,34 +183,12 @@ export default function NewInvoice() {
                   options={currencyOptions}
                 />
               </div>
-
-              <LineItems
-                items={formData.items}
-                onChange={(items) => setFormData({ ...formData, items })}
-              />
             </div>
 
-            <div className="form-section">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="tax">BTW percentage</label>
-                  <Select
-                    value={taxOptions.find(o => o.value === String(formData.tax_percentage)) || null}
-                    onChange={(option) => setFormData({ ...formData, tax_percentage: Number(option?.value ?? 21) })}
-                    options={taxOptions}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="discount">Kortingspercentage</label>
-                  <Select
-                    value={discountOptions.find(o => o.value === String(formData.discount_percentage)) || null}
-                    onChange={(option) => setFormData({ ...formData, discount_percentage: Number(option?.value ?? 0) })}
-                    options={discountOptions}
-                  />
-                </div>
-              </div>
-            </div>
+            <DocumentBlocks
+              blocks={formData.blocks}
+              onChange={(blocks) => setFormData({ ...formData, blocks })}
+            />
 
             <div className="form-section">
               <div className="form-group">
@@ -237,10 +214,9 @@ export default function NewInvoice() {
               { label: 'Vervaldatum', value: formatDate(formData.due_date) },
             ]}
             customer={selectedCustomer}
-            items={formData.items}
+            blocks={formData.blocks}
             currency={formData.currency}
-            taxPercentage={formData.tax_percentage}
-            discountPercentage={formData.discount_percentage}
+            introText={formData.intro_text}
             notes={formData.notes}
           />
         </div>

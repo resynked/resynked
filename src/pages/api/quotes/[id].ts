@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getQuote, updateQuote, deleteQuote } from '@/lib/db';
-import { calculateTotals } from '@/lib/utils';
+import { calculateDocumentTotal } from '@/lib/utils';
+import { validateBlocks } from '@/lib/blocks';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -32,15 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         valid_until,
         status,
         currency,
-        tax_percentage,
-        discount_percentage,
+        intro_text,
         notes,
-        items,
+        blocks,
       } = req.body;
-
-      if (Array.isArray(items) && items.some((item: any) => !item.description?.trim())) {
-        return res.status(400).json({ error: 'Elke regel heeft een omschrijving nodig' });
-      }
 
       const updates: any = {};
       if (customer_id !== undefined) updates.customer_id = customer_id;
@@ -49,22 +45,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (valid_until !== undefined) updates.valid_until = valid_until;
       if (status !== undefined) updates.status = status;
       if (currency !== undefined) updates.currency = currency;
-      if (tax_percentage !== undefined) updates.tax_percentage = tax_percentage;
-      if (discount_percentage !== undefined) updates.discount_percentage = discount_percentage;
+      if (intro_text !== undefined) updates.intro_text = intro_text;
       if (notes !== undefined) updates.notes = notes;
 
-      // Het totaal wordt hier herrekend zodat het altijd bij de regels past
-      if (Array.isArray(items)) {
-        const existing = await getQuote(id, tenantId);
-        const { total } = calculateTotals(
-          items,
-          tax_percentage ?? existing.tax_percentage,
-          discount_percentage ?? existing.discount_percentage
-        );
-        updates.total = total;
+      // Het totaal wordt hier herrekend zodat het altijd bij de blokken past
+      if (blocks !== undefined) {
+        const problem = validateBlocks(blocks);
+        if (problem) {
+          return res.status(400).json({ error: problem });
+        }
+        updates.total = calculateDocumentTotal(blocks);
       }
 
-      const quote = await updateQuote(id, tenantId, updates, items);
+      const quote = await updateQuote(id, tenantId, updates, blocks);
       return res.status(200).json(quote);
     }
 
