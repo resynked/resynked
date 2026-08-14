@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import {
@@ -69,7 +69,7 @@ function BlocksView({ blocks, currency }: { blocks: DocumentBlock[]; currency: s
       {blocks.map((block, blockIndex) => {
         if (block.kind === 'tekst') {
           return (
-            <div key={blockIndex} className="invoice-notes">
+            <div key={blockIndex} className="invoice-notes" data-block="tekst" data-block-title={block.title}>
               {block.title && <h3>{block.title}</h3>}
               {block.body && <FormattedText text={block.body} />}
             </div>
@@ -84,7 +84,12 @@ function BlocksView({ blocks, currency }: { blocks: DocumentBlock[]; currency: s
         );
 
         return (
-          <Fragment key={blockIndex}>
+          <div
+            key={blockIndex}
+            data-block="prijsopgave"
+            data-block-title={block.title}
+            data-block-tax={block.tax_percentage}
+          >
             {block.title && <h3>{block.title} (btw {block.tax_percentage}%)</h3>}
 
             {block.items.length > 0 && (
@@ -140,7 +145,7 @@ function BlocksView({ blocks, currency }: { blocks: DocumentBlock[]; currency: s
                 <span>{formatCurrency(totals.total, currency)}</span>
               </div>
             </div>
-          </Fragment>
+          </div>
         );
       })}
     </>
