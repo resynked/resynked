@@ -193,7 +193,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setTemplates({ ...templates, quote_template_html: e.target.value })
                                         }
-                                        placeholder={'<style>\n  .zijbalk { background: #efe8da; }\n</style>\n\n<section class="pagina">\n  <aside class="zijbalk">\n    <img src="{{logo}}" alt="">\n    <h1>Offerte</h1>\n  </aside>\n  <main>\n    <div data-slot="klantgegevens"></div>\n    <div data-slot="kenmerken"></div>\n    <div data-slot="brief"></div>\n    <div data-slot="blokken"></div>\n  </main>\n</section>'}
+                                        placeholder="Plak hier uw offertesjabloon"
                                         rows={20}
                                     />
                                 </div>
@@ -208,7 +208,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setTemplates({ ...templates, invoice_template_html: e.target.value })
                                         }
-                                        placeholder="Leeg laten om hetzelfde ontwerp als de standaardfactuur te gebruiken"
+                                        placeholder="Plak hier uw factuursjabloon"
                                         rows={20}
                                     />
                                 </div>
