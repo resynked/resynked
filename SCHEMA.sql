@@ -1,0 +1,255 @@
+-- ============================================================
+-- Resynked - volledig databaseschema
+--
+-- Voer dit bestand in zijn geheel uit in de Supabase SQL editor
+-- (Dashboard -> SQL Editor -> New query -> plakken -> Run).
+-- Het bouwt een lege database op; er is geen bestaande data nodig.
+--
+-- Opbouw:
+--   tenants, users              accounts per aannemer
+--   customers, contact_persons  relaties
+--   quotes, quote_items         offertes met vrije regels
+--   invoices, invoice_items     facturen met vrije regels
+--   notes                       notities per klant
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Hulpfunctie: houdt updated_at bij
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ------------------------------------------------------------
+-- Tenants: één per aannemer
+-- ------------------------------------------------------------
+CREATE TABLE tenants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER update_tenants_updated_at
+  BEFORE UPDATE ON tenants
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
+-- Users: inloggen gaat via NextAuth, wachtwoord staat als bcrypt-hash
+-- ------------------------------------------------------------
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  name TEXT,
+  role TEXT NOT NULL DEFAULT 'user',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX users_tenant_id_idx ON users(tenant_id);
+
+CREATE TRIGGER update_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
+-- Customers: de klanten van de aannemer
+-- ------------------------------------------------------------
+CREATE TABLE customers (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL DEFAULT '',
+  first_name TEXT,
+  middle_name TEXT,
+  last_name TEXT,
+  gender TEXT,
+  company_name TEXT,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  street_address TEXT,
+  postal_code TEXT,
+  city TEXT,
+  date_of_birth DATE,
+  iban TEXT,
+  kvk TEXT,
+  btw_number TEXT,
+  debtor_number TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX customers_tenant_id_idx ON customers(tenant_id);
+
+CREATE TRIGGER update_customers_updated_at
+  BEFORE UPDATE ON customers
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
+-- Contactpersonen bij een klant
+-- ------------------------------------------------------------
+CREATE TABLE contact_persons (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  first_name TEXT NOT NULL,
+  middle_name TEXT,
+  last_name TEXT NOT NULL,
+  gender TEXT,
+  email TEXT,
+  phone TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX contact_persons_tenant_id_idx ON contact_persons(tenant_id);
+CREATE INDEX contact_persons_customer_id_idx ON contact_persons(customer_id);
+
+CREATE TRIGGER update_contact_persons_updated_at
+  BEFORE UPDATE ON contact_persons
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
+-- Offertes
+-- ------------------------------------------------------------
+CREATE TABLE quotes (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+  quote_number TEXT NOT NULL,
+  quote_date DATE NOT NULL,
+  valid_until DATE NOT NULL,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'sent', 'approved', 'rejected', 'expired')),
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
+  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  notes TEXT,
+  converted_to_invoice_id BIGINT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX quotes_tenant_id_idx ON quotes(tenant_id);
+CREATE INDEX quotes_customer_id_idx ON quotes(customer_id);
+CREATE INDEX quotes_created_at_idx ON quotes(created_at DESC);
+
+CREATE TRIGGER update_quotes_updated_at
+  BEFORE UPDATE ON quotes
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Offerteregels: vrije omschrijving, geen artikelbestand
+CREATE TABLE quote_items (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  quote_id BIGINT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  quantity NUMERIC(12,2) NOT NULL DEFAULT 1,
+  unit TEXT NOT NULL DEFAULT 'stuks',
+  price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX quote_items_tenant_id_idx ON quote_items(tenant_id);
+CREATE INDEX quote_items_quote_id_idx ON quote_items(quote_id);
+
+-- ------------------------------------------------------------
+-- Facturen
+-- ------------------------------------------------------------
+CREATE TABLE invoices (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+  invoice_number TEXT,
+  invoice_date DATE,
+  due_date DATE,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'sent', 'paid', 'cancelled')),
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
+  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  notes TEXT,
+  quote_id BIGINT REFERENCES quotes(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX invoices_tenant_id_idx ON invoices(tenant_id);
+CREATE INDEX invoices_customer_id_idx ON invoices(customer_id);
+CREATE INDEX invoices_created_at_idx ON invoices(created_at DESC);
+
+CREATE TRIGGER update_invoices_updated_at
+  BEFORE UPDATE ON invoices
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Factuurregels: zelfde opzet als de offerteregels
+CREATE TABLE invoice_items (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  invoice_id BIGINT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  quantity NUMERIC(12,2) NOT NULL DEFAULT 1,
+  unit TEXT NOT NULL DEFAULT 'stuks',
+  price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX invoice_items_tenant_id_idx ON invoice_items(tenant_id);
+CREATE INDEX invoice_items_invoice_id_idx ON invoice_items(invoice_id);
+
+-- Een omgezette offerte wijst naar zijn factuur; deze koppeling kan pas
+-- gelegd worden nu beide tabellen bestaan
+ALTER TABLE quotes
+  ADD CONSTRAINT quotes_converted_to_invoice_id_fkey
+  FOREIGN KEY (converted_to_invoice_id) REFERENCES invoices(id) ON DELETE SET NULL;
+
+-- ------------------------------------------------------------
+-- Notities per klant
+-- ------------------------------------------------------------
+CREATE TABLE notes (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX notes_tenant_id_idx ON notes(tenant_id);
+CREATE INDEX notes_customer_id_idx ON notes(customer_id);
+CREATE INDEX notes_created_at_idx ON notes(created_at DESC);
+
+CREATE TRIGGER update_notes_updated_at
+  BEFORE UPDATE ON notes
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
+-- Row Level Security
+--
+-- De app praat met de database via de service role key en filtert zelf
+-- op de tenant uit de NextAuth-sessie. RLS staat hier aan zodat de
+-- publieke anon key niets kan lezen of schrijven: zonder policy komt
+-- er via die sleutel geen enkele rij door.
+-- ------------------------------------------------------------
+ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_persons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;

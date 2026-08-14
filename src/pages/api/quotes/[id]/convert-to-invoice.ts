@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
-import { convertOrderToInvoice } from '@/lib/db';
+import { convertQuoteToInvoice } from '@/lib/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -22,10 +22,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const invoice = await convertOrderToInvoice(id, tenantId);
+    const invoice = await convertQuoteToInvoice(id, tenantId);
     return res.status(200).json(invoice);
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }

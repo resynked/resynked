@@ -1,17 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
-import Link from 'next/link';
 import Select from '@/components/Select';
-import { Search, X } from 'lucide-react';
-import type { Customer, Product } from '@/lib/supabase';
+import LineItems, { emptyLineItem } from '@/components/LineItems';
+import DocumentPreview from '@/components/DocumentPreview';
+import type { Customer, LineItem } from '@/lib/supabase';
+import { formatDate, getCustomerDisplayName } from '@/lib/utils';
+
+const currencyOptions = [
+  { value: 'EUR', label: 'EUR (€)' },
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'GBP', label: 'GBP (£)' },
+];
+
+const taxOptions = [
+  { value: '0', label: '0%' },
+  { value: '9', label: '9%' },
+  { value: '21', label: '21%' },
+];
+
+const discountOptions = [
+  { value: '0', label: '0%' },
+  { value: '5', label: '5%' },
+  { value: '10', label: '10%' },
+  { value: '15', label: '15%' },
+  { value: '20', label: '20%' },
+];
 
 export default function NewQuote() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showProductSearch, setShowProductSearch] = useState(false);
 
   const [formData, setFormData] = useState({
     quote_number: '',
@@ -19,7 +37,7 @@ export default function NewQuote() {
     valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     customer_id: '',
     currency: 'EUR',
-    items: [] as { product_id: string; product_name: string; description: string; quantity: number; price: number }[],
+    items: [emptyLineItem()] as LineItem[],
     tax_percentage: 21,
     discount_percentage: 0,
     notes: '',
@@ -30,15 +48,11 @@ export default function NewQuote() {
 
   useEffect(() => {
     fetchCustomers();
-    fetchProducts();
-    generateQuoteNumber();
-  }, []);
 
-  const generateQuoteNumber = () => {
     const year = new Date().getFullYear();
     const random = Math.floor(Math.random() * 900) + 100;
     setFormData(prev => ({ ...prev, quote_number: `OFF-${year}-${random}` }));
-  };
+  }, []);
 
   const fetchCustomers = async () => {
     try {
@@ -46,112 +60,38 @@ export default function NewQuote() {
       const data = await res.json();
       setCustomers(data);
       if (data.length > 0) {
-        setFormData(prev => ({ ...prev, customer_id: data[0].id }));
+        setFormData(prev => ({ ...prev, customer_id: String(data[0].id) }));
       }
-    } catch (error) {
-      console.error('Error fetching customers:', error);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
     }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };
-
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const addProduct = (product: Product) => {
-    setFormData({
-      ...formData,
-      items: [
-        ...formData.items,
-        {
-          product_id: String(product.id),
-          product_name: product.name,
-          description: product.description || '',
-          quantity: 1,
-          price: product.price
-        },
-      ],
-    });
-    setSearchTerm('');
-    setShowProductSearch(false);
-  };
-
-  const removeItem = (index: number) => {
-    setFormData({
-      ...formData,
-      items: formData.items.filter((_, i) => i !== index),
-    });
-  };
-
-  const updateItem = (index: number, field: string, value: any) => {
-    const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setFormData({ ...formData, items: newItems });
-  };
-
-  const calculateSubtotal = () => {
-    return formData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-  };
-
-  const calculateDiscount = () => {
-    return (calculateSubtotal() * formData.discount_percentage) / 100;
-  };
-
-  const calculateTax = () => {
-    return ((calculateSubtotal() - calculateDiscount()) * formData.tax_percentage) / 100;
-  };
-
-  const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() + calculateTax();
   };
 
   const selectedCustomer = customers.find(c => String(c.id) === formData.customer_id);
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: c.name,
-  })) || [];
+    label: getCustomerDisplayName(c),
+  }));
 
-  const currencyOptions = [
-    { value: 'EUR', label: 'EUR (€)' },
-    { value: 'USD', label: 'USD ($)' },
-    { value: 'GBP', label: 'GBP (£)' },
-  ];
-
-  const taxOptions = [
-    { value: '0', label: '0%' },
-    { value: '9', label: '9%' },
-    { value: '21', label: '21%' },
-  ];
-
-  const discountOptions = [
-    { value: '0', label: '0%' },
-    { value: '5', label: '5%' },
-    { value: '10', label: '10%' },
-    { value: '15', label: '15%' },
-    { value: '20', label: '20%' },
-  ];
+  const hasValidItems =
+    formData.items.length > 0 && formData.items.every(item => item.description.trim());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
 
-    if (formData.items.length === 0) {
-      setError('Voeg minimaal één artikel toe');
-      setIsLoading(false);
+    if (!formData.customer_id) {
+      setError('Selecteer een klant');
       return;
     }
+
+    if (!hasValidItems) {
+      setError('Elke regel heeft een omschrijving nodig');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/quotes', {
@@ -192,7 +132,7 @@ export default function NewQuote() {
           <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
             Annuleren
           </button>
-          <button type="submit" form="quote-form" className="button" disabled={isLoading || formData.items.length === 0}>
+          <button type="submit" form="quote-form" className="button" disabled={isLoading}>
             {isLoading ? 'Opslaan...' : 'Opslaan'}
           </button>
         </div>
@@ -201,37 +141,11 @@ export default function NewQuote() {
       {error && <div className="error-message">{error}</div>}
 
       <div className="grid">
-        {/* Left Side - Form */}
         <div className="block">
           <form id="quote-form" onSubmit={handleSubmit}>
-            {/* Layout Tabs */}
-            <div className="tabs">
-              <a
-                href="#layout"
-                className="tab active"
-                onClick={(e) => e.preventDefault()}
-              >
-                Layout
-              </a>
-              <a
-                href="#algemeen"
-                className="tab"
-                onClick={(e) => e.preventDefault()}
-              >
-                Algemeen
-              </a>
-              <a
-                href="#versturen"
-                className="tab"
-                onClick={(e) => e.preventDefault()}
-              >
-                Versturen
-              </a>
-            </div>
-
-            {/* Quote Details */}
             <div className="form-section">
               <div className="form-group">
+                <label htmlFor="quote_number">Offertenummer</label>
                 <input
                   id="quote_number"
                   type="text"
@@ -269,7 +183,6 @@ export default function NewQuote() {
               </div>
             </div>
 
-            {/* Customer Selection */}
             <div className="form-section">
               <h3>Klantgegevens</h3>
               <div className="form-group">
@@ -282,9 +195,8 @@ export default function NewQuote() {
               </div>
             </div>
 
-            {/* Products */}
             <div className="form-section">
-              <h3>Artikelgegevens</h3>
+              <h3>Werkzaamheden en materialen</h3>
 
               <div className="form-group">
                 <label>Valuta</label>
@@ -295,90 +207,19 @@ export default function NewQuote() {
                 />
               </div>
 
-              {/* Product Search */}
-              <div className="search">
-                <div className="search-input">
-                  <Search size={16} />
-                  <input
-                    type="text"
-                    placeholder="Zoek en voeg artikelen toe..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setShowProductSearch(e.target.value.length > 0);
-                    }}
-                    onFocus={() => searchTerm && setShowProductSearch(true)}
-                  />
-                </div>
-
-                {showProductSearch && filteredProducts.length > 0 && (
-                  <div className="search-results">
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product.id}
-                        className="search-item"
-                        onClick={() => addProduct(product)}
-                      >
-                        <div className="product-search-info">
-                          <div className="product-search-name">{product.name}</div>
-                          <div className="product-search-desc">{product.description}</div>
-                        </div>
-                        <div className="product-search-price">€{product.price.toFixed(2)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Added Items */}
-              {formData.items.map((item, index) => (
-                <div key={index} className="form-section">
-                  <div className="form-row invoice-product-line">
-
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      value={item.product_name}
-                      onChange={(e) => updateItem(index, 'product_name', e.target.value)}
-                      placeholder="Product naam"
-                    />
-                  </div>
-
-                <div className="form-group">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
-                      placeholder="Aantal"
-                      className="center-input"
-                    />
-                </div>
-
-                  <Link className="action delete" href=""
-                      onClick={() => removeItem(index)}
-                    >
-                      <X size={16} />
-                    </Link>
-
-
-                  </div>
-                </div>
-              ))}
-
-              <button type="button" className="button add-item" onClick={() => setShowProductSearch(true)}>
-                + Artikel toevoegen
-              </button>
+              <LineItems
+                items={formData.items}
+                onChange={(items) => setFormData({ ...formData, items })}
+              />
             </div>
 
-            {/* Tax & Discount */}
             <div className="form-section">
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="tax">BTW percentage</label>
                   <Select
                     value={taxOptions.find(o => o.value === String(formData.tax_percentage)) || null}
-                    onChange={(option) => setFormData({ ...formData, tax_percentage: option?.value ? Number(option.value) : 21 })}
+                    onChange={(option) => setFormData({ ...formData, tax_percentage: Number(option?.value ?? 21) })}
                     options={taxOptions}
                   />
                 </div>
@@ -387,14 +228,13 @@ export default function NewQuote() {
                   <label htmlFor="discount">Kortingspercentage</label>
                   <Select
                     value={discountOptions.find(o => o.value === String(formData.discount_percentage)) || null}
-                    onChange={(option) => setFormData({ ...formData, discount_percentage: option?.value ? Number(option.value) : 0 })}
+                    onChange={(option) => setFormData({ ...formData, discount_percentage: Number(option?.value ?? 0) })}
                     options={discountOptions}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Notes */}
             <div className="form-section">
               <div className="form-group">
                 <label htmlFor="notes">Opmerkingen</label>
@@ -402,7 +242,7 @@ export default function NewQuote() {
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Eventuele opmerkingen..."
+                  placeholder="Bijvoorbeeld: uitvoering in overleg, steiger door opdrachtgever..."
                   rows={4}
                 />
               </div>
@@ -410,113 +250,21 @@ export default function NewQuote() {
           </form>
         </div>
 
-        {/* Right Side - Preview */}
         <div className="block">
-          <div className="invoice-preview">
-            {/* Company Header */}
-            <div className="invoice-company-header">
-              <div className="invoice-company-logo">Bedrijfslogo</div>
-              <div className="invoice-company-info">
-                <div>Uw bedrijfsnaam</div>
-                <div>Straatnaam 1</div>
-                <div>1200 AC Amsterdam</div>
-
-                  <div>KvK: 12345678</div>
-                  <div>BTW: NL123456789B01</div>
-                  <div>Bank: NL55 BANK 0123 4567 89</div>
-
-              </div>
-            </div>
-
-            {/* Customer Info */}
-            {selectedCustomer && (
-              <div className="invoice-customer-info">
-                <div>{selectedCustomer.name}</div>
-                {selectedCustomer.address && (
-                  <>
-                    {selectedCustomer.address.split('\n').map((line, i) => (
-                      <div key={i}>{line}</div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Quote Title */}
-            <h1 className="invoice-title">Offerte</h1>
-
-            {/* Quote Meta */}
-            {formData.quote_number && (
-              <div className="invoice-data">
-                {formData.quote_number && <div>Offertenummer: {formData.quote_number}</div>}
-                {formData.quote_date && <div>Offertedatum: {new Date(formData.quote_date).toLocaleDateString('nl-NL')}</div>}
-                {formData.valid_until && <div>Geldig tot: {new Date(formData.valid_until).toLocaleDateString('nl-NL')}</div>}
-              </div>
-            )}
-
-            {/* Quote Table */}
-            {formData.items.length > 0 && (
-              <div className="table-container">
-                <table className="product-table">
-                  <thead>
-                    <tr>
-                      <th>Artikelnummer</th>
-                      <th>Omschrijving</th>
-                      <th>Aantal</th>
-                      <th>Prijs per stuk</th>
-                      <th>Totaal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.items.map((item, index) => (
-                      <tr key={index}>
-                        <td>{String(item.product_id).slice(0, 8)}</td>
-                        <td>
-                          {item.product_name}
-                          {item.description && <div className="invoice-table-desc">{item.description}</div>}
-                        </td>
-                        <td>{item.quantity}</td>
-                        <td>€ {item.price.toFixed(2)}</td>
-                        <td>€ {(item.quantity * item.price).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Totals */}
-            {formData.items.length > 0 && (
-              <div className="invoice-total">
-                <div className="invoice-total-row">
-                  <span>Subtotaal</span>
-                  <span>€ {calculateSubtotal().toFixed(2)}</span>
-                </div>
-                {formData.discount_percentage > 0 && (
-                  <div className="invoice-total-row">
-                    <span>Korting ({formData.discount_percentage}%)</span>
-                    <span>- € {calculateDiscount().toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="invoice-total-row">
-                  <span>BTW ({formData.tax_percentage}%)</span>
-                  <span>€ {calculateTax().toFixed(2)}</span>
-                </div>
-                <div className="invoice-total-row total-final">
-                  <span>Totaal</span>
-                  <span>€ {calculateTotal().toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Notes */}
-            {formData.notes && (
-              <div className="invoice-notes">
-                <strong>Opmerkingen:</strong>
-                <p>{formData.notes}</p>
-              </div>
-            )}
-          </div>
+          <DocumentPreview
+            title="Offerte"
+            meta={[
+              { label: 'Offertenummer', value: formData.quote_number },
+              { label: 'Offertedatum', value: formatDate(formData.quote_date) },
+              { label: 'Geldig tot', value: formatDate(formData.valid_until) },
+            ]}
+            customer={selectedCustomer}
+            items={formData.items}
+            currency={formData.currency}
+            taxPercentage={formData.tax_percentage}
+            discountPercentage={formData.discount_percentage}
+            notes={formData.notes}
+          />
         </div>
       </div>
     </Layout>

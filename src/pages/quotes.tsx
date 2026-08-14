@@ -3,18 +3,28 @@ import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface Quote {
   id: string;
   customer_id: string;
-  customer: { id: string; name: string; email: string | null };
+  customer: { id: string; name: string; company_name: string | null; email: string | null };
   quote_number: string;
   quote_date: string;
   valid_until: string;
   total: number;
   status: string;
+  converted_to_invoice_id: number | null;
   created_at: string;
 }
+
+const statusLabels: Record<string, string> = {
+  draft: 'Concept',
+  sent: 'Verzonden',
+  approved: 'Goedgekeurd',
+  rejected: 'Afgewezen',
+  expired: 'Verlopen',
+};
 
 export default function Quotes() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -107,8 +117,9 @@ export default function Quotes() {
           discount_percentage: fullQuote.discount_percentage,
           notes: fullQuote.notes,
           items: fullQuote.quote_items?.map((item: any) => ({
-            product_id: item.product_id,
+            description: item.description,
             quantity: item.quantity,
+            unit: item.unit,
             price: item.price,
           })) || [],
         }),
@@ -120,22 +131,23 @@ export default function Quotes() {
     }
   };
 
-  const handleConvertToOrder = async (quoteId: string) => {
-    if (!confirm('Weet je zeker dat je deze offerte wilt omzetten naar een bestelling?')) return;
+  const handleConvertToInvoice = async (quoteId: string) => {
+    if (!confirm('Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.')) return;
 
     try {
-      const response = await fetch(`/api/quotes/${quoteId}/convert-to-order`, {
+      const response = await fetch(`/api/quotes/${quoteId}/convert-to-invoice`, {
         method: 'POST',
       });
-      const order = await response.json();
+      const data = await response.json();
 
-      // Refresh the quotes list to show updated status
-      fetchQuotes();
+      if (!response.ok) {
+        alert(data.error || 'Er ging iets mis bij het omzetten van de offerte.');
+        return;
+      }
 
-      // Optionally redirect to the new order
-      window.location.href = `/orders/${order.id}`;
+      window.location.href = `/invoices/${data.id}`;
     } catch (error) {
-      console.error('Error converting quote to order:', error);
+      console.error('Error converting quote to invoice:', error);
       alert('Er ging iets mis bij het omzetten van de offerte.');
     }
   };
@@ -148,7 +160,11 @@ export default function Quotes() {
       rejected: 'status-cancelled',
       expired: 'status-cancelled',
     };
-    return <span className={`status-badge ${statusClasses[status as keyof typeof statusClasses]}`}>{status}</span>;
+    return (
+      <span className={`status-badge ${statusClasses[status as keyof typeof statusClasses]}`}>
+        {statusLabels[status] || status}
+      </span>
+    );
   };
 
   return (
@@ -228,10 +244,10 @@ export default function Quotes() {
                 </button>
               </td>
               <td>{quote.quote_number}</td>
-              <td>{quote.customer.name}</td>
-              <td>€{quote.total.toFixed(2)}</td>
+              <td>{quote.customer?.company_name || quote.customer?.name}</td>
+              <td>{formatCurrency(quote.total)}</td>
               <td>{getStatusBadge(quote.status)}</td>
-              <td>{new Date(quote.valid_until).toLocaleDateString('nl-NL')}</td>
+              <td>{formatDate(quote.valid_until)}</td>
               <td className="actions">
                 <div className="action-dropdown" ref={openDropdownId === quote.id ? dropdownRef : null}>
                   <button
@@ -248,19 +264,23 @@ export default function Quotes() {
                       <Link href="" className="copy" onClick={() => handleDuplicate(quote)}>
                         Kopiëren
                       </Link>
-                      {quote.status === 'sent' || quote.status === 'draft' ? (
+                      {quote.converted_to_invoice_id ? (
+                        <Link href={`/invoices/${quote.converted_to_invoice_id}`} className="edit">
+                          Bekijk factuur
+                        </Link>
+                      ) : (
                         <Link
                           href=""
                           className="edit"
                           onClick={(e) => {
                             e.preventDefault();
                             setOpenDropdownId(null);
-                            handleConvertToOrder(quote.id);
+                            handleConvertToInvoice(quote.id);
                           }}
                         >
-                          Omzetten naar bestelling
+                          Omzetten naar factuur
                         </Link>
-                      ) : null}
+                      )}
                       <Link
                         href=""
                         className="delete"

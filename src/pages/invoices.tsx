@@ -3,15 +3,25 @@ import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface Invoice {
   id: string;
   customer_id: string;
-  customer: { id: string; name: string; email: string | null };
+  customer: { id: string; name: string; company_name: string | null; email: string | null };
+  invoice_number: string | null;
+  invoice_date: string | null;
   total: number;
   status: string;
   created_at: string;
 }
+
+const statusLabels: Record<string, string> = {
+  draft: 'Concept',
+  sent: 'Verzonden',
+  paid: 'Betaald',
+  cancelled: 'Geannuleerd',
+};
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -96,17 +106,17 @@ export default function Invoices() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer_id: fullInvoice.customer_id,
-          invoice_number: `${fullInvoice.invoice_number}-kopie`,
           invoice_date: new Date().toISOString().split('T')[0],
           due_date: fullInvoice.due_date,
           currency: fullInvoice.currency,
           tax_percentage: fullInvoice.tax_percentage,
           discount_percentage: fullInvoice.discount_percentage,
-          total: fullInvoice.total,
+          notes: fullInvoice.notes,
           status: 'draft',
           items: fullInvoice.invoice_items?.map((item: any) => ({
-            product_id: item.product_id,
+            description: item.description,
             quantity: item.quantity,
+            unit: item.unit,
             price: item.price,
           })) || [],
         }),
@@ -125,7 +135,11 @@ export default function Invoices() {
       paid: 'status-paid',
       cancelled: 'status-cancelled',
     };
-    return <span className={`status-badge ${statusClasses[status as keyof typeof statusClasses]}`}>{status}</span>;
+    return (
+      <span className={`status-badge ${statusClasses[status as keyof typeof statusClasses]}`}>
+        {statusLabels[status] || status}
+      </span>
+    );
   };
 
   return (
@@ -204,11 +218,11 @@ export default function Invoices() {
                   {selectedIds.includes(invoice.id) && <Check size={14} />}
                 </button>
               </td>
-              <td>#{String(invoice.id).slice(0, 8)}</td>
-              <td>{invoice.customer.name}</td>
-              <td>€{invoice.total.toFixed(2)}</td>
+              <td>{invoice.invoice_number || `#${invoice.id}`}</td>
+              <td>{invoice.customer?.company_name || invoice.customer?.name}</td>
+              <td>{formatCurrency(invoice.total)}</td>
               <td>{getStatusBadge(invoice.status)}</td>
-              <td>{new Date(invoice.created_at).toLocaleDateString('nl-NL')}</td>
+              <td>{formatDate(invoice.invoice_date || invoice.created_at)}</td>
               <td className="actions">
                 <div className="action-dropdown" ref={openDropdownId === invoice.id ? dropdownRef : null}>
                   <button

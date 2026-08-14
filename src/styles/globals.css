@@ -159,7 +159,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
 .content .block {background: var(--color2); padding: var(--space30); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
-.content .block.chat {height: 100%;}
 
 .content .grid:has(.block.page-navigation) {grid-template-columns: 300px 1fr;}
 .content .block.page-navigation {padding: 0;}
@@ -216,56 +215,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .invoice-preview .invoice-total .invoice-total-row.total-final {border-top: 1px solid var(--border-color); font-weight: 600; font-size: 16px; padding-top: var(--space15); margin-top: var(--space10);}
 .invoice-preview .invoice-company-header {display: flex; justify-content: space-between; margin-bottom: var(--space50);}
 
-.search-input {position: relative; display: flex; align-items: center;}
-.search-input input {padding-left: 40px;}
-.search-input svg {position: absolute; left: var(--space15); color: var(--font-color2);}
-
-.search-results {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--color2);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius1);
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 100;
-  margin-top: var(--space5);
-}
-
-.search-item {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space15);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.search-item:hover {
-  background-color: var(--color3);
-}
-
-.product-search-info {
-  flex: 1;
-}
-
-.product-search-name {
-  font-weight: 600;
-  margin-bottom: var(--space5);
-}
-
-.product-search-desc {
-  font-size: 13px;
-  color: var(--font-color2);
-}
-
-.product-search-price {
-  font-weight: 600;
-  color: var(--color5);
-}
-
 .form-section {margin: 0 0 var(--space30) 0; display: flex ; flex-direction: column; gap: var(--space10);}
 .form-section .form-row {display: flex; gap: var(--space10);}
 .form-section .form-group {display: flex; flex-direction: column; flex: 1;}
@@ -273,7 +222,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-group textarea {min-height: 180px;}
 .form-section .form-group .center-input {text-align: center;}
 
-.form-section .search {position: relative; margin: var(--space10) 0 var(--space20) 0;}
 .form-section .react-select__control {border-color: var(--border-color); border-radius: var(--border-radius1);}
 .form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}
 .form-section h2, .form-section h3 {margin: 0;}
@@ -283,36 +231,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .empty-state {text-align: center; padding: var(--space100) 0; max-width: 600px; margin: 0 auto;}
 .empty-state p {color: var(--font-color2);}
 .empty-state .button {display: inline-block;}
-
-.chat-container {display: flex ; flex-direction: column; height: 100%;}
-.chat-container .chat-messages {flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space30);}
-.chat-container .chat-messages .chat-welcome {display: flex; align-items: center; justify-content: center; padding: var(--space30) 0; box-sizing: border-box;}
-.chat-container .chat-messages .chat-welcome h2 {margin: 0;}
-.chat-container .chat-messages .message.user {text-align: right; background: var(--color4); padding: var(--space10); border-radius: var(--border-radius2); box-sizing: border-box; margin-left: auto;}
-.chat-container .chat-messages .message.user p {margin: 0;}
-
-.chat-container .chat-input-form {display: flex; align-items: center; gap: var(--space10); border-radius: var(--border-radius2); padding: var(--space20); box-sizing: border-box; background: var(--color3); border: 1px solid var(--border-color); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
-.chat-container .chat-input-form .chat-textarea {flex: 1; border: none; background: transparent; resize: none; outline: none; font-family: inherit; color: var(--font-color1); max-height: 200px; min-height: 80px; box-shadow: none; padding: 0;}
-.chat-container .chat-input-form .chat-textarea:disabled {opacity: 0.6; cursor: not-allowed;}
-.chat-container .chat-input-form .button {border-radius: 100%; line-height: 0; padding: 8px; margin: auto 0 0 0;}
-.chat-container .chat-input-form .button:hover:not(:disabled) {opacity: 0.9;}
-.chat-container .chat-input-form .button:disabled {opacity: 0.2; pointer-events: none;}
-
-.chat-container .chat-messages .typing-dots {display: flex; gap: 4px; padding: 8px 0;}
-.chat-container .chat-messages .typing-dots span {width: 8px; height: 8px; border-radius: 50%; background: var(--font-color2); animation: typingBounce 1.4s infinite ease-in-out both;}
-.chat-container .chat-messages .typing-dots span:nth-child(1) {animation-delay: -0.32s;}
-.chat-container .chat-messages .typing-dots span:nth-child(2) {animation-delay: -0.16s;}
-
-@keyframes typingBounce {
-  0%, 80%, 100% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
 
 .toast {position: fixed; bottom: var(--space20); right: var(--space20); background: var(--color2); border-radius: var(--border-radius2); color: inherit; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 10px rgba(0, 0, 0, 0.1); min-width: 300px; max-width: 400px; z-index: 20; animation: slideIn 0.3s ease-out; border: 1px solid var(--border-color); padding: var(--space15); box-sizing: border-box; display: grid; grid-template-columns: 16px 1fr; gap: var(--space10);}
 .toast .toast-content {line-height: 1.35em; font-size: 12px; font-weight: 500;}

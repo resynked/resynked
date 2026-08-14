@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getQuotes, createQuote } from '@/lib/db';
+import { calculateTotals } from '@/lib/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -19,18 +20,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { customer_id, quote_number, quote_date, valid_until, currency, tax_percentage, discount_percentage, notes, items } = req.body;
+      const {
+        customer_id,
+        quote_number,
+        quote_date,
+        valid_until,
+        currency,
+        tax_percentage,
+        discount_percentage,
+        notes,
+        items,
+      } = req.body;
 
-      if (!customer_id || !quote_number || !quote_date || !valid_until || !items || items.length === 0) {
-        return res.status(400).json({ error: 'Missing required fields' });
+      if (!customer_id || !quote_number || !quote_date || !valid_until) {
+        return res.status(400).json({ error: 'Vul offertenummer, datum, geldigheidsdatum en klant in' });
       }
 
-      // Calculate total
-      const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-      const discount = subtotal * ((discount_percentage || 0) / 100);
-      const taxableAmount = subtotal - discount;
-      const tax = taxableAmount * ((tax_percentage || 21) / 100);
-      const total = taxableAmount + tax;
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Voeg minimaal één regel toe' });
+      }
+
+      if (items.some((item: any) => !item.description?.trim())) {
+        return res.status(400).json({ error: 'Elke regel heeft een omschrijving nodig' });
+      }
+
+      const taxPercentage = tax_percentage ?? 21;
+      const discountPercentage = discount_percentage ?? 0;
+      const { total } = calculateTotals(items, taxPercentage, discountPercentage);
 
       const quote = await createQuote(
         {
@@ -42,8 +58,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           total,
           status: 'draft',
           currency: currency || 'EUR',
-          tax_percentage: tax_percentage || 21,
-          discount_percentage: discount_percentage || 0,
+          tax_percentage: taxPercentage,
+          discount_percentage: discountPercentage,
           notes: notes || null,
         },
         items
@@ -53,8 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }

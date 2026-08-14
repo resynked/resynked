@@ -73,16 +73,15 @@ export interface ContactPerson {
   updated_at: string;
 }
 
-export interface Product {
-  id: number;
-  tenant_id: string;
-  name: string;
-  description: string | null;
+/** Eén vrije regel op een offerte of factuur. */
+export interface LineItem {
+  id?: number;
+  description: string;
+  quantity: number;
+  unit: string;
   price: number;
-  stock: number;
-  image_url: string | null;
-  created_at: string;
-  updated_at: string;
+  total?: number;
+  position?: number;
 }
 
 export interface Invoice {
@@ -96,18 +95,15 @@ export interface Invoice {
   tax_percentage?: number;
   discount_percentage?: number;
   total: number;
-  status: string;
+  status: string; // draft, sent, paid, cancelled
+  notes?: string | null;
+  quote_id?: number | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface InvoiceItem {
-  id: number;
+export interface InvoiceItem extends LineItem {
   invoice_id: number;
-  product_id: number;
-  quantity: number;
-  price: number;
-  total?: number;
   tenant_id: string;
 }
 
@@ -124,45 +120,14 @@ export interface Quote {
   tax_percentage: number;
   discount_percentage: number;
   notes?: string | null;
-  converted_to_order_id?: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface QuoteItem {
-  id: number;
-  quote_id: number;
-  product_id: number;
-  quantity: number;
-  price: number;
-  total?: number;
-}
-
-export interface Order {
-  id: number;
-  tenant_id: string;
-  customer_id: number;
-  order_number: string;
-  order_date: string;
-  total: number;
-  status: string; // pending, processing, completed, cancelled
-  currency: string;
-  tax_percentage: number;
-  discount_percentage: number;
-  notes?: string | null;
-  quote_id?: number | null;
   converted_to_invoice_id?: number | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface OrderItem {
-  id: number;
-  order_id: number;
-  product_id: number;
-  quantity: number;
-  price: number;
-  total?: number;
+export interface QuoteItem extends LineItem {
+  quote_id: number;
+  tenant_id: string;
 }
 
 export interface Note {

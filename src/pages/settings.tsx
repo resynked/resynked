@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import { CircleUserRound, Languages, Bell, UserRoundPlus, ShoppingCart, Mail, Bot } from 'lucide-react';
+import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail } from 'lucide-react';
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('account');
@@ -62,17 +62,6 @@ export default function Settings() {
                     <nav>
                         <span className="titel">API instellingen</span>
                         <Link
-                            href="#webshop"
-                            className={`${activeTab === 'webshop' ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab('webshop');
-                            }}
-                        >
-                            <ShoppingCart size={18} />
-                            <span>Webshop</span>
-                        </Link>
-                        <Link
                             href="#email"
                             className={`${activeTab === 'email' ? 'active' : ''}`}
                             onClick={(e) => {
@@ -83,18 +72,6 @@ export default function Settings() {
                             <Mail size={18} />
                             <span>E-mail</span>
                         </Link>
-                        <Link
-                            href="#openai"
-                            className={`${activeTab === 'openai' ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab('openai');
-                            }}
-                        >
-                            <Bot size={18} />
-                            <span>OpenAI</span>
-                        </Link>
-
                     </nav>
                 </div>
                 <div className="block">
@@ -118,20 +95,8 @@ export default function Settings() {
 
                     )}
 
-                    {activeTab === 'webshop' && (
-                        <h2>Webshop</h2>
-
-                    )}
-
-
                     {activeTab === 'email' && (
                         <h2>E-mail</h2>
-
-                    )}
-
-
-                    {activeTab === 'openai' && (
-                        <h2>OpenAI</h2>
 
                     )}
                 </div>

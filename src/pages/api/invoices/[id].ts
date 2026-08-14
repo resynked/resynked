@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getInvoice, updateInvoice, deleteInvoice } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase';
+import { calculateTotals } from '@/lib/utils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -27,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'PUT') {
       const {
         customer_id,
-        total,
         status,
         invoice_number,
         invoice_date,
@@ -35,12 +34,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         currency,
         tax_percentage,
         discount_percentage,
+        notes,
         items,
       } = req.body;
 
+      if (Array.isArray(items) && items.some((item: any) => !item.description?.trim())) {
+        return res.status(400).json({ error: 'Elke regel heeft een omschrijving nodig' });
+      }
+
       const updates: any = {};
       if (customer_id !== undefined) updates.customer_id = customer_id;
-      if (total !== undefined) updates.total = parseFloat(total);
       if (status !== undefined) updates.status = status;
       if (invoice_number !== undefined) updates.invoice_number = invoice_number;
       if (invoice_date !== undefined) updates.invoice_date = invoice_date;
@@ -48,39 +51,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (currency !== undefined) updates.currency = currency;
       if (tax_percentage !== undefined) updates.tax_percentage = tax_percentage;
       if (discount_percentage !== undefined) updates.discount_percentage = discount_percentage;
+      if (notes !== undefined) updates.notes = notes;
 
-      // Update invoice
-      const invoice = await updateInvoice(id, tenantId, updates);
-
-      // Update invoice items if provided
-      if (items && Array.isArray(items)) {
-        // Delete existing items
-        const { error: deleteError } = await supabaseAdmin
-          .from('invoice_items')
-          .delete()
-          .eq('invoice_id', id);
-
-        if (deleteError) throw deleteError;
-
-        // Insert new items
-        if (items.length > 0) {
-          const itemsWithInvoiceId = items.map((item: any) => ({
-            invoice_id: id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            price: item.price,
-            total: item.quantity * item.price,
-            tenant_id: tenantId,
-          }));
-
-          const { error: insertError } = await supabaseAdmin
-            .from('invoice_items')
-            .insert(itemsWithInvoiceId);
-
-          if (insertError) throw insertError;
-        }
+      // Het totaal wordt hier herrekend zodat het altijd bij de regels past
+      if (Array.isArray(items)) {
+        const existing = await getInvoice(id, tenantId);
+        const { total } = calculateTotals(
+          items,
+          tax_percentage ?? existing.tax_percentage,
+          discount_percentage ?? existing.discount_percentage
+        );
+        updates.total = total;
       }
 
+      const invoice = await updateInvoice(id, tenantId, updates, items);
       return res.status(200).json(invoice);
     }
 
@@ -90,8 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }

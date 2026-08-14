@@ -1,11 +1,31 @@
 import { supabaseAdmin } from './supabase';
-import type { Customer, Product, Invoice, InvoiceItem, Quote, QuoteItem, Order, OrderItem, Note } from './supabase';
+import type { Customer, Invoice, Quote, LineItem, Note } from './supabase';
+import { calculateTotals } from './utils';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
 const supabase = supabaseAdmin;
 
 // Helper function to get updated_at timestamp
 const now = () => new Date().toISOString();
+
+/** Normaliseer binnenkomende regels naar wat er in de database gaat. */
+function normalizeItems(items: any[], tenantId: string, parentKey: 'quote_id' | 'invoice_id', parentId: number | string) {
+  return items.map((item: any, index: number) => {
+    const quantity = Number(item.quantity) || 0;
+    const price = Number(item.price) || 0;
+
+    return {
+      [parentKey]: parentId,
+      tenant_id: tenantId,
+      description: (item.description || '').trim(),
+      quantity,
+      unit: item.unit || 'stuks',
+      price,
+      total: quantity * price,
+      position: index,
+    };
+  });
+}
 
 // Customers
 export async function getCustomers(tenantId: string) {
@@ -56,7 +76,7 @@ export async function updateCustomer(id: string | number, tenantId: string, upda
 }
 
 export async function deleteCustomer(id: string | number, tenantId: string) {
-  // Check for related records
+  // Een klant met offertes of facturen mag niet zomaar verdwijnen
   const { data: invoices, error: invoicesError } = await supabase
     .from('invoices')
     .select('id')
@@ -64,13 +84,10 @@ export async function deleteCustomer(id: string | number, tenantId: string) {
     .eq('tenant_id', tenantId)
     .limit(1);
 
-  if (invoicesError) {
-    console.error('Error checking invoices:', invoicesError);
-    throw invoicesError;
-  }
+  if (invoicesError) throw invoicesError;
 
   if (invoices && invoices.length > 0) {
-    throw new Error('Cannot delete customer with existing invoices');
+    throw new Error('Deze klant heeft nog facturen en kan niet verwijderd worden');
   }
 
   const { data: quotes, error: quotesError } = await supabase
@@ -80,315 +97,33 @@ export async function deleteCustomer(id: string | number, tenantId: string) {
     .eq('tenant_id', tenantId)
     .limit(1);
 
-  if (quotesError) {
-    console.error('Error checking quotes:', quotesError);
-    throw quotesError;
-  }
+  if (quotesError) throw quotesError;
 
   if (quotes && quotes.length > 0) {
-    throw new Error('Cannot delete customer with existing quotes');
+    throw new Error('Deze klant heeft nog offertes en kan niet verwijderd worden');
   }
 
-  const { data: orders, error: ordersError } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('customer_id', id)
-    .eq('tenant_id', tenantId)
-    .limit(1);
-
-  if (ordersError) {
-    console.error('Error checking orders:', ordersError);
-    throw ordersError;
-  }
-
-  if (orders && orders.length > 0) {
-    throw new Error('Cannot delete customer with existing orders');
-  }
-
-  // Delete related contact persons
   const { error: contactPersonsError } = await supabase
     .from('contact_persons')
     .delete()
     .eq('customer_id', id)
     .eq('tenant_id', tenantId);
 
-  if (contactPersonsError) {
-    console.error('Error deleting contact persons:', contactPersonsError);
-    throw contactPersonsError;
-  }
+  if (contactPersonsError) throw contactPersonsError;
 
-  // Delete related notes
   const { error: notesError } = await supabase
     .from('notes')
     .delete()
     .eq('customer_id', id)
     .eq('tenant_id', tenantId);
 
-  if (notesError) {
-    console.error('Error deleting notes:', notesError);
-    throw notesError;
-  }
+  if (notesError) throw notesError;
 
-  // Now delete the customer
   const { error } = await supabase
     .from('customers')
     .delete()
     .eq('id', id)
     .eq('tenant_id', tenantId);
-
-  if (error) {
-    console.error('Error deleting customer:', error);
-    throw error;
-  }
-  return { success: true };
-}
-
-// Products
-export async function getProducts(tenantId: string) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data as Product[];
-}
-
-export async function getProduct(id: string | number, tenantId: string) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .eq('tenant_id', tenantId)
-    .single();
-
-  if (error) throw error;
-  return data as Product;
-}
-
-export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) {
-  console.log('Creating product with supabaseAdmin, tenant_id:', product.tenant_id);
-  console.log('Using admin client:', supabase === supabaseAdmin ? 'YES' : 'NO');
-
-  const { data, error } = await supabase
-    .from('products')
-    .insert({ ...product, updated_at: now() })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Product creation error:', error);
-    throw error;
-  }
-  return data as Product;
-}
-
-export async function updateProduct(id: string | number, tenantId: string, updates: Partial<Product>) {
-  const { data, error } = await supabase
-    .from('products')
-    .update({ ...updates, updated_at: now() })
-    .eq('id', id)
-    .eq('tenant_id', tenantId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as Product;
-}
-
-export async function deleteProduct(id: string | number, tenantId: string) {
-  // Check for related records in invoice_items
-  const { data: invoiceItems, error: invoiceItemsError } = await supabase
-    .from('invoice_items')
-    .select('id')
-    .eq('product_id', id)
-    .eq('tenant_id', tenantId)
-    .limit(1);
-
-  if (invoiceItemsError) {
-    console.error('Error checking invoice items:', invoiceItemsError);
-    throw invoiceItemsError;
-  }
-
-  if (invoiceItems && invoiceItems.length > 0) {
-    throw new Error('Cannot delete product used in invoices');
-  }
-
-  // Check for related records in quote_items by joining with quotes
-  const { data: quotesWithProduct, error: quotesError } = await supabase
-    .from('quotes')
-    .select('id, quote_items!inner(id)')
-    .eq('tenant_id', tenantId)
-    .eq('quote_items.product_id', id)
-    .limit(1);
-
-  if (quotesError) {
-    console.error('Error checking quotes with product:', quotesError);
-    throw quotesError;
-  }
-
-  if (quotesWithProduct && quotesWithProduct.length > 0) {
-    throw new Error('Cannot delete product used in quotes');
-  }
-
-  // Check for related records in order_items by joining with orders
-  const { data: ordersWithProduct, error: ordersError } = await supabase
-    .from('orders')
-    .select('id, order_items!inner(id)')
-    .eq('tenant_id', tenantId)
-    .eq('order_items.product_id', id)
-    .limit(1);
-
-  if (ordersError) {
-    console.error('Error checking orders with product:', ordersError);
-    throw ordersError;
-  }
-
-  if (ordersWithProduct && ordersWithProduct.length > 0) {
-    throw new Error('Cannot delete product used in orders');
-  }
-
-  // Now delete the product
-  const { error } = await supabase
-    .from('products')
-    .delete()
-    .eq('id', id)
-    .eq('tenant_id', tenantId);
-
-  if (error) {
-    console.error('Error deleting product:', error);
-    throw error;
-  }
-  return { success: true };
-}
-
-// Invoices
-export async function getInvoices(tenantId: string) {
-  const { data, error } = await supabase
-    .from('invoices')
-    .select(`
-      *,
-      customer:customers(id, name, email)
-    `)
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getInvoice(id: string | number, tenantId: string) {
-  const { data, error } = await supabase
-    .from('invoices')
-    .select(`
-      *,
-      customer:customers(id, name, email),
-      invoice_items(
-        id,
-        quantity,
-        price,
-        product:products(id, name, description)
-      )
-    `)
-    .eq('id', id)
-    .eq('tenant_id', tenantId)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function createInvoice(
-  invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
-  items: any[]
-) {
-  // Create invoice without invoice_number first
-  const { invoice_number, ...invoiceWithoutNumber } = invoice as any;
-
-  const { data: invoiceData, error: invoiceError } = await supabase
-    .from('invoices')
-    .insert({ ...invoiceWithoutNumber, updated_at: now() })
-    .select()
-    .single();
-
-  if (invoiceError) throw invoiceError;
-
-  // Generate invoice number based on ID: FT{id+10000}
-  const generatedInvoiceNumber = `FT${invoiceData.id + 10000}`;
-
-  // Update invoice with generated number
-  const { data: updatedInvoice, error: updateError } = await supabase
-    .from('invoices')
-    .update({ invoice_number: generatedInvoiceNumber })
-    .eq('id', invoiceData.id)
-    .select()
-    .single();
-
-  if (updateError) throw updateError;
-
-  // Create invoice items
-  if (items.length > 0) {
-    const itemsWithInvoiceId = items.map((item: any) => ({
-      invoice_id: updatedInvoice.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: item.price,
-      tenant_id: invoice.tenant_id,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('invoice_items')
-      .insert(itemsWithInvoiceId);
-
-    if (itemsError) throw itemsError;
-  }
-
-  return updatedInvoice as Invoice;
-}
-
-export async function updateInvoice(id: string | number, tenantId: string, updates: Partial<Invoice>) {
-  const { data, error } = await supabase
-    .from('invoices')
-    .update({ ...updates, updated_at: now() })
-    .eq('id', id)
-    .eq('tenant_id', tenantId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as Invoice;
-}
-
-export async function deleteInvoice(id: string | number, tenantId: string) {
-  const { error } = await supabase
-    .from('invoices')
-    .delete()
-    .eq('id', id)
-    .eq('tenant_id', tenantId);
-
-  if (error) throw error;
-  return { success: true };
-}
-
-// Invoice Items
-export async function updateInvoiceItem(id: string | number, updates: Partial<InvoiceItem>) {
-  const { data, error } = await supabase
-    .from('invoice_items')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as InvoiceItem;
-}
-
-export async function deleteInvoiceItem(id: string | number) {
-  const { error } = await supabase
-    .from('invoice_items')
-    .delete()
-    .eq('id', id);
 
   if (error) throw error;
   return { success: true };
@@ -400,7 +135,7 @@ export async function getQuotes(tenantId: string) {
     .from('quotes')
     .select(`
       *,
-      customer:customers(id, name, email)
+      customer:customers(id, name, company_name, email)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -414,20 +149,19 @@ export async function getQuote(id: string | number, tenantId: string) {
     .from('quotes')
     .select(`
       *,
-      customer:customers(id, name, email),
-      quote_items(
-        id,
-        quantity,
-        price,
-        total,
-        product:products(id, name, description)
-      )
+      customer:customers(*),
+      quote_items(id, description, quantity, unit, price, total, position)
     `)
     .eq('id', id)
     .eq('tenant_id', tenantId)
     .single();
 
   if (error) throw error;
+
+  if (data?.quote_items) {
+    data.quote_items.sort((a: LineItem, b: LineItem) => (a.position ?? 0) - (b.position ?? 0));
+  }
+
   return data;
 }
 
@@ -444,17 +178,9 @@ export async function createQuote(
   if (quoteError) throw quoteError;
 
   if (items.length > 0) {
-    const itemsWithQuoteId = items.map((item: any) => ({
-      quote_id: quoteData.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: item.price,
-      total: item.quantity * item.price,
-    }));
-
     const { error: itemsError } = await supabase
       .from('quote_items')
-      .insert(itemsWithQuoteId);
+      .insert(normalizeItems(items, quote.tenant_id, 'quote_id', quoteData.id));
 
     if (itemsError) throw itemsError;
   }
@@ -462,7 +188,12 @@ export async function createQuote(
   return quoteData as Quote;
 }
 
-export async function updateQuote(id: string | number, tenantId: string, updates: Partial<Quote>) {
+export async function updateQuote(
+  id: string | number,
+  tenantId: string,
+  updates: Partial<Quote>,
+  items?: any[]
+) {
   const { data, error } = await supabase
     .from('quotes')
     .update({ ...updates, updated_at: now() })
@@ -472,6 +203,26 @@ export async function updateQuote(id: string | number, tenantId: string, updates
     .single();
 
   if (error) throw error;
+
+  // Regels worden in hun geheel vervangen als ze meegestuurd zijn
+  if (Array.isArray(items)) {
+    const { error: deleteError } = await supabase
+      .from('quote_items')
+      .delete()
+      .eq('quote_id', id)
+      .eq('tenant_id', tenantId);
+
+    if (deleteError) throw deleteError;
+
+    if (items.length > 0) {
+      const { error: insertError } = await supabase
+        .from('quote_items')
+        .insert(normalizeItems(items, tenantId, 'quote_id', id));
+
+      if (insertError) throw insertError;
+    }
+  }
+
   return data as Quote;
 }
 
@@ -486,13 +237,13 @@ export async function deleteQuote(id: string | number, tenantId: string) {
   return { success: true };
 }
 
-// Orders
-export async function getOrders(tenantId: string) {
+// Invoices
+export async function getInvoices(tenantId: string) {
   const { data, error } = await supabase
-    .from('orders')
+    .from('invoices')
     .select(`
       *,
-      customer:customers(id, name, email)
+      customer:customers(id, name, company_name, email)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -501,62 +252,70 @@ export async function getOrders(tenantId: string) {
   return data;
 }
 
-export async function getOrder(id: string | number, tenantId: string) {
+export async function getInvoice(id: string | number, tenantId: string) {
   const { data, error } = await supabase
-    .from('orders')
+    .from('invoices')
     .select(`
       *,
-      customer:customers(id, name, email),
-      order_items(
-        id,
-        quantity,
-        price,
-        total,
-        product:products(id, name, description)
-      )
+      customer:customers(*),
+      invoice_items(id, description, quantity, unit, price, total, position)
     `)
     .eq('id', id)
     .eq('tenant_id', tenantId)
     .single();
 
   if (error) throw error;
+
+  if (data?.invoice_items) {
+    data.invoice_items.sort((a: LineItem, b: LineItem) => (a.position ?? 0) - (b.position ?? 0));
+  }
+
   return data;
 }
 
-export async function createOrder(
-  order: Omit<Order, 'id' | 'created_at' | 'updated_at'>,
+export async function createInvoice(
+  invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
   items: any[]
 ) {
-  const { data: orderData, error: orderError } = await supabase
-    .from('orders')
-    .insert({ ...order, updated_at: now() })
+  // Het factuurnummer wordt uit het id afgeleid, dus eerst invoegen
+  const { invoice_number, ...invoiceWithoutNumber } = invoice as any;
+
+  const { data: invoiceData, error: invoiceError } = await supabase
+    .from('invoices')
+    .insert({ ...invoiceWithoutNumber, updated_at: now() })
     .select()
     .single();
 
-  if (orderError) throw orderError;
+  if (invoiceError) throw invoiceError;
+
+  const { data: updatedInvoice, error: updateError } = await supabase
+    .from('invoices')
+    .update({ invoice_number: `FT${invoiceData.id + 10000}` })
+    .eq('id', invoiceData.id)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
 
   if (items.length > 0) {
-    const itemsWithOrderId = items.map((item: any) => ({
-      order_id: orderData.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: item.price,
-      total: item.quantity * item.price,
-    }));
-
     const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(itemsWithOrderId);
+      .from('invoice_items')
+      .insert(normalizeItems(items, invoice.tenant_id, 'invoice_id', updatedInvoice.id));
 
     if (itemsError) throw itemsError;
   }
 
-  return orderData as Order;
+  return updatedInvoice as Invoice;
 }
 
-export async function updateOrder(id: string | number, tenantId: string, updates: Partial<Order>) {
+export async function updateInvoice(
+  id: string | number,
+  tenantId: string,
+  updates: Partial<Invoice>,
+  items?: any[]
+) {
   const { data, error } = await supabase
-    .from('orders')
+    .from('invoices')
     .update({ ...updates, updated_at: now() })
     .eq('id', id)
     .eq('tenant_id', tenantId)
@@ -564,12 +323,31 @@ export async function updateOrder(id: string | number, tenantId: string, updates
     .single();
 
   if (error) throw error;
-  return data as Order;
+
+  if (Array.isArray(items)) {
+    const { error: deleteError } = await supabase
+      .from('invoice_items')
+      .delete()
+      .eq('invoice_id', id)
+      .eq('tenant_id', tenantId);
+
+    if (deleteError) throw deleteError;
+
+    if (items.length > 0) {
+      const { error: insertError } = await supabase
+        .from('invoice_items')
+        .insert(normalizeItems(items, tenantId, 'invoice_id', id));
+
+      if (insertError) throw insertError;
+    }
+  }
+
+  return data as Invoice;
 }
 
-export async function deleteOrder(id: string | number, tenantId: string) {
+export async function deleteInvoice(id: string | number, tenantId: string) {
   const { error } = await supabase
-    .from('orders')
+    .from('invoices')
     .delete()
     .eq('id', id)
     .eq('tenant_id', tenantId);
@@ -578,76 +356,43 @@ export async function deleteOrder(id: string | number, tenantId: string) {
   return { success: true };
 }
 
-// Conversion functions
-export async function convertQuoteToOrder(quoteId: string | number, tenantId: string) {
-  // Get quote with items
+/** Zet een offerte om in een factuur, inclusief alle regels. */
+export async function convertQuoteToInvoice(quoteId: string | number, tenantId: string) {
   const quote = await getQuote(quoteId, tenantId);
 
-  // Generate order number
-  const orderNumber = `ORD-${Date.now()}`;
+  if (quote.converted_to_invoice_id) {
+    throw new Error('Deze offerte is al omgezet naar een factuur');
+  }
 
-  // Create order from quote
-  const order = await createOrder(
+  const items = (quote.quote_items || []).map((item: LineItem) => ({
+    description: item.description,
+    quantity: item.quantity,
+    unit: item.unit,
+    price: item.price,
+  }));
+
+  const { total } = calculateTotals(items, quote.tax_percentage, quote.discount_percentage);
+  const today = new Date();
+
+  const invoice = await createInvoice(
     {
       tenant_id: tenantId,
       customer_id: quote.customer_id,
-      order_number: orderNumber,
-      order_date: new Date().toISOString().split('T')[0],
-      total: quote.total,
-      status: 'pending',
+      invoice_date: today.toISOString().split('T')[0],
+      due_date: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      total,
+      status: 'draft',
       currency: quote.currency,
       tax_percentage: quote.tax_percentage,
       discount_percentage: quote.discount_percentage,
       notes: quote.notes,
-      quote_id: typeof quoteId === 'number' ? quoteId : parseInt(quoteId as string),
-    },
-    quote.quote_items.map((item: any) => ({
-      product_id: item.product.id,
-      quantity: item.quantity,
-      price: item.price,
-    }))
+      quote_id: typeof quoteId === 'number' ? quoteId : parseInt(quoteId as string, 10),
+    } as Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
+    items
   );
 
-  // Update quote to mark as converted
   await updateQuote(quoteId, tenantId, {
     status: 'approved',
-    converted_to_order_id: order.id,
-  });
-
-  return order;
-}
-
-export async function convertOrderToInvoice(orderId: string | number, tenantId: string) {
-  // Get order with items
-  const order = await getOrder(orderId, tenantId);
-
-  // Generate invoice number
-  const invoiceNumber = `INV-${Date.now()}`;
-
-  // Create invoice from order
-  const invoice = await createInvoice(
-    {
-      tenant_id: tenantId,
-      customer_id: order.customer_id,
-      invoice_number: invoiceNumber,
-      invoice_date: new Date().toISOString().split('T')[0],
-      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days
-      total: order.total,
-      status: 'draft',
-      currency: order.currency,
-      tax_percentage: order.tax_percentage,
-      discount_percentage: order.discount_percentage,
-    },
-    order.order_items.map((item: any) => ({
-      product_id: item.product.id,
-      quantity: item.quantity,
-      price: item.price,
-    }))
-  );
-
-  // Update order to mark as converted
-  await updateOrder(orderId, tenantId, {
-    status: 'completed',
     converted_to_invoice_id: invoice.id,
   });
 
@@ -660,7 +405,7 @@ export async function getNotes(tenantId: string, customerId?: number) {
     .from('notes')
     .select(`
       *,
-      customer:customers(id, name)
+      customer:customers(id, name, company_name)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -680,7 +425,7 @@ export async function getNote(id: string | number, tenantId: string) {
     .from('notes')
     .select(`
       *,
-      customer:customers(id, name, email)
+      customer:customers(id, name, company_name, email)
     `)
     .eq('id', id)
     .eq('tenant_id', tenantId)

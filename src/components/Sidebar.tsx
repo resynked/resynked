@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
-import { LayoutDashboard, Users, Package, FileText, FileCheck, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
 
 export default function Sidebar() {
   const router = useRouter();
@@ -61,17 +61,9 @@ export default function Sidebar() {
           <Users size={16} />
           <span>Klanten</span>
         </Link>
-        <Link href="/products" className={isActive('/products') || router.pathname.startsWith('/products') ? 'active' : ''}>
-          <Package size={16} />
-          <span>Producten</span>
-        </Link>
         <Link href="/quotes" className={isActive('/quotes') || router.pathname.startsWith('/quotes') ? 'active' : ''}>
           <FileText size={16} />
           <span>Offertes</span>
-        </Link>
-        <Link href="/orders" className={isActive('/orders') || router.pathname.startsWith('/orders') ? 'active' : ''}>
-          <FileCheck size={16} />
-          <span>Orderbevestigingen</span>
         </Link>
         <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''}>
           <ReceiptEuro size={16} />

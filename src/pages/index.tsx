@@ -1,41 +1,62 @@
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
-import ChatAssistant from '@/components/ChatAssistant';
+import Table from '@/components/Table';
 import OmzetChart from '@/components/OmzetChart';
+import { formatCurrency, formatDate } from '@/lib/utils';
+
+interface Document {
+  id: string;
+  customer: { name: string; company_name: string | null } | null;
+  total: number;
+  status: string;
+}
+
+interface OpenQuote extends Document {
+  quote_number: string;
+  valid_until: string;
+}
+
+interface OpenInvoice extends Document {
+  invoice_number: string | null;
+  due_date: string | null;
+}
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
-  const [stats, setStats] = useState({ customers: 0, products: 0, invoices: 0 });
+  const { status } = useSession();
+  const [quotes, setQuotes] = useState<OpenQuote[]>([]);
+  const [invoices, setInvoices] = useState<OpenInvoice[]>([]);
 
   useEffect(() => {
-    // Only fetch stats if authenticated
     if (status === 'authenticated') {
-      fetchStats();
+      fetchDocuments();
     }
   }, [status]);
 
-  const fetchStats = async () => {
+  const fetchDocuments = async () => {
     try {
-      const [customersRes, productsRes, invoicesRes] = await Promise.all([
-        fetch('/api/customers'),
-        fetch('/api/products'),
+      const [quotesRes, invoicesRes] = await Promise.all([
+        fetch('/api/quotes'),
         fetch('/api/invoices'),
       ]);
 
-      const customers = await customersRes.json();
-      const products = await productsRes.json();
-      const invoices = await invoicesRes.json();
+      const quotesData = await quotesRes.json();
+      const invoicesData = await invoicesRes.json();
 
-      setStats({
-        customers: customers.length || 0,
-        products: products.length || 0,
-        invoices: invoices.length || 0,
-      });
+      setQuotes(
+        (quotesData || []).filter((q: OpenQuote) => q.status === 'draft' || q.status === 'sent')
+      );
+      setInvoices(
+        (invoicesData || []).filter((i: OpenInvoice) => i.status === 'draft' || i.status === 'sent')
+      );
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching documents:', error);
     }
   };
+
+  const customerName = (document: Document) =>
+    document.customer?.company_name || document.customer?.name || '';
 
   return (
     <Layout>
@@ -44,12 +65,48 @@ export default function Dashboard() {
           <OmzetChart />
         </div>
       </div>
+
       <div className="grid two">
         <div className="block">
-          <h2>Notities</h2>
+          <h2>Openstaande offertes</h2>
+          {quotes.length === 0 ? (
+            <p>Geen openstaande offertes.</p>
+          ) : (
+            <Table headers={['Offerte #', 'Klant', 'Totaal', 'Geldig tot']}>
+              {quotes.map((quote) => (
+                <tr key={quote.id}>
+                  <td>
+                    <Link href={`/quotes/${quote.id}`}>{quote.quote_number}</Link>
+                  </td>
+                  <td>{customerName(quote)}</td>
+                  <td>{formatCurrency(quote.total)}</td>
+                  <td>{formatDate(quote.valid_until)}</td>
+                </tr>
+              ))}
+            </Table>
+          )}
         </div>
-        <div className="block chat">
-          <ChatAssistant />
+
+        <div className="block">
+          <h2>Openstaande facturen</h2>
+          {invoices.length === 0 ? (
+            <p>Geen openstaande facturen.</p>
+          ) : (
+            <Table headers={['Factuur #', 'Klant', 'Totaal', 'Vervaldatum']}>
+              {invoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>
+                    <Link href={`/invoices/${invoice.id}`}>
+                      {invoice.invoice_number || `#${invoice.id}`}
+                    </Link>
+                  </td>
+                  <td>{customerName(invoice)}</td>
+                  <td>{formatCurrency(invoice.total)}</td>
+                  <td>{formatDate(invoice.due_date)}</td>
+                </tr>
+              ))}
+            </Table>
+          )}
         </div>
       </div>
     </Layout>
