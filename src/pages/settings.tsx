@@ -145,46 +145,44 @@ export default function Settings() {
 
                     {activeTab === 'sjabloon' && (
                         <>
-                            <div className="form-section">
-                                <h2>Sjabloon</h2>
-                                <p>
-                                    Plak hier de HTML van je eigen offerte- en factuurontwerp. Alles wat vast is —
-                                    de zijbalk, kleuren, logo, paginanummers — schrijf je zelf. De plekken die met
-                                    de offerte meegroeien laat je leeg met een data-slot; die vult het systeem.
-                                </p>
-                            </div>
+                            <h2>Sjabloon</h2>
+                            <p>
+                                Plak hier de HTML van je eigen offerte- en factuurontwerp. Alles wat vast is —
+                                de zijbalk, kleuren, logo, paginanummers — schrijf je zelf. De plekken die met
+                                de offerte meegroeien laat je leeg met een data-slot; die vult het systeem.
+                            </p>
 
-                            <div className="form-section edit-holder">
-                                <h3>Plekken die het systeem vult</h3>
-                                <p>
-                                    Zet een leeg element neer met het juiste data-slot, bijvoorbeeld{' '}
-                                    <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
-                                </p>
-                                <ul>
-                                    <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
-                                    <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
-                                    <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
-                                    <li><strong>blokken</strong> — alle blokken met regels en subtotalen per BTW-tarief</li>
-                                    <li><strong>totaal</strong> — het eindbedrag</li>
-                                    <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
-                                    <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
-                                    <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
-                                </ul>
+                        
+                            <h3>Plekken die het systeem vult</h3>
+                            <p>
+                                Zet een leeg element neer met het juiste data-slot, bijvoorbeeld{' '}
+                                <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
+                            </p>
+                            <ul>
+                                <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
+                                <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
+                                <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
+                                <li><strong>blokken</strong> — alle blokken met regels en subtotalen per BTW-tarief</li>
+                                <li><strong>totaal</strong> — het eindbedrag</li>
+                                <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
+                                <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
+                                <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
+                            </ul>
 
-                                <h3>Losse waarden</h3>
-                                <p>
-                                    Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
-                                    <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
-                                </p>
-                                <ul>
-                                    <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
-                                    <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
-                                    <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
-                                </ul>
-                                <p>
-                                    Laat je een veld leeg, dan valt de offerte terug op de standaardweergave.
-                                </p>
-                            </div>
+                            <h3>Losse waarden</h3>
+                            <p>
+                                Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
+                                <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
+                            </p>
+                            <ul>
+                                <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
+                                <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
+                                <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
+                            </ul>
+                            <p>
+                                Laat je een veld leeg, dan valt de offerte terug op de standaardweergave.
+                            </p>
+                            
 
                             <div className="form-section">
                                 <div className="form-group">
