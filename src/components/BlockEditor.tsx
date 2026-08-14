@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { X, Copy, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, Copy } from 'lucide-react';
 import Select from '@/components/Select';
 import { UNITS } from '@/lib/constants';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
@@ -33,6 +33,7 @@ const discountOptions = [
 
 const ELEMENT_NAMEN: Record<ElementKind, string> = {
   gegevens: 'Gegevens',
+  kop: 'Kop',
   tekst: 'Tekst',
   prijstabel: 'Prijstabel',
 };
@@ -64,15 +65,6 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
       ...block,
       elements: [...block.elements.slice(0, index + 1), copy, ...block.elements.slice(index + 1)],
     });
-  };
-
-  const moveElement = (index: number, richting: -1 | 1) => {
-    const doel = index + richting;
-    if (doel < 0 || doel >= block.elements.length) return;
-
-    const elements = [...block.elements];
-    [elements[index], elements[doel]] = [elements[doel], elements[index]];
-    onChange({ ...block, elements });
   };
 
   const updateItem = (elementIndex: number, itemIndex: number, changes: Partial<LineItem>) => {
@@ -115,30 +107,6 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
             </div>
 
             <Link
-              className="action"
-              href=""
-              title="Omhoog"
-              onClick={(e) => {
-                e.preventDefault();
-                moveElement(elementIndex, -1);
-              }}
-            >
-              <ChevronUp size={16} />
-            </Link>
-
-            <Link
-              className="action"
-              href=""
-              title="Omlaag"
-              onClick={(e) => {
-                e.preventDefault();
-                moveElement(elementIndex, 1);
-              }}
-            >
-              <ChevronDown size={16} />
-            </Link>
-
-            <Link
               className="action copy"
               href=""
               title="Dupliceren"
@@ -163,8 +131,15 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
             </Link>
           </div>
 
-          {element.kind === 'gegevens' && (
-            <p>Toont de klant, het nummer en de datums van dit document.</p>
+          {element.kind === 'kop' && (
+            <div className="form-group">
+              <input
+                type="text"
+                value={element.body || ''}
+                onChange={(e) => updateElement(elementIndex, { body: e.target.value })}
+                placeholder="Bijvoorbeeld Aanvullende informatie & betalingsvoorwaarden"
+              />
+            </div>
           )}
 
           {element.kind === 'tekst' && (
@@ -321,6 +296,10 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
         <div className="form-row">
           <button type="button" className="button add-item" onClick={() => addElement('prijstabel')}>
             + Prijstabel
+          </button>
+
+          <button type="button" className="button add-item" onClick={() => addElement('kop')}>
+            + Kop
           </button>
 
           <button type="button" className="button add-item" onClick={() => addElement('tekst')}>

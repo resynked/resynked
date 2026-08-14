@@ -66,7 +66,7 @@ async function saveBlocks(
         block_id: blockId,
         tenant_id: tenantId,
         kind: element.kind,
-        body: element.kind === 'tekst' ? element.body || null : null,
+        body: element.kind === 'tekst' || element.kind === 'kop' ? element.body || null : null,
         tax_percentage: Number(element.tax_percentage) || 0,
         discount_percentage: Number(element.discount_percentage) || 0,
         position: elementIndex,

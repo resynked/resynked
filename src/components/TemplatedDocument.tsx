@@ -16,6 +16,8 @@ interface TemplatedDocumentProps {
   onSelect?: (slot: string) => void;
   /** Hoeveel keer een pagina met data-repeat herhaald moet worden */
   repeatCounts?: Record<string, number>;
+  /** De titel van elk blok, als haakje voor eigen opmaak per pagina */
+  repeatTitles?: string[];
 }
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -43,7 +45,7 @@ function fillPlaceholders(html: string, values: Record<string, string>): string 
  * elk prijsblok zijn eigen vel met eigen zijbalk, en telt een paginateller in
  * het sjabloon vanzelf door — ongeacht hoeveel blokken een offerte heeft.
  */
-function expandRepeats(doc: Document, counts: Record<string, number>) {
+function expandRepeats(doc: Document, counts: Record<string, number>, titles: string[]) {
   doc.querySelectorAll<HTMLElement>('[data-repeat]').forEach((sjabloon) => {
     const naam = sjabloon.getAttribute('data-repeat') || '';
     // Altijd minstens één pagina: die laatste is leeg en toont het plusje
@@ -52,6 +54,10 @@ function expandRepeats(doc: Document, counts: Record<string, number>) {
     for (let i = 0; i < aantal; i++) {
       const kopie = sjabloon.cloneNode(true) as HTMLElement;
       kopie.removeAttribute('data-repeat');
+
+      // Zo kan het sjabloon een pagina anders opmaken op zijn titel:
+      // .pagina[data-blok-titel="Algemene voorwaarden"] { ... }
+      kopie.setAttribute('data-blok-titel', titles[i] || '');
 
       if (i === aantal - 1) {
         // De laatste pagina is de plek om iets toe te voegen; bij het
@@ -77,12 +83,12 @@ function expandRepeats(doc: Document, counts: Record<string, number>) {
  * Haalt scripts en klikhandlers uit het sjabloon. Stijlen blijven staan,
  * want daar zit de hele vormgeving in.
  */
-function sanitize(html: string, repeatCounts: Record<string, number>): string {
+function sanitize(html: string, repeatCounts: Record<string, number>, repeatTitles: string[]): string {
   if (typeof window === 'undefined') return '';
 
   const doc = new DOMParser().parseFromString(html, 'text/html');
 
-  expandRepeats(doc, repeatCounts);
+  expandRepeats(doc, repeatCounts, repeatTitles);
 
   doc.querySelectorAll('script, iframe, object, embed').forEach((el) => el.remove());
 
@@ -117,6 +123,7 @@ export default function TemplatedDocument({
   activeSlot,
   onSelect,
   repeatCounts = {},
+  repeatTitles = [],
 }: TemplatedDocumentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [targets, setTargets] = useState<{ name: string; element: HTMLElement }[]>([]);
@@ -126,10 +133,10 @@ export default function TemplatedDocument({
 
   // Alleen opnieuw opschonen als er echt iets aan de inhoud verandert
   const valuesKey = JSON.stringify(values);
-  const repeatKey = JSON.stringify(repeatCounts);
+  const repeatKey = JSON.stringify([repeatCounts, repeatTitles]);
 
   useEffect(() => {
-    setSafeHtml(sanitize(fillPlaceholders(html, values), repeatCounts));
+    setSafeHtml(sanitize(fillPlaceholders(html, values), repeatCounts, repeatTitles));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [html, valuesKey, repeatKey]);
 

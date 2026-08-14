@@ -159,7 +159,7 @@ CREATE TABLE quote_elements (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   block_id BIGINT NOT NULL REFERENCES quote_blocks(id) ON DELETE CASCADE,
   kind TEXT NOT NULL DEFAULT 'tekst'
-    CHECK (kind IN ('gegevens', 'tekst', 'prijstabel')),
+    CHECK (kind IN ('gegevens', 'kop', 'tekst', 'prijstabel')),
   body TEXT,
   tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
   discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
@@ -236,7 +236,7 @@ CREATE TABLE invoice_elements (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   block_id BIGINT NOT NULL REFERENCES invoice_blocks(id) ON DELETE CASCADE,
   kind TEXT NOT NULL DEFAULT 'tekst'
-    CHECK (kind IN ('gegevens', 'tekst', 'prijstabel')),
+    CHECK (kind IN ('gegevens', 'kop', 'tekst', 'prijstabel')),
   body TEXT,
   tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
   discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,

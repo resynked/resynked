@@ -21,7 +21,7 @@ export const emptyHeading = (): LineItem => ({
 /** Een vers element van de gekozen soort. */
 export const emptyElement = (kind: ElementKind): DocumentElement => ({
   kind,
-  body: kind === 'tekst' ? '' : null,
+  body: kind === 'tekst' || kind === 'kop' ? '' : null,
   tax_percentage: 21,
   discount_percentage: 0,
   items: kind === 'prijstabel' ? [emptyItem()] : [],

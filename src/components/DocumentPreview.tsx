@@ -180,6 +180,8 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
             </>
           )}
 
+          {element.kind === 'kop' && <h2>{element.body || 'Kop toevoegen'}</h2>}
+
           {element.kind === 'tekst' &&
             (element.body ? <FormattedText text={element.body} /> : <p>Tekst toevoegen</p>)}
 
@@ -311,6 +313,7 @@ export default function DocumentPreview({
           if (index < blocks.length) onSelectBlock(index);
         }}
         repeatCounts={{ blok: blocks.length + 1 }}
+        repeatTitles={blocks.map(block => block.title)}
         slots={slots}
       />
     );
