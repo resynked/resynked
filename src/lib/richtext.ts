@@ -124,6 +124,75 @@ export function sanitizeRichText(html: string): string {
   return result + escapeText(withoutComments.slice(readUpTo));
 }
 
+/** Tags die een blok op zichzelf zijn; de rest hoort binnen een blok te staan. */
+const BLOCK_TAGS = new Set(['p', 'h2', 'h3', 'ul', 'ol', 'blockquote']);
+
+/**
+ * Zet tekst die buiten elk blok staat in een alinea.
+ *
+ * Begin je te typen in een leeg vel, dan zet de browser die eerste regel als
+ * losse tekst neer zonder omhullende tag — pas bij Enter maakt hij een <p>. In
+ * het document mist die eerste regel daardoor zijn alinea-afstand.
+ */
+function wrapLooseText(html: string): string {
+  let output = '';
+  let loose = '';
+  let depth = 0;
+  let readUpTo = 0;
+  let match: RegExpExecArray | null;
+
+  const flushLoose = () => {
+    if (loose.trim() !== '') output += `<p>${loose}</p>`;
+    loose = '';
+  };
+
+  // Binnen een blok gaat alles rechtstreeks mee; buiten een blok sparen we op
+  const push = (chunk: string) => {
+    if (depth > 0) output += chunk;
+    else loose += chunk;
+  };
+
+  TAG_PATTERN.lastIndex = 0;
+
+  while ((match = TAG_PATTERN.exec(html)) !== null) {
+    push(html.slice(readUpTo, match.index));
+
+    const tag = match[2].toLowerCase();
+    const isClosing = !!match[1];
+
+    if (BLOCK_TAGS.has(tag)) {
+      if (isClosing) {
+        depth = Math.max(0, depth - 1);
+      } else {
+        if (depth === 0) flushLoose();
+        depth++;
+      }
+      output += match[0];
+    } else {
+      push(match[0]);
+    }
+
+    readUpTo = TAG_PATTERN.lastIndex;
+  }
+
+  push(html.slice(readUpTo));
+  flushLoose();
+
+  return output;
+}
+
+/**
+ * Ruimt op wat de browser tijdens het typen achterlaat: alinea's zonder enige
+ * inhoud, losse tekst buiten een blok, en witregels aan het eind. Een <p><br></p>
+ * midden in de tekst blijft staan — dat is een witregel die iemand zelf heeft
+ * gemaakt door twee keer Enter te geven.
+ */
+export function tidyRichText(html: string): string {
+  const withoutEmpty = html.replace(/<p><\/p>/g, '');
+
+  return wrapLooseText(withoutEmpty).replace(/(?:<p>(?:<br>|\s)*<\/p>|<br>|\s)+$/g, '');
+}
+
 /** Of er al opmaak in de waarde zit, of dat het nog platte tekst is. */
 export function isRichText(value: string): boolean {
   return /<(p|br|strong|b|em|i|u|s|strike|h2|h3|ul|ol|li|a|blockquote|div)\b/i.test(value);
@@ -168,7 +237,7 @@ export function plainTextToRichText(text: string): string {
 
 /** De opmaak zoals hij getoond mag worden, ongeacht hoe hij is opgeslagen. */
 export function toDisplayHtml(value: string): string {
-  return isRichText(value) ? sanitizeRichText(value) : plainTextToRichText(value);
+  return tidyRichText(isRichText(value) ? sanitizeRichText(value) : plainTextToRichText(value));
 }
 
 /** Of er na het weghalen van alle tags nog tekst overblijft. */

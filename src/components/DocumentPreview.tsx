@@ -27,12 +27,29 @@ interface DocumentPreviewProps {
 }
 
 /**
- * De tekst van een tekstelement, met zijn opmaak. Wat de editor oplevert is
- * HTML; een tekst van vóór de editor staat als platte tekst in de database en
- * wordt hier omgezet. Beide gaan langs de opschoning van richtext.
+ * De tekst van een tekstelement, met zijn opmaak.
+ *
+ * Wat de editor oplevert is HTML; een tekst van vóór de editor staat als platte
+ * tekst in de database en wordt omgezet. Beide gaan langs de opschoning van
+ * richtext. De opmaak hangt aan het element zelf, zodat er geen tweede div om
+ * heen komt: die hoort bij het blok en niet bij de tekst.
  */
-export function FormattedText({ text }: { text: string }) {
-  return <div className="rich-text" dangerouslySetInnerHTML={{ __html: toDisplayHtml(text) }} />;
+function TextElement({ body }: { body: string | null }) {
+  if (!body || isRichTextEmpty(body)) {
+    return (
+      <div data-element="tekst" className="rich-text">
+        <p>Tekst toevoegen</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-element="tekst"
+      className="rich-text"
+      dangerouslySetInnerHTML={{ __html: toDisplayHtml(body) }}
+    />
+  );
 }
 
 /** De tabel met regels en de subtotalen van één prijstabel. */
@@ -118,7 +135,10 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
 
   return (
     <>
-      {block.elements.map((element, index) => (
+      {block.elements.map((element, index) =>
+        element.kind === 'tekst' ? (
+          <TextElement key={index} body={element.body} />
+        ) : (
         <div key={index} data-element={element.kind}>
           {element.kind === 'gegevens' && (
             <>
@@ -151,16 +171,10 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
 
           {element.kind === 'kop' && <h2>{element.body || 'Kop toevoegen'}</h2>}
 
-          {element.kind === 'tekst' &&
-            (element.body && !isRichTextEmpty(element.body) ? (
-              <FormattedText text={element.body} />
-            ) : (
-              <p>Tekst toevoegen</p>
-            ))}
-
           {element.kind === 'prijstabel' && <PriceTable element={element} currency={currency} />}
         </div>
-      ))}
+        )
+      )}
     </>
   );
 }

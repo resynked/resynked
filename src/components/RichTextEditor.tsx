@@ -16,7 +16,13 @@ import {
   RemoveFormatting,
   X,
 } from 'lucide-react';
-import { isRichText, isRichTextEmpty, plainTextToRichText, sanitizeRichText } from '@/lib/richtext';
+import {
+  isRichText,
+  isRichTextEmpty,
+  plainTextToRichText,
+  sanitizeRichText,
+  tidyRichText,
+} from '@/lib/richtext';
 
 interface RichTextEditorProps {
   /** De opmaak als HTML; platte tekst van een oude offerte mag er ook in */
@@ -131,10 +137,21 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     }
   }, []);
 
-  const emit = useCallback(() => {
-    const editable = editableRef.current;
-    if (editable) onChange(sanitizeRichText(editable.innerHTML));
-  }, [onChange]);
+  /**
+   * Tijdens het typen gaat de opmaak er ongemoeid door. Opruimen kan pas als je
+   * het vel verlaat: lege alinea's weghalen terwijl iemand nog aan het typen is
+   * zou de inhoud onder de cursor vandaan trekken.
+   */
+  const emit = useCallback(
+    (tidy = false) => {
+      const editable = editableRef.current;
+      if (!editable) return;
+
+      const clean = sanitizeRichText(editable.innerHTML);
+      onChange(tidy ? tidyRichText(clean) : clean);
+    },
+    [onChange]
+  );
 
   /** Leest bij de browser op welke knoppen nu aan staan. */
   const refreshStates = useCallback(() => {
@@ -304,8 +321,8 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         aria-multiline="true"
         aria-label="Tekst"
         data-placeholder={placeholder || 'Begin met typen...'}
-        onInput={emit}
-        onBlur={emit}
+        onInput={() => emit()}
+        onBlur={() => emit(true)}
         onKeyUp={refreshStates}
         onMouseUp={refreshStates}
         // Plakken gaat als platte tekst naar binnen: opmaak uit Word of van een
