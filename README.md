@@ -38,7 +38,9 @@ RLS-policies op de tabellen vormen de tweede laag.
    ```
 
 3. Draai [`SCHEMA.sql`](SCHEMA.sql) in de Supabase SQL-editor; dat bouwt de
-   hele database op
+   hele database op. Werk je een bestaande database bij, draai dan
+   [`MIGRATION.sql`](MIGRATION.sql) — dat is het enige migratiebestand en mag
+   zo vaak gedraaid worden als nodig
 4. `npm run dev` en maak via `/register` het eerste account aan — daarmee
    ontstaat meteen de tenant
 

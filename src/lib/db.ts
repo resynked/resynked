@@ -88,7 +88,8 @@ async function saveBlocks(
     .select('id, block_id, position');
 
   if (elementError) {
-    throw isMissingElementsTable(elementError) ? new Error(MIGRATION_NEEDED) : elementError;
+    console.error(`Elementen van ${soort} ${parentId} niet op te slaan —`, elementError);
+    throw describeElementError(elementError) || elementError;
   }
 
   // Terugkoppelen op de combinatie blok en plek binnen dat blok
@@ -148,8 +149,8 @@ const ITEM_COLUMNS = 'id, description, is_heading, quantity, unit, price, total,
 const CUSTOMER_SUMMARY = 'id, name, first_name, middle_name, last_name, company_name, customer_number, email';
 
 /**
- * PostgREST kent de elementen-tabellen niet als MIGRATION-elementen.sql nog
- * niet gedraaid heeft: dan komt er 42P01 (tabel bestaat niet) of PGRST200
+ * PostgREST kent de elementen-tabellen niet als MIGRATION.sql nog niet
+ * gedraaid heeft: dan komt er 42P01 (tabel bestaat niet) of PGRST200
  * (geen relatie gevonden) terug in plaats van rijen.
  */
 function isMissingElementsTable(error: any): boolean {
@@ -157,7 +158,26 @@ function isMissingElementsTable(error: any): boolean {
 }
 
 const MIGRATION_NEEDED =
-  'De database mist de elementen-tabellen. Draai MIGRATION-elementen.sql in de Supabase SQL-editor.';
+  'De database mist de elementen-tabellen. Draai MIGRATION.sql in de Supabase SQL-editor.';
+
+const KIND_NOT_ALLOWED =
+  'De database kent nog niet alle elementtypes. Draai MIGRATION.sql in de Supabase SQL-editor.';
+
+/**
+ * Maakt van een schemafout bij het opslaan van elementen een melding die zegt
+ * wat er te doen valt, in plaats van de kale tekst van Postgres. Geeft null
+ * terug als de fout niets met het schema te maken heeft.
+ */
+function describeElementError(error: any): Error | null {
+  if (isMissingElementsTable(error)) return new Error(MIGRATION_NEEDED);
+
+  // 23514 is een geweigerde CHECK. In de praktijk is dat een 'kind' dat de
+  // database nog niet toestaat omdat zijn check ouder is dan de code; een
+  // onbekend type is er dan al door validateBlocks uitgehaald.
+  if (error?.code === '23514') return new Error(KIND_NOT_ALLOWED);
+
+  return null;
+}
 
 /**
  * Haalt de blokken van een offerte of factuur op, met de elementen en de regels
@@ -183,8 +203,8 @@ async function fetchBlocks(soort: Soort, parentId: number | string, tenantId: st
 }
 
 /**
- * Leest de blokken zoals ze eruitzagen vóór MIGRATION-elementen.sql: een blok
- * was zelf tekst of prijstabel, en de regels hingen aan het blok. Elk blok
+ * Leest de blokken zoals ze eruitzagen vóór MIGRATION.sql: een blok was zelf
+ * tekst of prijstabel, en de regels hingen aan het blok. Elk blok
  * wordt hier één element — precies wat de migratie ook doet — zodat een offerte
  * uit een nog niet bijgewerkte database toch te openen is.
  */

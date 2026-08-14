@@ -1,5 +1,8 @@
 import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from './supabase';
 
+/** De elementtypes die een blok mag bevatten, gelijk aan de CHECK in de database. */
+export const ELEMENT_KINDS: ElementKind[] = ['gegevens', 'kop', 'tekst', 'prijstabel'];
+
 /** Een verse prijsregel. */
 export const emptyItem = (): LineItem => ({
   description: '',
@@ -92,6 +95,11 @@ export function validateBlocks(blocks: unknown): string | null {
     const elements = Array.isArray(block.elements) ? block.elements : [];
 
     for (const element of elements) {
+      // Hetzelfde rijtje als de CHECK op quote_elements en invoice_elements
+      if (!ELEMENT_KINDS.includes(element.kind)) {
+        return `Onbekend elementtype "${element.kind}" in "${block.title || 'zonder naam'}"`;
+      }
+
       if (element.kind !== 'prijstabel') continue;
 
       const items = Array.isArray(element.items) ? element.items : [];
