@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Select from '@/components/Select';
 import DocumentBlocks from '@/components/DocumentBlocks';
-import DocumentPreview from '@/components/DocumentPreview';
+import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
@@ -114,8 +114,7 @@ export default function EditQuote() {
     label: getCustomerDisplayName(c),
   }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError('');
 
     const problem = validateBlocks(formData.blocks);
@@ -210,7 +209,7 @@ export default function EditQuote() {
           <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
             Annuleren
           </button>
-          <button type="submit" form="quote-form" className="button" disabled={isLoading}>
+          <button type="button" className="button" onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? 'Bijwerken...' : 'Bijwerken'}
           </button>
         </div>
@@ -218,134 +217,138 @@ export default function EditQuote() {
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="grid two right-2fr">
-        <div className="block">
-          <form id="quote-form" onSubmit={handleSubmit}>
-            <div className="form-section">
-              <div className="form-group">
-                <label htmlFor="quote_number">Offertenummer</label>
-                <input
-                  id="quote_number"
-                  type="text"
-                  value={formData.quote_number}
-                  onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
-                  placeholder="Offertenummer"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-section">
-              <div className="form-row">
+      <DocumentEditor
+        title="Offerte"
+        meta={[
+          { label: 'Offertenummer', value: formData.quote_number },
+          { label: 'Offertedatum', value: formatDate(formData.quote_date) },
+          { label: 'Geldig tot', value: formatDate(formData.valid_until) },
+        ]}
+        customer={selectedCustomer}
+        blocks={formData.blocks}
+        currency={formData.currency}
+        introText={formData.intro_text}
+        notes={formData.notes}
+        panels={{
+          customer: {
+            title: 'Klant',
+            content: (
+              <div className="form-section">
                 <div className="form-group">
-                  <label htmlFor="quote_date">Offertedatum</label>
-                  <input
-                    id="quote_date"
-                    type="date"
-                    value={formData.quote_date}
-                    onChange={(e) => setFormData({ ...formData, quote_date: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="valid_until">Geldig tot</label>
-                  <input
-                    id="valid_until"
-                    type="date"
-                    value={formData.valid_until}
-                    onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-                    required
+                  <label>Klant</label>
+                  <Select
+                    value={customerOptions.find(o => o.value === formData.customer_id) || null}
+                    onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
+                    options={customerOptions}
+                    placeholder="Selecteer klant..."
                   />
                 </div>
               </div>
-            </div>
+            ),
+          },
+          details: {
+            title: 'Offertegegevens',
+            content: (
+              <>
+                <div className="form-section">
+                  <div className="form-group">
+                    <label htmlFor="quote_number">Offertenummer</label>
+                    <input
+                      id="quote_number"
+                      type="text"
+                      value={formData.quote_number}
+                      onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
+                      placeholder="Offertenummer"
+                    />
+                  </div>
+                </div>
 
-            <div className="form-section">
-              <div className="form-group">
-                <label htmlFor="status">Status</label>
-                <Select
-                  value={statusOptions.find(o => o.value === formData.status) || null}
-                  onChange={(option) => setFormData({ ...formData, status: option?.value || 'draft' })}
-                  options={statusOptions}
-                />
+                <div className="form-section">
+                  <div className="form-group">
+                    <label htmlFor="quote_date">Offertedatum</label>
+                    <input
+                      id="quote_date"
+                      type="date"
+                      value={formData.quote_date}
+                      onChange={(e) => setFormData({ ...formData, quote_date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="valid_until">Geldig tot</label>
+                    <input
+                      id="valid_until"
+                      type="date"
+                      value={formData.valid_until}
+                      onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="form-group">
+                    <label>Status</label>
+                    <Select
+                      value={statusOptions.find(o => o.value === formData.status) || null}
+                      onChange={(option) => setFormData({ ...formData, status: option?.value || 'draft' })}
+                      options={statusOptions}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Valuta</label>
+                    <Select
+                      value={currencyOptions.find(o => o.value === formData.currency) || null}
+                      onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
+                      options={currencyOptions}
+                    />
+                  </div>
+                </div>
+              </>
+            ),
+          },
+          intro: {
+            title: 'Begeleidende tekst',
+            content: (
+              <div className="form-section">
+                <div className="form-group">
+                  <textarea
+                    value={formData.intro_text}
+                    onChange={(e) => setFormData({ ...formData, intro_text: e.target.value })}
+                    placeholder="Geachte heer/mevrouw, hartelijk dank voor het vertrouwen..."
+                    rows={12}
+                  />
+                </div>
               </div>
-            </div>
-
-            <div className="form-section">
-              <h3>Klantgegevens</h3>
-              <div className="form-group">
-                <Select
-                  value={customerOptions.find(o => o.value === formData.customer_id) || null}
-                  onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
-                  options={customerOptions}
-                  placeholder="Selecteer klant..."
-                />
+            ),
+          },
+          blocks: {
+            title: 'Blokken',
+            content: (
+              <DocumentBlocks
+                blocks={formData.blocks}
+                onChange={(blocks) => setFormData({ ...formData, blocks })}
+              />
+            ),
+          },
+          notes: {
+            title: 'Opmerkingen',
+            content: (
+              <div className="form-section">
+                <div className="form-group">
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Eventuele opmerkingen..."
+                    rows={8}
+                  />
+                </div>
               </div>
-            </div>
+            ),
+          },
+        }}
+      />
 
-            <div className="form-section">
-              <div className="form-group">
-                <label htmlFor="intro_text">Begeleidende tekst</label>
-                <textarea
-                  id="intro_text"
-                  value={formData.intro_text}
-                  onChange={(e) => setFormData({ ...formData, intro_text: e.target.value })}
-                  placeholder="Geachte heer/mevrouw, hartelijk dank voor het vertrouwen..."
-                  rows={6}
-                />
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h3>Blokken</h3>
-
-              <div className="form-group">
-                <label>Valuta</label>
-                <Select
-                  value={currencyOptions.find(o => o.value === formData.currency) || null}
-                  onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
-                  options={currencyOptions}
-                />
-              </div>
-            </div>
-
-            <DocumentBlocks
-              blocks={formData.blocks}
-              onChange={(blocks) => setFormData({ ...formData, blocks })}
-            />
-
-            <div className="form-section">
-              <div className="form-group">
-                <label htmlFor="notes">Opmerkingen</label>
-                <textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Eventuele opmerkingen..."
-                  rows={4}
-                />
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <div className="block">
-          <DocumentPreview
-            title="Offerte"
-            meta={[
-              { label: 'Offertenummer', value: formData.quote_number },
-              { label: 'Offertedatum', value: formatDate(formData.quote_date) },
-              { label: 'Geldig tot', value: formatDate(formData.valid_until) },
-            ]}
-            customer={selectedCustomer}
-            blocks={formData.blocks}
-            currency={formData.currency}
-            introText={formData.intro_text}
-            notes={formData.notes}
-          />
-        </div>
-      </div>
     </Layout>
   );
 }

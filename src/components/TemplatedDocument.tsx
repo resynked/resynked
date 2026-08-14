@@ -8,6 +8,12 @@ interface TemplatedDocumentProps {
   values: Record<string, string>;
   /** Inhoud voor de plekken met data-slot, die met de offerte meegroeien */
   slots: Record<string, ReactNode>;
+  /** Label boven een aanklikbaar onderdeel, per slot */
+  labels?: Record<string, string>;
+  /** Welk onderdeel op dit moment bewerkt wordt */
+  activeSlot?: string | null;
+  /** Aangeroepen als er op een onderdeel geklikt wordt */
+  onSelect?: (slot: string) => void;
 }
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -64,7 +70,14 @@ function sanitize(html: string): string {
  * data-slot met echte inhoud. Het sjabloon bepaalt de vormgeving, het
  * systeem levert de regels — zo blijft een lange offerte netjes doorlopen.
  */
-export default function TemplatedDocument({ html, values, slots }: TemplatedDocumentProps) {
+export default function TemplatedDocument({
+  html,
+  values,
+  slots,
+  labels = {},
+  activeSlot,
+  onSelect,
+}: TemplatedDocumentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [targets, setTargets] = useState<{ name: string; element: HTMLElement }[]>([]);
 
@@ -96,6 +109,32 @@ export default function TemplatedDocument({ html, values, slots }: TemplatedDocu
 
     setTargets(found);
   }, [safeHtml]);
+
+  // Elk onderdeel van het sjabloon wordt aanklikbaar om te bewerken
+  useEffect(() => {
+    if (!onSelect) return;
+
+    const cleanups = targets.map(({ name, element }) => {
+      const handleClick = (event: MouseEvent) => {
+        event.stopPropagation();
+        onSelect(name);
+      };
+
+      element.classList.add('editable-region');
+      element.setAttribute('data-label', labels[name] || name);
+      element.addEventListener('click', handleClick);
+
+      return () => element.removeEventListener('click', handleClick);
+    });
+
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [targets, labels, onSelect]);
+
+  useEffect(() => {
+    targets.forEach(({ name, element }) => {
+      element.classList.toggle('active', name === activeSlot);
+    });
+  }, [targets, activeSlot]);
 
   return (
     <>

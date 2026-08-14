@@ -18,7 +18,23 @@ interface DocumentPreviewProps {
   currency?: string;
   introText?: string;
   notes?: string;
+  /** Welk onderdeel op dit moment bewerkt wordt */
+  activeSlot?: string | null;
+  /** Aangeroepen als er in het document op een onderdeel geklikt wordt */
+  onSelect?: (slot: string) => void;
 }
+
+/** Elk aanklikbaar onderdeel hoort bij een paneel met de bijbehorende velden. */
+export const SLOT_PANELS: Record<string, string> = {
+  klantgegevens: 'customer',
+  kenmerken: 'details',
+  brief: 'intro',
+  blokken: 'blocks',
+  tekstblokken: 'blocks',
+  prijsblokken: 'blocks',
+  totaal: 'blocks',
+  opmerkingen: 'notes',
+};
 
 /**
  * Zet een tekstblok om naar opmaak: een regel die met ## begint wordt een
@@ -161,8 +177,39 @@ export default function DocumentPreview({
   currency = 'EUR',
   introText,
   notes,
+  activeSlot,
+  onSelect,
 }: DocumentPreviewProps) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
+
+  const labels: Record<string, string> = {
+    klantgegevens: 'Klant',
+    kenmerken: title === 'Offerte' ? 'Offertegegevens' : 'Factuurgegevens',
+    brief: 'Begeleidende tekst',
+    blokken: 'Blokken',
+    tekstblokken: 'Blokken',
+    prijsblokken: 'Blokken',
+    totaal: 'Blokken',
+    opmerkingen: 'Opmerkingen',
+  };
+
+  /** Maakt een onderdeel van het document aanklikbaar om te bewerken. */
+  const Region = ({ slot, children }: { slot: string; children: React.ReactNode }) => {
+    if (!onSelect) return <>{children}</>;
+
+    return (
+      <div
+        className={`editable-region${activeSlot === slot ? ' active' : ''}`}
+        data-label={labels[slot] || slot}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSelect(slot);
+        }}
+      >
+        {children}
+      </div>
+    );
+  };
 
   useEffect(() => {
     fetch('/api/tenant')
@@ -214,6 +261,9 @@ export default function DocumentPreview({
       <TemplatedDocument
         html={template}
         values={values}
+        labels={labels}
+        activeSlot={activeSlot}
+        onSelect={onSelect}
         slots={{
           klantgegevens: (
             <>
@@ -268,49 +318,55 @@ export default function DocumentPreview({
         </div>
       </div>
 
-      {customerLines.length > 0 && (
+      <Region slot="klantgegevens">
         <div className="invoice-customer-info">
-          {customerLines.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
+          {customerLines.length > 0 ? (
+            customerLines.map((line, i) => <div key={i}>{line}</div>)
+          ) : (
+            <div>Nog geen klant gekozen</div>
+          )}
         </div>
-      )}
+      </Region>
 
       <h1 className="invoice-title">{title}</h1>
 
-      <div className="invoice-data">
-        {meta
-          .filter(row => row.value)
-          .map(row => (
-            <div key={row.label}>
-              {row.label}: {row.value}
-            </div>
-          ))}
-      </div>
+      <Region slot="kenmerken">
+        <div className="invoice-data">
+          {meta
+            .filter(row => row.value)
+            .map(row => (
+              <div key={row.label}>
+                {row.label}: {row.value}
+              </div>
+            ))}
+        </div>
+      </Region>
 
-      {introText && (
+      <Region slot="brief">
         <div className="invoice-notes">
-          <FormattedText text={introText} />
+          {introText ? <FormattedText text={introText} /> : <p>Begeleidende tekst toevoegen</p>}
         </div>
-      )}
+      </Region>
 
-      <BlocksView blocks={blocks} currency={currency} />
+      <Region slot="blokken">
+        <BlocksView blocks={blocks} currency={currency} />
 
-      {priceBlocks.length > 1 && (
-        <div className="invoice-total">
-          <div className="invoice-total-row total-final">
-            <span>Totale prijs</span>
-            <span>{formatCurrency(documentTotal, currency)}</span>
+        {priceBlocks.length > 1 && (
+          <div className="invoice-total">
+            <div className="invoice-total-row total-final">
+              <span>Totale prijs</span>
+              <span>{formatCurrency(documentTotal, currency)}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Region>
 
-      {notes && (
+      <Region slot="opmerkingen">
         <div className="invoice-notes">
           <strong>Opmerkingen:</strong>
-          <p>{notes}</p>
+          <p>{notes || 'Opmerkingen toevoegen'}</p>
         </div>
-      )}
+      </Region>
     </div>
   );
 }

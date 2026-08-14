@@ -170,6 +170,22 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .block.page-navigation .titel {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
 .content .block.page-navigation nav:last-child {border: 0;}
 
+/* Document met een paneel ernaast dat opengaat als je een onderdeel aanklikt */
+.content .grid:has(.block.editor-panel) {grid-template-columns: 420px 1fr;}
+.content .block.editor-panel {max-height: calc(100vh - 140px); overflow-y: auto;}
+.content .block.editor-panel .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
+.content .block.editor-panel .header h2 {margin: 0;}
+.content .block.editor-panel .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
+.content .block.editor-panel .header button:hover {color: var(--font-color1);}
+
+/* Aanklikbare onderdelen in het document */
+.editable-region {position: relative; cursor: pointer; border-radius: var(--border-radius1); outline: 2px solid transparent; outline-offset: 6px; transition: .2s all ease;}
+.editable-region:hover {outline-color: var(--color5); background: var(--color3);}
+.editable-region.active {outline-color: var(--color5); background: var(--color3);}
+.editable-region::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color5); color: var(--color2); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
+.editable-region:hover::after, .editable-region.active::after {opacity: 1;}
+.editable-region:empty {min-height: 20px;}
+
 .table-container {background:var(--color2); border-radius: var(--border-radius1); border: 1px solid var(--border-color);}
 .table-container .product-table {width: 100%; border-collapse: collapse;}
 .table-container .product-table thead {background-color: var(--color3);}
