@@ -3,16 +3,22 @@ import Layout from '@/components/Layout';
 import Link from 'next/link';
 import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import FileUpload from '@/components/FileUpload';
 import type { Tenant } from '@/lib/supabase';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
 const MAX_LOGO_BYTES = 300 * 1024;
+
+const LOGO_ACCEPT = 'image/svg+xml,image/png,image/jpeg';
 
 export default function Settings() {
     const toast = useToast();
     const [activeTab, setActiveTab] = useState('account');
     const [isSaving, setIsSaving] = useState(false);
     const [logo, setLogo] = useState('');
+    // Naam en grootte kennen we alleen van een logo dat net gekozen is; van
+    // een opgeslagen logo is enkel de data-URL bewaard
+    const [logoFile, setLogoFile] = useState<{ name: string; size: number } | null>(null);
     const [templates, setTemplates] = useState({
         quote_template_html: '',
         invoice_template_html: '',
@@ -57,19 +63,13 @@ export default function Settings() {
 
     // Het logo wordt als afbeelding in de offerte meegestuurd, dus het gaat
     // als data-URL de database in. Zo hoeft de PDF straks niets op te halen.
-    const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        if (file.size > MAX_LOGO_BYTES) {
-            toast.error('Te groot', 'Kies een logo van maximaal 300 kB. Een SVG is meestal een paar kB.');
-            return;
-        }
-
+    // De grens op de grootte controleert FileUpload al.
+    const handleLogoSelect = (file: File) => {
         const reader = new FileReader();
         reader.onload = () => {
             const dataUrl = String(reader.result);
             setLogo(dataUrl);
+            setLogoFile({ name: file.name, size: file.size });
             save({ logo_url: dataUrl }, 'Logo opgeslagen');
         };
         reader.onerror = () => toast.error('Fout', 'Het bestand kon niet gelezen worden');
@@ -78,6 +78,7 @@ export default function Settings() {
 
     const handleLogoRemove = () => {
         setLogo('');
+        setLogoFile(null);
         save({ logo_url: null }, 'Logo verwijderd');
     };
 
@@ -98,7 +99,7 @@ export default function Settings() {
             <div className="grid">
                 <div className="block page-navigation">
                     <nav>
-                        <span className="titel">Algemeen</span>
+                        <span className="section-title">Algemeen</span>
                         <Link
                             href="#account"
                             className={`${activeTab === 'account' ? 'active' : ''}`}
@@ -156,7 +157,7 @@ export default function Settings() {
                         </Link>
                     </nav>
                     <nav>
-                        <span className="titel">API instellingen</span>
+                        <span className="section-title">API instellingen</span>
                         <Link
                             href="#email"
                             className={`${activeTab === 'email' ? 'active' : ''}`}
@@ -183,35 +184,17 @@ export default function Settings() {
                                     Een SVG blijft het scherpst bij het afdrukken.
                                 </p>
 
-                                {logo && (
-                                    <div className="form-section edit-holder">
-                                        <img src={logo} alt="Logo" style={{ maxWidth: '240px', height: 'auto' }} />
-                                    </div>
-                                )}
-
-                                <div className="form-row">
-                                    <label className="button" htmlFor="logo-upload">
-                                        {logo ? 'Ander logo kiezen' : 'Logo kiezen'}
-                                    </label>
-                                    <input
-                                        id="logo-upload"
-                                        type="file"
-                                        accept="image/svg+xml,image/png,image/jpeg"
-                                        onChange={handleLogoChange}
-                                        style={{ display: 'none' }}
-                                    />
-
-                                    {logo && (
-                                        <button
-                                            type="button"
-                                            className="button negative"
-                                            onClick={handleLogoRemove}
-                                            disabled={isSaving}
-                                        >
-                                            Verwijderen
-                                        </button>
-                                    )}
-                                </div>
+                                <FileUpload
+                                    value={logo}
+                                    fileName={logoFile?.name || (logo ? 'Huidig logo' : null)}
+                                    fileSize={logoFile?.size ?? null}
+                                    accept={LOGO_ACCEPT}
+                                    maxBytes={MAX_LOGO_BYTES}
+                                    hint="SVG, PNG of JPG, maximaal 300 kB"
+                                    disabled={isSaving}
+                                    onSelect={handleLogoSelect}
+                                    onRemove={handleLogoRemove}
+                                />
                             </div>
                         </>
                     )}

@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import type { Customer, Note } from '@/lib/supabase';
-import { getCustomerDisplayName } from '@/lib/utils';
+import { getCustomerOptionLabel } from '@/lib/utils';
 import { SkeletonForm } from '@/components/Skeleton';
 
 interface NoteWithCustomer extends Note {
@@ -93,7 +93,7 @@ export default function EditNote() {
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: getCustomerDisplayName(c),
+    label: getCustomerOptionLabel(c),
   })) || [];
 
   if (isFetching) {

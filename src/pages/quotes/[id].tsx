@@ -7,8 +7,8 @@ import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
-import { validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { copyBlocks, validateBlocks } from '@/lib/blocks';
+import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { SkeletonCard } from '@/components/Skeleton';
 
@@ -74,20 +74,7 @@ export default function EditQuote() {
         customer_id: String(quote.customer_id),
         currency: quote.currency || 'EUR',
         status: quote.status,
-        blocks: (quote.blocks || []).map((block: any) => ({
-          title: block.title || '',
-          kind: block.kind || 'prijsopgave',
-          body: block.body || '',
-          tax_percentage: Number(block.tax_percentage) || 0,
-          discount_percentage: Number(block.discount_percentage) || 0,
-          items: (block.items || []).map((item: any) => ({
-            description: item.description || '',
-            is_heading: !!item.is_heading,
-            quantity: Number(item.quantity) || 0,
-            unit: item.unit || null,
-            price: Number(item.price) || 0,
-          })),
-        })),
+        blocks: copyBlocks(quote.blocks),
         intro_text: quote.intro_text || '',
         notes: quote.notes || '',
       });
@@ -113,7 +100,7 @@ export default function EditQuote() {
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: getCustomerDisplayName(c),
+    label: getCustomerOptionLabel(c),
   }));
 
   const handleSubmit = async () => {

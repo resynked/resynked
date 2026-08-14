@@ -3,14 +3,15 @@ import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { copyBlocks } from '@/lib/blocks';
+import type { Customer } from '@/lib/supabase';
 
 interface Invoice {
   id: string;
   customer_id: string;
-  customer: { id: string; name: string; company_name: string | null; email: string | null };
+  customer: Pick<Customer, 'id' | 'name' | 'first_name' | 'middle_name' | 'last_name' | 'company_name' | 'email'> | null;
   invoice_number: string | null;
   invoice_date: string | null;
   total: number;
@@ -230,7 +231,7 @@ export default function Invoices() {
                 </button>
               </td>
               <td>{invoice.invoice_number || `#${invoice.id}`}</td>
-              <td>{invoice.customer?.company_name || invoice.customer?.name}</td>
+              <td>{invoice.customer ? getCustomerDisplayName(invoice.customer) : '-'}</td>
               <td>{formatCurrency(invoice.total)}</td>
               <td>{getStatusBadge(invoice.status)}</td>
               <td>{formatDate(invoice.invoice_date || invoice.created_at)}</td>

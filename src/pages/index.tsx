@@ -4,11 +4,12 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import OmzetChart from '@/components/OmzetChart';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
+import type { Customer } from '@/lib/supabase';
 
 interface Document {
   id: string;
-  customer: { name: string; company_name: string | null } | null;
+  customer: Pick<Customer, 'name' | 'first_name' | 'middle_name' | 'last_name' | 'company_name'> | null;
   total: number;
   status: string;
 }
@@ -56,7 +57,7 @@ export default function Dashboard() {
   };
 
   const customerName = (document: Document) =>
-    document.customer?.company_name || document.customer?.name || '';
+    document.customer ? getCustomerDisplayName(document.customer) : '';
 
   return (
     <Layout>

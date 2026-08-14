@@ -7,7 +7,7 @@ import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { startBlocks, validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
 
 const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
@@ -58,7 +58,7 @@ export default function NewQuote() {
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: getCustomerDisplayName(c),
+    label: getCustomerOptionLabel(c),
   }));
 
   const handleSubmit = async () => {

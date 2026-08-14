@@ -1,11 +1,31 @@
 import type { Customer, DocumentBlock, DocumentElement, LineItem } from './supabase';
 
+/** De velden waaruit een klantnaam opgebouwd wordt; meer is niet nodig. */
+type NameParts = Pick<Customer, 'first_name' | 'middle_name' | 'last_name' | 'name' | 'company_name'>;
+
 /**
- * Get display name for a customer
- * Returns company name (company_name is required field)
+ * De naam van de klant als persoon: voornaam, tussenvoegsel, achternaam.
+ * Leeg als die velden niet gevuld zijn.
  */
-export function getCustomerDisplayName(customer: Customer): string {
-  return customer.company_name || customer.name || 'Naamloos bedrijf';
+export function getCustomerPersonName(customer: Partial<NameParts>): string {
+  return [customer.first_name, customer.middle_name, customer.last_name].filter(Boolean).join(' ');
+}
+
+/**
+ * De naam waarmee een klant overal in het systeem verschijnt: in de tabellen,
+ * in de keuzelijsten en boven de offerte. Dat is de naam van de persoon; staat
+ * die er niet, dan valt hij terug op het opgeslagen naamveld of de bedrijfsnaam.
+ */
+export function getCustomerDisplayName(customer: Partial<NameParts>): string {
+  return (
+    getCustomerPersonName(customer) || customer.name || customer.company_name || 'Naamloze klant'
+  );
+}
+
+/** Naam met klantnummer erachter, voor de keuzelijsten: "Jan de Vries (K-1024)" */
+export function getCustomerOptionLabel(customer: Partial<NameParts> & { customer_number?: string | null }): string {
+  const name = getCustomerDisplayName(customer);
+  return customer.customer_number ? `${name} (${customer.customer_number})` : name;
 }
 
 /** Het bedrag van één regel. Een tussenkop telt niet mee. */

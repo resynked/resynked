@@ -167,7 +167,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .block.page-navigation nav {display: flex; flex-direction: column; gap: 3px; padding: var(--space20); box-sizing: border-box; border-bottom: 1px solid var(--border-color);}
 .content .block.page-navigation nav a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; border-radius: var(--border-radius1);}
 .content .block.page-navigation nav a:hover, .content .block.page-navigation nav a.active {background-color: #efefef; color: var(--font-color1);}
-.content .block.page-navigation .titel {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
+.content .block.page-navigation .section-title {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
 .content .block.page-navigation nav:last-child {border: 0;}
 
 /* Paneel dat vanaf de rechterkant inschuift als je een onderdeel aanklikt */
@@ -247,6 +247,36 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section h2, .form-section h3 {margin: 0;}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
+
+/* Bestand kiezen: een vlak om in te slepen, met het gekozen bestand eronder */
+.file-upload {display: flex; flex-direction: column; gap: var(--space10);}
+
+.file-upload .dropzone {display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: var(--space30) var(--space20); box-sizing: border-box; text-align: center; background: var(--color2); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); cursor: pointer;}
+.file-upload .dropzone:hover, .file-upload .dropzone:focus-visible {background: var(--color3); border-color: var(--color1); outline: 0;}
+.file-upload .dropzone.dragging {background: #f2f7ff; border-color: var(--color5);}
+.file-upload .dropzone:disabled {cursor: not-allowed; opacity: .6;}
+
+.file-upload .dropzone .icon {display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; box-sizing: border-box; margin: 0 0 var(--space10) 0; border-radius: 50%; background: var(--color4); color: var(--font-color2); transition: .3s all ease;}
+.file-upload .dropzone:hover .icon {background: var(--color1); color: var(--color2);}
+.file-upload .dropzone.dragging .icon {background: #d2e1ff; color: var(--color5);}
+
+.file-upload .dropzone .instruction {font-size: 13px; font-weight: 500; line-height: 1.5em; color: var(--font-color1);}
+.file-upload .dropzone.dragging .instruction {color: var(--color5);}
+.file-upload .dropzone .hint {font-size: 11px; line-height: 1.5em; color: var(--font-color2);}
+
+.file-upload .attachment {display: flex; align-items: center; gap: var(--space10); padding: var(--space10); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
+.file-upload .attachment .preview {display: flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: var(--space5); box-sizing: border-box; background: var(--color3); border: 1px solid var(--border-color); border-radius: var(--border-radius1); overflow: hidden; color: var(--font-color2);}
+.file-upload .attachment .preview img {max-width: 100%; max-height: 100%; object-fit: contain;}
+
+.file-upload .attachment .details {display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.5em;}
+.file-upload .attachment .details .name {font-size: 13px; font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;}
+.file-upload .attachment .details .meta {font-size: 11px; color: var(--font-color2);}
+
+.file-upload .attachment .remove {display: flex; align-items: center; padding: var(--space5); box-sizing: border-box; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
+.file-upload .attachment .remove:hover {background: var(--color4); color: var(--color6);}
+.file-upload .attachment .remove:disabled {cursor: not-allowed; opacity: .6;}
+
+.file-upload .file-error {font-size: 12px; color: var(--color6); margin: 0;}
 
 .empty-state {text-align: center; padding: var(--space100) 0; max-width: 600px; margin: 0 auto;}
 .empty-state p {color: var(--font-color2);}

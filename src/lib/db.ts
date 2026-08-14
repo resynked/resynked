@@ -9,21 +9,27 @@ const supabase = supabaseAdmin;
 // Helper function to get updated_at timestamp
 const now = () => new Date().toISOString();
 
+/** Offertes en facturen zijn identiek opgebouwd, alleen de tabellen verschillen. */
+type Soort = 'quote' | 'invoice';
+
+function tablesFor(soort: Soort) {
+  return soort === 'quote'
+    ? { blocksTable: 'quote_blocks', elementsTable: 'quote_elements', itemsTable: 'quote_items', parentKey: 'quote_id' }
+    : { blocksTable: 'invoice_blocks', elementsTable: 'invoice_elements', itemsTable: 'invoice_items', parentKey: 'invoice_id' };
+}
+
 /**
  * Slaat de blokken van een offerte of factuur op. Bestaande blokken gaan er
  * eerst uit; elementen en regels verdwijnen mee door de cascade. Daarna gaan
  * de blokken erin, met hun elementen en de regels van elke prijstabel.
  */
 async function saveBlocks(
-  soort: 'quote' | 'invoice',
+  soort: Soort,
   parentId: number | string,
   tenantId: string,
   blocks: DocumentBlock[]
 ) {
-  const blocksTable = soort === 'quote' ? 'quote_blocks' : 'invoice_blocks';
-  const elementsTable = soort === 'quote' ? 'quote_elements' : 'invoice_elements';
-  const itemsTable = soort === 'quote' ? 'quote_items' : 'invoice_items';
-  const parentKey = soort === 'quote' ? 'quote_id' : 'invoice_id';
+  const { blocksTable, elementsTable, itemsTable, parentKey } = tablesFor(soort);
 
   const { error: deleteError } = await supabase
     .from(blocksTable)
@@ -81,7 +87,9 @@ async function saveBlocks(
     .insert(elementRows)
     .select('id, block_id, position');
 
-  if (elementError) throw elementError;
+  if (elementError) {
+    throw isMissingElementsTable(elementError) ? new Error(MIGRATION_NEEDED) : elementError;
+  }
 
   // Terugkoppelen op de combinatie blok en plek binnen dat blok
   const elementIdByKey = new Map<string, number>(
@@ -118,26 +126,101 @@ async function saveBlocks(
   }
 }
 
+const byPosition = (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0);
+
 /** Zet de genest opgehaalde blokken, elementen en regels op volgorde. */
 function sortBlocks(blocks: any[] | null | undefined) {
   if (!blocks) return [];
 
-  const opVolgorde = (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0);
-
-  return [...blocks].sort(opVolgorde).map((block) => ({
+  return [...blocks].sort(byPosition).map((block) => ({
     ...block,
-    elements: [...(block.elements || [])].sort(opVolgorde).map((element: any) => ({
+    elements: [...(block.elements || [])].sort(byPosition).map((element: any) => ({
       ...element,
-      items: [...(element.items || [])].sort(opVolgorde),
+      items: [...(element.items || [])].sort(byPosition),
     })),
   }));
 }
 
-const QUOTE_BLOCK_SELECT =
-  'id, title, position, elements:quote_elements(id, kind, body, tax_percentage, discount_percentage, position, items:quote_items(id, description, is_heading, quantity, unit, price, total, position))';
+const ELEMENT_COLUMNS = 'id, kind, body, tax_percentage, discount_percentage, position';
+const ITEM_COLUMNS = 'id, description, is_heading, quantity, unit, price, total, position';
 
-const INVOICE_BLOCK_SELECT =
-  'id, title, position, elements:invoice_elements(id, kind, body, tax_percentage, discount_percentage, position, items:invoice_items(id, description, is_heading, quantity, unit, price, total, position))';
+/** De klantvelden die bij een offerte, factuur of notitie meekomen. */
+const CUSTOMER_SUMMARY = 'id, name, first_name, middle_name, last_name, company_name, customer_number, email';
+
+/**
+ * PostgREST kent de elementen-tabellen niet als MIGRATION-elementen.sql nog
+ * niet gedraaid heeft: dan komt er 42P01 (tabel bestaat niet) of PGRST200
+ * (geen relatie gevonden) terug in plaats van rijen.
+ */
+function isMissingElementsTable(error: any): boolean {
+  return error?.code === 'PGRST200' || error?.code === '42P01';
+}
+
+const MIGRATION_NEEDED =
+  'De database mist de elementen-tabellen. Draai MIGRATION-elementen.sql in de Supabase SQL-editor.';
+
+/**
+ * Haalt de blokken van een offerte of factuur op, met de elementen en de regels
+ * van elke prijstabel erin. Dit gebeurt los van het document zelf: zo blijft
+ * duidelijk waar een fout vandaan komt, en kan een database die de elementen
+ * nog niet heeft terugvallen op de oude vorm.
+ */
+async function fetchBlocks(soort: Soort, parentId: number | string, tenantId: string) {
+  const { blocksTable, elementsTable, itemsTable, parentKey } = tablesFor(soort);
+
+  const { data, error } = await supabase
+    .from(blocksTable)
+    .select(
+      `id, title, position, elements:${elementsTable}(${ELEMENT_COLUMNS}, items:${itemsTable}(${ITEM_COLUMNS}))`
+    )
+    .eq(parentKey, parentId)
+    .eq('tenant_id', tenantId);
+
+  if (!error) return sortBlocks(data);
+  if (!isMissingElementsTable(error)) throw error;
+
+  return fetchLegacyBlocks(soort, parentId, tenantId);
+}
+
+/**
+ * Leest de blokken zoals ze eruitzagen vóór MIGRATION-elementen.sql: een blok
+ * was zelf tekst of prijstabel, en de regels hingen aan het blok. Elk blok
+ * wordt hier één element — precies wat de migratie ook doet — zodat een offerte
+ * uit een nog niet bijgewerkte database toch te openen is.
+ */
+async function fetchLegacyBlocks(soort: Soort, parentId: number | string, tenantId: string) {
+  const { blocksTable, itemsTable, parentKey } = tablesFor(soort);
+
+  const { data, error } = await supabase
+    .from(blocksTable)
+    .select(
+      `id, title, position, kind, body, tax_percentage, discount_percentage, items:${itemsTable}(${ITEM_COLUMNS})`
+    )
+    .eq(parentKey, parentId)
+    .eq('tenant_id', tenantId);
+
+  // Ook de oude vorm past niet: dan is er echt iets mis met het schema
+  if (error) {
+    console.error(`Blokken van ${soort} ${parentId} niet leesbaar —`, error);
+    throw new Error(MIGRATION_NEEDED);
+  }
+
+  return [...(data || [])].sort(byPosition).map((block: any) => ({
+    id: block.id,
+    title: block.title || '',
+    position: block.position,
+    elements: [
+      {
+        kind: block.kind === 'tekst' ? 'tekst' : 'prijstabel',
+        body: block.body ?? null,
+        tax_percentage: Number(block.tax_percentage) || 0,
+        discount_percentage: Number(block.discount_percentage) || 0,
+        position: 0,
+        items: [...(block.items || [])].sort(byPosition),
+      },
+    ],
+  }));
+}
 
 // Tenants: bedrijfsgegevens van de aannemer zelf
 export async function getTenant(tenantId: string) {
@@ -263,7 +346,7 @@ export async function getQuotes(tenantId: string) {
     .from('quotes')
     .select(`
       *,
-      customer:customers(id, name, company_name, email)
+      customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -275,15 +358,15 @@ export async function getQuotes(tenantId: string) {
 export async function getQuote(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('quotes')
-    .select(`*, customer:customers(*), blocks:quote_blocks(${QUOTE_BLOCK_SELECT})`)
+    .select('*, customer:customers(*)')
     .eq('id', id)
     .eq('tenant_id', tenantId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Offerte niet gevonden');
 
-  const quote = data as any;
-  return { ...quote, blocks: sortBlocks(quote?.blocks) };
+  return { ...(data as any), blocks: await fetchBlocks('quote', id, tenantId) };
 }
 
 export async function createQuote(
@@ -344,7 +427,7 @@ export async function getInvoices(tenantId: string) {
     .from('invoices')
     .select(`
       *,
-      customer:customers(id, name, company_name, email)
+      customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -356,15 +439,15 @@ export async function getInvoices(tenantId: string) {
 export async function getInvoice(id: string | number, tenantId: string) {
   const { data, error } = await supabase
     .from('invoices')
-    .select(`*, customer:customers(*), blocks:invoice_blocks(${INVOICE_BLOCK_SELECT})`)
+    .select('*, customer:customers(*)')
     .eq('id', id)
     .eq('tenant_id', tenantId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Factuur niet gevonden');
 
-  const invoice = data as any;
-  return { ...invoice, blocks: sortBlocks(invoice?.blocks) };
+  return { ...(data as any), blocks: await fetchBlocks('invoice', id, tenantId) };
 }
 
 export async function createInvoice(
@@ -474,7 +557,7 @@ export async function getNotes(tenantId: string, customerId?: number) {
     .from('notes')
     .select(`
       *,
-      customer:customers(id, name, company_name)
+      customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
@@ -494,7 +577,7 @@ export async function getNote(id: string | number, tenantId: string) {
     .from('notes')
     .select(`
       *,
-      customer:customers(id, name, company_name, email)
+      customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('id', id)
     .eq('tenant_id', tenantId)

@@ -3,15 +3,13 @@ import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check, Search } from 'lucide-react';
-import type { Note } from '@/lib/supabase';
+import type { Customer, Note } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
+import { getCustomerDisplayName } from '@/lib/utils';
 import { SkeletonTable } from '@/components/Skeleton';
 
 interface NoteWithCustomer extends Note {
-  customer: {
-    id: number;
-    name: string;
-  };
+  customer: Pick<Customer, 'id' | 'name' | 'first_name' | 'middle_name' | 'last_name' | 'company_name'> | null;
 }
 
 export default function Notes() {
@@ -42,10 +40,11 @@ export default function Notes() {
     if (!searchTerm.trim()) {
       setFilteredNotes(notes);
     } else {
+      const term = searchTerm.toLowerCase();
       const filtered = notes.filter((note) =>
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        note.title.toLowerCase().includes(term) ||
+        note.content.toLowerCase().includes(term) ||
+        (note.customer ? getCustomerDisplayName(note.customer).toLowerCase().includes(term) : false)
       );
       setFilteredNotes(filtered);
     }
@@ -202,7 +201,7 @@ export default function Notes() {
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
             'Titel',
-            'Bedrijfsnaam',
+            'Klant',
             'Inhoud',
             'Aangemaakt',
             ''
@@ -229,7 +228,7 @@ export default function Notes() {
                   {note.title}
               </td>
               <td>
-                  {note.customer?.name || 'Onbekend'}
+                  {note.customer ? getCustomerDisplayName(note.customer) : 'Onbekend'}
               </td>
               <td>
                   {note.content}

@@ -186,7 +186,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
         <div className="grid">
           <div className="block page-navigation">
             <nav>
-              <span className="titel">Algemeen</span>
+              <span className="section-title">Algemeen</span>
               <Link href="#algemeen" className="active">
                 <Layers size={18} />
                 <span>Algemeen</span>
@@ -216,7 +216,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
       <div className="grid">
         <div className="block page-navigation">
           <nav>
-            <span className="titel">Algemeen</span>
+            <span className="section-title">Algemeen</span>
             <Link
               href="#algemeen"
               className={`${activeTab === 'algemeen' ? 'active' : ''}`}

@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import type { Customer } from '@/lib/supabase';
-import { getCustomerDisplayName } from '@/lib/utils';
+import { getCustomerOptionLabel } from '@/lib/utils';
 
 export default function NewNote() {
   const toast = useToast();
@@ -76,7 +76,7 @@ export default function NewNote() {
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: getCustomerDisplayName(c),
+    label: getCustomerOptionLabel(c),
   })) || [];
 
   return (

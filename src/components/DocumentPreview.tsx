@@ -154,7 +154,8 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
         <div key={index} data-element={element.kind}>
           {element.kind === 'gegevens' && (
             <>
-              <div className="klantgegevens">
+              {/* Naam, straat met huisnummer, postcode met plaats */}
+              <div className="customer-details">
                 {customer ? (
                   <>
                     <div>{getCustomerDisplayName(customer)}</div>
@@ -168,7 +169,7 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
                 )}
               </div>
 
-              <div className="kenmerken">
+              <div className="document-meta">
                 {meta
                   .filter(row => row.value)
                   .map(row => (

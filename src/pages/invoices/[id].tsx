@@ -7,8 +7,8 @@ import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
-import { validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { copyBlocks, validateBlocks } from '@/lib/blocks';
+import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
 import { SkeletonCard } from '@/components/Skeleton';
 
 const currencyOptions = [
@@ -70,20 +70,7 @@ export default function EditInvoice() {
         customer_id: String(invoice.customer_id),
         currency: invoice.currency || 'EUR',
         status: invoice.status,
-        blocks: (invoice.blocks || []).map((block: any) => ({
-          title: block.title || '',
-          kind: block.kind || 'prijsopgave',
-          body: block.body || '',
-          tax_percentage: Number(block.tax_percentage) || 0,
-          discount_percentage: Number(block.discount_percentage) || 0,
-          items: (block.items || []).map((item: any) => ({
-            description: item.description || '',
-            is_heading: !!item.is_heading,
-            quantity: Number(item.quantity) || 0,
-            unit: item.unit || null,
-            price: Number(item.price) || 0,
-          })),
-        })),
+        blocks: copyBlocks(invoice.blocks),
         intro_text: invoice.intro_text || '',
         notes: invoice.notes || '',
       });
@@ -109,7 +96,7 @@ export default function EditInvoice() {
 
   const customerOptions = customers.map(c => ({
     value: String(c.id),
-    label: getCustomerDisplayName(c),
+    label: getCustomerOptionLabel(c),
   }));
 
   const handleSubmit = async () => {

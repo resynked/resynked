@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import type { Customer } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
+import { getCustomerDisplayName } from '@/lib/utils';
 import { SkeletonTable } from '@/components/Skeleton';
 
 export default function Customers() {
@@ -126,7 +127,7 @@ export default function Customers() {
             </Link>
           </div>
         </div>
-        <SkeletonTable rows={10} columns={6} />
+        <SkeletonTable rows={10} columns={5} />
       </Layout>
     );
   }
@@ -183,9 +184,8 @@ export default function Customers() {
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
             'Klantnummer',
-            'Bedrijfsnaam',
-            'E-mailadres',
             'Naam',
+            'E-mailadres',
             ''
           ]}
         >
@@ -207,13 +207,8 @@ export default function Customers() {
                 </button>
               </td>
               <td>{customer.customer_number || '-'}</td>
-              <td>{customer.company_name || '-'}</td>
+              <td>{getCustomerDisplayName(customer)}</td>
               <td>{customer.email || '-'}</td>
-              <td>
-                {[customer.first_name, customer.middle_name, customer.last_name]
-                  .filter(Boolean)
-                  .join(' ') || customer.company_name || customer.name}
-              </td>
               <td className="actions">
                 <div className="action-dropdown" ref={openDropdownId === customer.id ? dropdownRef : null}>
                   <button
