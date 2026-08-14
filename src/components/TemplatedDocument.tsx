@@ -14,6 +14,8 @@ interface TemplatedDocumentProps {
   activeSlot?: string | null;
   /** Aangeroepen als er op een onderdeel geklikt wordt */
   onSelect?: (slot: string) => void;
+  /** Hoeveel keer een pagina met data-repeat herhaald moet worden */
+  repeatCounts?: Record<string, number>;
 }
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -37,13 +39,47 @@ function fillPlaceholders(html: string, values: Record<string, string>): string 
 }
 
 /**
+ * Herhaalt een pagina met data-repeat zo vaak als er blokken zijn. Zo krijgt
+ * elk prijsblok zijn eigen vel met eigen zijbalk, en telt een paginateller in
+ * het sjabloon vanzelf door — ongeacht hoeveel blokken een offerte heeft.
+ */
+function expandRepeats(doc: Document, counts: Record<string, number>) {
+  doc.querySelectorAll<HTMLElement>('[data-repeat]').forEach((sjabloon) => {
+    const naam = sjabloon.getAttribute('data-repeat') || '';
+    const aantal = counts[naam] ?? 0;
+
+    if (aantal === 0) {
+      sjabloon.remove();
+      return;
+    }
+
+    for (let i = 0; i < aantal; i++) {
+      const kopie = sjabloon.cloneNode(true) as HTMLElement;
+      kopie.removeAttribute('data-repeat');
+
+      // Elke kopie krijgt zijn eigen genummerde slots, zodat er per pagina
+      // precies één blok in terechtkomt
+      kopie.querySelectorAll<HTMLElement>('[data-slot]').forEach((slot) => {
+        slot.setAttribute('data-slot', `${naam}-${i}`);
+      });
+
+      sjabloon.parentNode?.insertBefore(kopie, sjabloon);
+    }
+
+    sjabloon.remove();
+  });
+}
+
+/**
  * Haalt scripts en klikhandlers uit het sjabloon. Stijlen blijven staan,
  * want daar zit de hele vormgeving in.
  */
-function sanitize(html: string): string {
+function sanitize(html: string, repeatCounts: Record<string, number>): string {
   if (typeof window === 'undefined') return '';
 
   const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  expandRepeats(doc, repeatCounts);
 
   doc.querySelectorAll('script, iframe, object, embed').forEach((el) => el.remove());
 
@@ -77,6 +113,7 @@ export default function TemplatedDocument({
   labels = {},
   activeSlot,
   onSelect,
+  repeatCounts = {},
 }: TemplatedDocumentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [targets, setTargets] = useState<{ name: string; element: HTMLElement }[]>([]);
@@ -86,11 +123,12 @@ export default function TemplatedDocument({
 
   // Alleen opnieuw opschonen als er echt iets aan de inhoud verandert
   const valuesKey = JSON.stringify(values);
+  const repeatKey = JSON.stringify(repeatCounts);
 
   useEffect(() => {
-    setSafeHtml(sanitize(fillPlaceholders(html, values)));
+    setSafeHtml(sanitize(fillPlaceholders(html, values), repeatCounts));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [html, valuesKey]);
+  }, [html, valuesKey, repeatKey]);
 
   useEffect(() => {
     const container = containerRef.current;

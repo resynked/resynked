@@ -191,6 +191,15 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .editable-region:hover::after, .editable-region.active::after {opacity: 1;}
 .editable-region:empty {min-height: 20px;}
 
+/* Strook tussen twee blokken: de knoppen verschijnen pas bij hover */
+.add-block-divider {position: relative; height: var(--space20); display: flex; align-items: center; justify-content: center;}
+.add-block-divider::before {content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--color5); opacity: 0; transition: .2s all ease;}
+.add-block-divider:hover::before {opacity: 1;}
+.add-block-divider .add-block {opacity: 0; transition: .2s all ease;}
+.add-block-divider:hover .add-block {opacity: 1;}
+.add-block {position: relative; z-index: 1; display: flex; gap: var(--space5);}
+.add-block .button.add-item {width: auto; padding: var(--space5) var(--space10); border-style: solid; font-size: 11px;}
+
 .table-container {background:var(--color2); border-radius: var(--border-radius1); border: 1px solid var(--border-color);}
 .table-container .product-table {width: 100%; border-collapse: collapse;}
 .table-container .product-table thead {background-color: var(--color3);}
