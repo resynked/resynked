@@ -230,83 +230,76 @@ export default function EditQuote() {
         blocks={formData.blocks}
         currency={formData.currency}
         onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
-        panels={{
-          customer: {
-            title: 'Klant',
-            content: (
-              <div className="form-section">
-                <div className="form-group">
-                  <label>Klant</label>
-                  <Select
-                    value={customerOptions.find(o => o.value === formData.customer_id) || null}
-                    onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
-                    options={customerOptions}
-                    placeholder="Selecteer klant..."
-                  />
-                </div>
+        dataFields={
+          <>
+            <div className="form-section">
+              <div className="form-group">
+                <label>Klant</label>
+                <Select
+                  value={customerOptions.find(o => o.value === formData.customer_id) || null}
+                  onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
+                  options={customerOptions}
+                  placeholder="Selecteer klant..."
+                />
               </div>
-            ),
-          },
-          details: {
-            title: 'Offertegegevens',
-            content: (
-              <>
-                <div className="form-section">
-                  <div className="form-group">
-                    <label htmlFor="quote_number">Offertenummer</label>
-                    <input
-                      id="quote_number"
-                      type="text"
-                      value={formData.quote_number}
-                      onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
-                      placeholder="Offertenummer"
-                    />
-                  </div>
-                </div>
+            </div>
 
-                <div className="form-section">
-                  <div className="form-group">
-                    <label htmlFor="quote_date">Offertedatum</label>
-                    <DatePicker
-                      value={formData.quote_date}
-                      onChange={(date) => setFormData({ ...formData, quote_date: date })}
-                      placeholder="Kies een datum..."
-                    />
-                  </div>
+            <div className="form-section">
+              <div className="form-group">
+                <label htmlFor="quote_number">Offertenummer</label>
+                <input
+                  id="quote_number"
+                  type="text"
+                  value={formData.quote_number}
+                  onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
+                  placeholder="Offertenummer"
+                />
+              </div>
+            </div>
 
-                  <div className="form-group">
-                    <label htmlFor="valid_until">Geldig tot</label>
-                    <DatePicker
-                      value={formData.valid_until}
-                      onChange={(date) => setFormData({ ...formData, valid_until: date })}
-                      placeholder="Kies een datum..."
-                    />
-                  </div>
-                </div>
+            <div className="form-section">
+              <div className="form-group">
+                <label htmlFor="quote_date">Offertedatum</label>
+                <DatePicker
+                  value={formData.quote_date}
+                  onChange={(date) => setFormData({ ...formData, quote_date: date })}
+                  placeholder="Kies een datum..."
+                />
+              </div>
 
-                <div className="form-section">
-                  <div className="form-group">
-                    <label>Status</label>
-                    <Select
-                      value={statusOptions.find(o => o.value === formData.status) || null}
-                      onChange={(option) => setFormData({ ...formData, status: option?.value || 'draft' })}
-                      options={statusOptions}
-                    />
-                  </div>
+              <div className="form-group">
+                <label htmlFor="valid_until">Geldig tot</label>
+                <DatePicker
+                  value={formData.valid_until}
+                  onChange={(date) => setFormData({ ...formData, valid_until: date })}
+                  placeholder="Kies een datum..."
+                />
+              </div>
+            </div>
 
-                  <div className="form-group">
-                    <label>Valuta</label>
-                    <Select
-                      value={currencyOptions.find(o => o.value === formData.currency) || null}
-                      onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
-                      options={currencyOptions}
-                    />
-                  </div>
-                </div>
-              </>
-            ),
-          },
-        }}
+            <div className="form-section">
+              <div className="form-group">
+                <label>Status</label>
+                <Select
+                  value={statusOptions.find(o => o.value === formData.status) || null}
+                  onChange={(option) => setFormData({ ...formData, status: option?.value || 'draft' })}
+                  options={statusOptions}
+                />
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="form-group">
+                <label>Valuta</label>
+                <Select
+                  value={currencyOptions.find(o => o.value === formData.currency) || null}
+                  onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
+                  options={currencyOptions}
+                />
+              </div>
+            </div>
+          </>
+        }
       />
 
     </Layout>

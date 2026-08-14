@@ -126,61 +126,52 @@ export default function NewInvoice() {
         blocks={formData.blocks}
         currency={formData.currency}
         onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
-        panels={{
-          customer: {
-            title: 'Klant',
-            content: (
-              <div className="form-section">
-                <div className="form-group">
-                  <label>Klant</label>
-                  <Select
-                    value={customerOptions.find(o => o.value === formData.customer_id) || null}
-                    onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
-                    options={customerOptions}
-                    placeholder="Selecteer klant..."
-                  />
-                </div>
+        dataFields={
+          <>
+            <div className="form-section">
+              <div className="form-group">
+                <label>Klant</label>
+                <Select
+                  value={customerOptions.find(o => o.value === formData.customer_id) || null}
+                  onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
+                  options={customerOptions}
+                  placeholder="Selecteer klant..."
+                />
               </div>
-            ),
-          },
-          details: {
-            title: 'Factuurgegevens',
-            content: (
-              <>
-                <div className="form-section">
-                  <div className="form-group">
-                    <label htmlFor="invoice_date">Factuurdatum</label>
-                    <DatePicker
-                      value={formData.invoice_date}
-                      onChange={(date) => setFormData({ ...formData, invoice_date: date })}
-                      placeholder="Kies een datum..."
-                    />
-                  </div>
+            </div>
 
-                  <div className="form-group">
-                    <label htmlFor="due_date">Vervaldatum</label>
-                    <DatePicker
-                      value={formData.due_date}
-                      onChange={(date) => setFormData({ ...formData, due_date: date })}
-                      placeholder="Kies een datum..."
-                    />
-                  </div>
-                </div>
+            <div className="form-section">
+              <div className="form-group">
+                <label htmlFor="invoice_date">Factuurdatum</label>
+                <DatePicker
+                  value={formData.invoice_date}
+                  onChange={(date) => setFormData({ ...formData, invoice_date: date })}
+                  placeholder="Kies een datum..."
+                />
+              </div>
 
-                <div className="form-section">
-                  <div className="form-group">
-                    <label>Valuta</label>
-                    <Select
-                      value={currencyOptions.find(o => o.value === formData.currency) || null}
-                      onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
-                      options={currencyOptions}
-                    />
-                  </div>
-                </div>
-              </>
-            ),
-          },
-        }}
+              <div className="form-group">
+                <label htmlFor="due_date">Vervaldatum</label>
+                <DatePicker
+                  value={formData.due_date}
+                  onChange={(date) => setFormData({ ...formData, due_date: date })}
+                  placeholder="Kies een datum..."
+                />
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="form-group">
+                <label>Valuta</label>
+                <Select
+                  value={currencyOptions.find(o => o.value === formData.currency) || null}
+                  onChange={(option) => setFormData({ ...formData, currency: option?.value || 'EUR' })}
+                  options={currencyOptions}
+                />
+              </div>
+            </div>
+          </>
+        }
       />
 
     </Layout>

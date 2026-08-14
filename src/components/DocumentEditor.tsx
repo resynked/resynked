@@ -11,9 +11,8 @@ interface DocumentEditorProps {
   customer?: Customer | null;
   blocks: DocumentBlock[];
   currency?: string;
-  /** Velden die niet in een blok staan, zoals de klant en de datums */
-  panels: Record<string, { title: string; content: ReactNode }>;
-  /** Welk paneel opengaat bij een klik op het gegevens-element */
+  /** De velden bij een gegevens-element: klant, nummer, datums en valuta */
+  dataFields?: ReactNode;
   onBlocksChange?: (blocks: DocumentBlock[]) => void;
 }
 
@@ -28,28 +27,19 @@ export default function DocumentEditor({
   customer,
   blocks,
   currency,
-  panels,
+  dataFields,
   onBlocksChange,
 }: DocumentEditorProps) {
   const [activeBlock, setActiveBlock] = useState<number | null>(null);
-  const [activePanel, setActivePanel] = useState<string | null>(null);
 
-  const close = () => {
-    setActiveBlock(null);
-    setActivePanel(null);
-  };
-
-  const selectBlock = (index: number) => {
-    setActivePanel(null);
-    setActiveBlock(index);
-  };
+  const close = () => setActiveBlock(null);
 
   // Een nieuw blok opent meteen, zodat je de titel kunt typen
   const addBlock = (atIndex: number) => {
     if (!onBlocksChange) return;
 
     onBlocksChange([...blocks.slice(0, atIndex), emptyBlock(), ...blocks.slice(atIndex)]);
-    selectBlock(atIndex);
+    setActiveBlock(atIndex);
   };
 
   const changeBlock = (index: number, block: DocumentBlock) => {
@@ -62,7 +52,7 @@ export default function DocumentEditor({
       duplicateBlock(blocks[index]),
       ...blocks.slice(index + 1),
     ]);
-    selectBlock(index + 1);
+    setActiveBlock(index + 1);
   };
 
   const deleteBlock = (index: number) => {
@@ -71,7 +61,6 @@ export default function DocumentEditor({
   };
 
   const openBlock = activeBlock !== null ? blocks[activeBlock] : null;
-  const openPanel = activePanel ? panels[activePanel] : null;
 
   return (
     <>
@@ -84,45 +73,31 @@ export default function DocumentEditor({
             blocks={blocks}
             currency={currency}
             activeBlock={activeBlock}
-            onSelectBlock={onBlocksChange ? selectBlock : undefined}
+            onSelectBlock={onBlocksChange ? setActiveBlock : undefined}
             onAddBlock={onBlocksChange ? addBlock : undefined}
           />
         </div>
       </div>
 
-      {(openBlock || openPanel) && (
+      {openBlock && activeBlock !== null && (
         <>
           <div className="editor-panel-overlay" onClick={close} />
 
           <div className="editor-panel">
             <div className="header">
-              <h2>{openBlock ? 'Blok' : openPanel?.title}</h2>
+              <h2>Blok</h2>
               <button type="button" onClick={close} aria-label="Paneel sluiten">
                 <X size={18} />
               </button>
             </div>
 
-            {openBlock && activeBlock !== null ? (
-              <>
-                <BlockEditor
-                  block={openBlock}
-                  onChange={(block) => changeBlock(activeBlock, block)}
-                  onDuplicate={() => copyBlock(activeBlock)}
-                  onRemove={() => deleteBlock(activeBlock)}
-                />
-
-                {/* De gegevens in dit blok komen uit velden van het document zelf */}
-                {openBlock.elements.some(el => el.kind === 'gegevens') &&
-                  Object.entries(panels).map(([key, panel]) => (
-                    <div key={key} className="form-section edit-holder">
-                      <h3>{panel.title}</h3>
-                      {panel.content}
-                    </div>
-                  ))}
-              </>
-            ) : (
-              openPanel?.content
-            )}
+            <BlockEditor
+              block={openBlock}
+              onChange={(block) => changeBlock(activeBlock, block)}
+              onDuplicate={() => copyBlock(activeBlock)}
+              onRemove={() => deleteBlock(activeBlock)}
+              dataFields={dataFields}
+            />
           </div>
         </>
       )}

@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import Link from 'next/link';
 import { X, Copy } from 'lucide-react';
 import Select from '@/components/Select';
@@ -10,6 +11,8 @@ interface BlockEditorProps {
   onChange: (block: DocumentBlock) => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  /** De velden die bij het gegevens-element horen: klant, nummer en datums */
+  dataFields?: ReactNode;
 }
 
 const unitOptions = [
@@ -43,7 +46,7 @@ const ELEMENT_NAMEN: Record<ElementKind, string> = {
  * het sjabloon op zijn kant in de zijbalk — en daarin zet je elementen:
  * de gegevens, een stuk tekst of een prijstabel, zoveel als je wilt.
  */
-export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: BlockEditorProps) {
+export default function BlockEditor({ block, onChange, onDuplicate, onRemove, dataFields }: BlockEditorProps) {
   const updateElement = (index: number, changes: Partial<DocumentElement>) => {
     onChange({
       ...block,
@@ -130,6 +133,8 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
               <X size={16} />
             </Link>
           </div>
+
+          {element.kind === 'gegevens' && dataFields}
 
           {element.kind === 'kop' && (
             <div className="form-group">
