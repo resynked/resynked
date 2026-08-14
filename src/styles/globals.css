@@ -193,7 +193,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 
 /* Strook tussen twee blokken: de knoppen verschijnen pas bij hover */
 .add-block-divider {position: relative; height: var(--space20); display: flex; align-items: center; justify-content: center;}
-.add-block-divider::before {content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--color5); opacity: 0; transition: .2s all ease;}
 .add-block-divider:hover::before {opacity: 1;}
 .add-block-divider .add-block {opacity: 0; transition: .2s all ease;}
 .add-block-divider:hover .add-block {opacity: 1;}

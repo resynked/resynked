@@ -94,7 +94,7 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
             type="text"
             value={block.title}
             onChange={(e) => onChange({ ...block, title: e.target.value })}
-            placeholder="Bijvoorbeeld Werkzaamheden of Prijsopgave"
+            placeholder="Vul een titel in"
           />
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove }: 
                 type="text"
                 value={element.body || ''}
                 onChange={(e) => updateElement(elementIndex, { body: e.target.value })}
-                placeholder="Bijvoorbeeld Aanvullende informatie & betalingsvoorwaarden"
+                placeholder="Vul een kop in"
               />
             </div>
           )}
