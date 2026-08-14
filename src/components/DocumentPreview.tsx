@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import TemplatedDocument from '@/components/TemplatedDocument';
+import { Skeleton } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import {
   calculateBlockTotals,
@@ -85,7 +86,7 @@ function BlocksView({ blocks, currency }: { blocks: DocumentBlock[]; currency: s
       {blocks.map((block, blockIndex) => {
         if (block.kind === 'tekst') {
           return (
-            <div key={blockIndex} className="invoice-notes" data-block="tekst" data-block-title={block.title}>
+            <div key={blockIndex} data-block="tekst" data-block-title={block.title}>
               {block.title && <h3>{block.title}</h3>}
               {block.body && <FormattedText text={block.body} />}
             </div>
@@ -181,6 +182,7 @@ export default function DocumentPreview({
   onSelect,
 }: DocumentPreviewProps) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [isLoadingTenant, setIsLoadingTenant] = useState(true);
 
   const labels: Record<string, string> = {
     klantgegevens: 'Klant',
@@ -215,8 +217,23 @@ export default function DocumentPreview({
     fetch('/api/tenant')
       .then(res => (res.ok ? res.json() : null))
       .then(setTenant)
-      .catch(() => setTenant(null));
+      .catch(() => setTenant(null))
+      .finally(() => setIsLoadingTenant(false));
   }, []);
+
+  // Pas tonen als bekend is of er een eigen sjabloon is, anders flitst
+  // eerst de standaardweergave voorbij
+  if (isLoadingTenant) {
+    return (
+      <>
+        <Skeleton height="2rem" width="35%" style={{ marginBottom: 'var(--space30)' }} />
+        <Skeleton height="1rem" width="55%" style={{ marginBottom: 'var(--space10)' }} />
+        <Skeleton height="1rem" width="45%" style={{ marginBottom: 'var(--space30)' }} />
+        <Skeleton height="12rem" style={{ marginBottom: 'var(--space20)' }} />
+        <Skeleton height="1rem" width="30%" style={{ marginLeft: 'auto' }} />
+      </>
+    );
+  }
 
   const priceBlocks = blocks.filter(block => block.kind !== 'tekst');
   const documentTotal = calculateDocumentTotal(blocks);
@@ -304,48 +321,36 @@ export default function DocumentPreview({
     );
   }
 
+  // Zonder eigen sjabloon een kale weergave: de opmaak hoort in het
+  // sjabloon te staan dat de aannemer bij Instellingen invult
   return (
-    <div className="invoice-preview">
-      <div className="invoice-company-header">
-        <div className="invoice-company-logo">Bedrijfslogo</div>
-        <div className="invoice-company-info">
-          <div>Uw bedrijfsnaam</div>
-          <div>Straatnaam 1</div>
-          <div>1200 AC Amsterdam</div>
-          <div>KvK: 12345678</div>
-          <div>BTW: NL123456789B01</div>
-          <div>Bank: NL55 BANK 0123 4567 89</div>
-        </div>
-      </div>
+    <>
+      {tenant?.logo_url && (
+        <img src={tenant.logo_url} alt={tenant.company_name || ''} style={{ maxWidth: '200px' }} />
+      )}
 
       <Region slot="klantgegevens">
-        <div className="invoice-customer-info">
-          {customerLines.length > 0 ? (
-            customerLines.map((line, i) => <div key={i}>{line}</div>)
-          ) : (
-            <div>Nog geen klant gekozen</div>
-          )}
-        </div>
+        {customerLines.length > 0 ? (
+          customerLines.map((line, i) => <div key={i}>{line}</div>)
+        ) : (
+          <div>Nog geen klant gekozen</div>
+        )}
       </Region>
 
-      <h1 className="invoice-title">{title}</h1>
+      <h1>{title}</h1>
 
       <Region slot="kenmerken">
-        <div className="invoice-data">
-          {meta
-            .filter(row => row.value)
-            .map(row => (
-              <div key={row.label}>
-                {row.label}: {row.value}
-              </div>
-            ))}
-        </div>
+        {meta
+          .filter(row => row.value)
+          .map(row => (
+            <div key={row.label}>
+              {row.label}: {row.value}
+            </div>
+          ))}
       </Region>
 
       <Region slot="brief">
-        <div className="invoice-notes">
-          {introText ? <FormattedText text={introText} /> : <p>Begeleidende tekst toevoegen</p>}
-        </div>
+        {introText ? <FormattedText text={introText} /> : <p>Begeleidende tekst toevoegen</p>}
       </Region>
 
       <Region slot="blokken">
@@ -362,11 +367,9 @@ export default function DocumentPreview({
       </Region>
 
       <Region slot="opmerkingen">
-        <div className="invoice-notes">
-          <strong>Opmerkingen:</strong>
-          <p>{notes || 'Opmerkingen toevoegen'}</p>
-        </div>
+        <strong>Opmerkingen</strong>
+        <p>{notes || 'Opmerkingen toevoegen'}</p>
       </Region>
-    </div>
+    </>
   );
 }

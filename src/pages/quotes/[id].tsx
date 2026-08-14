@@ -9,6 +9,7 @@ import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
+import { SkeletonCard } from '@/components/Skeleton';
 
 const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
@@ -187,7 +188,10 @@ export default function EditQuote() {
   if (isLoadingData) {
     return (
       <Layout>
-        <div className="loading">Laden...</div>
+        <div className="header">
+          <h1>Offerte bewerken</h1>
+        </div>
+        <SkeletonCard />
       </Layout>
     );
   }

@@ -35,34 +35,42 @@ export default function DocumentEditor({
   const panelKey = activeSlot ? SLOT_PANELS[activeSlot] : null;
   const panel = panelKey ? panels[panelKey] : null;
 
+  const close = () => setActiveSlot(null);
+
   return (
-    <div className="grid">
-      {panel && (
-        <div className="block editor-panel">
-          <div className="header">
-            <h2>{panel.title}</h2>
-            <button type="button" onClick={() => setActiveSlot(null)} aria-label="Paneel sluiten">
-              <X size={18} />
-            </button>
-          </div>
-
-          {panel.content}
+    <>
+      <div className="grid">
+        <div className="block">
+          <DocumentPreview
+            title={title}
+            meta={meta}
+            customer={customer}
+            blocks={blocks}
+            currency={currency}
+            introText={introText}
+            notes={notes}
+            activeSlot={activeSlot}
+            onSelect={setActiveSlot}
+          />
         </div>
-      )}
-
-      <div className="block">
-        <DocumentPreview
-          title={title}
-          meta={meta}
-          customer={customer}
-          blocks={blocks}
-          currency={currency}
-          introText={introText}
-          notes={notes}
-          activeSlot={activeSlot}
-          onSelect={setActiveSlot}
-        />
       </div>
-    </div>
+
+      {panel && (
+        <>
+          <div className="editor-panel-overlay" onClick={close} />
+
+          <div className="editor-panel">
+            <div className="header">
+              <h2>{panel.title}</h2>
+              <button type="button" onClick={close} aria-label="Paneel sluiten">
+                <X size={18} />
+              </button>
+            </div>
+
+            {panel.content}
+          </div>
+        </>
+      )}
+    </>
   );
 }

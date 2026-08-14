@@ -170,13 +170,18 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .block.page-navigation .titel {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
 .content .block.page-navigation nav:last-child {border: 0;}
 
-/* Document met een paneel ernaast dat opengaat als je een onderdeel aanklikt */
-.content .grid:has(.block.editor-panel) {grid-template-columns: 420px 1fr;}
-.content .block.editor-panel {max-height: calc(100vh - 140px); overflow-y: auto;}
-.content .block.editor-panel .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
-.content .block.editor-panel .header h2 {margin: 0;}
-.content .block.editor-panel .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
-.content .block.editor-panel .header button:hover {color: var(--font-color1);}
+/* Paneel dat vanaf de rechterkant inschuift als je een onderdeel aanklikt */
+.editor-panel-overlay {position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; z-index: 10; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8.5px); transition: opacity 0.3s ease 0s;}
+.editor-panel {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 460px; max-width: 100%; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
+.editor-panel .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
+.editor-panel .header h2 {margin: 0;}
+.editor-panel .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
+.editor-panel .header button:hover {color: var(--font-color1);}
+
+@keyframes slideInPanel {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
 
 /* Aanklikbare onderdelen in het document */
 .editable-region {position: relative; cursor: pointer; border-radius: var(--border-radius1); outline: 2px solid transparent; outline-offset: 6px; transition: .2s all ease;}
@@ -221,16 +226,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .tabs {background: var(--color4); border-radius: var(--border-radius1); padding: var(--space5); box-sizing: border-box; display: inline-flex; margin: 0 0 var(--space30) 0;}
 .tabs a {text-align: center; text-decoration: none; color: inherit; font-size: 13px; border-radius: var(--border-radius1); padding: 2px var(--space30); box-sizing: border-box;}
 .tabs a.active {background: var(--color2);}
-
-.invoice-preview {max-height: calc(100vh - 200px); overflow-y: auto; font-size: 12px;}
-.invoice-preview .table-container {margin: var(--space30) 0;}
-.invoice-preview .invoice-customer-info {margin: 0 0 var(--space30) 0; line-height: 1.65em; color: var(--font-color2);}
-.invoice-preview .invoice-company-info {text-align: right; line-height: 1.65em; color: var(--font-color2);}
-.invoice-preview .invoice-data {line-height: 1.65em; color: var(--font-color2);}
-.invoice-preview .invoice-total {margin-left: auto; width: 300px;}
-.invoice-preview .invoice-total .invoice-total-row {display: flex; justify-content: space-between; font-size: 13px;}
-.invoice-preview .invoice-total .invoice-total-row.total-final {border-top: 1px solid var(--border-color); font-weight: 600; font-size: 16px; padding-top: var(--space15); margin-top: var(--space10);}
-.invoice-preview .invoice-company-header {display: flex; justify-content: space-between; margin-bottom: var(--space50);}
 
 .form-section {margin: 0 0 var(--space30) 0; display: flex ; flex-direction: column; gap: var(--space10);}
 .form-section .form-row {display: flex; gap: var(--space10);}
