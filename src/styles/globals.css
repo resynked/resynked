@@ -246,7 +246,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}
 .form-section h2, .form-section h3 {margin: 0;}
 
-.edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
+.edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 
 .empty-state {text-align: center; padding: var(--space100) 0; max-width: 600px; margin: 0 auto;}
 .empty-state p {color: var(--font-color2);}
