@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
+import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { startBlocks, validateBlocks } from '@/lib/blocks';
@@ -149,21 +150,19 @@ export default function NewInvoice() {
                 <div className="form-section">
                   <div className="form-group">
                     <label htmlFor="invoice_date">Factuurdatum</label>
-                    <input
-                      id="invoice_date"
-                      type="date"
+                    <DatePicker
                       value={formData.invoice_date}
-                      onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                      onChange={(date) => setFormData({ ...formData, invoice_date: date })}
+                      placeholder="Kies een datum..."
                     />
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="due_date">Vervaldatum</label>
-                    <input
-                      id="due_date"
-                      type="date"
+                    <DatePicker
                       value={formData.due_date}
-                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                      onChange={(date) => setFormData({ ...formData, due_date: date })}
+                      placeholder="Kies een datum..."
                     />
                   </div>
                 </div>

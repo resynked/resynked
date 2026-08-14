@@ -33,10 +33,8 @@ export const emptyBlock = (title = ''): DocumentBlock => ({
   elements: [],
 });
 
-/** De blokken waarmee een nieuwe offerte of factuur begint. */
-export const startBlocks = (): DocumentBlock[] => [
-  { title: 'Offerte', elements: [emptyElement('gegevens')] },
-];
+/** De blokken waarmee een nieuwe offerte of factuur begint: één lege pagina. */
+export const startBlocks = (): DocumentBlock[] => [emptyBlock()];
 
 /** Maakt een kopie van één element, zonder database-ids. */
 export function duplicateElement(element: DocumentElement): DocumentElement {

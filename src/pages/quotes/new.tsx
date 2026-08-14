@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
+import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { startBlocks, validateBlocks } from '@/lib/blocks';
@@ -167,21 +168,19 @@ export default function NewQuote() {
                 <div className="form-section">
                   <div className="form-group">
                     <label htmlFor="quote_date">Offertedatum</label>
-                    <input
-                      id="quote_date"
-                      type="date"
+                    <DatePicker
                       value={formData.quote_date}
-                      onChange={(e) => setFormData({ ...formData, quote_date: e.target.value })}
+                      onChange={(date) => setFormData({ ...formData, quote_date: date })}
+                      placeholder="Kies een datum..."
                     />
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="valid_until">Geldig tot</label>
-                    <input
-                      id="valid_until"
-                      type="date"
+                    <DatePicker
                       value={formData.valid_until}
-                      onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+                      onChange={(date) => setFormData({ ...formData, valid_until: date })}
+                      placeholder="Kies een datum..."
                     />
                   </div>
                 </div>
