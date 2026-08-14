@@ -57,9 +57,9 @@ function expandRepeats(doc: Document, counts: Record<string, number>) {
       const kopie = sjabloon.cloneNode(true) as HTMLElement;
       kopie.removeAttribute('data-repeat');
 
-      // Elke kopie krijgt zijn eigen genummerde slots, zodat er per pagina
-      // precies één blok in terechtkomt
-      kopie.querySelectorAll<HTMLElement>('[data-slot]').forEach((slot) => {
+      // Alleen het slot "blok" wordt genummerd, zodat er per pagina precies
+      // één blok in komt. Andere slots op de pagina blijven wat ze zijn.
+      kopie.querySelectorAll<HTMLElement>('[data-slot="blok"]').forEach((slot) => {
         slot.setAttribute('data-slot', `${naam}-${i}`);
       });
 
@@ -177,8 +177,10 @@ export default function TemplatedDocument({
   return (
     <>
       <div ref={containerRef} />
-      {targets.map(({ name, element }) =>
-        slots[name] ? createPortal(slots[name], element, name) : null
+      {targets.map(({ name, element }, index) =>
+        // Een slot kan meerdere keren voorkomen, bijvoorbeeld het totaal op
+        // elke herhaalde pagina, dus de sleutel bevat ook de plek
+        slots[name] ? createPortal(slots[name], element, `${name}-${index}`) : null
       )}
     </>
   );
