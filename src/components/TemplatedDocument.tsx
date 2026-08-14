@@ -54,7 +54,9 @@ function sanitize(html: string): string {
     });
   });
 
-  return doc.body.innerHTML;
+  // Een <style> aan het begin van het sjabloon belandt volgens de HTML-regels
+  // in de head, dus die moet er hier weer bij — anders verdwijnt de opmaak
+  return doc.head.innerHTML + doc.body.innerHTML;
 }
 
 /**
