@@ -1,4 +1,4 @@
-import type { DocumentBlock, LineItem } from './supabase';
+import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from './supabase';
 
 /** Een verse prijsregel. */
 export const emptyItem = (): LineItem => ({
@@ -18,35 +18,42 @@ export const emptyHeading = (): LineItem => ({
   price: 0,
 });
 
-/** Een vers prijsblok met één lege regel erin. */
-export const emptyBlock = (taxPercentage = 21): DocumentBlock => ({
-  title: '',
-  kind: 'prijsopgave',
-  body: null,
-  tax_percentage: taxPercentage,
+/** Een vers element van de gekozen soort. */
+export const emptyElement = (kind: ElementKind): DocumentElement => ({
+  kind,
+  body: kind === 'tekst' ? '' : null,
+  tax_percentage: 21,
   discount_percentage: 0,
-  items: [emptyItem()],
+  items: kind === 'prijstabel' ? [emptyItem()] : [],
 });
 
-/** Een vers tekstblok, voor bijvoorbeeld de omschrijving van de werkzaamheden. */
-export const emptyTextBlock = (): DocumentBlock => ({
-  title: 'Werkzaamheden',
-  kind: 'tekst',
-  body: '',
-  tax_percentage: 0,
-  discount_percentage: 0,
-  items: [],
+/** Een vers blok: één pagina met een titel en nog geen elementen. */
+export const emptyBlock = (title = ''): DocumentBlock => ({
+  title,
+  elements: [],
 });
 
-/** Maakt een kopie van één blok, inclusief alle regels. */
+/** De blokken waarmee een nieuwe offerte of factuur begint. */
+export const startBlocks = (): DocumentBlock[] => [
+  { title: 'Offerte', elements: [emptyElement('gegevens')] },
+];
+
+/** Maakt een kopie van één element, zonder database-ids. */
+export function duplicateElement(element: DocumentElement): DocumentElement {
+  return {
+    kind: element.kind,
+    body: element.body,
+    tax_percentage: element.tax_percentage,
+    discount_percentage: element.discount_percentage,
+    items: element.items.map(item => ({ ...item, id: undefined })),
+  };
+}
+
+/** Maakt een kopie van een heel blok, inclusief alle elementen. */
 export function duplicateBlock(block: DocumentBlock): DocumentBlock {
   return {
     title: block.title,
-    kind: block.kind,
-    body: block.body,
-    tax_percentage: block.tax_percentage,
-    discount_percentage: block.discount_percentage,
-    items: block.items.map(item => ({ ...item, id: undefined })),
+    elements: block.elements.map(duplicateElement),
   };
 }
 
@@ -57,16 +64,18 @@ export function duplicateBlock(block: DocumentBlock): DocumentBlock {
 export function copyBlocks(blocks: any[] | null | undefined): DocumentBlock[] {
   return (blocks || []).map((block: any) => ({
     title: block.title || '',
-    kind: block.kind === 'tekst' ? 'tekst' : 'prijsopgave',
-    body: block.body || null,
-    tax_percentage: Number(block.tax_percentage) || 0,
-    discount_percentage: Number(block.discount_percentage) || 0,
-    items: (block.items || []).map((item: any) => ({
-      description: item.description || '',
-      is_heading: !!item.is_heading,
-      quantity: Number(item.quantity) || 0,
-      unit: item.unit || null,
-      price: Number(item.price) || 0,
+    elements: (block.elements || []).map((element: any) => ({
+      kind: element.kind || 'tekst',
+      body: element.body ?? null,
+      tax_percentage: Number(element.tax_percentage) || 0,
+      discount_percentage: Number(element.discount_percentage) || 0,
+      items: (element.items || []).map((item: any) => ({
+        description: item.description || '',
+        is_heading: !!item.is_heading,
+        quantity: Number(item.quantity) || 0,
+        unit: item.unit || null,
+        price: Number(item.price) || 0,
+      })),
     })),
   }));
 }
@@ -81,21 +90,21 @@ export function validateBlocks(blocks: unknown): string | null {
     return 'Voeg minimaal één blok toe';
   }
 
-  const priceBlocks = blocks.filter((block: any) => block?.kind !== 'tekst');
+  for (const block of blocks) {
+    const elements = Array.isArray(block.elements) ? block.elements : [];
 
-  if (priceBlocks.length === 0) {
-    return 'Voeg minimaal één blok met bedragen toe';
-  }
+    for (const element of elements) {
+      if (element.kind !== 'prijstabel') continue;
 
-  for (const block of priceBlocks) {
-    const items = Array.isArray(block.items) ? block.items : [];
+      const items = Array.isArray(element.items) ? element.items : [];
 
-    if (items.filter((item: any) => !item.is_heading).length === 0) {
-      return `Blok "${block.title || 'zonder naam'}" heeft nog geen regels`;
-    }
+      if (items.filter((item: any) => !item.is_heading).length === 0) {
+        return `De prijstabel in "${block.title || 'zonder naam'}" heeft nog geen regels`;
+      }
 
-    if (items.some((item: any) => !item.description?.trim())) {
-      return `Elke regel in "${block.title || 'zonder naam'}" heeft een omschrijving nodig`;
+      if (items.some((item: any) => !item.description?.trim())) {
+        return `Elke regel in "${block.title || 'zonder naam'}" heeft een omschrijving nodig`;
+      }
     }
   }
 

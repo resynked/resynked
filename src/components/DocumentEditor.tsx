@@ -1,9 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { X } from 'lucide-react';
-import DocumentPreview, { SLOT_PANELS } from '@/components/DocumentPreview';
+import DocumentPreview from '@/components/DocumentPreview';
 import BlockEditor from '@/components/BlockEditor';
-import { duplicateBlock, emptyBlock, emptyTextBlock } from '@/lib/blocks';
-import type { BlockKind, Customer, DocumentBlock } from '@/lib/supabase';
+import { duplicateBlock, emptyBlock } from '@/lib/blocks';
+import type { Customer, DocumentBlock } from '@/lib/supabase';
 
 interface DocumentEditorProps {
   title: 'Offerte' | 'Factuur';
@@ -11,17 +11,15 @@ interface DocumentEditorProps {
   customer?: Customer | null;
   blocks: DocumentBlock[];
   currency?: string;
-  introText?: string;
-  notes?: string;
-  /** De velden per onderdeel, met dezelfde sleutels als SLOT_PANELS */
+  /** Velden die niet in een blok staan, zoals de klant en de datums */
   panels: Record<string, { title: string; content: ReactNode }>;
-  /** Zet de blokken opnieuw, als er vanuit het document een blok bijkomt */
+  /** Welk paneel opengaat bij een klik op het gegevens-element */
   onBlocksChange?: (blocks: DocumentBlock[]) => void;
 }
 
 /**
- * Toont het document over de volle breedte. Klik je op een onderdeel, dan
- * schuift links het paneel open met alleen de velden die daarbij horen —
+ * Toont het document over de volle breedte. Klik je op een blok, dan schuift
+ * rechts het paneel open met de titel van dat blok en de elementen erin —
  * zo staat niet het hele formulier tegelijk op het scherm.
  */
 export default function DocumentEditor({
@@ -30,38 +28,27 @@ export default function DocumentEditor({
   customer,
   blocks,
   currency,
-  introText,
-  notes,
   panels,
   onBlocksChange,
 }: DocumentEditorProps) {
-  const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [activeBlock, setActiveBlock] = useState<number | null>(null);
-
-  const panelKey = activeSlot ? SLOT_PANELS[activeSlot] : null;
-  const panel = panelKey ? panels[panelKey] : null;
+  const [activePanel, setActivePanel] = useState<string | null>(null);
 
   const close = () => {
-    setActiveSlot(null);
     setActiveBlock(null);
-  };
-
-  const selectSlot = (slot: string) => {
-    setActiveBlock(null);
-    setActiveSlot(slot);
+    setActivePanel(null);
   };
 
   const selectBlock = (index: number) => {
-    setActiveSlot(null);
+    setActivePanel(null);
     setActiveBlock(index);
   };
 
-  // Een blok toevoegen opent meteen het paneel, zodat je er direct in kunt typen
-  const addBlock = (kind: BlockKind, atIndex: number) => {
+  // Een nieuw blok opent meteen, zodat je de titel kunt typen
+  const addBlock = (atIndex: number) => {
     if (!onBlocksChange) return;
 
-    const nieuw = kind === 'tekst' ? emptyTextBlock() : emptyBlock();
-    onBlocksChange([...blocks.slice(0, atIndex), nieuw, ...blocks.slice(atIndex)]);
+    onBlocksChange([...blocks.slice(0, atIndex), emptyBlock(), ...blocks.slice(atIndex)]);
     selectBlock(atIndex);
   };
 
@@ -70,8 +57,11 @@ export default function DocumentEditor({
   };
 
   const copyBlock = (index: number) => {
-    const copy = duplicateBlock(blocks[index]);
-    onBlocksChange?.([...blocks.slice(0, index + 1), copy, ...blocks.slice(index + 1)]);
+    onBlocksChange?.([
+      ...blocks.slice(0, index + 1),
+      duplicateBlock(blocks[index]),
+      ...blocks.slice(index + 1),
+    ]);
     selectBlock(index + 1);
   };
 
@@ -81,6 +71,7 @@ export default function DocumentEditor({
   };
 
   const openBlock = activeBlock !== null ? blocks[activeBlock] : null;
+  const openPanel = activePanel ? panels[activePanel] : null;
 
   return (
     <>
@@ -92,10 +83,6 @@ export default function DocumentEditor({
             customer={customer}
             blocks={blocks}
             currency={currency}
-            introText={introText}
-            notes={notes}
-            activeSlot={activeSlot}
-            onSelect={selectSlot}
             activeBlock={activeBlock}
             onSelectBlock={onBlocksChange ? selectBlock : undefined}
             onAddBlock={onBlocksChange ? addBlock : undefined}
@@ -103,27 +90,38 @@ export default function DocumentEditor({
         </div>
       </div>
 
-      {(panel || openBlock) && (
+      {(openBlock || openPanel) && (
         <>
           <div className="editor-panel-overlay" onClick={close} />
 
           <div className="editor-panel">
             <div className="header">
-              <h2>{openBlock ? 'Blok' : panel?.title}</h2>
+              <h2>{openBlock ? 'Blok' : openPanel?.title}</h2>
               <button type="button" onClick={close} aria-label="Paneel sluiten">
                 <X size={18} />
               </button>
             </div>
 
             {openBlock && activeBlock !== null ? (
-              <BlockEditor
-                block={openBlock}
-                onChange={(block) => changeBlock(activeBlock, block)}
-                onDuplicate={() => copyBlock(activeBlock)}
-                onRemove={() => deleteBlock(activeBlock)}
-              />
+              <>
+                <BlockEditor
+                  block={openBlock}
+                  onChange={(block) => changeBlock(activeBlock, block)}
+                  onDuplicate={() => copyBlock(activeBlock)}
+                  onRemove={() => deleteBlock(activeBlock)}
+                />
+
+                {/* De gegevens in dit blok komen uit velden van het document zelf */}
+                {openBlock.elements.some(el => el.kind === 'gegevens') &&
+                  Object.entries(panels).map(([key, panel]) => (
+                    <div key={key} className="form-section edit-holder">
+                      <h3>{panel.title}</h3>
+                      {panel.content}
+                    </div>
+                  ))}
+              </>
             ) : (
-              panel?.content
+              openPanel?.content
             )}
           </div>
         </>

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
-import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { validateBlocks } from '@/lib/blocks';
@@ -193,8 +192,6 @@ export default function EditInvoice() {
         customer={selectedCustomer}
         blocks={formData.blocks}
         currency={formData.currency}
-        introText={formData.intro_text}
-        notes={formData.notes}
         onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         panels={{
           customer: {
@@ -271,45 +268,6 @@ export default function EditInvoice() {
                   </div>
                 </div>
               </>
-            ),
-          },
-          intro: {
-            title: 'Begeleidende tekst',
-            content: (
-              <div className="form-section">
-                <div className="form-group">
-                  <textarea
-                    value={formData.intro_text}
-                    onChange={(e) => setFormData({ ...formData, intro_text: e.target.value })}
-                    placeholder="Eventuele begeleidende tekst..."
-                    rows={12}
-                  />
-                </div>
-              </div>
-            ),
-          },
-          blocks: {
-            title: 'Blokken',
-            content: (
-              <DocumentBlocks
-                blocks={formData.blocks}
-                onChange={(blocks) => setFormData({ ...formData, blocks })}
-              />
-            ),
-          },
-          notes: {
-            title: 'Opmerkingen',
-            content: (
-              <div className="form-section">
-                <div className="form-group">
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Eventuele opmerkingen..."
-                    rows={8}
-                  />
-                </div>
-              </div>
             ),
           },
         }}

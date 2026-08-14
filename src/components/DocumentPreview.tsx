@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import { Skeleton } from '@/components/Skeleton';
-import type { BlockKind, Customer, DocumentBlock, Tenant } from '@/lib/supabase';
+import type { Customer, DocumentBlock, DocumentElement, Tenant } from '@/lib/supabase';
 import {
-  calculateBlockTotals,
   calculateDocumentTotal,
+  calculateElementTotals,
   formatCurrency,
   getCustomerDisplayName,
   lineTotal,
@@ -12,40 +12,22 @@ import {
 
 interface DocumentPreviewProps {
   title: 'Offerte' | 'Factuur';
-  /** Regels boven de blokken, bijvoorbeeld nummer en datums */
+  /** Regels bij het gegevens-element, bijvoorbeeld nummer en datums */
   meta: { label: string; value: string }[];
   customer?: Customer | null;
   blocks: DocumentBlock[];
   currency?: string;
-  introText?: string;
-  notes?: string;
-  /** Welk onderdeel op dit moment bewerkt wordt */
-  activeSlot?: string | null;
-  /** Aangeroepen als er in het document op een onderdeel geklikt wordt */
-  onSelect?: (slot: string) => void;
   /** Welk blok op dit moment bewerkt wordt */
   activeBlock?: number | null;
   /** Aangeroepen bij een klik op een blok in het document */
   onSelectBlock?: (index: number) => void;
   /** Voegt een blok toe op een bepaalde plek in de lijst */
-  onAddBlock?: (kind: BlockKind, atIndex: number) => void;
+  onAddBlock?: (atIndex: number) => void;
 }
 
-/** Elk aanklikbaar onderdeel hoort bij een paneel met de bijbehorende velden. */
-export const SLOT_PANELS: Record<string, string> = {
-  klantgegevens: 'customer',
-  kenmerken: 'details',
-  brief: 'intro',
-  blokken: 'blocks',
-  tekstblokken: 'blocks',
-  prijsblokken: 'blocks',
-  totaal: 'blocks',
-  opmerkingen: 'notes',
-};
-
 /**
- * Zet een tekstblok om naar opmaak: een regel die met ## begint wordt een
- * kop, een regel die met - begint een opsomming, de rest een alinea.
+ * Zet tekst om naar opmaak: een regel die met ## begint wordt een kop,
+ * een regel die met - begint een opsomming, de rest een alinea.
  */
 export function FormattedText({ text }: { text: string }) {
   const blocks: React.ReactNode[] = [];
@@ -85,134 +67,18 @@ export function FormattedText({ text }: { text: string }) {
   return <>{blocks}</>;
 }
 
-/** Knoppen om op een lege plek een blok toe te voegen. */
-function AddBlockButtons({ onAdd }: { onAdd: (kind: BlockKind) => void }) {
-  return (
-    <div className="add-block">
-      <button
-        type="button"
-        className="button add-item"
-        onClick={(event) => {
-          event.stopPropagation();
-          onAdd('prijsopgave');
-        }}
-      >
-        + Prijstabel
-      </button>
+/** De tabel met regels en de subtotalen van één prijstabel. */
+function PriceTable({ element, currency }: { element: DocumentElement; currency: string }) {
+  const totals = calculateElementTotals(element);
 
-      <button
-        type="button"
-        className="button add-item"
-        onClick={(event) => {
-          event.stopPropagation();
-          onAdd('tekst');
-        }}
-      >
-        + Tekst
-      </button>
-    </div>
-  );
-}
-
-/** Smalle strook tussen twee blokken waar een plusje verschijnt bij hover. */
-function AddBlockDivider({ onAdd }: { onAdd: (kind: BlockKind) => void }) {
-  return (
-    <div className="add-block-divider">
-      <AddBlockButtons onAdd={onAdd} />
-    </div>
-  );
-}
-
-interface BlocksViewProps {
-  blocks: DocumentBlock[];
-  currency: string;
-  /** De plek van dit blok in de hele lijst, zodat klikken het juiste blok opent */
-  indexOf?: (block: DocumentBlock) => number;
-  activeIndex?: number | null;
-  onSelectBlock?: (index: number) => void;
-  onAddBlock?: (kind: BlockKind, atIndex: number) => void;
-}
-
-/** De blokken met hun regels en subtotalen. Wordt in beide weergaven gebruikt. */
-function BlocksView({
-  blocks,
-  currency,
-  indexOf,
-  activeIndex,
-  onSelectBlock,
-  onAddBlock,
-}: BlocksViewProps) {
-  const wrap = (block: DocumentBlock, inhoud: React.ReactNode, extra: Record<string, string | number>) => {
-    const index = indexOf ? indexOf(block) : -1;
-    const klikbaar = onSelectBlock && index >= 0;
-
-    return (
-      <div
-        key={index}
-        {...extra}
-        className={klikbaar ? `editable-region${activeIndex === index ? ' active' : ''}` : undefined}
-        data-label={klikbaar ? block.title || 'Blok' : undefined}
-        onClick={
-          klikbaar
-            ? (event) => {
-                event.stopPropagation();
-                onSelectBlock(index);
-              }
-            : undefined
-        }
-      >
-        {inhoud}
-      </div>
-    );
-  };
-
-  return (
-    <>
-      {blocks.map((block, positie) => {
-        const index = indexOf ? indexOf(block) : positie;
-
-        const blokInhoud =
-          block.kind === 'tekst' ? (
-            <>
-              {block.title && <h3>{block.title}</h3>}
-              {block.body ? <FormattedText text={block.body} /> : <p>Tekst toevoegen</p>}
-            </>
-          ) : (
-            <PriceBlock block={block} currency={currency} />
-          );
-
-        return (
-          <div key={positie}>
-            {onAddBlock && <AddBlockDivider onAdd={(kind) => onAddBlock(kind, index)} />}
-
-            {wrap(block, blokInhoud, {
-              'data-block': block.kind,
-              'data-block-title': block.title,
-              ...(block.kind === 'prijsopgave' ? { 'data-block-tax': block.tax_percentage } : {}),
-            })}
-          </div>
-        );
-      })}
-
-      {onAddBlock && <AddBlockDivider onAdd={(kind) => onAddBlock(kind, blocks.length)} />}
-    </>
-  );
-}
-
-/** De tabel met regels en de subtotalen van één prijsblok. */
-function PriceBlock({ block, currency }: { block: DocumentBlock; currency: string }) {
-  const totals = calculateBlockTotals(block);
-
-  // Aantal en eenheid alleen tonen als ze in dit blok gebruikt worden
-  const showQuantity = block.items.some(
+  // Aantal en eenheid alleen tonen als ze in deze tabel gebruikt worden
+  const showQuantity = element.items.some(
     item => !item.is_heading && (item.unit || Number(item.quantity) !== 1)
   );
 
   return (
     <>
-      {block.title && <h3>{block.title} (btw {block.tax_percentage}%)</h3>}
-
-      {block.items.length > 0 && (
+      {element.items.length > 0 && (
         <div className="table-container">
           <table className="product-table">
             <thead>
@@ -224,15 +90,15 @@ function PriceBlock({ block, currency }: { block: DocumentBlock; currency: strin
               </tr>
             </thead>
             <tbody>
-              {block.items.map((item, itemIndex) =>
+              {element.items.map((item, index) =>
                 item.is_heading ? (
-                  <tr key={itemIndex}>
+                  <tr key={index}>
                     <td colSpan={showQuantity ? 4 : 2}>
                       <strong>{item.description}</strong>
                     </td>
                   </tr>
                 ) : (
-                  <tr key={itemIndex}>
+                  <tr key={index}>
                     <td>{item.description}</td>
                     {showQuantity && <td>{item.quantity}</td>}
                     {showQuantity && <td>{item.unit || ''}</td>}
@@ -250,14 +116,14 @@ function PriceBlock({ block, currency }: { block: DocumentBlock; currency: strin
           <span>Subtotaal excl. btw</span>
           <span>{formatCurrency(totals.subtotal, currency)}</span>
         </div>
-        {block.discount_percentage > 0 && (
+        {element.discount_percentage > 0 && (
           <div className="invoice-total-row">
-            <span>Korting ({block.discount_percentage}%)</span>
+            <span>Korting ({element.discount_percentage}%)</span>
             <span>- {formatCurrency(totals.discount, currency)}</span>
           </div>
         )}
         <div className="invoice-total-row">
-          <span>BTW ({block.tax_percentage}%)</span>
+          <span>BTW ({element.tax_percentage}%)</span>
           <span>{formatCurrency(totals.tax, currency)}</span>
         </div>
         <div className="invoice-total-row total-final">
@@ -269,6 +135,81 @@ function PriceBlock({ block, currency }: { block: DocumentBlock; currency: strin
   );
 }
 
+interface BlockViewProps {
+  block: DocumentBlock;
+  currency: string;
+  customer?: Customer | null;
+  meta: { label: string; value: string }[];
+}
+
+/** Alles wat er in één blok staat, in volgorde. */
+function BlockView({ block, currency, customer, meta }: BlockViewProps) {
+  if (block.elements.length === 0) {
+    return <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p>;
+  }
+
+  return (
+    <>
+      {block.elements.map((element, index) => (
+        <div key={index} data-element={element.kind}>
+          {element.kind === 'gegevens' && (
+            <>
+              <div className="klantgegevens">
+                {customer ? (
+                  <>
+                    <div>{getCustomerDisplayName(customer)}</div>
+                    {customer.street_address && <div>{customer.street_address}</div>}
+                    {(customer.postal_code || customer.city) && (
+                      <div>{[customer.postal_code, customer.city].filter(Boolean).join(' ')}</div>
+                    )}
+                  </>
+                ) : (
+                  <div>Nog geen klant gekozen</div>
+                )}
+              </div>
+
+              <div className="kenmerken">
+                {meta
+                  .filter(row => row.value)
+                  .map(row => (
+                    <div key={row.label}>
+                      {row.label}: {row.value}
+                    </div>
+                  ))}
+              </div>
+            </>
+          )}
+
+          {element.kind === 'tekst' &&
+            (element.body ? <FormattedText text={element.body} /> : <p>Tekst toevoegen</p>)}
+
+          {element.kind === 'prijstabel' && <PriceTable element={element} currency={currency} />}
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Strook waar bij hover een plusje verschijnt om een blok toe te voegen. */
+function AddBlockDivider({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="add-block-divider">
+      <div className="add-block">
+        <button
+          type="button"
+          className="button add-item"
+          onClick={(event) => {
+            event.stopPropagation();
+            onAdd();
+          }}
+        >
+          + Blok
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Papieren weergave van een offerte of factuur, zoals de klant hem krijgt. */
 export default function DocumentPreview({
   title,
@@ -276,45 +217,12 @@ export default function DocumentPreview({
   customer,
   blocks,
   currency = 'EUR',
-  introText,
-  notes,
-  activeSlot,
-  onSelect,
   activeBlock,
   onSelectBlock,
   onAddBlock,
 }: DocumentPreviewProps) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoadingTenant, setIsLoadingTenant] = useState(true);
-
-  const labels: Record<string, string> = {
-    klantgegevens: 'Klant',
-    kenmerken: title === 'Offerte' ? 'Offertegegevens' : 'Factuurgegevens',
-    brief: 'Begeleidende tekst',
-    blokken: 'Blokken',
-    tekstblokken: 'Blokken',
-    prijsblokken: 'Blokken',
-    totaal: 'Blokken',
-    opmerkingen: 'Opmerkingen',
-  };
-
-  /** Maakt een onderdeel van het document aanklikbaar om te bewerken. */
-  const Region = ({ slot, children }: { slot: string; children: React.ReactNode }) => {
-    if (!onSelect) return <>{children}</>;
-
-    return (
-      <div
-        className={`editable-region${activeSlot === slot ? ' active' : ''}`}
-        data-label={labels[slot] || slot}
-        onClick={(event) => {
-          event.stopPropagation();
-          onSelect(slot);
-        }}
-      >
-        {children}
-      </div>
-    );
-  };
 
   useEffect(() => {
     fetch('/api/tenant')
@@ -338,25 +246,15 @@ export default function DocumentPreview({
     );
   }
 
-  const priceBlocks = blocks.filter(block => block.kind !== 'tekst');
-  const textBlocks = blocks.filter(block => block.kind === 'tekst');
   const documentTotal = calculateDocumentTotal(blocks);
-
-  // Een blok kan in een deelverzameling staan; dit geeft zijn plek in het geheel
-  const indexOf = (block: DocumentBlock) => blocks.indexOf(block);
-
-  const customerLines = customer
-    ? [
-        getCustomerDisplayName(customer),
-        customer.street_address,
-        [customer.postal_code, customer.city].filter(Boolean).join(' '),
-      ].filter(Boolean)
-    : [];
-
   const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
 
+  const blokInhoud = (index: number) => (
+    <BlockView block={blocks[index]} currency={currency} customer={customer} meta={meta} />
+  );
+
   // Eigen sjabloon van de aannemer: dat bepaalt de vormgeving, wij leveren
-  // de inhoud aan op de plekken met data-slot
+  // de inhoud op de plekken met data-slot
   if (template) {
     const values: Record<string, string> = {
       documenttitel: title,
@@ -381,111 +279,39 @@ export default function DocumentPreview({
       values[row.label.toLowerCase().replace(/\s+/g, '_')] = row.value;
     });
 
-    // Een pagina met data-repeat wordt per blok herhaald. Er komt er altijd
-    // eentje bij: die laatste is leeg en toont de knoppen om een blok toe te
-    // voegen, zodat er nooit een pagina ontbreekt om mee te beginnen.
-    const herhaalSlots: Record<string, React.ReactNode> = {};
-
-    const vulHerhaling = (naam: string, lijst: DocumentBlock[]) => {
-      lijst.forEach((block, i) => {
-        herhaalSlots[`${naam}-${i}`] = (
-          <BlocksView
-            blocks={[block]}
-            currency={currency}
-            indexOf={indexOf}
-            activeIndex={activeBlock}
-            onSelectBlock={onSelectBlock}
-          />
-        );
-        herhaalSlots[`bloktitel-${i}`] = block.title;
-      });
-
-      // De lege pagina achteraan
-      if (onAddBlock) {
-        herhaalSlots[`${naam}-${lijst.length}`] = (
-          <AddBlockButtons onAdd={(kind) => onAddBlock(kind, blocks.length)} />
-        );
-      }
+    // Eén pagina per blok, plus een lege om er een toe te voegen
+    const slots: Record<string, React.ReactNode> = {
+      totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
     };
 
-    vulHerhaling('blok', blocks);
-    vulHerhaling('prijsblok', priceBlocks);
-    vulHerhaling('tekstblok', textBlocks);
+    const labels: Record<string, string> = {};
+
+    blocks.forEach((block, index) => {
+      slots[`blok-${index}`] = blokInhoud(index);
+      slots[`bloktitel-${index}`] = block.title;
+      labels[`blok-${index}`] = block.title || 'Blok';
+    });
+
+    if (onAddBlock) {
+      slots[`blok-${blocks.length}`] = <AddBlockDivider onAdd={() => onAddBlock(blocks.length)} />;
+      labels[`blok-${blocks.length}`] = 'Nieuw blok';
+    }
 
     return (
       <TemplatedDocument
         html={template}
         values={values}
         labels={labels}
-        activeSlot={activeSlot}
-        onSelect={onSelect}
-        repeatCounts={{
-          prijsblok: priceBlocks.length + 1,
-          tekstblok: textBlocks.length + 1,
-          blok: blocks.length + 1,
+        activeSlot={activeBlock === null || activeBlock === undefined ? null : `blok-${activeBlock}`}
+        onSelect={(slot) => {
+          const match = slot.match(/^blok-(\d+)$/);
+          if (!match || !onSelectBlock) return;
+
+          const index = Number(match[1]);
+          if (index < blocks.length) onSelectBlock(index);
         }}
-        slots={{
-          ...herhaalSlots,
-          klantgegevens: (
-            <>
-              {customerLines.map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
-            </>
-          ),
-          kenmerken: (
-            <>
-              {meta
-                .filter(row => row.value)
-                .map(row => (
-                  <div key={row.label}>
-                    {row.label}: {row.value}
-                  </div>
-                ))}
-            </>
-          ),
-          brief: introText ? <FormattedText text={introText} /> : null,
-          blokken: (
-            <BlocksView
-              blocks={blocks}
-              currency={currency}
-              indexOf={indexOf}
-              activeIndex={activeBlock}
-              onSelectBlock={onSelectBlock}
-              onAddBlock={onAddBlock}
-            />
-          ),
-          // Losse slots zodat een sjabloon de werkomschrijving en de
-          // prijsopgave op eigen pagina's kan zetten
-          tekstblokken: (
-            <BlocksView
-              blocks={textBlocks}
-              currency={currency}
-              indexOf={indexOf}
-              activeIndex={activeBlock}
-              onSelectBlock={onSelectBlock}
-              onAddBlock={onAddBlock}
-            />
-          ),
-          prijsblokken: (
-            <BlocksView
-              blocks={priceBlocks}
-              currency={currency}
-              indexOf={indexOf}
-              activeIndex={activeBlock}
-              onSelectBlock={onSelectBlock}
-              onAddBlock={onAddBlock}
-            />
-          ),
-          totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
-          opmerkingen: notes ? <p>{notes}</p> : null,
-          voorwaarden: tenant?.quote_conditions ? (
-            <FormattedText text={tenant.quote_conditions} />
-          ) : null,
-          algemene_voorwaarden: tenant?.terms_and_conditions ? (
-            <FormattedText text={tenant.terms_and_conditions} />
-          ) : null,
-        }}
+        repeatCounts={{ blok: blocks.length + 1 }}
+        slots={slots}
       />
     );
   }
@@ -498,54 +324,38 @@ export default function DocumentPreview({
         <img src={tenant.logo_url} alt={tenant.company_name || ''} style={{ maxWidth: '200px' }} />
       )}
 
-      <Region slot="klantgegevens">
-        {customerLines.length > 0 ? (
-          customerLines.map((line, i) => <div key={i}>{line}</div>)
-        ) : (
-          <div>Nog geen klant gekozen</div>
-        )}
-      </Region>
-
       <h1>{title}</h1>
 
-      <Region slot="kenmerken">
-        {meta
-          .filter(row => row.value)
-          .map(row => (
-            <div key={row.label}>
-              {row.label}: {row.value}
-            </div>
-          ))}
-      </Region>
+      {blocks.map((block, index) => (
+        <div key={index}>
+          {onAddBlock && <AddBlockDivider onAdd={() => onAddBlock(index)} />}
 
-      <Region slot="brief">
-        {introText ? <FormattedText text={introText} /> : <p>Begeleidende tekst toevoegen</p>}
-      </Region>
-
-      <Region slot="blokken">
-        <BlocksView
-          blocks={blocks}
-          currency={currency}
-          indexOf={indexOf}
-          activeIndex={activeBlock}
-          onSelectBlock={onSelectBlock}
-          onAddBlock={onAddBlock}
-        />
-
-        {priceBlocks.length > 1 && (
-          <div className="invoice-total">
-            <div className="invoice-total-row total-final">
-              <span>Totale prijs</span>
-              <span>{formatCurrency(documentTotal, currency)}</span>
-            </div>
+          <div
+            className={onSelectBlock ? `editable-region${activeBlock === index ? ' active' : ''}` : undefined}
+            data-label={block.title || 'Blok'}
+            onClick={
+              onSelectBlock
+                ? (event) => {
+                    event.stopPropagation();
+                    onSelectBlock(index);
+                  }
+                : undefined
+            }
+          >
+            {block.title && <h2>{block.title}</h2>}
+            {blokInhoud(index)}
           </div>
-        )}
-      </Region>
+        </div>
+      ))}
 
-      <Region slot="opmerkingen">
-        <strong>Opmerkingen</strong>
-        <p>{notes || 'Opmerkingen toevoegen'}</p>
-      </Region>
+      {onAddBlock && <AddBlockDivider onAdd={() => onAddBlock(blocks.length)} />}
+
+      <div className="invoice-total">
+        <div className="invoice-total-row total-final">
+          <span>Totale prijs</span>
+          <span>{formatCurrency(documentTotal, currency)}</span>
+        </div>
+      </div>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import type { Customer, DocumentBlock, LineItem } from './supabase';
+import type { Customer, DocumentBlock, DocumentElement, LineItem } from './supabase';
 
 /**
  * Get display name for a customer
@@ -15,19 +15,19 @@ export function lineTotal(item: Pick<LineItem, 'quantity' | 'price' | 'is_headin
 }
 
 /**
- * Bereken de bedragen van één blok. Elk blok heeft een eigen BTW-tarief,
- * zodat 9% schilderwerk en 21% overig werk elk hun eigen subtotaal krijgen.
- * Eén bron van waarheid voor zowel de preview in de browser als de API.
+ * Bereken de bedragen van één prijstabel. Elke tabel heeft een eigen
+ * BTW-tarief, zodat 9% schilderwerk en 21% overig werk elk hun eigen subtotaal
+ * krijgen. Eén bron van waarheid voor de browser en de API.
  */
-export function calculateBlockTotals(block: Pick<DocumentBlock, 'items' | 'tax_percentage' | 'discount_percentage' | 'kind'>) {
-  if (block.kind === 'tekst') {
+export function calculateElementTotals(element: Pick<DocumentElement, 'items' | 'tax_percentage' | 'discount_percentage' | 'kind'>) {
+  if (element.kind !== 'prijstabel') {
     return { subtotal: 0, discount: 0, tax: 0, total: 0 };
   }
 
-  const subtotal = block.items.reduce((sum, item) => sum + lineTotal(item), 0);
-  const discount = (subtotal * (Number(block.discount_percentage) || 0)) / 100;
+  const subtotal = element.items.reduce((sum, item) => sum + lineTotal(item), 0);
+  const discount = (subtotal * (Number(element.discount_percentage) || 0)) / 100;
   const taxableAmount = subtotal - discount;
-  const tax = (taxableAmount * (Number(block.tax_percentage) || 0)) / 100;
+  const tax = (taxableAmount * (Number(element.tax_percentage) || 0)) / 100;
 
   return {
     subtotal,
@@ -37,9 +37,18 @@ export function calculateBlockTotals(block: Pick<DocumentBlock, 'items' | 'tax_p
   };
 }
 
-/** Het eindbedrag van een offerte of factuur: de som van alle bloktotalen. */
-export function calculateDocumentTotal(blocks: Pick<DocumentBlock, 'items' | 'tax_percentage' | 'discount_percentage' | 'kind'>[]): number {
-  return blocks.reduce((sum, block) => sum + calculateBlockTotals(block).total, 0);
+/** Het eindbedrag: de som van alle prijstabellen in alle blokken. */
+export function calculateDocumentTotal(blocks: DocumentBlock[]): number {
+  return blocks.reduce(
+    (sum, block) =>
+      sum + block.elements.reduce((s, element) => s + calculateElementTotals(element).total, 0),
+    0
+  );
+}
+
+/** Alle prijstabellen uit alle blokken, in volgorde. */
+export function allPriceTables(blocks: DocumentBlock[]): DocumentElement[] {
+  return blocks.flatMap(block => block.elements.filter(e => e.kind === 'prijstabel'));
 }
 
 /** Bedrag als € 1.234,56 */

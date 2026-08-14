@@ -106,21 +106,29 @@ export interface LineItem {
 }
 
 /**
- * Een offerte of factuur bestaat uit blokken. Een tekstblok bevat een vrij
- * verhaal, een prijsblok bevat regels en heeft een eigen BTW-tarief — zo
- * staan 9% en 21% naast elkaar met elk een eigen subtotaal.
+ * Binnen een blok staan elementen. 'gegevens' toont de klant, het nummer en de
+ * datums; 'tekst' is een vrij verhaal; 'prijstabel' bevat regels en heeft een
+ * eigen BTW-tarief, zodat 9% en 21% naast elkaar kunnen staan met elk een
+ * eigen subtotaal.
  */
-export type BlockKind = 'tekst' | 'prijsopgave';
+export type ElementKind = 'gegevens' | 'tekst' | 'prijstabel';
 
-export interface DocumentBlock {
+export interface DocumentElement {
   id?: number;
-  title: string;
-  kind: BlockKind;
+  kind: ElementKind;
   body: string | null;
   tax_percentage: number;
   discount_percentage: number;
   position?: number;
   items: LineItem[];
+}
+
+/** Een blok is één pagina van het document, met een eigen titel. */
+export interface DocumentBlock {
+  id?: number;
+  title: string;
+  position?: number;
+  elements: DocumentElement[];
 }
 
 export interface Invoice {

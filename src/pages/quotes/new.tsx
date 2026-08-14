@@ -3,10 +3,9 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
-import DocumentBlocks from '@/components/DocumentBlocks';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
-import { emptyBlock, validateBlocks } from '@/lib/blocks';
+import { startBlocks, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
 
 const currencyOptions = [
@@ -26,7 +25,7 @@ export default function NewQuote() {
     valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     customer_id: '',
     currency: 'EUR',
-    blocks: [emptyBlock()] as DocumentBlock[],
+    blocks: startBlocks() as DocumentBlock[],
     intro_text: '',
     notes: '',
   });
@@ -130,8 +129,6 @@ export default function NewQuote() {
         customer={selectedCustomer}
         blocks={formData.blocks}
         currency={formData.currency}
-        introText={formData.intro_text}
-        notes={formData.notes}
         onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         panels={{
           customer: {
@@ -200,45 +197,6 @@ export default function NewQuote() {
                   </div>
                 </div>
               </>
-            ),
-          },
-          intro: {
-            title: 'Begeleidende tekst',
-            content: (
-              <div className="form-section">
-                <div className="form-group">
-                  <textarea
-                    value={formData.intro_text}
-                    onChange={(e) => setFormData({ ...formData, intro_text: e.target.value })}
-                    placeholder="Geachte heer/mevrouw, hartelijk dank voor het vertrouwen..."
-                    rows={12}
-                  />
-                </div>
-              </div>
-            ),
-          },
-          blocks: {
-            title: 'Blokken',
-            content: (
-              <DocumentBlocks
-                blocks={formData.blocks}
-                onChange={(blocks) => setFormData({ ...formData, blocks })}
-              />
-            ),
-          },
-          notes: {
-            title: 'Opmerkingen',
-            content: (
-              <div className="form-section">
-                <div className="form-group">
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Bijvoorbeeld: uitvoering in overleg, steiger door opdrachtgever..."
-                    rows={8}
-                  />
-                </div>
-              </div>
             ),
           },
         }}

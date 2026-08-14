@@ -138,20 +138,12 @@ CREATE TRIGGER update_quotes_updated_at
   BEFORE UPDATE ON quotes
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Een offerte bestaat uit blokken. Een tekstblok bevat een vrij verhaal
--- (bijvoorbeeld de omschrijving van de werkzaamheden), een prijsblok bevat
--- regels met bedragen en heeft een eigen BTW-tarief. Zo staan 9% schilderwerk
--- en 21% overig werk naast elkaar in dezelfde offerte, elk met eigen subtotaal.
+-- Een offerte bestaat uit blokken; elk blok is een pagina met een eigen titel.
 CREATE TABLE quote_blocks (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   quote_id BIGINT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
   title TEXT NOT NULL DEFAULT '',
-  kind TEXT NOT NULL DEFAULT 'prijsopgave'
-    CHECK (kind IN ('tekst', 'prijsopgave')),
-  body TEXT,
-  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
-  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
   position INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -159,12 +151,30 @@ CREATE TABLE quote_blocks (
 CREATE INDEX quote_blocks_tenant_id_idx ON quote_blocks(tenant_id);
 CREATE INDEX quote_blocks_quote_id_idx ON quote_blocks(quote_id);
 
--- Offerteregels: vrije omschrijving, geen artikelbestand.
--- Een regel met is_heading is een tussenkop zonder bedrag.
-CREATE TABLE quote_items (
+-- Binnen een blok staan elementen: de offertegegevens, een stuk tekst of een
+-- prijstabel. Elke prijstabel heeft een eigen BTW-tarief, zodat 9% schilderwerk
+-- en 21% overig werk naast elkaar kunnen staan met elk een eigen subtotaal.
+CREATE TABLE quote_elements (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   block_id BIGINT NOT NULL REFERENCES quote_blocks(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'tekst'
+    CHECK (kind IN ('gegevens', 'tekst', 'prijstabel')),
+  body TEXT,
+  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
+  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX quote_elements_tenant_id_idx ON quote_elements(tenant_id);
+CREATE INDEX quote_elements_block_id_idx ON quote_elements(block_id);
+
+-- Regels van een prijstabel. Een regel met is_heading is een tussenkop.
+CREATE TABLE quote_items (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  element_id BIGINT NOT NULL REFERENCES quote_elements(id) ON DELETE CASCADE,
   description TEXT NOT NULL,
   is_heading BOOLEAN NOT NULL DEFAULT false,
   quantity NUMERIC(12,2) NOT NULL DEFAULT 1,
@@ -176,7 +186,7 @@ CREATE TABLE quote_items (
 );
 
 CREATE INDEX quote_items_tenant_id_idx ON quote_items(tenant_id);
-CREATE INDEX quote_items_block_id_idx ON quote_items(block_id);
+CREATE INDEX quote_items_element_id_idx ON quote_items(element_id);
 
 -- ------------------------------------------------------------
 -- Facturen
@@ -214,11 +224,6 @@ CREATE TABLE invoice_blocks (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   invoice_id BIGINT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
   title TEXT NOT NULL DEFAULT '',
-  kind TEXT NOT NULL DEFAULT 'prijsopgave'
-    CHECK (kind IN ('tekst', 'prijsopgave')),
-  body TEXT,
-  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
-  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
   position INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -226,10 +231,26 @@ CREATE TABLE invoice_blocks (
 CREATE INDEX invoice_blocks_tenant_id_idx ON invoice_blocks(tenant_id);
 CREATE INDEX invoice_blocks_invoice_id_idx ON invoice_blocks(invoice_id);
 
-CREATE TABLE invoice_items (
+CREATE TABLE invoice_elements (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   block_id BIGINT NOT NULL REFERENCES invoice_blocks(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'tekst'
+    CHECK (kind IN ('gegevens', 'tekst', 'prijstabel')),
+  body TEXT,
+  tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
+  discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX invoice_elements_tenant_id_idx ON invoice_elements(tenant_id);
+CREATE INDEX invoice_elements_block_id_idx ON invoice_elements(block_id);
+
+CREATE TABLE invoice_items (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  element_id BIGINT NOT NULL REFERENCES invoice_elements(id) ON DELETE CASCADE,
   description TEXT NOT NULL,
   is_heading BOOLEAN NOT NULL DEFAULT false,
   quantity NUMERIC(12,2) NOT NULL DEFAULT 1,
@@ -241,7 +262,7 @@ CREATE TABLE invoice_items (
 );
 
 CREATE INDEX invoice_items_tenant_id_idx ON invoice_items(tenant_id);
-CREATE INDEX invoice_items_block_id_idx ON invoice_items(block_id);
+CREATE INDEX invoice_items_element_id_idx ON invoice_items(element_id);
 
 -- Een omgezette offerte wijst naar zijn factuur; deze koppeling kan pas
 -- gelegd worden nu beide tabellen bestaan
@@ -283,9 +304,11 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quote_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quote_elements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_elements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 

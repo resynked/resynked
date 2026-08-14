@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase';
 import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note } from './supabase';
 import { calculateDocumentTotal, lineTotal } from './utils';
+import { copyBlocks } from './blocks';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
 const supabase = supabaseAdmin;
@@ -9,18 +10,21 @@ const supabase = supabaseAdmin;
 const now = () => new Date().toISOString();
 
 /**
- * Slaat de blokken van een offerte of factuur op. De bestaande blokken gaan
- * er eerst uit; regels verdwijnen met hun blok mee door de cascade. Daarna
- * worden de blokken teruggeschreven met hun regels eraan.
+ * Slaat de blokken van een offerte of factuur op. Bestaande blokken gaan er
+ * eerst uit; elementen en regels verdwijnen mee door de cascade. Daarna gaan
+ * de blokken erin, met hun elementen en de regels van elke prijstabel.
  */
 async function saveBlocks(
-  blocksTable: 'quote_blocks' | 'invoice_blocks',
-  itemsTable: 'quote_items' | 'invoice_items',
-  parentKey: 'quote_id' | 'invoice_id',
+  soort: 'quote' | 'invoice',
   parentId: number | string,
   tenantId: string,
   blocks: DocumentBlock[]
 ) {
+  const blocksTable = soort === 'quote' ? 'quote_blocks' : 'invoice_blocks';
+  const elementsTable = soort === 'quote' ? 'quote_elements' : 'invoice_elements';
+  const itemsTable = soort === 'quote' ? 'quote_items' : 'invoice_items';
+  const parentKey = soort === 'quote' ? 'quote_id' : 'invoice_id';
+
   const { error: deleteError } = await supabase
     .from(blocksTable)
     .delete()
@@ -31,47 +35,81 @@ async function saveBlocks(
 
   if (blocks.length === 0) return;
 
-  const rows = blocks.map((block, index) => ({
-    [parentKey]: parentId,
-    tenant_id: tenantId,
-    title: (block.title || '').trim(),
-    kind: block.kind === 'tekst' ? 'tekst' : 'prijsopgave',
-    body: block.kind === 'tekst' ? block.body || null : null,
-    tax_percentage: Number(block.tax_percentage) || 0,
-    discount_percentage: Number(block.discount_percentage) || 0,
-    position: index,
-  }));
-
-  const { data: savedBlocks, error: insertError } = await supabase
+  const { data: savedBlocks, error: blockError } = await supabase
     .from(blocksTable)
-    .insert(rows)
+    .insert(
+      blocks.map((block, index) => ({
+        [parentKey]: parentId,
+        tenant_id: tenantId,
+        title: (block.title || '').trim(),
+        position: index,
+      }))
+    )
     .select('id, position');
 
-  if (insertError) throw insertError;
+  if (blockError) throw blockError;
 
-  // De ids komen niet gegarandeerd in dezelfde volgorde terug, dus koppelen
-  // we op position — die hebben we hierboven zelf gezet
-  const idByPosition = new Map<number, number>(
-    (savedBlocks || []).map((block: any) => [block.position, block.id])
+  // De ids komen niet gegarandeerd op volgorde terug, dus koppelen we op
+  // position — die hebben we hierboven zelf gezet
+  const blockIdByPosition = new Map<number, number>(
+    (savedBlocks || []).map((row: any) => [row.position, row.id])
+  );
+
+  const elementRows: any[] = [];
+
+  blocks.forEach((block, blockIndex) => {
+    const blockId = blockIdByPosition.get(blockIndex);
+    if (!blockId) return;
+
+    block.elements.forEach((element, elementIndex) => {
+      elementRows.push({
+        block_id: blockId,
+        tenant_id: tenantId,
+        kind: element.kind,
+        body: element.kind === 'tekst' ? element.body || null : null,
+        tax_percentage: Number(element.tax_percentage) || 0,
+        discount_percentage: Number(element.discount_percentage) || 0,
+        position: elementIndex,
+      });
+    });
+  });
+
+  if (elementRows.length === 0) return;
+
+  const { data: savedElements, error: elementError } = await supabase
+    .from(elementsTable)
+    .insert(elementRows)
+    .select('id, block_id, position');
+
+  if (elementError) throw elementError;
+
+  // Terugkoppelen op de combinatie blok en plek binnen dat blok
+  const elementIdByKey = new Map<string, number>(
+    (savedElements || []).map((row: any) => [`${row.block_id}-${row.position}`, row.id])
   );
 
   const itemRows = blocks.flatMap((block, blockIndex) => {
-    if (block.kind === 'tekst') return [];
-
-    const blockId = idByPosition.get(blockIndex);
+    const blockId = blockIdByPosition.get(blockIndex);
     if (!blockId) return [];
 
-    return block.items.map((item, itemIndex) => ({
-      block_id: blockId,
-      tenant_id: tenantId,
-      description: (item.description || '').trim(),
-      is_heading: !!item.is_heading,
-      quantity: item.is_heading ? 0 : Number(item.quantity) || 0,
-      unit: item.is_heading ? null : item.unit || null,
-      price: item.is_heading ? 0 : Number(item.price) || 0,
-      total: lineTotal(item),
-      position: itemIndex,
-    }));
+    return block.elements.flatMap((element, elementIndex) => {
+      if (element.kind !== 'prijstabel') return [];
+
+      const elementId = elementIdByKey.get(`${blockId}-${elementIndex}`);
+      if (!elementId) return [];
+
+      return element.items.map((item, itemIndex) => ({
+        element_id: elementId,
+        tenant_id: tenantId,
+        description: (item.description || '').trim(),
+        is_heading: !!item.is_heading,
+        quantity: item.is_heading ? 0 : Number(item.quantity) || 0,
+        unit: item.is_heading ? null : item.unit || null,
+        price: item.is_heading ? 0 : Number(item.price) || 0,
+        total: lineTotal(item),
+        position: itemIndex,
+      }));
+    });
   });
 
   if (itemRows.length > 0) {
@@ -80,27 +118,26 @@ async function saveBlocks(
   }
 }
 
-/** Zet de genest opgehaalde blokken en regels in de juiste volgorde. */
+/** Zet de genest opgehaalde blokken, elementen en regels op volgorde. */
 function sortBlocks(blocks: any[] | null | undefined) {
   if (!blocks) return [];
 
-  return [...blocks]
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .map((block) => ({
-      ...block,
-      items: [...(block.items || [])].sort(
-        (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0)
-      ),
-    }));
+  const opVolgorde = (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0);
+
+  return [...blocks].sort(opVolgorde).map((block) => ({
+    ...block,
+    elements: [...(block.elements || [])].sort(opVolgorde).map((element: any) => ({
+      ...element,
+      items: [...(element.items || [])].sort(opVolgorde),
+    })),
+  }));
 }
 
-// Uitgeschreven per tabel: de typegenerator van supabase-js leest deze
-// strings letterlijk en kan er niets in laten invullen
 const QUOTE_BLOCK_SELECT =
-  'id, title, kind, body, tax_percentage, discount_percentage, position, items:quote_items(id, description, is_heading, quantity, unit, price, total, position)';
+  'id, title, position, elements:quote_elements(id, kind, body, tax_percentage, discount_percentage, position, items:quote_items(id, description, is_heading, quantity, unit, price, total, position))';
 
 const INVOICE_BLOCK_SELECT =
-  'id, title, kind, body, tax_percentage, discount_percentage, position, items:invoice_items(id, description, is_heading, quantity, unit, price, total, position)';
+  'id, title, position, elements:invoice_elements(id, kind, body, tax_percentage, discount_percentage, position, items:invoice_items(id, description, is_heading, quantity, unit, price, total, position))';
 
 // Tenants: bedrijfsgegevens van de aannemer zelf
 export async function getTenant(tenantId: string) {
@@ -261,7 +298,7 @@ export async function createQuote(
 
   if (quoteError) throw quoteError;
 
-  await saveBlocks('quote_blocks', 'quote_items', 'quote_id', quoteData.id, quote.tenant_id, blocks);
+  await saveBlocks('quote', quoteData.id, quote.tenant_id, blocks);
 
   return quoteData as Quote;
 }
@@ -284,7 +321,7 @@ export async function updateQuote(
 
   // Blokken worden in hun geheel vervangen als ze meegestuurd zijn
   if (Array.isArray(blocks)) {
-    await saveBlocks('quote_blocks', 'quote_items', 'quote_id', id, tenantId, blocks);
+    await saveBlocks('quote', id, tenantId, blocks);
   }
 
   return data as Quote;
@@ -354,14 +391,7 @@ export async function createInvoice(
 
   if (updateError) throw updateError;
 
-  await saveBlocks(
-    'invoice_blocks',
-    'invoice_items',
-    'invoice_id',
-    updatedInvoice.id,
-    invoice.tenant_id,
-    blocks
-  );
+  await saveBlocks('invoice', updatedInvoice.id, invoice.tenant_id, blocks);
 
   return updatedInvoice as Invoice;
 }
@@ -383,7 +413,7 @@ export async function updateInvoice(
   if (error) throw error;
 
   if (Array.isArray(blocks)) {
-    await saveBlocks('invoice_blocks', 'invoice_items', 'invoice_id', id, tenantId, blocks);
+    await saveBlocks('invoice', id, tenantId, blocks);
   }
 
   return data as Invoice;
@@ -410,20 +440,7 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
 
   // Alle blokken gaan mee, inclusief hun eigen BTW-tarief, zodat de
   // splitsing tussen bijvoorbeeld 9% en 21% op de factuur intact blijft
-  const blocks: DocumentBlock[] = (quote.blocks || []).map((block: any) => ({
-    title: block.title,
-    kind: block.kind,
-    body: block.body,
-    tax_percentage: block.tax_percentage,
-    discount_percentage: block.discount_percentage,
-    items: (block.items || []).map((item: any) => ({
-      description: item.description,
-      is_heading: item.is_heading,
-      quantity: item.quantity,
-      unit: item.unit,
-      price: item.price,
-    })),
-  }));
+  const blocks: DocumentBlock[] = copyBlocks(quote.blocks);
 
   const today = new Date();
 
