@@ -202,14 +202,6 @@ export async function deleteCustomer(id: string | number, tenantId: string) {
     throw new Error('Deze klant heeft nog offertes en kan niet verwijderd worden');
   }
 
-  const { error: contactPersonsError } = await supabase
-    .from('contact_persons')
-    .delete()
-    .eq('customer_id', id)
-    .eq('tenant_id', tenantId);
-
-  if (contactPersonsError) throw contactPersonsError;
-
   const { error: notesError } = await supabase
     .from('notes')
     .delete()

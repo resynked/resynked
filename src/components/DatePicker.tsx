@@ -8,6 +8,14 @@ interface DatePickerProps {
   isDisabled?: boolean;
 }
 
+const MONTHS = [
+  'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+  'juli', 'augustus', 'september', 'oktober', 'november', 'december',
+];
+
+/** Aantal jaren dat het jaaroverzicht in één keer toont. */
+const YEARS_PER_PAGE = 12;
+
 export default function DatePicker({
   value,
   onChange,
@@ -16,6 +24,9 @@ export default function DatePicker({
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Klikken op de maandnaam schakelt naar maanden en daarna naar jaren, zodat
+  // een geboortedatum in drie klikken te bereiken is in plaats van jaren terugbladeren
+  const [view, setView] = useState<'days' | 'months' | 'years'>('days');
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Initialize currentMonth based on value
@@ -29,6 +40,7 @@ export default function DatePicker({
     function handleClickOutside(event: MouseEvent) {
       if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setView('days');
       }
     }
 
@@ -69,23 +81,51 @@ export default function DatePicker({
     const formattedDate = selectedDate.toISOString().split('T')[0];
     onChange(formattedDate);
     setIsOpen(false);
+    setView('days');
   };
 
-  const handlePrevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  const handleMonthClick = (month: number) => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), month, 1));
+    setView('days');
   };
 
-  const handleNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  const handleYearClick = (year: number) => {
+    setCurrentMonth(new Date(year, currentMonth.getMonth(), 1));
+    setView('months');
   };
 
-  const monthName = currentMonth.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+  // De pijltjes verspringen een maand, een jaar of een heel jaarblok,
+  // afhankelijk van wat er open staat
+  const step = (direction: -1 | 1) => {
+    if (view === 'days') {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1));
+    } else if (view === 'months') {
+      setCurrentMonth(new Date(currentMonth.getFullYear() + direction, currentMonth.getMonth(), 1));
+    } else {
+      setCurrentMonth(
+        new Date(currentMonth.getFullYear() + direction * YEARS_PER_PAGE, currentMonth.getMonth(), 1)
+      );
+    }
+  };
+
   const days = getDaysInMonth(currentMonth);
   const today = new Date().toISOString().split('T')[0];
-  const selectedDay = value ? new Date(value).getDate() : null;
-  const isCurrentMonth = value &&
-    new Date(value).getMonth() === currentMonth.getMonth() &&
-    new Date(value).getFullYear() === currentMonth.getFullYear();
+  const selectedDate = value ? new Date(value) : null;
+  const selectedDay = selectedDate ? selectedDate.getDate() : null;
+  const isCurrentMonth = selectedDate &&
+    selectedDate.getMonth() === currentMonth.getMonth() &&
+    selectedDate.getFullYear() === currentMonth.getFullYear();
+
+  // Het jaarblok begint op een rond getal, zodat bladeren voorspelbaar loopt
+  const firstYear = Math.floor(currentMonth.getFullYear() / YEARS_PER_PAGE) * YEARS_PER_PAGE;
+  const years = Array.from({ length: YEARS_PER_PAGE }, (_, i) => firstYear + i);
+
+  const headerLabel =
+    view === 'days'
+      ? `${MONTHS[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`
+      : view === 'months'
+        ? String(currentMonth.getFullYear())
+        : `${firstYear} - ${firstYear + YEARS_PER_PAGE - 1}`;
 
   return (
     <div className="datepicker" ref={pickerRef}>
@@ -105,43 +145,83 @@ export default function DatePicker({
       {isOpen && !isDisabled && (
         <div className="menu">
           <div className="header">
-            <button type="button" onClick={handlePrevMonth} className="nav">
+            <button type="button" onClick={() => step(-1)} className="nav">
               <ChevronLeft size={16} />
             </button>
-            <div className="month">{monthName}</div>
-            <button type="button" onClick={handleNextMonth} className="nav">
+            <button
+              type="button"
+              className="month"
+              onClick={() => setView(view === 'days' ? 'months' : view === 'months' ? 'years' : 'days')}
+            >
+              {headerLabel}
+            </button>
+            <button type="button" onClick={() => step(1)} className="nav">
               <ChevronRight size={16} />
             </button>
           </div>
 
-          <div className="weekdays">
-            {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day) => (
-              <div key={day} className="weekday">{day}</div>
-            ))}
-          </div>
+          {view === 'days' && (
+            <>
+              <div className="weekdays">
+                {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day) => (
+                  <div key={day} className="weekday">{day}</div>
+                ))}
+              </div>
 
-          <div className="days">
-            {days.map((day, index) => {
-              if (day === null) {
-                return <div key={`empty-${index}`} className="day empty"></div>;
-              }
+              <div className="days">
+                {days.map((day, index) => {
+                  if (day === null) {
+                    return <div key={`empty-${index}`} className="day empty"></div>;
+                  }
 
-              const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
-              const isToday = dateStr === today;
-              const isSelected = isCurrentMonth && day === selectedDay;
+                  const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
+                  const isToday = dateStr === today;
+                  const isSelected = isCurrentMonth && day === selectedDay;
 
-              return (
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      className={`day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleDateClick(day)}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {view === 'months' && (
+            <div className="days" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {MONTHS.map((month, index) => (
                 <button
-                  key={day}
+                  key={month}
                   type="button"
-                  className={`day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleDateClick(day)}
+                  className={`day ${index === currentMonth.getMonth() ? 'selected' : ''}`}
+                  onClick={() => handleMonthClick(index)}
                 >
-                  {day}
+                  {month.slice(0, 3)}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {view === 'years' && (
+            <div className="days" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {years.map((year) => (
+                <button
+                  key={year}
+                  type="button"
+                  className={`day ${year === currentMonth.getFullYear() ? 'selected' : ''}`}
+                  onClick={() => handleYearClick(year)}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

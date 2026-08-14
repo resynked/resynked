@@ -6,11 +6,11 @@
 -- Het bouwt een lege database op; er is geen bestaande data nodig.
 --
 -- Opbouw:
---   tenants, users              accounts per aannemer
---   customers, contact_persons  relaties
---   quotes, quote_items         offertes met vrije regels
---   invoices, invoice_items     facturen met vrije regels
---   notes                       notities per klant
+--   tenants, users                accounts per aannemer
+--   customers                     relaties
+--   quotes, quote_blocks, ...     offertes in blokken met eigen BTW-tarief
+--   invoices, invoice_blocks, ... facturen, zelfde opzet
+--   notes                         notities per klant
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -103,30 +103,6 @@ CREATE INDEX customers_tenant_id_idx ON customers(tenant_id);
 
 CREATE TRIGGER update_customers_updated_at
   BEFORE UPDATE ON customers
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- ------------------------------------------------------------
--- Contactpersonen bij een klant
--- ------------------------------------------------------------
-CREATE TABLE contact_persons (
-  id BIGSERIAL PRIMARY KEY,
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-  first_name TEXT NOT NULL,
-  middle_name TEXT,
-  last_name TEXT NOT NULL,
-  gender TEXT,
-  email TEXT,
-  phone TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX contact_persons_tenant_id_idx ON contact_persons(tenant_id);
-CREATE INDEX contact_persons_customer_id_idx ON contact_persons(customer_id);
-
-CREATE TRIGGER update_contact_persons_updated_at
-  BEFORE UPDATE ON contact_persons
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ------------------------------------------------------------
@@ -301,7 +277,6 @@ CREATE TRIGGER update_notes_updated_at
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE contact_persons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quote_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;

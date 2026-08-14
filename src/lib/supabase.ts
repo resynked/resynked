@@ -88,20 +88,6 @@ export interface Customer {
   updated_at: string;
 }
 
-export interface ContactPerson {
-  id: number;
-  tenant_id: string;
-  customer_id: number;
-  first_name: string;
-  middle_name: string | null;
-  last_name: string;
-  gender: string | null;
-  email: string | null;
-  phone: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 /**
  * Eén regel binnen een blok. Een regel met is_heading is een tussenkop
  * zonder bedrag, bijvoorbeeld "Dakwerkzaamheden".

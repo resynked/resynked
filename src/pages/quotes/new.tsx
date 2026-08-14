@@ -123,7 +123,7 @@ export default function NewQuote() {
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="grid">
+      <div className="grid two right-2fr">
         <div className="block">
           <form id="quote-form" onSubmit={handleSubmit}>
             <div className="form-section">
