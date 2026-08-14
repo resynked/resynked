@@ -162,7 +162,9 @@ export default function Settings() {
                                 <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
                                 <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
                                 <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
-                                <li><strong>blokken</strong> — alle blokken met regels en subtotalen per BTW-tarief</li>
+                                <li><strong>blokken</strong> — alle blokken achter elkaar</li>
+                                <li><strong>tekstblokken</strong> — alleen de tekstblokken, zoals de omschrijving van de werkzaamheden</li>
+                                <li><strong>prijsblokken</strong> — alleen de blokken met bedragen en subtotalen per BTW-tarief</li>
                                 <li><strong>totaal</strong> — het eindbedrag</li>
                                 <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
                                 <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>

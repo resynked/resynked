@@ -235,6 +235,12 @@ export default function DocumentPreview({
           ),
           brief: introText ? <FormattedText text={introText} /> : null,
           blokken: <BlocksView blocks={blocks} currency={currency} />,
+          // Losse slots zodat een sjabloon de werkomschrijving en de
+          // prijsopgave op eigen pagina's kan zetten
+          tekstblokken: (
+            <BlocksView blocks={blocks.filter(b => b.kind === 'tekst')} currency={currency} />
+          ),
+          prijsblokken: <BlocksView blocks={priceBlocks} currency={currency} />,
           totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
           opmerkingen: notes ? <p>{notes}</p> : null,
           voorwaarden: tenant?.quote_conditions ? (

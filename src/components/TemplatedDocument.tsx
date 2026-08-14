@@ -71,15 +71,25 @@ export default function TemplatedDocument({ html, values, slots }: TemplatedDocu
   // De sanitize gebruikt DOMParser, dus dit gebeurt pas in de browser
   const [safeHtml, setSafeHtml] = useState('');
 
+  // Alleen opnieuw opschonen als er echt iets aan de inhoud verandert
+  const valuesKey = JSON.stringify(values);
+
   useEffect(() => {
     setSafeHtml(sanitize(fillPlaceholders(html, values)));
-  }, [html, values]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [html, valuesKey]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    // De inhoud wordt hier met de hand gezet in plaats van via
+    // dangerouslySetInnerHTML: React zou de innerHTML bij elke wijziging
+    // opnieuw schrijven en daarmee de inhoud van de slots weggooien
+    container.innerHTML = safeHtml;
 
     const found: { name: string; element: HTMLElement }[] = [];
-    containerRef.current.querySelectorAll<HTMLElement>('[data-slot]').forEach((element) => {
+    container.querySelectorAll<HTMLElement>('[data-slot]').forEach((element) => {
       const name = element.getAttribute('data-slot');
       if (name) found.push({ name, element });
     });
@@ -89,7 +99,7 @@ export default function TemplatedDocument({ html, values, slots }: TemplatedDocu
 
   return (
     <>
-      <div ref={containerRef} dangerouslySetInnerHTML={{ __html: safeHtml }} />
+      <div ref={containerRef} />
       {targets.map(({ name, element }) =>
         slots[name] ? createPortal(slots[name], element, name) : null
       )}
