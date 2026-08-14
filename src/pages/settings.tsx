@@ -5,10 +5,14 @@ import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate }
 import { useToast } from '@/components/Toast';
 import type { Tenant } from '@/lib/supabase';
 
+/** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
+const MAX_LOGO_BYTES = 300 * 1024;
+
 export default function Settings() {
     const toast = useToast();
     const [activeTab, setActiveTab] = useState('account');
     const [isSaving, setIsSaving] = useState(false);
+    const [logo, setLogo] = useState('');
     const [templates, setTemplates] = useState({
         quote_template_html: '',
         invoice_template_html: '',
@@ -19,6 +23,7 @@ export default function Settings() {
             .then(res => (res.ok ? res.json() : null))
             .then((tenant: Tenant | null) => {
                 if (!tenant) return;
+                setLogo(tenant.logo_url || '');
                 setTemplates({
                     quote_template_html: tenant.quote_template_html || '',
                     invoice_template_html: tenant.invoice_template_html || '',
@@ -27,13 +32,13 @@ export default function Settings() {
             .catch(() => toast.error('Fout', 'Instellingen konden niet geladen worden'));
     }, []);
 
-    const handleSaveTemplates = async () => {
+    const save = async (updates: Record<string, string | null>, melding: string) => {
         setIsSaving(true);
         try {
             const response = await fetch('/api/tenant', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(templates),
+                body: JSON.stringify(updates),
             });
 
             if (!response.ok) {
@@ -42,13 +47,41 @@ export default function Settings() {
                 return;
             }
 
-            toast.success('Gelukt', 'Sjabloon opgeslagen');
+            toast.success('Gelukt', melding);
         } catch (err) {
             toast.error('Fout', 'Opslaan mislukt');
         } finally {
             setIsSaving(false);
         }
     };
+
+    // Het logo wordt als afbeelding in de offerte meegestuurd, dus het gaat
+    // als data-URL de database in. Zo hoeft de PDF straks niets op te halen.
+    const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > MAX_LOGO_BYTES) {
+            toast.error('Te groot', 'Kies een logo van maximaal 300 kB. Een SVG is meestal een paar kB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = String(reader.result);
+            setLogo(dataUrl);
+            save({ logo_url: dataUrl }, 'Logo opgeslagen');
+        };
+        reader.onerror = () => toast.error('Fout', 'Het bestand kon niet gelezen worden');
+        reader.readAsDataURL(file);
+    };
+
+    const handleLogoRemove = () => {
+        setLogo('');
+        save({ logo_url: null }, 'Logo verwijderd');
+    };
+
+    const handleSaveTemplates = () => save(templates, 'Sjabloon opgeslagen');
 
     return (
         <Layout>
@@ -139,8 +172,48 @@ export default function Settings() {
                 </div>
                 <div className="block">
                     {activeTab === 'account' && (
-                        <h2>Account</h2>
+                        <>
+                            <h2>Account</h2>
 
+                            <div className="form-section">
+                                <h3>Logo</h3>
+                                <p>
+                                    Dit logo verschijnt op je offertes en facturen, op de plek waar je
+                                    in het sjabloon <code>&#123;&#123;logo&#125;&#125;</code> hebt gezet.
+                                    Een SVG blijft het scherpst bij het afdrukken.
+                                </p>
+
+                                {logo && (
+                                    <div className="form-section edit-holder">
+                                        <img src={logo} alt="Logo" style={{ maxWidth: '240px', height: 'auto' }} />
+                                    </div>
+                                )}
+
+                                <div className="form-row">
+                                    <label className="button" htmlFor="logo-upload">
+                                        {logo ? 'Ander logo kiezen' : 'Logo kiezen'}
+                                    </label>
+                                    <input
+                                        id="logo-upload"
+                                        type="file"
+                                        accept="image/svg+xml,image/png,image/jpeg"
+                                        onChange={handleLogoChange}
+                                        style={{ display: 'none' }}
+                                    />
+
+                                    {logo && (
+                                        <button
+                                            type="button"
+                                            className="button negative"
+                                            onClick={handleLogoRemove}
+                                            disabled={isSaving}
+                                        >
+                                            Verwijderen
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </>
                     )}
 
                     {activeTab === 'sjabloon' && (

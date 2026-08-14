@@ -21,6 +21,14 @@ const EDITABLE_FIELDS = [
   'invoice_template_html',
 ] as const;
 
+// Het logo komt als data-URL binnen en is daarmee groter dan een gewoon
+// JSON-verzoek; de standaardgrens van 1 MB is dan al snel te krap
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: '2mb' },
+  },
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
 
