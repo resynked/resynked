@@ -182,7 +182,7 @@ export default function Customers() {
             >
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
-            'ID',
+            'Klantnummer',
             'Bedrijfsnaam',
             'E-mailadres',
             'Naam',
@@ -206,7 +206,7 @@ export default function Customers() {
                   {selectedIds.includes(customer.id) && <Check size={14} />}
                 </button>
               </td>
-              <td>{customer.id}</td>
+              <td>{customer.customer_number || '-'}</td>
               <td>{customer.company_name || '-'}</td>
               <td>{customer.email || '-'}</td>
               <td>

@@ -1,5 +1,6 @@
-import { Fragment } from 'react';
-import type { Customer, DocumentBlock } from '@/lib/supabase';
+import { Fragment, useEffect, useState } from 'react';
+import TemplatedDocument from '@/components/TemplatedDocument';
+import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import {
   calculateBlockTotals,
   calculateDocumentTotal,
@@ -23,7 +24,7 @@ interface DocumentPreviewProps {
  * Zet een tekstblok om naar opmaak: een regel die met ## begint wordt een
  * kop, een regel die met - begint een opsomming, de rest een alinea.
  */
-function FormattedText({ text }: { text: string }) {
+export function FormattedText({ text }: { text: string }) {
   const blocks: React.ReactNode[] = [];
   let bullets: string[] = [];
 
@@ -61,62 +62,10 @@ function FormattedText({ text }: { text: string }) {
   return <>{blocks}</>;
 }
 
-/** Papieren weergave van een offerte of factuur, zoals de klant hem krijgt. */
-export default function DocumentPreview({
-  title,
-  meta,
-  customer,
-  blocks,
-  currency = 'EUR',
-  introText,
-  notes,
-}: DocumentPreviewProps) {
-  const priceBlocks = blocks.filter(block => block.kind !== 'tekst');
-  const documentTotal = calculateDocumentTotal(blocks);
-
+/** De blokken met hun regels en subtotalen. Wordt in beide weergaven gebruikt. */
+function BlocksView({ blocks, currency }: { blocks: DocumentBlock[]; currency: string }) {
   return (
-    <div className="invoice-preview">
-      <div className="invoice-company-header">
-        <div className="invoice-company-logo">Bedrijfslogo</div>
-        <div className="invoice-company-info">
-          <div>Uw bedrijfsnaam</div>
-          <div>Straatnaam 1</div>
-          <div>1200 AC Amsterdam</div>
-          <div>KvK: 12345678</div>
-          <div>BTW: NL123456789B01</div>
-          <div>Bank: NL55 BANK 0123 4567 89</div>
-        </div>
-      </div>
-
-      {customer && (
-        <div className="invoice-customer-info">
-          <div>{getCustomerDisplayName(customer)}</div>
-          {customer.street_address && <div>{customer.street_address}</div>}
-          {(customer.postal_code || customer.city) && (
-            <div>{[customer.postal_code, customer.city].filter(Boolean).join(' ')}</div>
-          )}
-          {customer.btw_number && <div>BTW: {customer.btw_number}</div>}
-        </div>
-      )}
-
-      <h1 className="invoice-title">{title}</h1>
-
-      <div className="invoice-data">
-        {meta
-          .filter(row => row.value)
-          .map(row => (
-            <div key={row.label}>
-              {row.label}: {row.value}
-            </div>
-          ))}
-      </div>
-
-      {introText && (
-        <div className="invoice-notes">
-          <FormattedText text={introText} />
-        </div>
-      )}
-
+    <>
       {blocks.map((block, blockIndex) => {
         if (block.kind === 'tekst') {
           return (
@@ -194,6 +143,147 @@ export default function DocumentPreview({
           </Fragment>
         );
       })}
+    </>
+  );
+}
+
+/** Papieren weergave van een offerte of factuur, zoals de klant hem krijgt. */
+export default function DocumentPreview({
+  title,
+  meta,
+  customer,
+  blocks,
+  currency = 'EUR',
+  introText,
+  notes,
+}: DocumentPreviewProps) {
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+
+  useEffect(() => {
+    fetch('/api/tenant')
+      .then(res => (res.ok ? res.json() : null))
+      .then(setTenant)
+      .catch(() => setTenant(null));
+  }, []);
+
+  const priceBlocks = blocks.filter(block => block.kind !== 'tekst');
+  const documentTotal = calculateDocumentTotal(blocks);
+
+  const customerLines = customer
+    ? [
+        getCustomerDisplayName(customer),
+        customer.street_address,
+        [customer.postal_code, customer.city].filter(Boolean).join(' '),
+      ].filter(Boolean)
+    : [];
+
+  const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
+
+  // Eigen sjabloon van de aannemer: dat bepaalt de vormgeving, wij leveren
+  // de inhoud aan op de plekken met data-slot
+  if (template) {
+    const values: Record<string, string> = {
+      documenttitel: title,
+      klant_naam: customer ? getCustomerDisplayName(customer) : '',
+      klant_adres: customer?.street_address || '',
+      klant_postcode_plaats: customer
+        ? [customer.postal_code, customer.city].filter(Boolean).join(' ')
+        : '',
+      bedrijf_naam: tenant?.company_name || '',
+      bedrijf_adres: tenant?.street_address || '',
+      bedrijf_postcode_plaats: [tenant?.postal_code, tenant?.city].filter(Boolean).join(' '),
+      bedrijf_email: tenant?.email || '',
+      bedrijf_telefoon: tenant?.phone || '',
+      bedrijf_kvk: tenant?.kvk || '',
+      bedrijf_btw: tenant?.btw_number || '',
+      bedrijf_iban: tenant?.iban || '',
+      logo: tenant?.logo_url || '',
+      totaal: formatCurrency(documentTotal, currency),
+    };
+
+    meta.forEach(row => {
+      values[row.label.toLowerCase().replace(/\s+/g, '_')] = row.value;
+    });
+
+    return (
+      <TemplatedDocument
+        html={template}
+        values={values}
+        slots={{
+          klantgegevens: (
+            <>
+              {customerLines.map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </>
+          ),
+          kenmerken: (
+            <>
+              {meta
+                .filter(row => row.value)
+                .map(row => (
+                  <div key={row.label}>
+                    {row.label}: {row.value}
+                  </div>
+                ))}
+            </>
+          ),
+          brief: introText ? <FormattedText text={introText} /> : null,
+          blokken: <BlocksView blocks={blocks} currency={currency} />,
+          totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
+          opmerkingen: notes ? <p>{notes}</p> : null,
+          voorwaarden: tenant?.quote_conditions ? (
+            <FormattedText text={tenant.quote_conditions} />
+          ) : null,
+          algemene_voorwaarden: tenant?.terms_and_conditions ? (
+            <FormattedText text={tenant.terms_and_conditions} />
+          ) : null,
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="invoice-preview">
+      <div className="invoice-company-header">
+        <div className="invoice-company-logo">Bedrijfslogo</div>
+        <div className="invoice-company-info">
+          <div>Uw bedrijfsnaam</div>
+          <div>Straatnaam 1</div>
+          <div>1200 AC Amsterdam</div>
+          <div>KvK: 12345678</div>
+          <div>BTW: NL123456789B01</div>
+          <div>Bank: NL55 BANK 0123 4567 89</div>
+        </div>
+      </div>
+
+      {customerLines.length > 0 && (
+        <div className="invoice-customer-info">
+          {customerLines.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
+
+      <h1 className="invoice-title">{title}</h1>
+
+      <div className="invoice-data">
+        {meta
+          .filter(row => row.value)
+          .map(row => (
+            <div key={row.label}>
+              {row.label}: {row.value}
+            </div>
+          ))}
+      </div>
+
+      {introText && (
+        <div className="invoice-notes">
+          <FormattedText text={introText} />
+        </div>
+      )}
+
+      <BlocksView blocks={blocks} currency={currency} />
 
       {priceBlocks.length > 1 && (
         <div className="invoice-total">

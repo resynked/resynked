@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         iban,
         kvk,
         btw_number,
-        debtor_number,
+        customer_number,
       } = req.body;
 
       const customer = await updateCustomer(id, tenantId, {
@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         iban: iban || null,
         kvk: kvk || null,
         btw_number: btw_number || null,
-        debtor_number: debtor_number || null,
+        customer_number: customer_number || null,
       });
 
       return res.status(200).json(customer);

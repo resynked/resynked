@@ -49,6 +49,8 @@ export interface Tenant {
   logo_url: string | null;
   quote_conditions: string | null;
   terms_and_conditions: string | null;
+  quote_template_html: string | null;
+  invoice_template_html: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -83,7 +85,7 @@ export interface Customer {
   iban: string | null;
   kvk: string | null;
   btw_number: string | null;
-  debtor_number: string | null;
+  customer_number: string | null;
   created_at: string;
   updated_at: string;
 }

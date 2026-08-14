@@ -45,7 +45,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
     iban: '',
     kvk: '',
     btw_number: '',
-    debtor_number: '',
+    customer_number: '',
   });
 
   // Notes state (only for edit mode)
@@ -91,7 +91,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
           iban: customer.iban || '',
           kvk: customer.kvk || '',
           btw_number: customer.btw_number || '',
-          debtor_number: customer.debtor_number || '',
+          customer_number: customer.customer_number || '',
         });
       } else {
         setError('Klant niet gevonden');
@@ -328,12 +328,12 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       />
                     </div>
                     <div className="form-group">
-                      <label htmlFor="debtor_number">Klantnummer</label>
+                      <label htmlFor="customer_number">Klantnummer</label>
                       <input
-                        id="debtor_number"
+                        id="customer_number"
                         type="text"
-                        value={formData.debtor_number}
-                        onChange={(e) => setFormData({ ...formData, debtor_number: e.target.value })}
+                        value={formData.customer_number}
+                        onChange={(e) => setFormData({ ...formData, customer_number: e.target.value })}
                       />
                     </div>
                   </div>

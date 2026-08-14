@@ -44,6 +44,10 @@ CREATE TABLE tenants (
   logo_url TEXT,
   quote_conditions TEXT,        -- garanties, betalingsvoorwaarden, verzekering
   terms_and_conditions TEXT,    -- algemene voorwaarden
+  -- Eigen vormgeving per aannemer: HTML met data-slot plekken die het
+  -- systeem vult met de klantgegevens, de regels en de totalen
+  quote_template_html TEXT,
+  invoice_template_html TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -94,7 +98,7 @@ CREATE TABLE customers (
   iban TEXT,
   kvk TEXT,
   btw_number TEXT,
-  debtor_number TEXT,
+  customer_number TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
