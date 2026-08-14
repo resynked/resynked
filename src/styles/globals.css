@@ -248,10 +248,6 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 
-/* Kenmerken van het document: nummer, datum, geldigheidsdatum.
-   De dubbele punt komt uit de stijl, zodat de opmaak zelf alleen de tekst bevat. */
-.document-meta .label::after {content: ':';}
-.document-meta .value {margin-left: 4px;}
 
 /* Tekstverwerker: balk met knoppen en daaronder het vel waarin je typt */
 .rich-editor {background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); overflow: hidden;}
