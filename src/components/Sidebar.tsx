@@ -47,8 +47,8 @@ export default function Sidebar() {
         <Image
           src="/logo.svg"
           alt="Resynked Logo"
-          width={45}
-          height={45}
+          width={30}
+          height={30}
           className="sidebar-logo"
         />
       </div>
