@@ -46,21 +46,24 @@ function fillPlaceholders(html: string, values: Record<string, string>): string 
 function expandRepeats(doc: Document, counts: Record<string, number>) {
   doc.querySelectorAll<HTMLElement>('[data-repeat]').forEach((sjabloon) => {
     const naam = sjabloon.getAttribute('data-repeat') || '';
-    const aantal = counts[naam] ?? 0;
-
-    if (aantal === 0) {
-      sjabloon.remove();
-      return;
-    }
+    // Altijd minstens één pagina: die laatste is leeg en toont het plusje
+    const aantal = Math.max(counts[naam] ?? 0, 1);
 
     for (let i = 0; i < aantal; i++) {
       const kopie = sjabloon.cloneNode(true) as HTMLElement;
       kopie.removeAttribute('data-repeat');
 
-      // Alleen het slot "blok" wordt genummerd, zodat er per pagina precies
-      // één blok in komt. Andere slots op de pagina blijven wat ze zijn.
-      kopie.querySelectorAll<HTMLElement>('[data-slot="blok"]').forEach((slot) => {
-        slot.setAttribute('data-slot', `${naam}-${i}`);
+      if (i === aantal - 1) {
+        // De laatste pagina is de plek om iets toe te voegen; bij het
+        // afdrukken kan het sjabloon hem hiermee verbergen
+        kopie.setAttribute('data-add-page', '');
+      }
+
+      // De slots die bij één blok horen krijgen een nummer; andere slots
+      // op de pagina, zoals het eindtotaal, blijven wat ze zijn
+      kopie.querySelectorAll<HTMLElement>('[data-slot="blok"], [data-slot="bloktitel"]').forEach((slot) => {
+        const basis = slot.getAttribute('data-slot');
+        slot.setAttribute('data-slot', `${basis === 'bloktitel' ? 'bloktitel' : naam}-${i}`);
       });
 
       sjabloon.parentNode?.insertBefore(kopie, sjabloon);

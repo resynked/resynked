@@ -381,45 +381,36 @@ export default function DocumentPreview({
       values[row.label.toLowerCase().replace(/\s+/g, '_')] = row.value;
     });
 
-    // Een pagina met data-repeat wordt per blok herhaald; elke kopie krijgt
-    // een eigen genummerd slot met precies dat ene blok erin
+    // Een pagina met data-repeat wordt per blok herhaald. Er komt er altijd
+    // eentje bij: die laatste is leeg en toont de knoppen om een blok toe te
+    // voegen, zodat er nooit een pagina ontbreekt om mee te beginnen.
     const herhaalSlots: Record<string, React.ReactNode> = {};
 
-    priceBlocks.forEach((block, i) => {
-      herhaalSlots[`prijsblok-${i}`] = (
-        <BlocksView
-          blocks={[block]}
-          currency={currency}
-          indexOf={indexOf}
-          activeIndex={activeBlock}
-          onSelectBlock={onSelectBlock}
-        />
-      );
-    });
+    const vulHerhaling = (naam: string, lijst: DocumentBlock[]) => {
+      lijst.forEach((block, i) => {
+        herhaalSlots[`${naam}-${i}`] = (
+          <BlocksView
+            blocks={[block]}
+            currency={currency}
+            indexOf={indexOf}
+            activeIndex={activeBlock}
+            onSelectBlock={onSelectBlock}
+          />
+        );
+        herhaalSlots[`bloktitel-${i}`] = block.title;
+      });
 
-    textBlocks.forEach((block, i) => {
-      herhaalSlots[`tekstblok-${i}`] = (
-        <BlocksView
-          blocks={[block]}
-          currency={currency}
-          indexOf={indexOf}
-          activeIndex={activeBlock}
-          onSelectBlock={onSelectBlock}
-        />
-      );
-    });
+      // De lege pagina achteraan
+      if (onAddBlock) {
+        herhaalSlots[`${naam}-${lijst.length}`] = (
+          <AddBlockButtons onAdd={(kind) => onAddBlock(kind, blocks.length)} />
+        );
+      }
+    };
 
-    blocks.forEach((block, i) => {
-      herhaalSlots[`blok-${i}`] = (
-        <BlocksView
-          blocks={[block]}
-          currency={currency}
-          indexOf={indexOf}
-          activeIndex={activeBlock}
-          onSelectBlock={onSelectBlock}
-        />
-      );
-    });
+    vulHerhaling('blok', blocks);
+    vulHerhaling('prijsblok', priceBlocks);
+    vulHerhaling('tekstblok', textBlocks);
 
     return (
       <TemplatedDocument
@@ -429,9 +420,9 @@ export default function DocumentPreview({
         activeSlot={activeSlot}
         onSelect={onSelect}
         repeatCounts={{
-          prijsblok: priceBlocks.length,
-          tekstblok: textBlocks.length,
-          blok: blocks.length,
+          prijsblok: priceBlocks.length + 1,
+          tekstblok: textBlocks.length + 1,
+          blok: blocks.length + 1,
         }}
         slots={{
           ...herhaalSlots,
