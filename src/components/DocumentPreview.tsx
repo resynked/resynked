@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import { Skeleton } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, DocumentElement, Tenant } from '@/lib/supabase';
+import { isRichTextEmpty, toDisplayHtml } from '@/lib/richtext';
 import {
   calculateDocumentTotal,
   calculateElementTotals,
@@ -26,45 +27,12 @@ interface DocumentPreviewProps {
 }
 
 /**
- * Zet tekst om naar opmaak: een regel die met ## begint wordt een kop,
- * een regel die met - begint een opsomming, de rest een alinea.
+ * De tekst van een tekstelement, met zijn opmaak. Wat de editor oplevert is
+ * HTML; een tekst van vóór de editor staat als platte tekst in de database en
+ * wordt hier omgezet. Beide gaan langs de opschoning van richtext.
  */
 export function FormattedText({ text }: { text: string }) {
-  const blocks: React.ReactNode[] = [];
-  let bullets: string[] = [];
-
-  const flushBullets = (key: string) => {
-    if (bullets.length === 0) return;
-    blocks.push(
-      <ul key={key}>
-        {bullets.map((bullet, i) => (
-          <li key={i}>{bullet}</li>
-        ))}
-      </ul>
-    );
-    bullets = [];
-  };
-
-  text.split('\n').forEach((line, index) => {
-    const trimmed = line.trim();
-
-    if (trimmed.startsWith('- ')) {
-      bullets.push(trimmed.slice(2));
-      return;
-    }
-
-    flushBullets(`ul-${index}`);
-
-    if (trimmed.startsWith('## ')) {
-      blocks.push(<h3 key={index}>{trimmed.slice(3)}</h3>);
-    } else if (trimmed) {
-      blocks.push(<p key={index}>{trimmed}</p>);
-    }
-  });
-
-  flushBullets('ul-last');
-
-  return <>{blocks}</>;
+  return <div className="rich-text" dangerouslySetInnerHTML={{ __html: toDisplayHtml(text) }} />;
 }
 
 /** De tabel met regels en de subtotalen van één prijstabel. */
@@ -184,7 +152,11 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
           {element.kind === 'kop' && <h2>{element.body || 'Kop toevoegen'}</h2>}
 
           {element.kind === 'tekst' &&
-            (element.body ? <FormattedText text={element.body} /> : <p>Tekst toevoegen</p>)}
+            (element.body && !isRichTextEmpty(element.body) ? (
+              <FormattedText text={element.body} />
+            ) : (
+              <p>Tekst toevoegen</p>
+            ))}
 
           {element.kind === 'prijstabel' && <PriceTable element={element} currency={currency} />}
         </div>

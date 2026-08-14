@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { X, Copy } from 'lucide-react';
 import Select from '@/components/Select';
+import RichTextEditor from '@/components/RichTextEditor';
 import { UNITS } from '@/lib/constants';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
 import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from '@/lib/supabase';
@@ -149,11 +150,10 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
 
           {element.kind === 'tekst' && (
             <div className="form-group">
-              <textarea
+              <RichTextEditor
                 value={element.body || ''}
-                onChange={(e) => updateElement(elementIndex, { body: e.target.value })}
-                placeholder={'Begin met een korte inleiding.\n\n## Dakwerkzaamheden\n- Het demonteren van de nokvorsten'}
-                rows={12}
+                onChange={(body) => updateElement(elementIndex, { body })}
+                placeholder="Begin met een korte inleiding."
               />
             </div>
           )}
