@@ -157,12 +157,14 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
                 )}
               </div>
 
+              {/* Label en waarde elk in een span, zodat ze los te stijlen zijn */}
               <div className="document-meta">
                 {meta
                   .filter(row => row.value)
                   .map(row => (
                     <div key={row.label}>
-                      {row.label}: {row.value}
+                      <span className="label">{row.label}</span>
+                      <span className="value">{row.value}</span>
                     </div>
                   ))}
               </div>
