@@ -184,10 +184,10 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 }
 
 /* Aanklikbare onderdelen in het document */
-.editable-region {position: relative; cursor: pointer; border-radius: var(--border-radius1); outline: 2px solid transparent; outline-offset: 6px; transition: .2s all ease;}
-.editable-region:hover {outline-color: var(--color5); background: var(--color3);}
+.editable-region {position: relative; cursor: pointer; outline: 2px solid transparent; outline-offset: 6px; transition: .3s all ease;}
+.editable-region.active, .editable-region:hover {outline-color: var(--color4);}
 .editable-region.active {outline-color: var(--color5); background: var(--color3);}
-.editable-region::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color5); color: var(--color2); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
+.editable-region::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
 .editable-region:hover::after, .editable-region.active::after {opacity: 1;}
 .editable-region:empty {min-height: 20px;}
 
