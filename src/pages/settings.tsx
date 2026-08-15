@@ -196,14 +196,11 @@ export default function Settings() {
                         <>
                             <h2>Account</h2>
 
-                            <div className="form-section">
-                                <h3>Logo</h3>
-                                <p>
-                                    Dit logo verschijnt op je offertes en facturen, op de plek waar je
-                                    in het sjabloon <code>&#123;&#123;logo&#125;&#125;</code> hebt gezet.
-                                    Een SVG blijft het scherpst bij het afdrukken.
-                                </p>
-
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Logo</span>
+                                    <span className="description">Dit logo verschijnt op je offertes, facturen en e-mail.</span>
+                                </div>
                                 <FileUpload
                                     value={logo}
                                     fileName={logoFile?.name || (logo ? 'Huidig logo' : null)}
