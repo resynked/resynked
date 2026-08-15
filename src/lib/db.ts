@@ -441,6 +441,67 @@ export async function deleteQuote(id: string | number, tenantId: string) {
   return { success: true };
 }
 
+/**
+ * Zoekt een offerte op zijn publieke sleutel, voor de pagina waar de klant hem
+ * bekijkt en ondertekent. Er is hier geen sessie: de sleutel is het enige
+ * bewijs, dus er gaat niet meer mee dan die pagina nodig heeft. De tenant komt
+ * apart mee voor het logo en het sjabloon.
+ */
+export async function getQuoteByToken(token: string) {
+  const { data, error } = await supabase
+    .from('quotes')
+    .select(
+      'id, tenant_id, quote_number, quote_date, valid_until, total, status, currency, ' +
+        'signed_at, signed_name, signature_image, ' +
+        'customer:customers(name, first_name, middle_name, last_name, company_name, street_address, postal_code, city)'
+    )
+    .eq('public_token', token)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const quote = data as any;
+  const tenant = await getTenant(quote.tenant_id);
+
+  return {
+    quote: { ...quote, blocks: await fetchBlocks('quote', quote.id, quote.tenant_id) },
+    tenant,
+  };
+}
+
+/**
+ * Legt de handtekening van de klant vast. Een offerte kan maar één keer
+ * getekend worden; daarna staat hij op goedgekeurd.
+ */
+export async function signQuote(token: string, name: string, signatureImage: string) {
+  const { data: existing, error: lookupError } = await supabase
+    .from('quotes')
+    .select('id, signed_at')
+    .eq('public_token', token)
+    .maybeSingle();
+
+  if (lookupError) throw lookupError;
+  if (!existing) return null;
+  if (existing.signed_at) throw new Error('Deze offerte is al ondertekend');
+
+  const { data, error } = await supabase
+    .from('quotes')
+    .update({
+      signed_at: now(),
+      signed_name: name,
+      signature_image: signatureImage,
+      status: 'approved',
+      updated_at: now(),
+    })
+    .eq('public_token', token)
+    .select('id, signed_at, signed_name')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 // Invoices
 export async function getInvoices(tenantId: string) {
   const { data, error } = await supabase

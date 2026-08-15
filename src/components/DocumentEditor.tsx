@@ -81,9 +81,9 @@ export default function DocumentEditor({
 
       {openBlock && activeBlock !== null && (
         <>
-          <div className="editor-panel-overlay" onClick={close} />
+          <div className="modal-overlay" onClick={close} />
 
-          <div className="editor-panel">
+          <div className="modal-container">
             <div className="header">
               <h2>Blok</h2>
               <button type="button" onClick={close} aria-label="Paneel sluiten">

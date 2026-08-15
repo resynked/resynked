@@ -51,6 +51,10 @@ export interface Tenant {
   terms_and_conditions: string | null;
   quote_template_html: string | null;
   invoice_template_html: string | null;
+  /** Onderwerp van de mail waarmee een offerte de deur uit gaat */
+  email_subject: string | null;
+  /** De tekst onder het logo in die mail */
+  email_intro_text: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -161,6 +165,13 @@ export interface Quote {
   intro_text?: string | null;
   notes?: string | null;
   converted_to_invoice_id?: number | null;
+  /** Waarmee de klant zonder in te loggen bij zijn eigen offerte komt */
+  public_token?: string;
+  sent_at?: string | null;
+  signed_at?: string | null;
+  signed_name?: string | null;
+  /** De handtekening van de klant als PNG data-URL */
+  signature_image?: string | null;
   created_at: string;
   updated_at: string;
 }

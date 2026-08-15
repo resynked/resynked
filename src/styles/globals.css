@@ -159,6 +159,10 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .header .actions {display: flex; gap: var(--space10); align-items: center;}
 .content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
+.autosave-status {font-size: 12px; color: var(--font-color2); white-space: nowrap;}
+.autosave-status.error {color: var(--color6);}
+.autosave-status.saved {color: var(--color7);}
+
 .content .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 
 .content .grid:has(.block.page-navigation) {grid-template-columns: 300px 1fr;}
@@ -170,13 +174,12 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .block.page-navigation .section-title {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
 .content .block.page-navigation nav:last-child {border: 0;}
 
-/* Paneel dat vanaf de rechterkant inschuift als je een onderdeel aanklikt */
-.editor-panel-overlay {position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; z-index: 10; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8.5px); transition: opacity 0.3s ease 0s;}
-.editor-panel {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 100%; max-width: 600px; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
-.editor-panel .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
-.editor-panel .header h2 {margin: 0;}
-.editor-panel .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
-.editor-panel .header button:hover {color: var(--font-color1);}
+/* Paneel dat vanaf de rechterkant inschuift; de achtergrond is .modal-overlay */
+.modal-container {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 100%; max-width: 600px; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
+.modal-container .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
+.modal-container .header h2 {margin: 0;}
+.modal-container .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
+.modal-container .header button:hover {color: var(--font-color1);}
 
 @keyframes slideInPanel {
   from { transform: translateX(100%); }
@@ -248,6 +251,25 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 
+
+/* De offerte zoals de klant hem via de mail te zien krijgt: geen menu, geen
+   zijbalk, alleen het document en het vak om te ondertekenen */
+.public-document {max-width: var(--max-width-small); margin: 0 auto; padding: var(--space20); box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space20);}
+.public-document .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
+.public-document .empty-state {padding: var(--space50) var(--space20);}
+
+.signature-block .form-row {margin: var(--space20) 0 0 0;}
+.signature-block .signed .confirmation {display: flex; align-items: center; gap: var(--space10); color: var(--color7); font-weight: 500;}
+.signature-block .signed img {max-width: 320px; height: auto; display: block; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2);}
+
+/* Vak waarin de klant tekent, met de vinger of met de muis */
+.signature-pad {display: flex; flex-direction: column; gap: var(--space5);}
+.signature-pad .pad {width: 100%; height: 200px; background: var(--color2); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); cursor: crosshair;}
+.signature-pad .footer {display: flex; align-items: center; justify-content: space-between; gap: var(--space10);}
+.signature-pad .footer .hint {font-size: 12px; color: var(--font-color2);}
+.signature-pad .footer .clear {display: flex; align-items: center; gap: var(--space5); font-size: 12px; padding: var(--space5) var(--space10); box-sizing: border-box; border-radius: var(--border-radius1); color: var(--font-color2);}
+.signature-pad .footer .clear:hover:not(:disabled) {background: var(--color4); color: var(--font-color1);}
+.signature-pad .footer .clear:disabled {opacity: .5; cursor: not-allowed;}
 
 /* Tekstverwerker: balk met knoppen en daaronder het vel waarin je typt */
 .rich-editor {background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); overflow: hidden;}

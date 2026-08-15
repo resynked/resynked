@@ -36,6 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         intro_text,
         notes,
         blocks,
+        autosave,
       } = req.body;
 
       const updates: any = {};
@@ -50,9 +51,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Het totaal wordt hier herrekend zodat het altijd bij de blokken past
       if (blocks !== undefined) {
-        const problem = validateBlocks(blocks);
-        if (problem) {
-          return res.status(400).json({ error: problem });
+        // Automatisch opslaan gebeurt terwijl iemand nog bezig is; een tabel
+        // zonder regels mag het bewaren dan niet tegenhouden, anders gaat juist
+        // het werk verloren dat we wilden veiligstellen. De controle hoort bij
+        // het bewust bijwerken.
+        if (!autosave) {
+          const problem = validateBlocks(blocks);
+          if (problem) {
+            return res.status(400).json({ error: problem });
+          }
         }
         updates.total = calculateDocumentTotal(blocks);
       }

@@ -147,6 +147,34 @@ export default function Quotes() {
     }
   };
 
+  const handleSend = async (quoteId: string) => {
+    const confirmed = await confirm({
+      title: 'Offerte versturen',
+      message:
+        'De klant krijgt een mail met een knop naar deze offerte, waar hij hem kan bekijken en ondertekenen.',
+      confirmText: 'Versturen',
+      cancelText: 'Annuleren',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/send`, { method: 'POST' });
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error('Versturen mislukt', data.error || 'Er is iets misgegaan');
+        return;
+      }
+
+      toast.success('Verstuurd', `De offerte is naar ${data.sentTo} gestuurd`);
+      fetchQuotes();
+    } catch (error) {
+      console.error('Error sending quote:', error);
+      toast.error('Versturen mislukt', 'Er is iets misgegaan. Probeer het opnieuw.');
+    }
+  };
+
   const handleConvertToInvoice = async (quoteId: string) => {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
@@ -286,6 +314,17 @@ export default function Quotes() {
                       </Link>
                       <Link href="" className="copy" onClick={() => handleDuplicate(quote)}>
                         Kopiëren
+                      </Link>
+                      <Link
+                        href=""
+                        className="edit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenDropdownId(null);
+                          handleSend(quote.id);
+                        }}
+                      >
+                        Versturen
                       </Link>
                       {quote.converted_to_invoice_id ? (
                         <Link href={`/invoices/${quote.converted_to_invoice_id}`} className="edit">

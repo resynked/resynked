@@ -10,6 +10,9 @@ aannemers komen elkaar nooit tegen.
 - **Offertes** met vrije regels: omschrijving, aantal, eenheid (stuks, uur, m², …) en prijs
 - **Offerte omzetten naar factuur** met één knop; alle regels gaan mee
 - **Facturen** met status concept / verzonden / betaald / geannuleerd
+- **Offerte versturen** per mail: de klant krijgt een bericht met het logo, je
+  eigen tekst uit Instellingen > E-mail en een knop naar een pagina waar hij de
+  offerte kan bekijken en met vinger of muis kan **ondertekenen**
 - **Notities** per klant
 - **Omzetgrafiek** op het dashboard, gevoed door betaalde facturen
 
@@ -35,7 +38,18 @@ RLS-policies op de tabellen vormen de tweede laag.
    SUPABASE_SERVICE_ROLE_KEY=...
    NEXTAUTH_SECRET=...
    NEXTAUTH_URL=http://localhost:3000
+
+   # Offertes versturen
+   RESEND_API_KEY=...
+   EMAIL_FROM=Resynked <offertes@jouwdomein.nl>
+   APP_URL=http://localhost:3000
    ```
+
+   `EMAIL_FROM` moet een adres zijn op een domein dat je in Resend geverifieerd
+   hebt, anders weigert Resend de mail. `APP_URL` is het adres waarop de app te
+   bereiken is; daarmee wordt de link in de mail opgebouwd. Op Vercel zet je die
+   op de echte domeinnaam — zonder die variabele wijst de knop in de mail naar
+   `localhost`. Staat `APP_URL` er niet, dan valt hij terug op `NEXTAUTH_URL`.
 
 3. Draai [`SCHEMA.sql`](SCHEMA.sql) in de Supabase SQL-editor; dat bouwt de
    hele database op. Werk je een bestaande database bij, draai dan

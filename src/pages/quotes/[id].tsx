@@ -10,6 +10,7 @@ import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
+import { autosaveLabel, useAutosave } from '@/hooks/useAutosave';
 import { SkeletonCard } from '@/components/Skeleton';
 
 const currencyOptions = [
@@ -49,6 +50,9 @@ export default function EditQuote() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [signedAt, setSignedAt] = useState<string | null>(null);
+  const [signedName, setSignedName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -67,6 +71,8 @@ export default function EditQuote() {
       const quote: any = await response.json();
 
       setConvertedInvoiceId(quote.converted_to_invoice_id || null);
+      setSignedAt(quote.signed_at || null);
+      setSignedName(quote.signed_name || null);
       setFormData({
         quote_number: quote.quote_number || '',
         quote_date: quote.quote_date || new Date().toISOString().split('T')[0],
@@ -103,8 +109,41 @@ export default function EditQuote() {
     label: getCustomerOptionLabel(c),
   }));
 
-  const handleSubmit = async () => {
+  /**
+   * Schrijft de offerte weg. Bij automatisch opslaan mag het werk halverwege
+   * zijn — een prijstabel zonder regels blokkeert dan niet het bewaren.
+   */
+  const persist = async (data: typeof formData, autosave: boolean) => {
+    const response = await fetch(`/api/quotes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quote_number: data.quote_number,
+        quote_date: data.quote_date,
+        valid_until: data.valid_until,
+        customer_id: data.customer_id,
+        status: data.status,
+        currency: data.currency,
+        intro_text: data.intro_text || null,
+        notes: data.notes || null,
+        blocks: data.blocks,
+        autosave,
+      }),
+    });
 
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || 'Er is iets misgegaan');
+    }
+  };
+
+  const { status: autosaveStatus, savedAt } = useAutosave(
+    formData,
+    (data) => persist(data, true),
+    { enabled: !isLoadingData }
+  );
+
+  const handleSubmit = async () => {
     const problem = validateBlocks(formData.blocks);
     if (problem) {
       toast.error('Fout', problem);
@@ -114,33 +153,46 @@ export default function EditQuote() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/quotes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quote_number: formData.quote_number,
-          quote_date: formData.quote_date,
-          valid_until: formData.valid_until,
-          customer_id: formData.customer_id,
-          status: formData.status,
-          currency: formData.currency,
-          intro_text: formData.intro_text || null,
-          notes: formData.notes || null,
-          blocks: formData.blocks,
-        }),
-      });
+      await persist(formData, false);
+      router.push('/quotes');
+    } catch (err: any) {
+      toast.error('Fout', err.message || 'Er is iets misgegaan. Probeer het opnieuw.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    const confirmed = await confirm({
+      title: 'Offerte versturen',
+      message:
+        'De klant krijgt een mail met een knop naar deze offerte, waar hij hem kan bekijken en ondertekenen.',
+      confirmText: 'Versturen',
+      cancelText: 'Annuleren',
+    });
+
+    if (!confirmed) return;
+
+    setIsSending(true);
+
+    try {
+      // Eerst het openstaande werk vastleggen, anders krijgt de klant een
+      // oudere versie te zien dan wat er op het scherm staat
+      await persist(formData, true);
+
+      const response = await fetch(`/api/quotes/${id}/send`, { method: 'POST' });
+      const data = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        toast.error('Fout', data.error || 'Er is iets misgegaan');
-        setIsLoading(false);
+        toast.error('Versturen mislukt', data.error || 'Er is iets misgegaan');
         return;
       }
 
-      router.push('/quotes');
+      toast.success('Verstuurd', `De offerte is naar ${data.sentTo} gestuurd`);
+      setFormData((current) => ({ ...current, status: 'sent' }));
     } catch (err) {
-      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
-      setIsLoading(false);
+      toast.error('Versturen mislukt', 'Er is iets misgegaan. Probeer het opnieuw.');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -188,6 +240,17 @@ export default function EditQuote() {
       <div className="header">
         <h1>Offerte bewerken</h1>
         <div className="actions">
+          <span className={`autosave-status ${autosaveStatus}`}>
+            {autosaveLabel(autosaveStatus, savedAt)}
+          </span>
+          {signedAt && (
+            <span className="autosave-status saved">
+              Getekend door {signedName} op {formatDate(signedAt)}
+            </span>
+          )}
+          <button type="button" className="button cancel" onClick={handleSend} disabled={isSending}>
+            {isSending ? 'Versturen...' : 'Versturen'}
+          </button>
           {convertedInvoiceId ? (
             <Link href={`/invoices/${convertedInvoiceId}`} className="button cancel">
               Bekijk factuur

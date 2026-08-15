@@ -15,9 +15,14 @@ interface DocumentPreviewProps {
   title: 'Offerte' | 'Factuur';
   /** Regels bij het gegevens-element, bijvoorbeeld nummer en datums */
   meta: { label: string; value: string }[];
-  customer?: Customer | null;
+  customer?: Partial<Customer> | null;
   blocks: DocumentBlock[];
   currency?: string;
+  /**
+   * De bedrijfsgegevens. De schermen binnen de app halen die zelf op, maar de
+   * publieke offertepagina heeft geen sessie en geeft ze mee.
+   */
+  tenant?: Tenant | null;
   /** Welk blok op dit moment bewerkt wordt */
   activeBlock?: number | null;
   /** Aangeroepen bij een klik op een blok in het document */
@@ -123,7 +128,7 @@ function PriceTable({ element, currency }: { element: DocumentElement; currency:
 interface BlockViewProps {
   block: DocumentBlock;
   currency: string;
-  customer?: Customer | null;
+  customer?: Partial<Customer> | null;
   meta: { label: string; value: string }[];
 }
 
@@ -208,20 +213,26 @@ export default function DocumentPreview({
   customer,
   blocks,
   currency = 'EUR',
+  tenant: givenTenant,
   activeBlock,
   onSelectBlock,
   onAddBlock,
 }: DocumentPreviewProps) {
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [isLoadingTenant, setIsLoadingTenant] = useState(true);
+  const [fetchedTenant, setFetchedTenant] = useState<Tenant | null>(null);
+  const [isLoadingTenant, setIsLoadingTenant] = useState(!givenTenant);
 
   useEffect(() => {
+    // Zijn de gegevens meegegeven, dan valt er niets op te halen
+    if (givenTenant) return;
+
     fetch('/api/tenant')
       .then(res => (res.ok ? res.json() : null))
-      .then(setTenant)
-      .catch(() => setTenant(null))
+      .then(setFetchedTenant)
+      .catch(() => setFetchedTenant(null))
       .finally(() => setIsLoadingTenant(false));
-  }, []);
+  }, [givenTenant]);
+
+  const tenant = givenTenant ?? fetchedTenant;
 
   // Pas tonen als bekend is of er een eigen sjabloon is, anders flitst
   // eerst de standaardweergave voorbij

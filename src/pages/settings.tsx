@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
+import RichTextEditor from '@/components/RichTextEditor';
 import type { Tenant } from '@/lib/supabase';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
@@ -23,6 +24,10 @@ export default function Settings() {
         quote_template_html: '',
         invoice_template_html: '',
     });
+    const [emailSettings, setEmailSettings] = useState({
+        email_subject: '',
+        email_intro_text: '',
+    });
 
     useEffect(() => {
         fetch('/api/tenant')
@@ -33,6 +38,10 @@ export default function Settings() {
                 setTemplates({
                     quote_template_html: tenant.quote_template_html || '',
                     invoice_template_html: tenant.invoice_template_html || '',
+                });
+                setEmailSettings({
+                    email_subject: tenant.email_subject || '',
+                    email_intro_text: tenant.email_intro_text || '',
                 });
             })
             .catch(() => toast.error('Fout', 'Instellingen konden niet geladen worden'));
@@ -84,6 +93,8 @@ export default function Settings() {
 
     const handleSaveTemplates = () => save(templates, 'Sjabloon opgeslagen');
 
+    const handleSaveEmail = () => save(emailSettings, 'E-mailinstellingen opgeslagen');
+
     return (
         <Layout>
             <div className="header">
@@ -91,6 +102,13 @@ export default function Settings() {
                 {activeTab === 'sjabloon' && (
                     <div className="actions">
                         <button className="button" onClick={handleSaveTemplates} disabled={isSaving}>
+                            {isSaving ? 'Opslaan...' : 'Opslaan'}
+                        </button>
+                    </div>
+                )}
+                {activeTab === 'email' && (
+                    <div className="actions">
+                        <button className="button" onClick={handleSaveEmail} disabled={isSaving}>
                             {isSaving ? 'Opslaan...' : 'Opslaan'}
                         </button>
                     </div>
@@ -290,8 +308,43 @@ export default function Settings() {
                     )}
 
                     {activeTab === 'email' && (
-                        <h2>E-mail</h2>
+                        <>
+                            <h2>E-mail</h2>
+                            <p>
+                                Dit is de mail die de klant krijgt als je een offerte verstuurt.
+                                Bovenin komt je logo uit het tabblad Account, daaronder de tekst
+                                hieronder, en daaronder een knop naar de offerte waar de klant hem
+                                kan bekijken en ondertekenen.
+                            </p>
 
+                            <div className="form-section">
+                                <div className="form-group">
+                                    <label htmlFor="email_subject">Onderwerp</label>
+                                    <input
+                                        id="email_subject"
+                                        type="text"
+                                        value={emailSettings.email_subject}
+                                        onChange={(e) =>
+                                            setEmailSettings({ ...emailSettings, email_subject: e.target.value })
+                                        }
+                                        placeholder="Uw offerte van Hendrikse Onderhoud"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <div className="form-group">
+                                    <label>Tekst in de mail</label>
+                                    <RichTextEditor
+                                        value={emailSettings.email_intro_text}
+                                        onChange={(email_intro_text) =>
+                                            setEmailSettings({ ...emailSettings, email_intro_text })
+                                        }
+                                        placeholder="Beste klant, hierbij ontvangt u onze offerte."
+                                    />
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
             </div>

@@ -189,7 +189,32 @@ BEGIN
 END $$;
 
 -- ------------------------------------------------------------
--- 3. Rechten en RLS voor de nieuwe tabellen
+-- 3. Offertes versturen en laten ondertekenen
+--
+-- De aannemer stelt bij Instellingen > E-mail zijn vaste begeleidende tekst in.
+-- Elke offerte krijgt een eigen sleutel: daarmee komt de klant via de knop in
+-- de mail op een pagina waar hij de offerte ziet en kan tekenen. De sleutel is
+-- een gok-bestendige UUID en is het enige wat die pagina beveiligt, dus hij
+-- staat nergens anders dan in de mail aan die ene klant.
+-- ------------------------------------------------------------
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_subject TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_intro_text TEXT;
+
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS public_token UUID;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS signed_at TIMESTAMPTZ;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS signed_name TEXT;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS signature_image TEXT;
+
+-- Bestaande offertes krijgen alsnog een sleutel, daarna mag de kolom niet leeg
+UPDATE quotes SET public_token = gen_random_uuid() WHERE public_token IS NULL;
+ALTER TABLE quotes ALTER COLUMN public_token SET DEFAULT gen_random_uuid();
+ALTER TABLE quotes ALTER COLUMN public_token SET NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS quotes_public_token_idx ON quotes(public_token);
+
+-- ------------------------------------------------------------
+-- 4. Rechten en RLS voor de nieuwe tabellen
 --
 -- Zonder deze grants antwoordt de API met 42501 "permission denied", ook op
 -- een sleutel die RLS mag omzeilen. anon en authenticated krijgen bewust

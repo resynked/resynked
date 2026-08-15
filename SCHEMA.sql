@@ -44,6 +44,8 @@ CREATE TABLE tenants (
   logo_url TEXT,
   quote_conditions TEXT,        -- garanties, betalingsvoorwaarden, verzekering
   terms_and_conditions TEXT,    -- algemene voorwaarden
+  email_subject TEXT,           -- onderwerp van de mail waarmee een offerte de deur uit gaat
+  email_intro_text TEXT,        -- de tekst onder het logo in die mail
   -- Eigen vormgeving per aannemer: HTML met data-slot plekken die het
   -- systeem vult met de klantgegevens, de regels en de totalen
   quote_template_html TEXT,
@@ -126,10 +128,18 @@ CREATE TABLE quotes (
   intro_text TEXT,
   notes TEXT,
   converted_to_invoice_id BIGINT,
+  -- Waarmee de klant zonder in te loggen bij zijn eigen offerte komt; deze
+  -- sleutel staat alleen in de mail aan die klant
+  public_token UUID NOT NULL DEFAULT gen_random_uuid(),
+  sent_at TIMESTAMPTZ,
+  signed_at TIMESTAMPTZ,
+  signed_name TEXT,
+  signature_image TEXT,         -- de handtekening als PNG data-URL
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX quotes_public_token_idx ON quotes(public_token);
 CREATE INDEX quotes_tenant_id_idx ON quotes(tenant_id);
 CREATE INDEX quotes_customer_id_idx ON quotes(customer_id);
 CREATE INDEX quotes_created_at_idx ON quotes(created_at DESC);
