@@ -124,17 +124,58 @@ export function buildQuoteEmailSubject(tenant: Tenant, quote: Pick<Quote, 'quote
   return tenant.email_subject?.trim() || `Offerte ${quote.quote_number}`;
 }
 
+/** Grof gecontroleerd: één apenstaartje, een punt erachter, en geen witruimte. */
+export function isEmailAddress(value: string): boolean {
+  return /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(value.trim());
+}
+
 /**
- * Verstuurt een mail via Resend. De sleutel en het afzendadres staan in de
- * omgevingsvariabelen; het afzenddomein moet in Resend geverifieerd zijn,
- * anders weigert Resend de mail.
+ * De afzender zoals hij in de mail komt te staan, bijvoorbeeld
+ * `Hendrikse Onderhoud <offertes@hendrikse.nl>`.
+ *
+ * Naam en adres komen uit de instellingen van de aannemer en belanden in een
+ * mailkop. Alles wat daar een tweede kop van zou kunnen maken — regeleindes,
+ * punthaken, komma's — gaat er daarom uit. Heeft de aannemer geen eigen adres
+ * ingevuld, dan valt het terug op het systeemadres uit de omgeving.
  */
-export async function sendMail(options: { to: string; subject: string; html: string; replyTo?: string }) {
+export function buildSender(tenant: Pick<Tenant, 'email_from' | 'company_name' | 'name'>): string | null {
+  const address = (tenant.email_from || '').trim();
+
+  if (!address || !isEmailAddress(address)) return null;
+
+  const name = (tenant.company_name || tenant.name || '')
+    .replace(/[<>,;"\r\n]/g, '')
+    .trim();
+
+  return name ? `${name} <${address}>` : address;
+}
+
+/**
+ * Verstuurt een mail via Resend.
+ *
+ * De sleutel is systeembreed en staat in de omgeving; het afzendadres komt bij
+ * voorkeur uit de instellingen van de aannemer. Het domein van dat adres moet
+ * in Resend geverifieerd zijn, anders weigert Resend de mail — daar krijgt de
+ * gebruiker hieronder een leesbare melding over in plaats van de kale fout.
+ */
+export async function sendMail(options: {
+  to: string;
+  subject: string;
+  html: string;
+  /** Afzender uit de instellingen; leeg betekent het systeemadres */
+  from?: string | null;
+  replyTo?: string;
+}) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const from = options.from || process.env.EMAIL_FROM;
 
   if (!apiKey) throw new Error('Zet RESEND_API_KEY in de omgevingsvariabelen');
-  if (!from) throw new Error('Zet EMAIL_FROM in de omgevingsvariabelen, bijvoorbeeld "Resynked <offertes@jouwdomein.nl>"');
+
+  if (!from) {
+    throw new Error(
+      'Er is geen afzendadres. Vul er een in bij Instellingen > E-mail, of zet EMAIL_FROM in de omgevingsvariabelen.'
+    );
+  }
 
   const resend = new Resend(apiKey);
 
@@ -146,7 +187,18 @@ export async function sendMail(options: { to: string; subject: string; html: str
     replyTo: options.replyTo,
   });
 
-  if (error) throw new Error(error.message || 'De mail kon niet verstuurd worden');
+  if (error) {
+    const message = error.message || 'De mail kon niet verstuurd worden';
+
+    if (/not verified|domain/i.test(message)) {
+      throw new Error(
+        `Het afzendadres ${from} kan niet gebruikt worden: dat domein is niet geverifieerd in Resend. ` +
+          'Verifieer het domein in Resend, of vul bij Instellingen > E-mail een adres in op een domein dat dat wel is.'
+      );
+    }
+
+    throw new Error(message);
+  }
 
   return data;
 }

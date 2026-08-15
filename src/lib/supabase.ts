@@ -55,6 +55,8 @@ export interface Tenant {
   email_subject: string | null;
   /** De tekst onder het logo in die mail */
   email_intro_text: string | null;
+  /** Afzendadres van deze aannemer; leeg betekent het systeemadres uit EMAIL_FROM */
+  email_from: string | null;
   created_at: string;
   updated_at: string;
 }

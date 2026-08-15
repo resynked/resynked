@@ -25,6 +25,7 @@ export default function Settings() {
         invoice_template_html: '',
     });
     const [emailSettings, setEmailSettings] = useState({
+        email_from: '',
         email_subject: '',
         email_intro_text: '',
     });
@@ -40,6 +41,7 @@ export default function Settings() {
                     invoice_template_html: tenant.invoice_template_html || '',
                 });
                 setEmailSettings({
+                    email_from: tenant.email_from || '',
                     email_subject: tenant.email_subject || '',
                     email_intro_text: tenant.email_intro_text || '',
                 });
@@ -316,6 +318,28 @@ export default function Settings() {
                                 hieronder, en daaronder een knop naar de offerte waar de klant hem
                                 kan bekijken en ondertekenen.
                             </p>
+
+                            <div className="form-section">
+                                <div className="form-group">
+                                    <label htmlFor="email_from">Afzendadres</label>
+                                    <input
+                                        id="email_from"
+                                        type="email"
+                                        value={emailSettings.email_from}
+                                        onChange={(e) =>
+                                            setEmailSettings({ ...emailSettings, email_from: e.target.value })
+                                        }
+                                        placeholder="offertes@jouwdomein.nl"
+                                    />
+                                    <p className="field-hint">
+                                        Hiervandaan gaan je offertes de deur uit. Het domein van dit
+                                        adres moet geverifieerd zijn bij de mailverzender; is dat niet
+                                        zo, dan wordt de mail geweigerd. Laat je dit leeg, dan gaat de
+                                        offerte uit vanaf het algemene adres van het systeem en komt
+                                        een antwoord van de klant alsnog bij jou terecht.
+                                    </p>
+                                </div>
+                            </div>
 
                             <div className="form-section">
                                 <div className="form-group">

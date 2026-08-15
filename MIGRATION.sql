@@ -199,6 +199,9 @@ END $$;
 -- ------------------------------------------------------------
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_subject TEXT;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_intro_text TEXT;
+-- Het afzendadres van deze aannemer. Blijft dit leeg, dan gaat de mail uit
+-- vanaf het systeemadres in EMAIL_FROM.
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS email_from TEXT;
 
 ALTER TABLE quotes ADD COLUMN IF NOT EXISTS public_token UUID;
 ALTER TABLE quotes ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;

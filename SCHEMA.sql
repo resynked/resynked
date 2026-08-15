@@ -46,6 +46,7 @@ CREATE TABLE tenants (
   terms_and_conditions TEXT,    -- algemene voorwaarden
   email_subject TEXT,           -- onderwerp van de mail waarmee een offerte de deur uit gaat
   email_intro_text TEXT,        -- de tekst onder het logo in die mail
+  email_from TEXT,              -- afzendadres; leeg = het systeemadres uit EMAIL_FROM
   -- Eigen vormgeving per aannemer: HTML met data-slot plekken die het
   -- systeem vult met de klantgegevens, de regels en de totalen
   quote_template_html TEXT,

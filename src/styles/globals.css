@@ -244,6 +244,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-group label {font-size: 12px; font-weight: 500; color: var(--font-color1);}
 .form-section .form-group textarea {min-height: 180px;}
 .form-section .form-group .center-input {text-align: center;}
+.form-section .form-group .field-hint {font-size: 12px; line-height: 1.5em; color: var(--font-color2); margin: var(--space5) 0 0 0;}
 
 .form-section .react-select__control {border-color: var(--border-color); border-radius: var(--border-radius1);}
 .form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}

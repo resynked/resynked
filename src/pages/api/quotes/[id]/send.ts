@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { getQuote, getTenant, updateQuote } from '@/lib/db';
-import { buildQuoteEmailHtml, buildQuoteEmailSubject, quoteLink, sendMail } from '@/lib/email';
+import { buildQuoteEmailHtml, buildQuoteEmailSubject, buildSender, quoteLink, sendMail } from '@/lib/email';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -41,8 +41,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       to: customer.email,
       subject: buildQuoteEmailSubject(tenant, quote),
       html: buildQuoteEmailHtml({ tenant, customer, quote, token: quote.public_token }),
-      // Antwoordt de klant op de mail, dan komt dat bij de aannemer terecht
-      replyTo: tenant.email || undefined,
+      // Het adres uit Instellingen > E-mail; is dat leeg, dan het systeemadres
+      from: buildSender(tenant),
+      // Antwoordt de klant op de mail, dan komt dat bij de aannemer terecht,
+      // ook als de mail vanaf het systeemadres verstuurd is
+      replyTo: tenant.email_from || tenant.email || undefined,
     });
 
     // Een offerte die al goedgekeurd of afgewezen is blijft staan waar hij staat
