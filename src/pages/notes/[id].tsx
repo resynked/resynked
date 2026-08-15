@@ -98,7 +98,7 @@ export default function EditNote() {
 
   if (isFetching) {
     return (
-      <Layout>
+      <Layout title="Notitie bewerken">
         <div className="header">
           <h1>Notitie bewerken</h1>
           <div className="actions">
@@ -117,7 +117,7 @@ export default function EditNote() {
 
   if (!note) {
     return (
-      <Layout>
+      <Layout title="Notitie bewerken">
         <div className="header">
           <h1>Notitie niet gevonden</h1>
         </div>
@@ -129,7 +129,7 @@ export default function EditNote() {
   }
 
   return (
-    <Layout>
+    <Layout title="Notitie bewerken">
       <div className="header">
         <h1>Notitie bewerken</h1>
         <div className="actions">

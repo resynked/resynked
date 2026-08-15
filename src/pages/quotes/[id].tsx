@@ -226,7 +226,7 @@ export default function EditQuote() {
 
   if (isLoadingData) {
     return (
-      <Layout>
+      <Layout title="Offerte bewerken">
         <div className="header">
           <h1>Offerte bewerken</h1>
         </div>
@@ -236,7 +236,7 @@ export default function EditQuote() {
   }
 
   return (
-    <Layout>
+    <Layout title="Offerte bewerken">
       <div className="header">
         <h1>Offerte bewerken</h1>
         <div className="actions">

@@ -60,7 +60,7 @@ export default function Dashboard() {
     document.customer ? getCustomerDisplayName(document.customer) : '';
 
   return (
-    <Layout>
+    <Layout title="Dashboard">
       <div className="grid">
         <div className="block">
           <OmzetChart />

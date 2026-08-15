@@ -130,7 +130,7 @@ export default function Notes() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="Notities">
         <div className="header">
           <h1>Notities</h1>
           <div className="actions">
@@ -145,7 +145,7 @@ export default function Notes() {
   }
 
   return (
-    <Layout>
+    <Layout title="Notities">
       <div className="header">
         <h1>Notities</h1>
         <div className="actions">

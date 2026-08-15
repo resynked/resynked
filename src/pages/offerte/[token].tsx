@@ -7,6 +7,7 @@ import SignaturePad from '@/components/SignaturePad';
 import { SkeletonCard } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
+import { pageTitle } from '@/lib/constants';
 
 interface PublicQuote {
   quote_number: string;
@@ -102,7 +103,7 @@ export default function PublicQuote() {
   return (
     <>
       <Head>
-        <title>{quote ? `Offerte ${quote.quote_number}` : 'Offerte'}</title>
+        <title>{pageTitle(quote ? `Offerte ${quote.quote_number}` : 'Offerte')}</title>
         {/* Deze pagina hoort nergens in een zoekmachine te staan */}
         <meta name="robots" content="noindex, nofollow" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

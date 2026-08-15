@@ -8,14 +8,14 @@ export default function EditCustomer() {
 
   if (!id || typeof id !== 'string') {
     return (
-      <Layout>
+      <Layout title="Klant bewerken">
         <div className="loading">Laden...</div>
       </Layout>
     );
   }
 
   return (
-    <Layout>
+    <Layout title="Klant bewerken">
       <CustomerForm mode="edit" customerId={id} />
     </Layout>
   );

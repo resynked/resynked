@@ -189,7 +189,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 /* Aanklikbare onderdelen in het document */
 .editable-region {position: relative; cursor: pointer; outline: 2px solid transparent; outline-offset: 6px; transition: .3s all ease;}
 .editable-region.active, .editable-region:hover {outline-color: var(--color4);}
-.editable-region.active {outline-color: var(--color5); background: var(--color3);}
+.editable-region.active {outline-color: var(--color4); background: var(--color3);}
 .editable-region::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
 .editable-region:hover::after, .editable-region.active::after {opacity: 1;}
 .editable-region:empty {min-height: 20px;}
@@ -244,11 +244,16 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section .form-group label {font-size: 12px; font-weight: 500; color: var(--font-color1);}
 .form-section .form-group textarea {min-height: 180px;}
 .form-section .form-group .center-input {text-align: center;}
-.form-section .form-group .field-hint {font-size: 12px; line-height: 1.5em; color: var(--font-color2); margin: var(--space5) 0 0 0;}
 
 .form-section .react-select__control {border-color: var(--border-color); border-radius: var(--border-radius1);}
 .form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}
 .form-section h2, .form-section h3 {margin: 0;}
+
+.row-section {display: grid; grid-template-columns: 1fr 3fr; gap: var(--space30); padding: var(--space10) 0; box-sizing: border-box;}
+.row-section .information .title {display: block; font-weight: bold;}
+.row-section .information .description {color: var(--font-color2);}
+.row-section > div > *:first-child {margin-top: 0;}
+.row-section > div > *:last-child {margin-bottom: 0;}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 

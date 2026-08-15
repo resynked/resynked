@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
+import { pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
 
 
@@ -68,6 +70,10 @@ export default function Register() {
 
   return (
     <>
+      <Head>
+        <title>{pageTitle('Registreren')}</title>
+      </Head>
+
       <div className="register-wrapper">
         <div className="register-block">
           <h1>Maak je account aan</h1>

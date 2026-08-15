@@ -102,7 +102,7 @@ export default function NewInvoice() {
   };
 
   return (
-    <Layout>
+    <Layout title="Nieuwe factuur">
       <div className="header">
         <h1>Nieuwe factuur aanmaken</h1>
         <div className="actions">

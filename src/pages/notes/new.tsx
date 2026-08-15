@@ -80,7 +80,7 @@ export default function NewNote() {
   })) || [];
 
   return (
-    <Layout>
+    <Layout title="Nieuwe notitie">
       <div className="header">
         <h1>Nieuwe notitie aanmaken</h1>
         <div className="actions">

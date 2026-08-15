@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
+import { pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
 
 export default function Login() {
@@ -46,6 +48,10 @@ export default function Login() {
 
   return (
     <>
+      <Head>
+        <title>{pageTitle('Inloggen')}</title>
+      </Head>
+
       <div className="login-wrapper">
         <div className="login-block">
           <h1>Inloggen bij Resynked</h1>

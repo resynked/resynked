@@ -98,7 +98,7 @@ export default function Settings() {
     const handleSaveEmail = () => save(emailSettings, 'E-mailinstellingen opgeslagen');
 
     return (
-        <Layout>
+        <Layout title="Instellingen">
             <div className="header">
                 <h1>Instellingen</h1>
                 {activeTab === 'sjabloon' && (
@@ -201,17 +201,19 @@ export default function Settings() {
                                     <span className="title">Logo</span>
                                     <span className="description">Dit logo verschijnt op je offertes, facturen en e-mail.</span>
                                 </div>
-                                <FileUpload
-                                    value={logo}
-                                    fileName={logoFile?.name || (logo ? 'Huidig logo' : null)}
-                                    fileSize={logoFile?.size ?? null}
-                                    accept={LOGO_ACCEPT}
-                                    maxBytes={MAX_LOGO_BYTES}
-                                    hint="SVG, PNG of JPG, maximaal 300 kB"
-                                    disabled={isSaving}
-                                    onSelect={handleLogoSelect}
-                                    onRemove={handleLogoRemove}
-                                />
+                                <div>
+                                    <FileUpload
+                                        value={logo}
+                                        fileName={logoFile?.name || (logo ? 'Huidig logo' : null)}
+                                        fileSize={logoFile?.size ?? null}
+                                        accept={LOGO_ACCEPT}
+                                        maxBytes={MAX_LOGO_BYTES}
+                                        hint="SVG, PNG of JPG, maximaal 300 kB"
+                                        disabled={isSaving}
+                                        onSelect={handleLogoSelect}
+                                        onRemove={handleLogoRemove}
+                                    />
+                                </div>
                             </div>
                         </>
                     )}
@@ -219,49 +221,59 @@ export default function Settings() {
                     {activeTab === 'sjabloon' && (
                         <>
                             <h2>Sjabloon</h2>
-                            <p>
-                                Plak hier de HTML van je eigen offerte- en factuurontwerp. Alles wat vast is —
-                                de zijbalk, kleuren, logo, paginanummers — schrijf je zelf. De plekken die met
-                                de offerte meegroeien laat je leeg met een data-slot; die vult het systeem.
-                            </p>
 
-                        
-                            <h3>Plekken die het systeem vult</h3>
-                            <p>
-                                Zet een leeg element neer met het juiste data-slot, bijvoorbeeld{' '}
-                                <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
-                            </p>
-                            <ul>
-                                <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
-                                <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
-                                <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
-                                <li><strong>blokken</strong> — alle blokken achter elkaar</li>
-                                <li><strong>tekstblokken</strong> — alleen de tekstblokken, zoals de omschrijving van de werkzaamheden</li>
-                                <li><strong>prijsblokken</strong> — alleen de blokken met bedragen en subtotalen per BTW-tarief</li>
-                                <li><strong>totaal</strong> — het eindbedrag</li>
-                                <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
-                                <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
-                                <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
-                            </ul>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Plekken die het systeem vult</span>
+                                    <span className="description">
+                                        Alles wat vast is — de zijbalk, kleuren, logo, paginanummers —
+                                        schrijf je zelf. De plekken die met de offerte meegroeien laat je
+                                        leeg met een data-slot, bijvoorbeeld{' '}
+                                        <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
+                                    </span>
+                                </div>
+                                <div>
+                                    <ul>
+                                        <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
+                                        <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
+                                        <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
+                                        <li><strong>blokken</strong> — alle blokken achter elkaar</li>
+                                        <li><strong>tekstblokken</strong> — alleen de tekstblokken, zoals de omschrijving van de werkzaamheden</li>
+                                        <li><strong>prijsblokken</strong> — alleen de blokken met bedragen en subtotalen per BTW-tarief</li>
+                                        <li><strong>totaal</strong> — het eindbedrag</li>
+                                        <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
+                                        <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
+                                        <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
+                                    </ul>
+                                </div>
+                            </div>
 
-                            <h3>Losse waarden</h3>
-                            <p>
-                                Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
-                                <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
-                            </p>
-                            <ul>
-                                <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
-                                <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
-                                <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
-                            </ul>
-                            <p>
-                                Laat je een veld leeg, dan valt de offerte terug op de standaardweergave.
-                            </p>
-                            
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Losse waarden</span>
+                                    <span className="description">
+                                        Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
+                                        <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
+                                    </span>
+                                </div>
+                                <div>
+                                    <ul>
+                                        <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
+                                        <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
+                                        <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
+                                    </ul>
+                                </div>
+                            </div>
 
-                            <div className="form-section">
-                                <div className="form-group">
-                                    <label htmlFor="quote_template_html">Offertesjabloon</label>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="quote_template_html">Offertesjabloon</label>
+                                    <span className="description">
+                                        De HTML van je eigen offerteontwerp. Laat je dit leeg, dan valt de
+                                        offerte terug op de standaardweergave.
+                                    </span>
+                                </div>
+                                <div>
                                     <textarea
                                         id="quote_template_html"
                                         value={templates.quote_template_html}
@@ -274,9 +286,15 @@ export default function Settings() {
                                 </div>
                             </div>
 
-                            <div className="form-section">
-                                <div className="form-group">
-                                    <label htmlFor="invoice_template_html">Factuursjabloon</label>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="invoice_template_html">Factuursjabloon</label>
+                                    <span className="description">
+                                        De HTML van je eigen factuurontwerp. Laat je dit leeg, dan valt de
+                                        factuur terug op de standaardweergave.
+                                    </span>
+                                </div>
+                                <div>
                                     <textarea
                                         id="invoice_template_html"
                                         value={templates.invoice_template_html}
@@ -309,16 +327,19 @@ export default function Settings() {
                     {activeTab === 'email' && (
                         <>
                             <h2>E-mail</h2>
-                            <p>
-                                Dit is de mail die de klant krijgt als je een offerte verstuurt.
-                                Bovenin komt je logo uit het tabblad Account, daaronder de tekst
-                                hieronder, en daaronder een knop naar de offerte waar de klant hem
-                                kan bekijken en ondertekenen.
-                            </p>
 
-                            <div className="form-section">
-                                <div className="form-group">
-                                    <label htmlFor="email_from">Afzendadres</label>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="email_from">Afzendadres</label>
+                                    <span className="description">
+                                        Hiervandaan gaan je offertes de deur uit. Het domein van dit adres
+                                        moet geverifieerd zijn bij de mailverzender; is dat niet zo, dan
+                                        wordt de mail geweigerd. Laat je dit leeg, dan gaat de offerte uit
+                                        vanaf het algemene adres van het systeem en komt een antwoord van
+                                        de klant alsnog bij jou terecht.
+                                    </span>
+                                </div>
+                                <div>
                                     <input
                                         id="email_from"
                                         type="email"
@@ -328,19 +349,18 @@ export default function Settings() {
                                         }
                                         placeholder="offertes@jouwdomein.nl"
                                     />
-                                    <p className="field-hint">
-                                        Hiervandaan gaan je offertes de deur uit. Het domein van dit
-                                        adres moet geverifieerd zijn bij de mailverzender; is dat niet
-                                        zo, dan wordt de mail geweigerd. Laat je dit leeg, dan gaat de
-                                        offerte uit vanaf het algemene adres van het systeem en komt
-                                        een antwoord van de klant alsnog bij jou terecht.
-                                    </p>
                                 </div>
                             </div>
 
-                            <div className="form-section">
-                                <div className="form-group">
-                                    <label htmlFor="email_subject">Onderwerp</label>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="email_subject">Onderwerp</label>
+                                    <span className="description">
+                                        Het onderwerp van de mail. Laat je dit leeg, dan wordt het
+                                        &quot;Offerte&quot; met het offertenummer erachter.
+                                    </span>
+                                </div>
+                                <div>
                                     <input
                                         id="email_subject"
                                         type="text"
@@ -353,9 +373,16 @@ export default function Settings() {
                                 </div>
                             </div>
 
-                            <div className="form-section">
-                                <div className="form-group">
-                                    <label>Tekst in de mail</label>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Tekst in de mail</span>
+                                    <span className="description">
+                                        Bovenin de mail komt je logo uit het tabblad Account, daaronder deze
+                                        tekst, en daaronder een knop naar de offerte waar de klant hem kan
+                                        bekijken en ondertekenen.
+                                    </span>
+                                </div>
+                                <div>
                                     <RichTextEditor
                                         value={emailSettings.email_intro_text}
                                         onChange={(email_intro_text) =>

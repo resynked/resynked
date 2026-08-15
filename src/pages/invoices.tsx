@@ -155,7 +155,7 @@ export default function Invoices() {
   };
 
   return (
-    <Layout>
+    <Layout title="Facturen">
       <div className="header">
         <h1>Facturen</h1>
         <div className="actions">

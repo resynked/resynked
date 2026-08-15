@@ -118,7 +118,7 @@ export default function Customers() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout title="Klanten">
         <div className="header">
           <h1>Klanten</h1>
           <div className="actions">
@@ -133,7 +133,7 @@ export default function Customers() {
   }
 
   return (
-    <Layout>
+    <Layout title="Klanten">
       <div className="header">
         <h1>Klanten</h1>
         <div className="actions">

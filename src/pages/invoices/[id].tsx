@@ -142,7 +142,7 @@ export default function EditInvoice() {
 
   if (isLoadingData) {
     return (
-      <Layout>
+      <Layout title="Factuur bewerken">
         <div className="header">
           <h1>Factuur bewerken</h1>
         </div>
@@ -152,7 +152,7 @@ export default function EditInvoice() {
   }
 
   return (
-    <Layout>
+    <Layout title="Factuur bewerken">
       <div className="header">
         <h1>Factuur bewerken</h1>
         <div className="actions">

@@ -219,7 +219,7 @@ export default function Quotes() {
   };
 
   return (
-    <Layout>
+    <Layout title="Offertes">
       <div className="header">
         <h1>Offertes</h1>
         <div className="actions">

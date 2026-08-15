@@ -107,7 +107,7 @@ export default function NewQuote() {
   };
 
   return (
-    <Layout>
+    <Layout title="Nieuwe offerte">
       <div className="header">
         <h1>Nieuwe offerte aanmaken</h1>
         <div className="actions">
