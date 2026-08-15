@@ -235,7 +235,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .tabs a {text-align: center; text-decoration: none; color: inherit; font-size: 13px; border-radius: var(--border-radius1); padding: 2px var(--space30); box-sizing: border-box;}
 .tabs a.active {background: var(--color2);}
 
-.form-section {margin: 0 0 var(--space20) 0; display: flex ; flex-direction: column; gap: var(--space10);}
+.form-section {margin: 0 0 var(--space10) 0; display: flex ; flex-direction: column; gap: var(--space10);}
 .form-section .form-row {display: flex; gap: var(--space10);}
 .form-section .form-group {display: flex; flex-direction: column; flex: 1;}
 .form-section .form-group label {font-size: var(--fontsize2); font-weight: 500; color: var(--font-color1);}
