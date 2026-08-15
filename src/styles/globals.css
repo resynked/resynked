@@ -248,7 +248,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 
 .row-section {display: grid; grid-template-columns: 1fr 3fr; gap: var(--space30); padding: var(--space10) 0; box-sizing: border-box;}
 .row-section .information .title {display: block; font-weight: bold;}
-.row-section .information .description {color: var(--font-color2);}
+.row-section .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
 .row-section > div > *:first-child {margin-top: 0;}
 .row-section > div > *:last-child {margin-bottom: 0;}
 .row-section + h3, h2 + h3 {margin: var(--space20) 0 var(--space5) 0;}
