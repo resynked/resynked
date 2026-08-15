@@ -56,7 +56,7 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
 
 input:focus {border-color: var(--color1); color: var(--font-color1);}
 
-a {color: var(--color5); transition: .3s all ease;}
+a {color: var(--font-color2); transition: .3s all ease;}
 
 p {margin: 0 0 1em 0;}
 
@@ -207,8 +207,8 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .table-container .product-table tr:last-of-type td {border-bottom: 0;}
 
 .table-container .data-table {width: 100%; border-collapse: collapse;}
-.table-container .data-table th {padding: 7px 10px; box-sizing: border-box; font-size: var(--fontsize1); text-align: left; font-weight: 500; color: var(--color1); border-bottom: 1px solid var(--border-color);}
-.table-container .data-table tr td {padding: 7px 10px; border-bottom: 1px solid var(--border-color); box-sizing: border-box; line-height: 1;}
+.table-container .data-table th {padding: 5px 10px; box-sizing: border-box; font-size: var(--fontsize1); text-align: left; font-weight: 500; color: var(--color1); border-bottom: 1px solid var(--border-color);}
+.table-container .data-table tr td {padding: 5px 10px; border-bottom: 1px solid var(--border-color); box-sizing: border-box; line-height: 1;}
 .table-container .data-table tr:last-of-type td {border-bottom: 0;}
 .table-container .data-table tr.selected, .table-container .data-table tr:hover {background: var(--color3);}
 
