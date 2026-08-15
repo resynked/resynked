@@ -10,7 +10,8 @@
   --font-color2: #7f7f7f;
   --border-color: #efefef;
   --font-family1: "Inter", Helvetica, Arial, sans-serif;
-  --body-fontsize: 13px;
+  --fontsize1: 13px;
+  --fontsize2: 12px;
   --h1-size: 20px;
   --h2-size: 18px;
   --h3-size: 16px;
@@ -34,7 +35,7 @@
 
 html, body {height: 100%;}
 
-body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--body-fontsize); line-height: 1.75em; margin: 0; padding: 0;}
+body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--fontsize1); line-height: 1.75em; margin: 0; padding: 0;}
 
 textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="number"], input[type="date" i] {
   background-color: var(--color2);
@@ -65,7 +66,7 @@ h1 {font-size: var(--h1-size);}
 h2 {font-size: var(--h2-size);}
 h3 {font-size: var(--h3-size);}
 
-button {font-family: var(--font-family1); font-size: var(--body-fontsize); background: unset; border: 0; outline: 0; padding: 0; margin: 0; text-align: left; cursor: pointer; transition: .3s all ease;}
+button {font-family: var(--font-family1); font-size: var(--fontsize1); background: unset; border: 0; outline: 0; padding: 0; margin: 0; text-align: left; cursor: pointer; transition: .3s all ease;}
 
 .button {background: var(--color1); text-align: center; border-radius: var(--border-radius1); font-weight: 500; line-height: 1; padding: 12px 15px; box-sizing: border-box; text-decoration: none; color: var(--color2);}
 
@@ -77,7 +78,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .button.cancel {background: var(--color2); border: 1px solid var(--border-color); color: var(--font-color1);}
 .button.cancel:hover {background: var(--color4);}
 
-.button.add-item {width: 100%; padding: var(--space10); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); background: var(--color2); color: var(--font-color2); font-size: 12px;}
+.button.add-item {width: 100%; padding: var(--space10); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); background: var(--color2); color: var(--font-color2); font-size: var(--fontsize2);}
 .button.add-item:hover {color: var(--font-color1); background-color: var(--color4);}
 
 .checkbox {width: 16px; height: 16px; background: unset; padding: 0; border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
@@ -104,7 +105,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .datepicker .weekdays {display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space3); margin-bottom: var(--space8);}
 .datepicker .weekday {text-align: center; font-size: 11px; font-weight: 600; color: var(--font-color2); padding: var(--space5);}
 .datepicker .days {display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space3);}
-.datepicker .day {background: none; border: none; padding: 8px; cursor: pointer; font-size: 12px; border-radius: var(--border-radius1); transition: .3s all ease; color: var(--font-color2); text-align: center;}
+.datepicker .day {background: none; border: none; padding: 8px; cursor: pointer; font-size: var(--fontsize2); border-radius: var(--border-radius1); transition: .3s all ease; color: var(--font-color2); text-align: center;}
 .datepicker .day.empty {cursor: default;}
 .datepicker .day.today {font-weight: 600; color: var(--font-color1);}
 .datepicker .day.selected, .datepicker .day.selected:hover, .datepicker .day:hover:not(.empty) {font-weight: 500; color: var(--color5); background: #d2e1ff;}
@@ -139,8 +140,8 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 
 .sidebar .profile {position: relative; cursor: pointer; padding: var(--space5) var(--space10); margin: var(--space5); box-sizing: border-box; border-radius: var(--border-radius2); display: flex; align-items: center; gap: var(--space10); transition: .3s all ease;}
 .sidebar .profile:hover {background: #efefef;}
-.sidebar .profile .avatar {width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; aspect-ratio: 1; background: var(--color1); display: flex; align-items: center; justify-content: center; color: var(--color2); font-weight: 600; font-size: 12px;}
-.sidebar .profile .info {line-height: 1.5em; font-weight: 500; font-size: 12px; overflow: hidden;}
+.sidebar .profile .avatar {width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; aspect-ratio: 1; background: var(--color1); display: flex; align-items: center; justify-content: center; color: var(--color2); font-weight: 600; font-size: var(--fontsize2);}
+.sidebar .profile .info {line-height: 1.5em; font-weight: 500; font-size: var(--fontsize2); overflow: hidden;}
 .sidebar .profile .info .name {white-space: nowrap; text-overflow: ellipsis; overflow: hidden;}
 .sidebar .profile .info .email {color: var(--font-color2); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;}
 
@@ -159,7 +160,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .header .actions {display: flex; gap: var(--space10); align-items: center;}
 .content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
-.autosave-status {font-size: 12px; color: var(--font-color2); white-space: nowrap;}
+.autosave-status {font-size: var(--fontsize2); color: var(--font-color2); white-space: nowrap;}
 .autosave-status.error {color: var(--color6);}
 .autosave-status.saved {color: var(--color7);}
 
@@ -171,7 +172,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .block.page-navigation nav {display: flex; flex-direction: column; gap: 3px; padding: var(--space20); box-sizing: border-box; border-bottom: 1px solid var(--border-color);}
 .content .block.page-navigation nav a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; border-radius: var(--border-radius1);}
 .content .block.page-navigation nav a:hover, .content .block.page-navigation nav a.active {background-color: #efefef; color: var(--font-color1);}
-.content .block.page-navigation .section-title {font-size: 12px; color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
+.content .block.page-navigation .section-title {font-size: var(--fontsize2); color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
 .content .block.page-navigation nav:last-child {border: 0;}
 
 /* Paneel dat vanaf de rechterkant inschuift; de achtergrond is .modal-overlay */
@@ -201,12 +202,12 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .table-container {background:var(--color2); border-radius: var(--border-radius1); border: 1px solid var(--border-color);}
 .table-container .product-table {width: 100%; border-collapse: collapse;}
 .table-container .product-table thead {background-color: var(--color3);}
-.table-container .product-table th {padding: var(--space5) var(--space15); box-sizing: border-box; font-size: 12px; text-align: left; font-weight: 600; color: var(--color1); border-bottom: 1px solid var(--border-color);}
+.table-container .product-table th {padding: var(--space5) var(--space15); box-sizing: border-box; font-size: var(--fontsize2); text-align: left; font-weight: 600; color: var(--color1); border-bottom: 1px solid var(--border-color);}
 .table-container .product-table tr td {padding: var(--space5) var(--space15); border-bottom: 1px solid var(--border-color); color: var(--font-color2); box-sizing: border-box;}
 .table-container .product-table tr:last-of-type td {border-bottom: 0;}
 
 .table-container .data-table {width: 100%; border-collapse: collapse;}
-.table-container .data-table th {padding: 7px 10px; box-sizing: border-box; font-size: var(--body-fontsize); text-align: left; font-weight: 500; color: var(--color1); border-bottom: 1px solid var(--border-color);}
+.table-container .data-table th {padding: 7px 10px; box-sizing: border-box; font-size: var(--fontsize1); text-align: left; font-weight: 500; color: var(--color1); border-bottom: 1px solid var(--border-color);}
 .table-container .data-table tr td {padding: 7px 10px; border-bottom: 1px solid var(--border-color); box-sizing: border-box; line-height: 1;}
 .table-container .data-table tr:last-of-type td {border-bottom: 0;}
 .table-container .data-table tr.selected, .table-container .data-table tr:hover {background: var(--color3);}
@@ -215,7 +216,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .table-container .data-table tr td.actions .action-dropdown {position: relative;}
 .table-container .data-table tr td.actions .action-dropdown button {background: var(--color4); border-radius: var(--border-radius1); padding: var(--space5); color: var(--font-color2); line-height: 0;}
 .table-container .data-table tr td.actions .action-dropdown .action-menu {position: absolute; padding: var(--space5); box-sizing: border-box; min-width: 160px; display: flex; flex-direction: column; top: 100%; right: 0; background: var(--color2); border-radius: var(--border-radius2); border: 1px solid var(--border-color); z-index: 1; line-height: 1.85em; box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
-.table-container .data-table tr td.actions .action-dropdown .action-menu a {text-align: left; outline: 0; padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: var(--body-fontsize); box-sizing: border-box; border-radius: var(--border-radius1);}
+.table-container .data-table tr td.actions .action-dropdown .action-menu a {text-align: left; outline: 0; padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: var(--fontsize1); box-sizing: border-box; border-radius: var(--border-radius1);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a:hover {background: var(--color4);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a.delete {color: var(--color6);}
 
@@ -237,7 +238,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .form-section {margin: 0 0 var(--space20) 0; display: flex ; flex-direction: column; gap: var(--space10);}
 .form-section .form-row {display: flex; gap: var(--space10);}
 .form-section .form-group {display: flex; flex-direction: column; flex: 1;}
-.form-section .form-group label {font-size: 12px; font-weight: 500; color: var(--font-color1);}
+.form-section .form-group label {font-size: var(--fontsize2); font-weight: 500; color: var(--font-color1);}
 .form-section .form-group textarea {min-height: 180px;}
 .form-section .form-group .center-input {text-align: center;}
 
@@ -250,16 +251,12 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .row-section .information .description {color: var(--font-color2);}
 .row-section > div > *:first-child {margin-top: 0;}
 .row-section > div > *:last-child {margin-bottom: 0;}
-
-/* Kopje boven een groepje rijen, bijvoorbeeld Offertemail en Factuurmail */
 .row-section + h3, h2 + h3 {margin: var(--space20) 0 var(--space5) 0;}
 
-/* Vraagteken naast een titel dat de uitleg opent */
 h2 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
 h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
-
 
 /* De offerte zoals de klant hem via de mail te zien krijgt: geen menu, geen
    zijbalk, alleen het document en het vak om te ondertekenen */
@@ -275,8 +272,8 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .signature-pad {display: flex; flex-direction: column; gap: var(--space5);}
 .signature-pad .pad {width: 100%; height: 200px; background: var(--color2); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); cursor: crosshair;}
 .signature-pad .footer {display: flex; align-items: center; justify-content: space-between; gap: var(--space10);}
-.signature-pad .footer .hint {font-size: 12px; color: var(--font-color2);}
-.signature-pad .footer .clear {display: flex; align-items: center; gap: var(--space5); font-size: 12px; padding: var(--space5) var(--space10); box-sizing: border-box; border-radius: var(--border-radius1); color: var(--font-color2);}
+.signature-pad .footer .hint {font-size: var(--fontsize2); color: var(--font-color2);}
+.signature-pad .footer .clear {display: flex; align-items: center; gap: var(--space5); font-size: var(--fontsize2); padding: var(--space5) var(--space10); box-sizing: border-box; border-radius: var(--border-radius1); color: var(--font-color2);}
 .signature-pad .footer .clear:hover:not(:disabled) {background: var(--color4); color: var(--font-color1);}
 .signature-pad .footer .clear:disabled {opacity: .5; cursor: not-allowed;}
 
@@ -339,14 +336,14 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .file-upload .attachment .remove:hover {background: var(--color4); color: var(--color6);}
 .file-upload .attachment .remove:disabled {cursor: not-allowed; opacity: .6;}
 
-.file-upload .file-error {font-size: 12px; color: var(--color6); margin: 0;}
+.file-upload .file-error {font-size: var(--fontsize2); color: var(--color6); margin: 0;}
 
 .empty-state {text-align: center; padding: var(--space100) 0; max-width: 600px; margin: 0 auto;}
 .empty-state p {color: var(--font-color2);}
 .empty-state .button {display: inline-block;}
 
 .toast {position: fixed; bottom: var(--space20); right: var(--space20); background: var(--color2); border-radius: var(--border-radius2); color: inherit; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 10px rgba(0, 0, 0, 0.1); min-width: 300px; max-width: 400px; z-index: 20; animation: slideIn 0.3s ease-out; border: 1px solid var(--border-color); padding: var(--space15); box-sizing: border-box; display: grid; grid-template-columns: 16px 1fr; gap: var(--space10);}
-.toast .toast-content {line-height: 1.35em; font-size: 12px; font-weight: 500;}
+.toast .toast-content {line-height: 1.35em; font-size: var(--fontsize2); font-weight: 500;}
 .toast .toast-content .toast-title {grid-column-start: 2; }
 .toast .toast-content .toast-description {grid-column-start: 2; color: var(--font-color2);}
 .toast.error {color: var(--color6);}
