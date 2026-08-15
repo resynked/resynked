@@ -44,9 +44,15 @@ CREATE TABLE tenants (
   logo_url TEXT,
   quote_conditions TEXT,        -- garanties, betalingsvoorwaarden, verzekering
   terms_and_conditions TEXT,    -- algemene voorwaarden
-  email_subject TEXT,           -- onderwerp van de mail waarmee een offerte de deur uit gaat
-  email_intro_text TEXT,        -- de tekst onder het logo in die mail
   email_from TEXT,              -- afzendadres; leeg = het systeemadres uit EMAIL_FROM
+  quote_email_subject TEXT,     -- onderwerp van de offertemail
+  quote_email_intro_text TEXT,  -- de tekst onder het logo in de offertemail
+  invoice_email_subject TEXT,   -- onderwerp van de factuurmail
+  invoice_email_intro_text TEXT,-- de tekst onder het logo in de factuurmail
+  -- Het eerstvolgende nummer, bijvoorbeeld 20260050. De cijfers achteraan
+  -- tellen bij elk document op; voorloopnullen blijven staan.
+  quote_number_next TEXT,
+  invoice_number_next TEXT,
   -- Eigen vormgeving per aannemer: HTML met data-slot plekken die het
   -- systeem vult met de klantgegevens, de regels en de totalen
   quote_template_html TEXT,

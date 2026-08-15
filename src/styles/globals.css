@@ -34,7 +34,7 @@
 
 html, body {height: 100%;}
 
-body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--body-fontsize); line-height: 1.85em; margin: 0; padding: 0;}
+body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--body-fontsize); line-height: 1.75em; margin: 0; padding: 0;}
 
 textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="number"], input[type="date" i] {
   background-color: var(--color2);
@@ -175,11 +175,7 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .content .block.page-navigation nav:last-child {border: 0;}
 
 /* Paneel dat vanaf de rechterkant inschuift; de achtergrond is .modal-overlay */
-.modal-container {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 100%; max-width: 600px; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
-.modal-container .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
-.modal-container .header h2 {margin: 0;}
-.modal-container .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
-.modal-container .header button:hover {color: var(--font-color1);}
+
 
 @keyframes slideInPanel {
   from { transform: translateX(100%); }
@@ -254,6 +250,13 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .row-section .information .description {color: var(--font-color2);}
 .row-section > div > *:first-child {margin-top: 0;}
 .row-section > div > *:last-child {margin-bottom: 0;}
+
+/* Kopje boven een groepje rijen, bijvoorbeeld Offertemail en Factuurmail */
+.row-section + h3, h2 + h3 {margin: var(--space20) 0 var(--space5) 0;}
+
+/* Vraagteken naast een titel dat de uitleg opent */
+h2 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
+h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 
@@ -354,6 +357,12 @@ button {font-family: var(--font-family1); font-size: var(--body-fontsize); backg
 .modal .modal-title {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space10) 0;}
 .modal .modal-title h3 {margin: 0;}
 .modal .modal-content .buttons {display: flex; gap: var(--space10); justify-content: flex-end; margin: var(--space20) 0 0 0;}
+
+.modal-container {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 100%; max-width: 600px; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
+.modal-container .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
+.modal-container .header h2 {margin: 0;}
+.modal-container .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
+.modal-container .header button:hover {color: var(--font-color1);}
 
 @keyframes slideIn {
   from {

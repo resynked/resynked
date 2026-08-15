@@ -2,6 +2,7 @@ import { supabaseAdmin } from './supabase';
 import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note } from './supabase';
 import { calculateDocumentTotal, lineTotal } from './utils';
 import { copyBlocks } from './blocks';
+import { isCountable, nextNumber } from './numbering';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
 const supabase = supabaseAdmin;
@@ -264,6 +265,65 @@ export async function updateTenant(tenantId: string, updates: Partial<Tenant>) {
 
   if (error) throw error;
   return data as Tenant;
+}
+
+/**
+ * Pakt het eerstvolgende nummer uit de eigen nummering van de aannemer en zet
+ * de teller door. Geeft null terug als er geen nummering is ingesteld.
+ *
+ * De teller wordt alleen opgehoogd als hij nog op hetzelfde nummer staat als
+ * bij het lezen. Slaan twee mensen tegelijk op, dan krijgt de tweede geen rij
+ * terug en probeert hij het opnieuw met het volgende nummer — zo krijgen twee
+ * facturen nooit hetzelfde nummer.
+ */
+export async function takeDocumentNumber(tenantId: string, soort: Soort): Promise<string | null> {
+  const column = soort === 'quote' ? 'quote_number_next' : 'invoice_number_next';
+
+  for (let poging = 0; poging < 5; poging++) {
+    const { data, error } = await supabase
+      .from('tenants')
+      .select(column)
+      .eq('id', tenantId)
+      .single();
+
+    if (error) throw error;
+
+    const stored = (data as any)?.[column];
+    if (!isCountable(stored)) return null;
+
+    const number = String(stored).trim();
+
+    const { data: updated, error: updateError } = await supabase
+      .from('tenants')
+      .update({ [column]: nextNumber(number), updated_at: now() })
+      .eq('id', tenantId)
+      .eq(column, stored)
+      .select('id');
+
+    if (updateError) throw updateError;
+    if (updated && updated.length > 0) return number;
+  }
+
+  throw new Error('Kon geen nummer toekennen. Probeer het opnieuw.');
+}
+
+/**
+ * Het nummer waaronder een offerte of factuur opgeslagen wordt. Heeft iemand in
+ * het scherm zelf een ander nummer ingetypt, dan wint dat en blijft de teller
+ * staan waar hij staat.
+ */
+export async function resolveDocumentNumber(
+  tenantId: string,
+  soort: Soort,
+  submitted?: string | null
+): Promise<string> {
+  const typed = (submitted || '').trim();
+  const tenant = await getTenant(tenantId);
+  const counter = (soort === 'quote' ? tenant.quote_number_next : tenant.invoice_number_next) || '';
+
+  if (typed && typed !== counter.trim()) return typed;
+
+  return (await takeDocumentNumber(tenantId, soort)) || typed;
 }
 
 // Customers
@@ -535,16 +595,20 @@ export async function createInvoice(
   invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
   blocks: DocumentBlock[]
 ) {
-  // Het factuurnummer wordt uit het id afgeleid, dus eerst invoegen
+  // Heeft de aannemer een eigen nummering, dan komt het nummer daaruit. Zo niet,
+  // dan wordt het uit het id afgeleid en moet de rij er dus eerst zijn.
   const { invoice_number, ...invoiceWithoutNumber } = invoice as any;
+  const eigenNummer = invoice_number || (await takeDocumentNumber(invoice.tenant_id, 'invoice'));
 
   const { data: invoiceData, error: invoiceError } = await supabase
     .from('invoices')
-    .insert({ ...invoiceWithoutNumber, updated_at: now() })
+    .insert({ ...invoiceWithoutNumber, invoice_number: eigenNummer || null, updated_at: now() })
     .select()
     .single();
 
   if (invoiceError) throw invoiceError;
+
+  if (eigenNummer) return invoiceData as Invoice;
 
   const { data: updatedInvoice, error: updateError } = await supabase
     .from('invoices')

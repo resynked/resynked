@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { getQuotes, createQuote } from '@/lib/db';
+import { getQuotes, createQuote, resolveDocumentNumber } from '@/lib/db';
 import { calculateDocumentTotal } from '@/lib/utils';
 import { validateBlocks } from '@/lib/blocks';
 
@@ -32,8 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         blocks,
       } = req.body;
 
-      if (!customer_id || !quote_number || !quote_date || !valid_until) {
-        return res.status(400).json({ error: 'Vul offertenummer, datum, geldigheidsdatum en klant in' });
+      if (!customer_id || !quote_date || !valid_until) {
+        return res.status(400).json({ error: 'Vul datum, geldigheidsdatum en klant in' });
       }
 
       const problem = validateBlocks(blocks);
@@ -41,11 +41,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: problem });
       }
 
+      // Het nummer komt uit de eigen nummering, tenzij er zelf iets ingetypt is
+      const number = await resolveDocumentNumber(tenantId, 'quote', quote_number);
+
+      if (!number) {
+        return res.status(400).json({
+          error: 'Vul een offertenummer in, of stel een nummering in bij Instellingen > Account',
+        });
+      }
+
       const quote = await createQuote(
         {
           tenant_id: tenantId,
           customer_id,
-          quote_number,
+          quote_number: number,
           quote_date,
           valid_until,
           total: calculateDocumentTotal(blocks),

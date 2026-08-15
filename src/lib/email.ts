@@ -37,6 +37,21 @@ interface QuoteEmailInput {
   token: string;
 }
 
+/** De tags die in een mailonderwerp gebruikt mogen worden. */
+export const SUBJECT_TAGS = {
+  quote: ['offertenummer', 'klant', 'bedrijf'],
+  invoice: ['factuurnummer', 'klant', 'bedrijf'],
+} as const;
+
+/**
+ * Vult de tags in een onderwerp, bijvoorbeeld "Offerte {{offertenummer}}".
+ * Een tag die niet bestaat blijft staan zoals hij is, zodat een typefout
+ * zichtbaar wordt in plaats van stilletjes te verdwijnen.
+ */
+export function fillSubjectTags(subject: string, values: Record<string, string>): string {
+  return subject.replace(/\{\{\s*([\w]+)\s*\}\}/g, (match, key) => values[key] ?? match);
+}
+
 /**
  * De mail waarmee een offerte de deur uit gaat: bovenin het logo van de
  * aannemer, daaronder zijn eigen tekst uit Instellingen, en een knop naar de
@@ -61,8 +76,8 @@ export function buildQuoteEmailHtml({ tenant, customer, quote, token }: QuoteEma
       </tr>`
     : '';
 
-  const intro = tenant.email_intro_text
-    ? toDisplayHtml(tenant.email_intro_text)
+  const intro = tenant.quote_email_intro_text
+    ? toDisplayHtml(tenant.quote_email_intro_text)
     : `<p>Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
        <p>Hierbij ontvangt u onze offerte. U kunt hem hieronder bekijken en direct ondertekenen.</p>`;
 
@@ -119,9 +134,41 @@ export function buildQuoteEmailHtml({ tenant, customer, quote, token }: QuoteEma
 </html>`;
 }
 
-/** Het onderwerp: de eigen tekst van de aannemer, of anders een vaste regel. */
-export function buildQuoteEmailSubject(tenant: Tenant, quote: Pick<Quote, 'quote_number'>): string {
-  return tenant.email_subject?.trim() || `Offerte ${quote.quote_number}`;
+/**
+ * Het onderwerp van de offertemail: de eigen regel van de aannemer met de tags
+ * ingevuld, of anders een vaste regel met het offertenummer erin.
+ */
+export function buildQuoteEmailSubject(
+  tenant: Tenant,
+  quote: Pick<Quote, 'quote_number'>,
+  customer?: Partial<Customer>
+): string {
+  const eigen = tenant.quote_email_subject?.trim();
+
+  if (!eigen) return `Offerte ${quote.quote_number}`;
+
+  return fillSubjectTags(eigen, {
+    offertenummer: quote.quote_number || '',
+    klant: customer ? getCustomerDisplayName(customer) : '',
+    bedrijf: tenant.company_name || tenant.name || '',
+  });
+}
+
+/** Hetzelfde voor de factuurmail. */
+export function buildInvoiceEmailSubject(
+  tenant: Tenant,
+  invoice: { invoice_number?: string | null },
+  customer?: Partial<Customer>
+): string {
+  const eigen = tenant.invoice_email_subject?.trim();
+
+  if (!eigen) return `Factuur ${invoice.invoice_number || ''}`.trim();
+
+  return fillSubjectTags(eigen, {
+    factuurnummer: invoice.invoice_number || '',
+    klant: customer ? getCustomerDisplayName(customer) : '',
+    bedrijf: tenant.company_name || tenant.name || '',
+  });
 }
 
 /** Grof gecontroleerd: één apenstaartje, een punt erachter, en geen witruimte. */

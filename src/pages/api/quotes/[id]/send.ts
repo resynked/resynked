@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await sendMail({
       to: customer.email,
-      subject: buildQuoteEmailSubject(tenant, quote),
+      subject: buildQuoteEmailSubject(tenant, quote, customer),
       html: buildQuoteEmailHtml({ tenant, customer, quote, token: quote.public_token }),
       // Het adres uit Instellingen > E-mail; is dat leeg, dan het systeemadres
       from: buildSender(tenant),

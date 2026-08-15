@@ -217,7 +217,45 @@ ALTER TABLE quotes ALTER COLUMN public_token SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS quotes_public_token_idx ON quotes(public_token);
 
 -- ------------------------------------------------------------
--- 4. Rechten en RLS voor de nieuwe tabellen
+-- 4. Eigen nummering en een aparte tekst voor de factuurmail
+--
+-- De offerte- en factuurmail hebben elk hun eigen onderwerp en tekst, dus de
+-- velden die er waren krijgen er 'quote_' voor en er komt een factuurversie
+-- naast. Daarnaast bepaalt de aannemer voortaan zelf zijn nummering: hij vult
+-- het eerstvolgende nummer in, bijvoorbeeld 20260050, en het systeem telt de
+-- cijfers achteraan op — 20260051, 20260052 — met de voorloopnullen intact.
+-- ------------------------------------------------------------
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS quote_email_subject TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS quote_email_intro_text TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS invoice_email_subject TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS invoice_email_intro_text TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS quote_number_next TEXT;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS invoice_number_next TEXT;
+
+-- De oude velden heetten email_subject en email_intro_text en gingen over de
+-- offerte. Hun inhoud verhuist mee; daarna kunnen ze weg. Staan ze er al niet
+-- meer, dan is dit onderdeel eerder gedraaid en gebeurt er niets.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'tenants' AND column_name = 'email_subject'
+  ) THEN
+    EXECUTE 'UPDATE tenants SET quote_email_subject = email_subject WHERE quote_email_subject IS NULL';
+    EXECUTE 'ALTER TABLE tenants DROP COLUMN email_subject';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'tenants' AND column_name = 'email_intro_text'
+  ) THEN
+    EXECUTE 'UPDATE tenants SET quote_email_intro_text = email_intro_text WHERE quote_email_intro_text IS NULL';
+    EXECUTE 'ALTER TABLE tenants DROP COLUMN email_intro_text';
+  END IF;
+END $$;
+
+-- ------------------------------------------------------------
+-- 5. Rechten en RLS voor de nieuwe tabellen
 --
 -- Zonder deze grants antwoordt de API met 42501 "permission denied", ook op
 -- een sleutel die RLS mag omzeilen. anon en authenticated krijgen bewust

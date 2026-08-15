@@ -35,11 +35,24 @@ export default function NewQuote() {
 
   useEffect(() => {
     fetchCustomers();
-
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 900) + 100;
-    setFormData(prev => ({ ...prev, quote_number: `OFF-${year}-${random}` }));
+    fetchNextNumber();
   }, []);
+
+  // Het nummer dat de aannemer bij Instellingen heeft ingesteld staat alvast in
+  // het veld, zodat hij ziet wat hij krijgt en het desgewenst kan aanpassen
+  const fetchNextNumber = async () => {
+    try {
+      const res = await fetch('/api/tenant');
+      if (!res.ok) return;
+
+      const tenant = await res.json();
+      if (tenant?.quote_number_next) {
+        setFormData(prev => ({ ...prev, quote_number: tenant.quote_number_next }));
+      }
+    } catch (err) {
+      console.error('Error fetching next quote number:', err);
+    }
+  };
 
   const fetchCustomers = async () => {
     try {

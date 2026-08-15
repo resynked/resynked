@@ -51,10 +51,18 @@ export interface Tenant {
   terms_and_conditions: string | null;
   quote_template_html: string | null;
   invoice_template_html: string | null;
-  /** Onderwerp van de mail waarmee een offerte de deur uit gaat */
-  email_subject: string | null;
-  /** De tekst onder het logo in die mail */
-  email_intro_text: string | null;
+  /** Onderwerp van de offertemail; mag tags als {{offertenummer}} bevatten */
+  quote_email_subject: string | null;
+  /** De tekst onder het logo in de offertemail */
+  quote_email_intro_text: string | null;
+  /** Onderwerp van de factuurmail; mag tags als {{factuurnummer}} bevatten */
+  invoice_email_subject: string | null;
+  /** De tekst onder het logo in de factuurmail */
+  invoice_email_intro_text: string | null;
+  /** Het eerstvolgende offertenummer, bijvoorbeeld 20260050 */
+  quote_number_next: string | null;
+  /** Het eerstvolgende factuurnummer */
+  invoice_number_next: string | null;
   /** Afzendadres van deze aannemer; leeg betekent het systeemadres uit EMAIL_FROM */
   email_from: string | null;
   created_at: string;

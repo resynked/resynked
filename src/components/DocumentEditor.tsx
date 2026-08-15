@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
-import { X } from 'lucide-react';
 import DocumentPreview from '@/components/DocumentPreview';
+import SidePanel from '@/components/SidePanel';
 import BlockEditor from '@/components/BlockEditor';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
@@ -80,26 +80,15 @@ export default function DocumentEditor({
       </div>
 
       {openBlock && activeBlock !== null && (
-        <>
-          <div className="modal-overlay" onClick={close} />
-
-          <div className="modal-container">
-            <div className="header">
-              <h2>Blok</h2>
-              <button type="button" onClick={close} aria-label="Paneel sluiten">
-                <X size={18} />
-              </button>
-            </div>
-
-            <BlockEditor
-              block={openBlock}
-              onChange={(block) => changeBlock(activeBlock, block)}
-              onDuplicate={() => copyBlock(activeBlock)}
-              onRemove={() => deleteBlock(activeBlock)}
-              dataFields={dataFields}
-            />
-          </div>
-        </>
+        <SidePanel title="Blok" onClose={close}>
+          <BlockEditor
+            block={openBlock}
+            onChange={(block) => changeBlock(activeBlock, block)}
+            onDuplicate={() => copyBlock(activeBlock)}
+            onRemove={() => deleteBlock(activeBlock)}
+            dataFields={dataFields}
+          />
+        </SidePanel>
       )}
     </>
   );

@@ -20,9 +20,13 @@ const EDITABLE_FIELDS = [
   'terms_and_conditions',
   'quote_template_html',
   'invoice_template_html',
-  'email_subject',
-  'email_intro_text',
   'email_from',
+  'quote_email_subject',
+  'quote_email_intro_text',
+  'invoice_email_subject',
+  'invoice_email_intro_text',
+  'quote_number_next',
+  'invoice_number_next',
 ] as const;
 
 // Het logo komt als data-URL binnen en is daarmee groter dan een gewoon

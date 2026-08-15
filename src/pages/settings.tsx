@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate } from 'lucide-react';
+import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate, CircleQuestionMark } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
 import RichTextEditor from '@/components/RichTextEditor';
+import SidePanel from '@/components/SidePanel';
 import type { Tenant } from '@/lib/supabase';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
@@ -26,9 +27,16 @@ export default function Settings() {
     });
     const [emailSettings, setEmailSettings] = useState({
         email_from: '',
-        email_subject: '',
-        email_intro_text: '',
+        quote_email_subject: '',
+        quote_email_intro_text: '',
+        invoice_email_subject: '',
+        invoice_email_intro_text: '',
     });
+    const [numbering, setNumbering] = useState({
+        quote_number_next: '',
+        invoice_number_next: '',
+    });
+    const [showTemplateHelp, setShowTemplateHelp] = useState(false);
 
     useEffect(() => {
         fetch('/api/tenant')
@@ -42,8 +50,14 @@ export default function Settings() {
                 });
                 setEmailSettings({
                     email_from: tenant.email_from || '',
-                    email_subject: tenant.email_subject || '',
-                    email_intro_text: tenant.email_intro_text || '',
+                    quote_email_subject: tenant.quote_email_subject || '',
+                    quote_email_intro_text: tenant.quote_email_intro_text || '',
+                    invoice_email_subject: tenant.invoice_email_subject || '',
+                    invoice_email_intro_text: tenant.invoice_email_intro_text || '',
+                });
+                setNumbering({
+                    quote_number_next: tenant.quote_number_next || '',
+                    invoice_number_next: tenant.invoice_number_next || '',
                 });
             })
             .catch(() => toast.error('Fout', 'Instellingen konden niet geladen worden'));
@@ -97,10 +111,19 @@ export default function Settings() {
 
     const handleSaveEmail = () => save(emailSettings, 'E-mailinstellingen opgeslagen');
 
+    const handleSaveNumbering = () => save(numbering, 'Nummering opgeslagen');
+
     return (
         <Layout title="Instellingen">
             <div className="header">
                 <h1>Instellingen</h1>
+                {activeTab === 'account' && (
+                    <div className="actions">
+                        <button className="button" onClick={handleSaveNumbering} disabled={isSaving}>
+                            {isSaving ? 'Opslaan...' : 'Opslaan'}
+                        </button>
+                    </div>
+                )}
                 {activeTab === 'sjabloon' && (
                     <div className="actions">
                         <button className="button" onClick={handleSaveTemplates} disabled={isSaving}>
@@ -215,62 +238,70 @@ export default function Settings() {
                                     />
                                 </div>
                             </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="quote_number_next">Volgend offertenummer</label>
+                                    <span className="description">
+                                        Het nummer dat de volgende offerte krijgt. De cijfers achteraan
+                                        tellen daarna vanzelf op.
+                                    </span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="quote_number_next"
+                                        type="text"
+                                        value={numbering.quote_number_next}
+                                        onChange={(e) =>
+                                            setNumbering({ ...numbering, quote_number_next: e.target.value })
+                                        }
+                                        placeholder="20260050"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="invoice_number_next">Volgend factuurnummer</label>
+                                    <span className="description">
+                                        Zelfde opzet als bij de offertes, met een eigen reeks.
+                                    </span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="invoice_number_next"
+                                        type="text"
+                                        value={numbering.invoice_number_next}
+                                        onChange={(e) =>
+                                            setNumbering({ ...numbering, invoice_number_next: e.target.value })
+                                        }
+                                        placeholder="20260001"
+                                    />
+                                </div>
+                            </div>
                         </>
                     )}
 
                     {activeTab === 'sjabloon' && (
                         <>
-                            <h2>Sjabloon</h2>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <span className="title">Plekken die het systeem vult</span>
-                                    <span className="description">
-                                        Alles wat vast is — de zijbalk, kleuren, logo, paginanummers —
-                                        schrijf je zelf. De plekken die met de offerte meegroeien laat je
-                                        leeg met een data-slot, bijvoorbeeld{' '}
-                                        <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
-                                    </span>
-                                </div>
-                                <div>
-                                    <ul>
-                                        <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
-                                        <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
-                                        <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
-                                        <li><strong>blokken</strong> — alle blokken achter elkaar</li>
-                                        <li><strong>tekstblokken</strong> — alleen de tekstblokken, zoals de omschrijving van de werkzaamheden</li>
-                                        <li><strong>prijsblokken</strong> — alleen de blokken met bedragen en subtotalen per BTW-tarief</li>
-                                        <li><strong>totaal</strong> — het eindbedrag</li>
-                                        <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
-                                        <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
-                                        <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <span className="title">Losse waarden</span>
-                                    <span className="description">
-                                        Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
-                                        <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
-                                    </span>
-                                </div>
-                                <div>
-                                    <ul>
-                                        <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
-                                        <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
-                                        <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
-                                    </ul>
-                                </div>
-                            </div>
+                            <h2>
+                                Sjabloon
+                                <button
+                                    type="button"
+                                    className="help"
+                                    title="Uitleg over sjablonen"
+                                    aria-label="Uitleg over sjablonen"
+                                    onClick={() => setShowTemplateHelp(true)}
+                                >
+                                    <CircleQuestionMark size={16} />
+                                </button>
+                            </h2>
 
                             <div className="row-section">
                                 <div className="information">
                                     <label className="title" htmlFor="quote_template_html">Offertesjabloon</label>
                                     <span className="description">
-                                        De HTML van je eigen offerteontwerp. Laat je dit leeg, dan valt de
-                                        offerte terug op de standaardweergave.
+                                        De HTML van je eigen offerteontwerp.
                                     </span>
                                 </div>
                                 <div>
@@ -290,8 +321,7 @@ export default function Settings() {
                                 <div className="information">
                                     <label className="title" htmlFor="invoice_template_html">Factuursjabloon</label>
                                     <span className="description">
-                                        De HTML van je eigen factuurontwerp. Laat je dit leeg, dan valt de
-                                        factuur terug op de standaardweergave.
+                                        De HTML van je eigen factuurontwerp.
                                     </span>
                                 </div>
                                 <div>
@@ -332,11 +362,8 @@ export default function Settings() {
                                 <div className="information">
                                     <label className="title" htmlFor="email_from">Afzendadres</label>
                                     <span className="description">
-                                        Hiervandaan gaan je offertes de deur uit. Het domein van dit adres
-                                        moet geverifieerd zijn bij de mailverzender; is dat niet zo, dan
-                                        wordt de mail geweigerd. Laat je dit leeg, dan gaat de offerte uit
-                                        vanaf het algemene adres van het systeem en komt een antwoord van
-                                        de klant alsnog bij jou terecht.
+                                        Hiervandaan gaat je post de deur uit. Leeg = het adres van het
+                                        systeem, met jouw adres als antwoordadres.
                                     </span>
                                 </div>
                                 <div>
@@ -352,47 +379,135 @@ export default function Settings() {
                                 </div>
                             </div>
 
+                            <h3>Offertemail</h3>
+
                             <div className="row-section">
                                 <div className="information">
-                                    <label className="title" htmlFor="email_subject">Onderwerp</label>
+                                    <label className="title" htmlFor="quote_email_subject">Onderwerp</label>
                                     <span className="description">
-                                        Het onderwerp van de mail. Laat je dit leeg, dan wordt het
-                                        &quot;Offerte&quot; met het offertenummer erachter.
+                                        Gebruik <code>&#123;&#123;offertenummer&#125;&#125;</code>,{' '}
+                                        <code>&#123;&#123;klant&#125;&#125;</code> of{' '}
+                                        <code>&#123;&#123;bedrijf&#125;&#125;</code>.
                                     </span>
                                 </div>
                                 <div>
                                     <input
-                                        id="email_subject"
+                                        id="quote_email_subject"
                                         type="text"
-                                        value={emailSettings.email_subject}
+                                        value={emailSettings.quote_email_subject}
                                         onChange={(e) =>
-                                            setEmailSettings({ ...emailSettings, email_subject: e.target.value })
+                                            setEmailSettings({ ...emailSettings, quote_email_subject: e.target.value })
                                         }
-                                        placeholder="Uw offerte van Hendrikse Onderhoud"
+                                        placeholder="Offerte {{offertenummer}} van {{bedrijf}}"
                                     />
                                 </div>
                             </div>
 
                             <div className="row-section">
                                 <div className="information">
-                                    <span className="title">Tekst in de mail</span>
+                                    <span className="title">Tekst</span>
                                     <span className="description">
-                                        Bovenin de mail komt je logo uit het tabblad Account, daaronder deze
-                                        tekst, en daaronder een knop naar de offerte waar de klant hem kan
-                                        bekijken en ondertekenen.
+                                        Komt onder je logo, boven de knop naar de offerte.
                                     </span>
                                 </div>
                                 <div>
                                     <RichTextEditor
-                                        value={emailSettings.email_intro_text}
-                                        onChange={(email_intro_text) =>
-                                            setEmailSettings({ ...emailSettings, email_intro_text })
+                                        value={emailSettings.quote_email_intro_text}
+                                        onChange={(quote_email_intro_text) =>
+                                            setEmailSettings({ ...emailSettings, quote_email_intro_text })
                                         }
                                         placeholder="Beste klant, hierbij ontvangt u onze offerte."
                                     />
                                 </div>
                             </div>
+
+                            <h3>Factuurmail</h3>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="invoice_email_subject">Onderwerp</label>
+                                    <span className="description">
+                                        Gebruik <code>&#123;&#123;factuurnummer&#125;&#125;</code>,{' '}
+                                        <code>&#123;&#123;klant&#125;&#125;</code> of{' '}
+                                        <code>&#123;&#123;bedrijf&#125;&#125;</code>.
+                                    </span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="invoice_email_subject"
+                                        type="text"
+                                        value={emailSettings.invoice_email_subject}
+                                        onChange={(e) =>
+                                            setEmailSettings({ ...emailSettings, invoice_email_subject: e.target.value })
+                                        }
+                                        placeholder="Factuur {{factuurnummer}} van {{bedrijf}}"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Tekst</span>
+                                    <span className="description">
+                                        Komt onder je logo in de factuurmail.
+                                    </span>
+                                </div>
+                                <div>
+                                    <RichTextEditor
+                                        value={emailSettings.invoice_email_intro_text}
+                                        onChange={(invoice_email_intro_text) =>
+                                            setEmailSettings({ ...emailSettings, invoice_email_intro_text })
+                                        }
+                                        placeholder="Beste klant, hierbij ontvangt u onze factuur."
+                                    />
+                                </div>
+                            </div>
                         </>
+                    )}
+
+                    {showTemplateHelp && (
+                        <SidePanel title="Uitleg sjablonen" onClose={() => setShowTemplateHelp(false)}>
+                            <p>
+                                Plak bij Offertesjabloon en Factuursjabloon de HTML van je eigen ontwerp.
+                                Alles wat vast is — de zijbalk, kleuren, logo, paginanummers — schrijf je
+                                zelf. De plekken die met het document meegroeien laat je leeg; die vult het
+                                systeem.
+                            </p>
+
+                            <h3>Plekken die het systeem vult</h3>
+                            <p>
+                                Zet een leeg element neer met het juiste data-slot, bijvoorbeeld{' '}
+                                <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
+                            </p>
+                            <ul>
+                                <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
+                                <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
+                                <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
+                                <li><strong>blokken</strong> — alle blokken achter elkaar</li>
+                                <li><strong>tekstblokken</strong> — alleen de tekstblokken</li>
+                                <li><strong>prijsblokken</strong> — alleen de blokken met bedragen en subtotalen per BTW-tarief</li>
+                                <li><strong>totaal</strong> — het eindbedrag</li>
+                                <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
+                                <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
+                                <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
+                            </ul>
+
+                            <h3>Losse waarden</h3>
+                            <p>
+                                Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
+                                <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
+                            </p>
+                            <ul>
+                                <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
+                                <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
+                                <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
+                            </ul>
+
+                            <p>
+                                Laat je een sjabloon leeg, dan valt het document terug op de
+                                standaardweergave.
+                            </p>
+                        </SidePanel>
                     )}
                 </div>
             </div>
