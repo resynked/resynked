@@ -48,7 +48,7 @@ function fillPlaceholders(html: string, values: Record<string, string>): string 
 function expandRepeats(doc: Document, counts: Record<string, number>, titles: string[]) {
   doc.querySelectorAll<HTMLElement>('[data-repeat]').forEach((sjabloon) => {
     const naam = sjabloon.getAttribute('data-repeat') || '';
-    // Altijd minstens één pagina: die laatste is leeg en toont het plusje
+    // Een document zonder blokken toont toch één vel, anders staat er niets
     const aantal = Math.max(counts[naam] ?? 0, 1);
 
     for (let i = 0; i < aantal; i++) {
@@ -58,12 +58,6 @@ function expandRepeats(doc: Document, counts: Record<string, number>, titles: st
       // Zo kan het sjabloon een pagina anders opmaken op zijn titel:
       // .pagina[data-blok-titel="Algemene voorwaarden"] { ... }
       kopie.setAttribute('data-blok-titel', titles[i] || '');
-
-      if (i === aantal - 1) {
-        // De laatste pagina is de plek om iets toe te voegen; bij het
-        // afdrukken kan het sjabloon hem hiermee verbergen
-        kopie.setAttribute('data-add-page', '');
-      }
 
       // De slots die bij één blok horen krijgen een nummer; andere slots
       // op de pagina, zoals het eindtotaal, blijven wat ze zijn

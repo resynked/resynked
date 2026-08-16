@@ -281,7 +281,9 @@ export default function DocumentPreview({
       values[row.label.toLowerCase().replace(/\s+/g, '_')] = row.value;
     });
 
-    // Eén pagina per blok, plus een lege om er een toe te voegen
+    // Eén pagina per blok, niet meer. Een extra vel om iets toe te voegen zou
+    // ook bij de klant in de mail als lege pagina onder de offerte staan; de
+    // knop daarvoor hoort onder het papier, niet erin.
     const slots: Record<string, React.ReactNode> = {
       totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
     };
@@ -294,28 +296,39 @@ export default function DocumentPreview({
       labels[`blok-${index}`] = block.title || 'Blok';
     });
 
-    if (onAddBlock) {
-      slots[`blok-${blocks.length}`] = <AddBlockDivider onAdd={() => onAddBlock(blocks.length)} />;
-      labels[`blok-${blocks.length}`] = 'Nieuw blok';
-    }
-
     return (
-      <TemplatedDocument
-        html={template}
-        values={values}
-        labels={labels}
-        activeSlot={activeBlock === null || activeBlock === undefined ? null : `blok-${activeBlock}`}
-        onSelect={(slot) => {
-          const match = slot.match(/^blok-(\d+)$/);
-          if (!match || !onSelectBlock) return;
+      <>
+        <TemplatedDocument
+          html={template}
+          values={values}
+          labels={labels}
+          activeSlot={activeBlock === null || activeBlock === undefined ? null : `blok-${activeBlock}`}
+          // Alleen tijdens het bewerken; anders krijgt de klant op zijn eigen
+          // offertepagina de omlijning en het label van een bewerkbaar vlak
+          onSelect={
+            onSelectBlock
+              ? (slot) => {
+                  const match = slot.match(/^blok-(\d+)$/);
+                  if (!match) return;
 
-          const index = Number(match[1]);
-          if (index < blocks.length) onSelectBlock(index);
-        }}
-        repeatCounts={{ blok: blocks.length + 1 }}
-        repeatTitles={blocks.map(block => block.title)}
-        slots={slots}
-      />
+                  const index = Number(match[1]);
+                  if (index < blocks.length) onSelectBlock(index);
+                }
+              : undefined
+          }
+          repeatCounts={{ blok: blocks.length }}
+          repeatTitles={blocks.map(block => block.title)}
+          slots={slots}
+        />
+
+        {onAddBlock && (
+          <div className="add-block-footer">
+            <button type="button" className="button add-item" onClick={() => onAddBlock(blocks.length)}>
+              + Blok
+            </button>
+          </div>
+        )}
+      </>
     );
   }
 

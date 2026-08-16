@@ -197,6 +197,9 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .add-block-divider .add-block {opacity: 0; transition: .2s all ease;}
 .add-block-divider:hover .add-block {opacity: 1;}
 .add-block {position: relative; z-index: 1; display: flex; gap: var(--space5);}
+
+/* De knop om een blok toe te voegen staat onder het papier, niet als leeg vel erin */
+.add-block-footer {margin: var(--space20) 0 0 0;}
 .add-block .button.add-item {width: auto; padding: var(--space5) var(--space10); border-style: solid; font-size: 11px;}
 
 .table-container {background:var(--color2); border-radius: var(--border-radius1); border: 1px solid var(--border-color);}
