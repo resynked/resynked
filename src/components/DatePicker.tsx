@@ -135,7 +135,7 @@ export default function DatePicker({
         style={{ opacity: isDisabled ? 0.5 : 1, cursor: isDisabled ? 'not-allowed' : 'pointer' }}
       >
         <div className="value">
-          {value ? formatDate(value) : <span style={{ color: 'var(--font-color2)' }}>{placeholder}</span>}
+          {value ? formatDate(value) : <span className="placeholder">{placeholder}</span>}
         </div>
         <div className="arrow">
           <Calendar size={16} />

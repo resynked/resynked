@@ -68,7 +68,7 @@ export default function OmzetChart() {
 
       {loading ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
-          <div style={{ color: 'var(--font-color2)' }}>Laden...</div>
+          <div className="placeholder">Laden...</div>
         </div>
       ) : data.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>

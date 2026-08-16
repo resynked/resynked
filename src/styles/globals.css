@@ -37,12 +37,12 @@ html, body {height: 100%;}
 
 body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--fontsize1); line-height: 1.75em; margin: 0; padding: 0;}
 
-textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="number"], input[type="date" i] {
+textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"], input[type="search"], input[type="date" i] {
   background-color: var(--color2);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius1);
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
-  color: var(--font-color2);
+  color: var(--font-color1);
   font-family: inherit;
   font-size: inherit;
   line-height: normal;
@@ -54,7 +54,13 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
   outline: none;  -webkit-appearance: none; -moz-appearance: none; appearance: none;
 }
 
-input:focus {border-color: var(--color1); color: var(--font-color1);}
+input:focus, textarea:focus {border-color: var(--color1);}
+
+/* De hint staat lichter dan wat er ingevuld is. De opacity moet erbij: Firefox
+   zet daar zelf een waarde op, waardoor het grijs anders lichter uitvalt.
+   .placeholder is voor de eigen keuzelijsten, die geen echt invoerveld zijn. */
+::placeholder {color: var(--font-color2); opacity: 1;}
+.placeholder {color: var(--font-color2);}
 
 a {color: var(--font-color2); transition: .3s all ease;}
 
@@ -93,6 +99,8 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .select .menu .option {padding: var(--space5) 7px; box-sizing: border-box; cursor: pointer; transition: .3s all ease; font-size: 13px; border-radius: var(--border-radius1); }
 .select .menu .option:hover,
 .select .menu .option.selected {background: var(--color4);}
+.select .menu .option.empty {color: var(--font-color2); cursor: default;}
+.select .menu .option.empty:hover {background: unset;}
 
 .datepicker {position: relative; width: 100%;}
 .datepicker .control {display: flex; align-items: center; font-size: 13px; justify-content: space-between; padding: var(--space10) 12px; box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color);  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); border-radius: var(--border-radius2); cursor: pointer; transition: .3s all ease; line-height: normal;}

@@ -56,7 +56,7 @@ export default function Select({
         style={{ opacity: isDisabled ? 0.5 : 1, cursor: isDisabled ? 'not-allowed' : 'pointer' }}
       >
         <div className="value">
-          {value ? value.label : <span style={{ color: 'var(--font-color2)' }}>{placeholder}</span>}
+          {value ? value.label : <span className="placeholder">{placeholder}</span>}
         </div>
         <div className="arrow">
           <ChevronDown size={16} />
@@ -67,11 +67,11 @@ export default function Select({
         <div className="menu">
           {isClearable && value && (
             <div className="option" onClick={handleClear}>
-              <span style={{ color: 'var(--font-color2)' }}>Wissen</span>
+              <span className="placeholder">Wissen</span>
             </div>
           )}
           {options.length === 0 ? (
-            <div className="option" style={{ color: 'var(--font-color2)', cursor: 'default' }}>
+            <div className="option empty">
               Geen opties beschikbaar
             </div>
           ) : (
