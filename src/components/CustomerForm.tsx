@@ -3,11 +3,13 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
-import { Layers, FileText } from 'lucide-react';
+import { Layers, FilePen, FileText } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { Customer, Note } from '@/lib/supabase';
-import { formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { QUOTE_STATUS } from '@/lib/constants';
+import Table from '@/components/Table';
 import { SkeletonForm } from '@/components/Skeleton';
 
 interface NoteWithCustomer extends Note {
@@ -15,6 +17,16 @@ interface NoteWithCustomer extends Note {
     id: number;
     name: string;
   };
+}
+
+/** Een offerte van deze klant, zoals hij in het overzicht bij de relatie staat. */
+interface CustomerQuote {
+  id: number;
+  quote_number: string;
+  quote_date: string;
+  valid_until: string;
+  total: number;
+  status: string;
 }
 
 interface CustomerFormProps {
@@ -50,6 +62,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
   // Notes state (only for edit mode)
   const [notes, setNotes] = useState<NoteWithCustomer[]>([]);
+  const [quotes, setQuotes] = useState<CustomerQuote[]>([]);
 
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +78,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
     if (mode === 'edit' && customerId) {
       fetchCustomer();
       fetchNotes();
+      fetchQuotes();
     }
   }, [mode, customerId]);
 
@@ -111,6 +125,15 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
       }
     } catch (err) {
       console.error('Error fetching notes:', err);
+    }
+  };
+
+  const fetchQuotes = async () => {
+    try {
+      const response = await fetch(`/api/quotes?customer_id=${customerId}`);
+      if (response.ok) setQuotes(await response.json());
+    } catch (err) {
+      console.error('Error fetching quotes:', err);
     }
   };
 
@@ -237,8 +260,21 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                   setActiveTab('notities');
                 }}
               >
-                <FileText size={18} />
+                <FilePen size={18} />
                 <span>Notities</span>
+              </Link>
+            )}
+            {mode === 'edit' && (
+              <Link
+                href="#offertes"
+                className={`${activeTab === 'offertes' ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveTab('offertes');
+                }}
+              >
+                <FileText size={18} />
+                <span>Offertes</span>
               </Link>
             )}
           </nav>
@@ -462,6 +498,44 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <p>{note.content}</p>
                     </div>
                   ))
+                )}
+              </div>
+            )}
+
+            {/* Offertes Tab */}
+            {activeTab === 'offertes' && mode === 'edit' && (
+              <div className="form-section">
+                <div className="header">
+                  <h3>Offertes</h3>
+                  <div className="actions">
+                    <Link href={`/quotes/new?customer_id=${customerId}`} className="button">
+                      Offerte maken
+                    </Link>
+                  </div>
+                </div>
+
+                {quotes.length === 0 ? (
+                  <div className="empty-state">
+                    <p>Nog geen offertes voor deze klant.</p>
+                  </div>
+                ) : (
+                  <Table headers={['Offerte #', 'Offertedatum', 'Geldig tot', 'Totaal', 'Status']}>
+                    {quotes.map((quote) => (
+                      <tr key={quote.id}>
+                        <td>
+                          <Link href={`/quotes/${quote.id}`}>{quote.quote_number}</Link>
+                        </td>
+                        <td>{formatDate(quote.quote_date)}</td>
+                        <td>{formatDate(quote.valid_until)}</td>
+                        <td>{formatCurrency(quote.total)}</td>
+                        <td>
+                          <span className={`status-badge ${QUOTE_STATUS[quote.status]?.className || ''}`}>
+                            {QUOTE_STATUS[quote.status]?.label || quote.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </Table>
                 )}
               </div>
             )}

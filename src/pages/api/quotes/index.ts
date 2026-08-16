@@ -16,7 +16,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      const quotes = await getQuotes(tenantId);
+      // ?customer_id= geeft alleen de offertes van die klant
+      const { customer_id } = req.query;
+      const quotes = await getQuotes(tenantId, typeof customer_id === 'string' ? customer_id : undefined);
       return res.status(200).json(quotes);
     }
 

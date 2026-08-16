@@ -34,9 +34,11 @@ export default function NewQuote() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // Wachten tot het adres uitgelezen is, anders mist de klant uit de link
+    if (!router.isReady) return;
     fetchCustomers();
     fetchNextNumber();
-  }, []);
+  }, [router.isReady]);
 
   // Het nummer dat de aannemer bij Instellingen heeft ingesteld staat alvast in
   // het veld, zodat hij ziet wat hij krijgt en het desgewenst kan aanpassen
@@ -59,9 +61,14 @@ export default function NewQuote() {
       const res = await fetch('/api/customers');
       const data = await res.json();
       setCustomers(data);
-      if (data.length > 0) {
-        setFormData(prev => ({ ...prev, customer_id: String(data[0].id) }));
-      }
+
+      // Kom je hier vanuit een klant, dan staat die al goed; anders de eerste
+      const vanaf = router.query.customer_id;
+      const gekozen = typeof vanaf === 'string' && data.some((c: Customer) => String(c.id) === vanaf)
+        ? vanaf
+        : data.length > 0 ? String(data[0].id) : '';
+
+      if (gekozen) setFormData(prev => ({ ...prev, customer_id: gekozen }));
     } catch (err) {
       console.error('Error fetching customers:', err);
     }

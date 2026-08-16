@@ -8,6 +8,7 @@ import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils'
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/components/Toast';
 import { copyBlocks } from '@/lib/blocks';
+import { QUOTE_STATUS } from '@/lib/constants';
 import type { Customer } from '@/lib/supabase';
 
 interface Quote {
@@ -22,14 +23,6 @@ interface Quote {
   converted_to_invoice_id: number | null;
   created_at: string;
 }
-
-const statusLabels: Record<string, string> = {
-  draft: 'Concept',
-  sent: 'Verzonden',
-  approved: 'Goedgekeurd',
-  rejected: 'Afgewezen',
-  expired: 'Verlopen',
-};
 
 export default function Quotes() {
   const router = useRouter();
@@ -203,20 +196,11 @@ export default function Quotes() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusClasses = {
-      draft: 'status-draft',
-      sent: 'status-sent',
-      approved: 'status-paid',
-      rejected: 'status-cancelled',
-      expired: 'status-cancelled',
-    };
-    return (
-      <span className={`status-badge ${statusClasses[status as keyof typeof statusClasses]}`}>
-        {statusLabels[status] || status}
-      </span>
-    );
-  };
+  const getStatusBadge = (status: string) => (
+    <span className={`status-badge ${QUOTE_STATUS[status]?.className || ''}`}>
+      {QUOTE_STATUS[status]?.label || status}
+    </span>
+  );
 
   return (
     <Layout title="Offertes">

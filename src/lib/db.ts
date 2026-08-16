@@ -423,8 +423,8 @@ export async function deleteCustomer(id: string | number, tenantId: string) {
 }
 
 // Quotes
-export async function getQuotes(tenantId: string) {
-  const { data, error } = await supabase
+export async function getQuotes(tenantId: string, customerId?: number | string) {
+  let query = supabase
     .from('quotes')
     .select(`
       *,
@@ -434,6 +434,11 @@ export async function getQuotes(tenantId: string) {
     // Op offertenummer, nieuwste bovenaan
     .order('quote_number', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
+
+  // Voor het overzicht bij één klant
+  if (customerId) query = query.eq('customer_id', customerId);
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return data;
