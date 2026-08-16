@@ -476,21 +476,23 @@ export default function Settings() {
 
                             <h3>Plekken die het systeem vult</h3>
                             <p>
-                                Zet een leeg element neer met het juiste data-slot, bijvoorbeeld{' '}
-                                <code>&lt;div data-slot=&quot;blokken&quot;&gt;&lt;/div&gt;</code>
+                                Zet een leeg element neer met het juiste data-slot; het systeem zet de
+                                inhoud erin.
                             </p>
                             <ul>
-                                <li><strong>klantgegevens</strong> — naam en adres van de klant</li>
-                                <li><strong>kenmerken</strong> — nummer, datum en geldigheidsdatum</li>
-                                <li><strong>brief</strong> — de begeleidende tekst van de offerte</li>
-                                <li><strong>blokken</strong> — alle blokken achter elkaar</li>
-                                <li><strong>tekstblokken</strong> — alleen de tekstblokken</li>
-                                <li><strong>prijsblokken</strong> — alleen de blokken met bedragen en subtotalen per BTW-tarief</li>
-                                <li><strong>totaal</strong> — het eindbedrag</li>
-                                <li><strong>opmerkingen</strong> — de opmerkingen bij de offerte</li>
-                                <li><strong>voorwaarden</strong> — je vaste garantie- en betalingsvoorwaarden</li>
-                                <li><strong>algemene_voorwaarden</strong> — je algemene voorwaarden</li>
+                                <li>
+                                    <code>data-repeat=&quot;blok&quot;</code> — zet dit op je pagina; die
+                                    wordt dan één keer herhaald per blok in de offerte
+                                </li>
+                                <li><code>data-slot=&quot;blok&quot;</code> — de inhoud van dat blok</li>
+                                <li><code>data-slot=&quot;bloktitel&quot;</code> — de titel van dat blok</li>
+                                <li><code>data-slot=&quot;totaal&quot;</code> — het eindbedrag</li>
                             </ul>
+                            <p>
+                                Elke pagina krijgt ook <code>data-blok-titel</code> mee, zodat je één
+                                pagina anders kunt opmaken:{' '}
+                                <code>.pagina[data-blok-titel=&quot;Algemene voorwaarden&quot;] &#123; ... &#125;</code>
+                            </p>
 
                             <h3>Losse waarden</h3>
                             <p>
@@ -498,9 +500,10 @@ export default function Settings() {
                                 <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
                             </p>
                             <ul>
-                                <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code></li>
+                                <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
                                 <li><code>&#123;&#123;klant_naam&#125;&#125;</code>, <code>&#123;&#123;klant_adres&#125;&#125;</code>, <code>&#123;&#123;klant_postcode_plaats&#125;&#125;</code></li>
-                                <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
+                                <li><code>&#123;&#123;bedrijf_naam&#125;&#125;</code>, <code>&#123;&#123;bedrijf_adres&#125;&#125;</code>, <code>&#123;&#123;bedrijf_postcode_plaats&#125;&#125;</code>, <code>&#123;&#123;bedrijf_email&#125;&#125;</code>, <code>&#123;&#123;bedrijf_telefoon&#125;&#125;</code>, <code>&#123;&#123;bedrijf_kvk&#125;&#125;</code>, <code>&#123;&#123;bedrijf_btw&#125;&#125;</code>, <code>&#123;&#123;bedrijf_iban&#125;&#125;</code></li>
+                                <li>de kenmerken van het document: <code>&#123;&#123;offertenummer&#125;&#125;</code>, <code>&#123;&#123;offertedatum&#125;&#125;</code>, <code>&#123;&#123;geldig_tot&#125;&#125;</code></li>
                             </ul>
 
                             <p>
