@@ -284,7 +284,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
    zoals op een offerte die je uitprint en met de hand laat tekenen */
 .signature-fields {display: flex; gap: var(--space40); align-items: flex-end;}
 .signature-fields .field {flex: 1; display: flex; flex-direction: column;}
-.signature-fields .field .filled {display: flex; align-items: flex-end; min-height: 60px; padding: 0 0 var(--space5) 0;}
+.signature-fields .field .filled {display: flex; align-items: flex-end; justify-content: center; min-height: 60px; padding: 0 0 var(--space5) 0;}
 .signature-fields .field .filled img {max-height: 60px; max-width: 100%; width: auto;}
 .signature-fields .field .line {display: block; border-top: 1px solid currentColor; margin: var(--space30) 0 var(--space5) 0;}
 .signature-fields .field .filled + .line {margin-top: 0;}

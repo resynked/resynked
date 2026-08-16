@@ -236,9 +236,7 @@ function SignatureElement({
             {signature.image && <img src={signature.image} alt={`Handtekening van ${signature.name || ''}`} />}
           </span>
           <span className="line" />
-          <span className="caption">
-            Handtekening opdrachtgever{signature.name ? ` — ${signature.name}` : ''}
-          </span>
+          <span className="caption">Handtekening opdrachtgever</span>
         </div>
       </div>
     );
