@@ -7,6 +7,7 @@ import {
   calculateDocumentTotal,
   calculateElementTotals,
   formatCurrency,
+  formatDate,
   getCustomerDisplayName,
   lineTotal,
 } from '@/lib/utils';
@@ -23,6 +24,14 @@ interface DocumentPreviewProps {
    * publieke offertepagina heeft geen sessie en geeft ze mee.
    */
   tenant?: Tenant | null;
+  /** De handtekening van de klant, zodra die er is */
+  signature?: SignatureState | null;
+  /**
+   * Wat er op de plek van het handtekening-element komt zolang er niet getekend
+   * is. De offertepagina van de klant zet hier het tekenvak neer; in de app
+   * blijft dit leeg en staan er lijnen.
+   */
+  signatureField?: React.ReactNode;
   /** Welk blok op dit moment bewerkt wordt */
   activeBlock?: number | null;
   /** Aangeroepen bij een klik op een blok in het document */
@@ -130,10 +139,12 @@ interface BlockViewProps {
   currency: string;
   customer?: Partial<Customer> | null;
   meta: { label: string; value: string }[];
+  signature?: SignatureState | null;
+  signatureField?: React.ReactNode;
 }
 
 /** Alles wat er in één blok staat, in volgorde. */
-function BlockView({ block, currency, customer, meta }: BlockViewProps) {
+function BlockView({ block, currency, customer, meta, signature, signatureField }: BlockViewProps) {
   if (block.elements.length === 0) {
     return <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p>;
   }
@@ -178,11 +189,76 @@ function BlockView({ block, currency, customer, meta }: BlockViewProps) {
 
           {element.kind === 'kop' && <h2>{element.body || 'Kop toevoegen'}</h2>}
 
+          {element.kind === 'handtekening' && (
+            <SignatureElement signature={signature} field={signatureField} />
+          )}
+
           {element.kind === 'prijstabel' && <PriceTable element={element} currency={currency} />}
         </div>
         )
       )}
     </>
+  );
+}
+
+/** Wat er van de handtekening bekend is; leeg zolang er niet getekend is. */
+export interface SignatureState {
+  image?: string | null;
+  name?: string | null;
+  signedAt?: string | null;
+}
+
+/**
+ * De plek in het document waar de klant tekent.
+ *
+ * Drie toestanden: getekend toont de handtekening zelf; niet getekend op de
+ * pagina van de klant toont het tekenvak; overal elders de lijnen, zoals op een
+ * offerte die je uitprint en met de hand laat tekenen.
+ */
+function SignatureElement({
+  signature,
+  field,
+}: {
+  signature?: SignatureState | null;
+  field?: React.ReactNode;
+}) {
+  if (signature?.signedAt) {
+    return (
+      <div className="signature-fields signed">
+        <div className="field">
+          <span className="filled">{formatDate(signature.signedAt)}</span>
+          <span className="line" />
+          <span className="caption">Plaats / datum</span>
+        </div>
+
+        <div className="field">
+          <span className="filled">
+            {signature.image && <img src={signature.image} alt={`Handtekening van ${signature.name || ''}`} />}
+          </span>
+          <span className="line" />
+          <span className="caption">
+            Handtekening opdrachtgever{signature.name ? ` — ${signature.name}` : ''}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Alleen op de pagina van de klant: daar wordt dit het tekenvak
+  if (field) return <div className="signature-fields signing">{field}</div>;
+
+  return (
+    <div className="signature-fields">
+      <div className="field">
+        <span className="line" />
+        <span className="caption">Plaats / datum</span>
+      </div>
+
+      <div className="field">
+        <span className="line" />
+        <span className="caption">Handtekening opdrachtgever</span>
+      </div>
+    </div>
   );
 }
 
@@ -214,6 +290,8 @@ export default function DocumentPreview({
   blocks,
   currency = 'EUR',
   tenant: givenTenant,
+  signature,
+  signatureField,
   activeBlock,
   onSelectBlock,
   onAddBlock,
@@ -252,7 +330,14 @@ export default function DocumentPreview({
   const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
 
   const blokInhoud = (index: number) => (
-    <BlockView block={blocks[index]} currency={currency} customer={customer} meta={meta} />
+    <BlockView
+      block={blocks[index]}
+      currency={currency}
+      customer={customer}
+      meta={meta}
+      signature={signature}
+      signatureField={signatureField}
+    />
   );
 
   // Eigen sjabloon van de aannemer: dat bepaalt de vormgeving, wij leveren

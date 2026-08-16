@@ -149,7 +149,7 @@ ALTER TABLE invoice_blocks DROP COLUMN IF EXISTS tax_percentage;
 ALTER TABLE invoice_blocks DROP COLUMN IF EXISTS discount_percentage;
 
 -- ------------------------------------------------------------
--- 2. Het elementtype 'kop' toestaan
+-- 2. De toegestane elementtypes
 --
 -- Dit repareert de melding:
 --   new row for relation "quote_elements" violates check constraint
@@ -159,6 +159,10 @@ ALTER TABLE invoice_blocks DROP COLUMN IF EXISTS discount_percentage;
 -- slaat een bestaande tabel over — inclusief de CHECK die eraan hangt. Een
 -- database van vóór het element 'kop' houdt dus zijn oude rijtje waarden en
 -- weigert een kop-element. Daarom wordt de CHECK hier opnieuw gezet.
+--
+-- Hier staat welke elementen een blok mag bevatten. Komt er een type bij, dan
+-- hoef je alleen deze lijst aan te vullen; de CHECK wordt hieronder opnieuw
+-- gezet, dus een bestaande database loopt vanzelf mee.
 --
 -- Elke bestaande CHECK op kind gaat er eerst uit, ongeacht zijn naam. Op naam
 -- werken is hier niet genoeg: laat je er per ongeluk één staan, dan blijft die
@@ -182,8 +186,8 @@ BEGIN
     END LOOP;
 
     EXECUTE format(
-      'ALTER TABLE %I ADD CONSTRAINT %I CHECK (kind IN (%L, %L, %L, %L))',
-      doel, doel || '_kind_check', 'gegevens', 'kop', 'tekst', 'prijstabel'
+      'ALTER TABLE %I ADD CONSTRAINT %I CHECK (kind IN (%L, %L, %L, %L, %L))',
+      doel, doel || '_kind_check', 'gegevens', 'kop', 'tekst', 'prijstabel', 'handtekening'
     );
   END LOOP;
 END $$;

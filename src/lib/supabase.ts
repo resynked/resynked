@@ -125,7 +125,7 @@ export interface LineItem {
  * 'prijstabel' bevat regels en heeft een eigen BTW-tarief, zodat 9% en 21%
  * naast elkaar kunnen staan met elk een eigen subtotaal.
  */
-export type ElementKind = 'gegevens' | 'kop' | 'tekst' | 'prijstabel';
+export type ElementKind = 'gegevens' | 'kop' | 'tekst' | 'prijstabel' | 'handtekening';
 
 export interface DocumentElement {
   id?: number;

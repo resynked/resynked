@@ -40,6 +40,7 @@ const ELEMENT_NAMEN: Record<ElementKind, string> = {
   kop: 'Kop',
   tekst: 'Tekst',
   prijstabel: 'Prijstabel',
+  handtekening: 'Handtekening',
 };
 
 /**
@@ -136,6 +137,14 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
           </div>
 
           {element.kind === 'gegevens' && dataFields}
+
+          {element.kind === 'handtekening' && (
+            <p className="field-note">
+              Hier tekent de klant op zijn eigen offertepagina. Zolang er niet getekend
+              is staan hier de lijnen voor plaats, datum en handtekening; daarna staat
+              de handtekening zelf op deze plek.
+            </p>
+          )}
 
           {element.kind === 'kop' && (
             <div className="form-group">
@@ -313,6 +322,10 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
 
           <button type="button" className="button add-item" onClick={() => addElement('gegevens')}>
             + Gegevens
+          </button>
+
+          <button type="button" className="button add-item" onClick={() => addElement('handtekening')}>
+            + Handtekening
           </button>
         </div>
       </div>

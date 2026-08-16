@@ -1,7 +1,7 @@
 import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from './supabase';
 
 /** De elementtypes die een blok mag bevatten, gelijk aan de CHECK in de database. */
-export const ELEMENT_KINDS: ElementKind[] = ['gegevens', 'kop', 'tekst', 'prijstabel'];
+export const ELEMENT_KINDS: ElementKind[] = ['gegevens', 'kop', 'tekst', 'prijstabel', 'handtekening'];
 
 /** Een verse prijsregel. */
 export const emptyItem = (): LineItem => ({

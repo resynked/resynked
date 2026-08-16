@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
+import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
@@ -51,8 +52,7 @@ export default function EditQuote() {
   const [isLoading, setIsLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [signedAt, setSignedAt] = useState<string | null>(null);
-  const [signedName, setSignedName] = useState<string | null>(null);
+  const [signature, setSignature] = useState<SignatureState | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -71,8 +71,11 @@ export default function EditQuote() {
       const quote: any = await response.json();
 
       setConvertedInvoiceId(quote.converted_to_invoice_id || null);
-      setSignedAt(quote.signed_at || null);
-      setSignedName(quote.signed_name || null);
+      setSignature({
+        image: quote.signature_image || null,
+        name: quote.signed_name || null,
+        signedAt: quote.signed_at || null,
+      });
       setFormData({
         quote_number: quote.quote_number || '',
         quote_date: quote.quote_date || new Date().toISOString().split('T')[0],
@@ -243,9 +246,9 @@ export default function EditQuote() {
           <span className={`autosave-status ${autosaveStatus}`}>
             {autosaveLabel(autosaveStatus, savedAt)}
           </span>
-          {signedAt && (
+          {signature?.signedAt && (
             <span className="autosave-status saved">
-              Getekend door {signedName} op {formatDate(signedAt)}
+              Getekend door {signature.name} op {formatDate(signature.signedAt)}
             </span>
           )}
           <button type="button" className="button cancel" onClick={handleSend} disabled={isSending}>
@@ -279,6 +282,7 @@ export default function EditQuote() {
         customer={selectedCustomer}
         blocks={formData.blocks}
         currency={formData.currency}
+        signature={signature}
         onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         dataFields={
           <>

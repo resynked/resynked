@@ -3,6 +3,7 @@ import DocumentPreview from '@/components/DocumentPreview';
 import SidePanel from '@/components/SidePanel';
 import BlockEditor from '@/components/BlockEditor';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
+import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 
 interface DocumentEditorProps {
@@ -11,6 +12,8 @@ interface DocumentEditorProps {
   customer?: Customer | null;
   blocks: DocumentBlock[];
   currency?: string;
+  /** De handtekening van de klant, zodra die er is */
+  signature?: SignatureState | null;
   /** De velden bij een gegevens-element: klant, nummer, datums en valuta */
   dataFields?: ReactNode;
   onBlocksChange?: (blocks: DocumentBlock[]) => void;
@@ -27,6 +30,7 @@ export default function DocumentEditor({
   customer,
   blocks,
   currency,
+  signature,
   dataFields,
   onBlocksChange,
 }: DocumentEditorProps) {
@@ -72,6 +76,7 @@ export default function DocumentEditor({
             customer={customer}
             blocks={blocks}
             currency={currency}
+            signature={signature}
             activeBlock={activeBlock}
             onSelectBlock={onBlocksChange ? setActiveBlock : undefined}
             onAddBlock={onBlocksChange ? addBlock : undefined}

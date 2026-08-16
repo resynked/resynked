@@ -100,6 +100,49 @@ export default function PublicQuote() {
     }
   };
 
+  const isSigned = !!quote?.signed_at;
+
+  /**
+   * Staat er een handtekening-element in de offerte, dan tekent de klant daar —
+   * op de plek die de aannemer zelf heeft gekozen. Offertes van vóór dat element
+   * hebben het niet; die houden het losse blok onder het document.
+   */
+  const hasSignatureElement = (quote?.blocks || []).some((block) =>
+    block.elements.some((element) => element.kind === 'handtekening')
+  );
+
+  const signingForm = (
+    <>
+      <p>
+        Gaat u akkoord met deze offerte? Vul uw naam in en zet uw handtekening in het vak
+        hieronder. Dat kan met uw vinger op de telefoon of met de muis.
+      </p>
+
+      <div className="form-section">
+        <div className="form-group">
+          <label htmlFor="signed_name">Uw naam</label>
+          <input
+            id="signed_name"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Voor- en achternaam"
+          />
+        </div>
+      </div>
+
+      <SignaturePad onChange={setSignature} disabled={isSigning} />
+
+      {signError && <p className="error-message">{signError}</p>}
+
+      <div className="form-row">
+        <button type="button" className="button" onClick={handleSign} disabled={isSigning}>
+          {isSigning ? 'Bezig...' : 'Offerte ondertekenen'}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <>
       <Head>
@@ -137,57 +180,33 @@ export default function PublicQuote() {
                 blocks={quote.blocks}
                 currency={quote.currency}
                 tenant={tenant}
+                signature={{
+                  image: quote.signature_image,
+                  name: quote.signed_name,
+                  signedAt: quote.signed_at,
+                }}
+                signatureField={hasSignatureElement && !isSigned ? signingForm : undefined}
               />
             </div>
 
-            <div className="block signature-block">
-              <h2>Handtekening klant</h2>
-
-              {quote.signed_at ? (
-                <div className="signed">
-                  <p className="confirmation">
-                    <CircleCheck size={18} />
-                    <span>
-                      Ondertekend door {quote.signed_name} op {formatDate(quote.signed_at)}
-                    </span>
-                  </p>
-
-                  {quote.signature_image && (
-                    <img src={quote.signature_image} alt={`Handtekening van ${quote.signed_name}`} />
-                  )}
+            {/* Bevestiging na het tekenen, en het vak zelf voor offertes zonder element */}
+            {isSigned ? (
+              <div className="block signature-block">
+                <p className="confirmation">
+                  <CircleCheck size={18} />
+                  <span>
+                    Ondertekend door {quote.signed_name} op {formatDate(quote.signed_at!)}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              !hasSignatureElement && (
+                <div className="block signature-block">
+                  <h2>Handtekening klant</h2>
+                  {signingForm}
                 </div>
-              ) : (
-                <>
-                  <p>
-                    Gaat u akkoord met deze offerte? Vul uw naam in en zet uw handtekening in het
-                    vak hieronder. Dat kan met uw vinger op de telefoon of met de muis.
-                  </p>
-
-                  <div className="form-section">
-                    <div className="form-group">
-                      <label htmlFor="signed_name">Uw naam</label>
-                      <input
-                        id="signed_name"
-                        type="text"
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        placeholder="Voor- en achternaam"
-                      />
-                    </div>
-                  </div>
-
-                  <SignaturePad onChange={setSignature} disabled={isSigning} />
-
-                  {signError && <p className="error-message">{signError}</p>}
-
-                  <div className="form-row">
-                    <button type="button" className="button" onClick={handleSign} disabled={isSigning}>
-                      {isSigning ? 'Bezig...' : 'Offerte ondertekenen'}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+              )
+            )}
           </>
         )}
       </div>
