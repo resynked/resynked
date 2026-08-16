@@ -214,7 +214,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .table-container .product-table {width: 100%; border-collapse: collapse;}
 .table-container .product-table thead {background-color: var(--color3);}
 .table-container .product-table th {padding: var(--space5) var(--space15); box-sizing: border-box; font-size: var(--fontsize2); text-align: left; font-weight: 600; color: var(--color1); border-bottom: 1px solid var(--border-color);}
-.table-container .product-table tr td {padding: var(--space5) var(--space15); border-bottom: 1px solid var(--border-color); color: var(--font-color2); box-sizing: border-box;}
+.table-container .product-table tr td {padding: var(--space5) var(--space15); border-bottom: 1px solid var(--border-color); color: var(--font-color2); box-sizing: border-box; white-space: pre-line;}
 .table-container .product-table tr:last-of-type td {border-bottom: 0;}
 
 .table-container .data-table {width: 100%; border-collapse: collapse;}

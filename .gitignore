@@ -43,3 +43,7 @@ pnpm-debug.log*
 
 # Migrations folder
 migrations/
+# Bronbestanden en uitgelezen gegevens van de eenmalige import:
+# de PDF's zijn honderden MB's en de gegevens bevatten klantgegevens
+Import PDF/
+scripts/import-data.json

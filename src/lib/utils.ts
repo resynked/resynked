@@ -57,12 +57,24 @@ export function calculateElementTotals(element: Pick<DocumentElement, 'items' | 
   };
 }
 
-/** Het eindbedrag: de som van alle prijstabellen in alle blokken. */
+/** Bedragen op hele centen. */
+const toCents = (value: number): number => Math.round(value * 100) / 100;
+
+/**
+ * Het eindbedrag: de som van alle prijstabellen in alle blokken.
+ *
+ * Elke tabel wordt eerst op centen afgerond, want dat is ook het bedrag dat
+ * eronder staat. Zou je de onafgeronde bedragen optellen, dan kan het
+ * eindtotaal een cent afwijken van wat de klant krijgt als hij de tabellen zelf
+ * bij elkaar optelt. Afronden per BTW-tarief is ook hoe de btw hoort te lopen.
+ */
 export function calculateDocumentTotal(blocks: DocumentBlock[]): number {
-  return blocks.reduce(
-    (sum, block) =>
-      sum + block.elements.reduce((s, element) => s + calculateElementTotals(element).total, 0),
-    0
+  return toCents(
+    blocks.reduce(
+      (sum, block) =>
+        sum + block.elements.reduce((s, element) => s + toCents(calculateElementTotals(element).total), 0),
+      0
+    )
   );
 }
 

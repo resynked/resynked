@@ -332,6 +332,8 @@ export async function getCustomers(tenantId: string) {
     .from('customers')
     .select('*')
     .eq('tenant_id', tenantId)
+    // Op klantnummer; wie er nog geen heeft komt onderaan
+    .order('customer_number', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -429,6 +431,8 @@ export async function getQuotes(tenantId: string) {
       customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('tenant_id', tenantId)
+    // Op offertenummer, nieuwste bovenaan
+    .order('quote_number', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -571,6 +575,8 @@ export async function getInvoices(tenantId: string) {
       customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('tenant_id', tenantId)
+    // Op factuurnummer, nieuwste bovenaan
+    .order('invoice_number', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) throw error;

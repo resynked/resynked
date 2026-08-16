@@ -276,16 +276,52 @@ COMMIT;
 -- ------------------------------------------------------------
 -- Controle achteraf
 --
--- Regel 1: hier horen beide elementen-tabellen te staan met alle vier de
---          waarden in de CHECK.
--- Regel 2: hier horen géén rijen uit te komen. Komt er wel iets, dan is
---          onderdeel 1 halverwege gebleven.
+-- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
+-- Er horen zes regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
-SELECT conrelid::regclass AS tabel, pg_get_constraintdef(oid) AS check_regel
-FROM pg_constraint
-WHERE conname IN ('quote_elements_kind_check', 'invoice_elements_kind_check');
+SELECT 'Elementtypes offerte' AS controle,
+       COALESCE(
+         (SELECT pg_get_constraintdef(oid) FROM pg_constraint
+          WHERE conrelid = 'quote_elements'::regclass AND contype = 'c'
+            AND pg_get_constraintdef(oid) ILIKE '%kind%' LIMIT 1),
+         'NEE - geen CHECK gevonden'
+       ) AS uitkomst
 
-SELECT table_name, column_name
-FROM information_schema.columns
-WHERE (table_name IN ('quote_blocks', 'invoice_blocks') AND column_name = 'kind')
-   OR (table_name IN ('quote_items', 'invoice_items') AND column_name = 'block_id');
+UNION ALL SELECT 'Elementtypes factuur',
+       COALESCE(
+         (SELECT pg_get_constraintdef(oid) FROM pg_constraint
+          WHERE conrelid = 'invoice_elements'::regclass AND contype = 'c'
+            AND pg_get_constraintdef(oid) ILIKE '%kind%' LIMIT 1),
+         'NEE - geen CHECK gevonden'
+       )
+
+UNION ALL SELECT 'Blokken opgeschoond',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name IN ('quote_blocks', 'invoice_blocks')
+           AND column_name = 'kind'
+       ) THEN 'NEE - onderdeel 1 is halverwege gebleven' ELSE 'ja' END
+
+UNION ALL SELECT 'Regels hangen aan een element',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name IN ('quote_items', 'invoice_items')
+           AND column_name = 'block_id'
+       ) THEN 'NEE - onderdeel 1 is halverwege gebleven' ELSE 'ja' END
+
+UNION ALL SELECT 'Versturen en ondertekenen',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'quotes'
+           AND column_name IN ('public_token', 'sent_at', 'signed_at', 'signed_name', 'signature_image')
+       ) = 5 THEN 'ja - 5 van 5 kolommen' ELSE 'NEE - onderdeel 3 niet gelukt' END
+
+UNION ALL SELECT 'E-mail en nummering',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'tenants'
+           AND column_name IN ('email_from', 'quote_email_subject', 'quote_email_intro_text',
+                               'invoice_email_subject', 'invoice_email_intro_text',
+                               'quote_number_next', 'invoice_number_next')
+       ) = 7 THEN 'ja - 7 van 7 kolommen' ELSE 'NEE - onderdeel 4 niet gelukt' END;
