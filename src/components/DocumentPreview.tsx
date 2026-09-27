@@ -48,13 +48,15 @@ interface DocumentPreviewProps {
  * richtext. De opmaak hangt aan het element zelf, zodat er geen tweede div om
  * heen komt: die hoort bij het blok en niet bij de tekst.
  */
-function TextElement({ body }: { body: string | null }) {
+function TextElement({ body, bewerkbaar }: { body: string | null; bewerkbaar: boolean }) {
   if (!body || isRichTextEmpty(body)) {
-    return (
+    // Zonder tekst valt het element weg; alleen in de editor staat er een hint,
+    // want anders belandt "Tekst toevoegen" in de PDF die de klant krijgt
+    return bewerkbaar ? (
       <div data-element="tekst" className="rich-text">
         <p>Tekst toevoegen</p>
       </div>
-    );
+    ) : null;
   }
 
   return (
@@ -141,19 +143,21 @@ interface BlockViewProps {
   meta: { label: string; value: string }[];
   signature?: SignatureState | null;
   signatureField?: React.ReactNode;
+  /** In de editor staan er hints bij lege onderdelen; in het document niet */
+  bewerkbaar: boolean;
 }
 
 /** Alles wat er in één blok staat, in volgorde. */
-function BlockView({ block, currency, customer, meta, signature, signatureField }: BlockViewProps) {
+function BlockView({ block, currency, customer, meta, signature, signatureField, bewerkbaar }: BlockViewProps) {
   if (block.elements.length === 0) {
-    return <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p>;
+    return bewerkbaar ? <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p> : null;
   }
 
   return (
     <>
       {block.elements.map((element, index) =>
         element.kind === 'tekst' ? (
-          <TextElement key={index} body={element.body} />
+          <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} />
         ) : (
         <div key={index} data-element={element.kind}>
           {element.kind === 'gegevens' && (
@@ -169,7 +173,7 @@ function BlockView({ block, currency, customer, meta, signature, signatureField 
                     )}
                   </>
                 ) : (
-                  <div>Nog geen klant gekozen</div>
+                  bewerkbaar && <div>Nog geen klant gekozen</div>
                 )}
               </div>
 
@@ -187,7 +191,7 @@ function BlockView({ block, currency, customer, meta, signature, signatureField 
             </>
           )}
 
-          {element.kind === 'kop' && <h2>{element.body || 'Kop toevoegen'}</h2>}
+          {element.kind === 'kop' && (element.body ? <h2>{element.body}</h2> : bewerkbaar && <h2>Kop toevoegen</h2>)}
 
           {element.kind === 'handtekening' && (
             <SignatureElement signature={signature} field={signatureField} />
@@ -335,6 +339,7 @@ export default function DocumentPreview({
       meta={meta}
       signature={signature}
       signatureField={signatureField}
+      bewerkbaar={!!onSelectBlock}
     />
   );
 
