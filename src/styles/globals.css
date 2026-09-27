@@ -206,7 +206,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
    scherm precies waar hij in de PDF breekt: wat je in de editor ziet is wat
    er uit de printer komt. Een sjabloon dat staand papier wil, zet zelf
    --sheet-width en --sheet-height. */
-.document-window {overflow: hidden;}
+.document-window {overflow: hidden; contain: inline-size;}
 .document-paper {transform-origin: top left;}
 .document-paper [data-blok-titel][data-blok-titel] {
   width: var(--sheet-width, 297mm);
@@ -219,7 +219,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 
 @media print {
   /* Bij het afdrukken staat het papier al op ware grootte */
-  .document-window {overflow: visible; height: auto !important;}
+  .document-window {overflow: visible; height: auto !important; contain: none;}
   .document-paper {transform: none !important; width: auto !important;}
 }
 
