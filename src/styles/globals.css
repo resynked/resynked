@@ -209,6 +209,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .document-window {overflow: hidden; contain: inline-size;}
 .document-paper {transform-origin: top left;}
 .document-paper [data-blok-titel][data-blok-titel] {
+  position: relative;
   width: var(--sheet-width, 297mm);
   height: var(--sheet-height, 210mm);
   min-height: var(--sheet-height, 210mm);
@@ -217,7 +218,12 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
   box-sizing: border-box;
 }
 
+/* De knop op een vervolgvel ligt over het papier heen, zodat hij de inhoud
+   niet verschuift en dus ook niet meetelt voor wat er op een vel past */
+.sheet-actions {position: absolute; top: var(--space10); right: var(--space10); z-index: 3;}
+
 @media print {
+  .sheet-actions {display: none;}
   /* Bij het afdrukken staat het papier al op ware grootte */
   .document-window {overflow: visible; height: auto !important; contain: none;}
   .document-paper {transform: none !important; width: auto !important;}

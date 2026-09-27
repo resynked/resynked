@@ -18,6 +18,11 @@ interface TemplatedDocumentProps {
   repeatCounts?: Record<string, number>;
   /** De titel van elk blok, als haakje voor eigen opmaak per pagina */
   repeatTitles?: string[];
+  /**
+   * Knoppen die op een pagina komen te liggen in plaats van erin, per slot.
+   * Ze zweven over het papier en tellen dus niet mee voor wat er op past.
+   */
+  overlays?: Record<string, ReactNode>;
 }
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -118,6 +123,7 @@ export default function TemplatedDocument({
   onSelect,
   repeatCounts = {},
   repeatTitles = [],
+  overlays = {},
 }: TemplatedDocumentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [targets, setTargets] = useState<{ name: string; element: HTMLElement }[]>([]);
@@ -186,6 +192,15 @@ export default function TemplatedDocument({
         // elke herhaalde pagina, dus de sleutel bevat ook de plek
         slots[name] ? createPortal(slots[name], element, `${name}-${index}`) : null
       )}
+      {targets.map(({ name, element }, index) => {
+        const overlay = overlays[name];
+        if (!overlay) return null;
+
+        // Op de pagina zelf, niet in het slot: zo ligt de knop over het
+        // papier heen zonder de inhoud te verschuiven
+        const pagina = element.closest('[data-blok-titel]') as HTMLElement | null;
+        return pagina ? createPortal(overlay, pagina, `overlay-${name}-${index}`) : null;
+      })}
     </>
   );
 }

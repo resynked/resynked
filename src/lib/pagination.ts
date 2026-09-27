@@ -9,6 +9,8 @@
  */
 
 import type { DocumentBlock, DocumentElement } from '@/lib/supabase';
+import { duplicateElement } from '@/lib/blocks';
+import { toDisplayHtml } from '@/lib/richtext';
 
 /**
  * Eén onderdeel van een blok op een vel. Bij een tekstelement kan het om een
@@ -101,4 +103,34 @@ export function snijTekst(html: string, van?: number, tot?: number): string {
     .slice(van ?? 0, tot ?? knopen.length)
     .map((knoop) => (knoop.nodeType === 1 ? (knoop as HTMLElement).outerHTML : knoop.textContent || ''))
     .join('');
+}
+
+/**
+ * Maakt van de knip een echte scheiding: het blok valt uiteen in twee blokken
+ * met dezelfde titel, zodat het vervolg een eigen tekstveld krijgt en los te
+ * bewerken is. Vanaf dat moment bepaalt de aannemer zelf wat waar staat.
+ */
+export function splitsBlok(block: DocumentBlock, vanaf: Stuk): [DocumentBlock, DocumentBlock] {
+  const voor = block.elements.slice(0, vanaf.element).map(duplicateElement);
+  const na = block.elements.slice(vanaf.element + 1).map(duplicateElement);
+  const element = block.elements[vanaf.element];
+
+  if (!element) return [block, { title: block.title, elements: [] }];
+
+  const knoop = vanaf.van ?? 0;
+
+  // Begint het vervolg bij een heel element, dan hoeft er niets gesneden
+  if (element.kind !== 'tekst' || knoop === 0) {
+    return [
+      { title: block.title, elements: voor },
+      { title: block.title, elements: [duplicateElement(element), ...na] },
+    ];
+  }
+
+  // Een tekst die over twee vellen liep wordt op dezelfde plek twee teksten
+  const html = toDisplayHtml(element.body);
+  return [
+    { title: block.title, elements: [...voor, { ...duplicateElement(element), body: snijTekst(html, 0, knoop) }] },
+    { title: block.title, elements: [{ ...duplicateElement(element), body: snijTekst(html, knoop) }, ...na] },
+  ];
 }

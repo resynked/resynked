@@ -10,6 +10,7 @@ import {
   knipVel,
   snijTekst,
   type Knip,
+  type Stuk,
   type Vel,
 } from '@/lib/pagination';
 import {
@@ -47,6 +48,11 @@ interface DocumentPreviewProps {
   onSelectBlock?: (index: number) => void;
   /** Voegt een blok toe op een bepaalde plek in de lijst */
   onAddBlock?: (atIndex: number) => void;
+  /**
+   * Maakt van een vervolgvel een eigen blok, geknipt op de plek waar het
+   * vel begon. Daarna is het vervolg los te bewerken.
+   */
+  onSplitBlock?: (blok: number, vanaf: Stuk) => void;
   /**
    * Hoe groot het papier op het scherm staat. "passend" verkleint het vel tot
    * het in beeld past, zoals in de editor; "vol" laat het op ware grootte
@@ -340,14 +346,31 @@ function zoekKnip(pagina: HTMLElement, slot: HTMLElement, schaal: number): Knip 
       const van = Number(el.dataset.van) || 0;
       const knopen = Array.from(el.children);
       for (let i = 0; i < knopen.length; i++) {
-        if (!past(knopen[i])) return { stuk, knoop: van + i };
+        if (past(knopen[i])) continue;
+
+        // Een kopje hoort bij wat eronder staat. Valt dat op het volgende
+        // vel, dan gaat het kopje mee — anders blijft er een losse regel
+        // onderaan de pagina achter
+        let knip = i;
+        while (knip > 0 && isKop(knopen[knip - 1])) knip--;
+
+        return { stuk, knoop: van + knip };
       }
     }
+
+    // Hetzelfde voor een los kop-element vlak voor bijvoorbeeld een prijstabel
+    const vorige = el.previousElementSibling as HTMLElement | null;
+    if (vorige?.dataset.element === 'kop' && stuk > 0) return { stuk: stuk - 1 };
 
     return { stuk };
   }
 
   return null;
+}
+
+/** Kopjes horen bij de tekst eronder en gaan dus met die tekst mee. */
+function isKop(el: Element): boolean {
+  return /^H[1-6]$/.test(el.tagName);
 }
 
 /** Een vel zonder inhoud heeft geen zin; daar mag de knip niet op uitkomen. */
@@ -425,6 +448,7 @@ export default function DocumentPreview({
   activeBlock,
   onSelectBlock,
   onAddBlock,
+  onSplitBlock,
   papier = 'passend',
 }: DocumentPreviewProps) {
   const [fetchedTenant, setFetchedTenant] = useState<Tenant | null>(null);
@@ -473,28 +497,56 @@ export default function DocumentPreview({
     return () => window.removeEventListener('resize', pas);
   });
 
-  // Na elke tekening nameten of alles nog op zijn vel staat. Wat overloopt
-  // verhuist naar een volgend vel, net zolang tot er niets meer verschuift
+  // Nameten of alles nog op zijn vel staat. Wat overloopt verhuist naar een
+  // volgend vel, net zolang tot er niets meer verschuift. Er wordt daarna nog
+  // even doorgekeken: lettertypes, plaatjes en kolommen zetten de tekst soms
+  // pas na de eerste tekening op zijn definitieve plek
   useEffect(() => {
-    if (!papierRef.current || rondes.current > 40) return;
+    let gestopt = false;
+    let stil = 0;
+    let wacht: ReturnType<typeof setTimeout>;
 
-    const frame = requestAnimationFrame(() => {
+    const nogEens = (na: number) => {
+      wacht = setTimeout(() => requestAnimationFrame(kijk), na);
+    };
+
+    const kijk = () => {
+      if (gestopt) return;
+
       const papierEl = papierRef.current;
-      if (!papierEl) return;
-
-      // Het papier loopt nog achter op de indeling; volgende ronde opnieuw
-      if (papierEl.querySelectorAll('[data-blok-titel]').length !== vellen.length) return;
+      // Het papier loopt nog achter op de indeling; zo weer kijken
+      if (!papierEl || papierEl.querySelectorAll('[data-blok-titel]').length !== vellen.length) {
+        nogEens(60);
+        return;
+      }
 
       const opnieuw = herverdeel(papierEl, vellen, schaal);
-      if (opnieuw && !gelijkeIndeling(opnieuw, vellen)) {
+
+      if (opnieuw && !gelijkeIndeling(opnieuw, vellen) && rondes.current <= 40) {
         rondes.current += 1;
         setVellen(opnieuw);
-      } else {
-        setIndelingKlaar(true);
+        return;
       }
-    });
 
-    return () => cancelAnimationFrame(frame);
+      // Acht keer achter elkaar niets zien verschuiven, dan ligt het stil
+      stil += 1;
+      if (stil >= 8) {
+        setIndelingKlaar(true);
+        return;
+      }
+
+      nogEens(100);
+    };
+
+    // Zonder de juiste letters klopt geen enkele meting
+    const fonts = (document as any).fonts?.ready;
+    if (fonts) fonts.then(() => nogEens(0));
+    else nogEens(0);
+
+    return () => {
+      gestopt = true;
+      clearTimeout(wacht);
+    };
   });
 
   useEffect(() => {
@@ -585,6 +637,34 @@ export default function DocumentPreview({
       labels[`blok-${index}`] = block.title || 'Blok';
     });
 
+    // Een vel dat bij hetzelfde blok hoort als het vorige is een vervolg.
+    // Daar komt de knop om het los te maken
+    const overlays: Record<string, React.ReactNode> = {};
+    if (onSplitBlock) {
+      vellen.forEach((vel, index) => {
+        if (index === 0 || vellen[index - 1].blok !== vel.blok) return;
+
+        const begin = vel.stukken[0];
+        if (!begin) return;
+
+        overlays[`blok-${index}`] = (
+          <div className="sheet-actions">
+            <button
+              type="button"
+              className="button add-item"
+              title="Zet het vervolg in een eigen blok, zodat je het apart kunt bewerken"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSplitBlock(vel.blok, begin);
+              }}
+            >
+              Losmaken als eigen blok
+            </button>
+          </div>
+        );
+      });
+    }
+
     const actiefVel = activeBlock === null || activeBlock === undefined
       ? -1
       : vellen.findIndex(vel => vel.blok === activeBlock);
@@ -620,6 +700,7 @@ export default function DocumentPreview({
           repeatCounts={{ blok: vellen.length }}
           repeatTitles={vellen.map(vel => blocks[vel.blok]?.title ?? '')}
           slots={slots}
+          overlays={overlays}
         />
           </div>
         </div>

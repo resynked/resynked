@@ -3,6 +3,7 @@ import DocumentPreview from '@/components/DocumentPreview';
 import SidePanel from '@/components/SidePanel';
 import BlockEditor from '@/components/BlockEditor';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
+import { splitsBlok, type Stuk } from '@/lib/pagination';
 import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 
@@ -59,6 +60,19 @@ export default function DocumentEditor({
     setActiveBlock(index + 1);
   };
 
+  /**
+   * Een blok dat over twee vellen liep wordt hier echt twee blokken, geknipt
+   * waar het tweede vel begon. Allebei houden ze de titel, dus in het
+   * document verandert er niets — maar het vervolg is nu los te bewerken.
+   */
+  const splitBlock = (index: number, vanaf: Stuk) => {
+    if (!onBlocksChange) return;
+
+    const [eerste, tweede] = splitsBlok(blocks[index], vanaf);
+    onBlocksChange([...blocks.slice(0, index), eerste, tweede, ...blocks.slice(index + 1)]);
+    setActiveBlock(index + 1);
+  };
+
   const deleteBlock = (index: number) => {
     onBlocksChange?.(blocks.filter((_, i) => i !== index));
     close();
@@ -80,6 +94,7 @@ export default function DocumentEditor({
             activeBlock={activeBlock}
             onSelectBlock={onBlocksChange ? setActiveBlock : undefined}
             onAddBlock={onBlocksChange ? addBlock : undefined}
+            onSplitBlock={onBlocksChange ? splitBlock : undefined}
           />
         </div>
       </div>
