@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import DocumentPreview, { SignatureState } from '@/components/DocumentPreview';
 import { SkeletonCard } from '@/components/Skeleton';
-import type { Customer, DocumentBlock } from '@/lib/supabase';
+import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 
 interface PrintQuote {
@@ -29,40 +29,77 @@ export default function PrintQuote() {
   const { id } = router.query;
 
   const [quote, setQuote] = useState<PrintQuote | null>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [fout, setFout] = useState<string | null>(null);
 
+  // De bedrijfsgegevens worden hier opgehaald en meegegeven, zodat het
+  // document niet pas begint te laden als het al op het scherm staat
   useEffect(() => {
     if (!id) return;
 
-    fetch(`/api/quotes/${id}`)
-      .then(async (res) => {
+    Promise.all([
+      fetch(`/api/quotes/${id}`).then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Offerte niet gevonden');
         return data;
+      }),
+      fetch('/api/tenant').then((res) => (res.ok ? res.json() : null)),
+    ])
+      .then(([offerte, bedrijf]) => {
+        setTenant(bedrijf);
+        setQuote(offerte);
       })
-      .then(setQuote)
       .catch((err) => setFout(err.message));
   }, [id]);
 
-  // Pas afdrukken als het document er echt staat: zonder de lettertypen valt
-  // de opmaak anders uit dan op het scherm
+  /**
+   * Pas afdrukken als het document er echt staat.
+   *
+   * Het sjabloon wordt in stappen opgebouwd: eerst opschonen, dan in de DOM
+   * zetten, en daarna pas gaat de inhoud in de plekken met data-slot. Een vaste
+   * wachttijd is daarvoor te wankel — dan krijg je een lege of halve pagina op
+   * papier. Daarom wordt er gekeken of de inhoud er werkelijk is, en of de
+   * afbeeldingen en lettertypen binnen zijn.
+   */
   useEffect(() => {
     if (!quote) return;
 
     let gestopt = false;
+
+    const isKlaar = () => {
+      const vel = document.querySelector('.print-page');
+      if (!vel) return false;
+
+      // De blokken van de offerte staan er pas als hun elementen er staan
+      if (!vel.querySelector('[data-element]')) return false;
+
+      // Een logo dat nog laadt zou als leeg vlak op papier komen
+      const afbeeldingen = Array.from(vel.querySelectorAll('img'));
+      return afbeeldingen.every((img) => img.complete);
+    };
+
     const afdrukken = async () => {
       try {
         await document.fonts?.ready;
       } catch {
-        // Kent de browser dit niet, dan drukken we gewoon af
+        // Kent de browser dit niet, dan drukken we zonder die zekerheid af
       }
       if (!gestopt) window.print();
     };
 
-    const wachten = setTimeout(afdrukken, 300);
+    // Elke tiende seconde kijken, en na acht seconden hoe dan ook afdrukken
+    const begin = Date.now();
+    const klok = setInterval(() => {
+      if (gestopt) return;
+      if (isKlaar() || Date.now() - begin > 8000) {
+        clearInterval(klok);
+        afdrukken();
+      }
+    }, 100);
+
     return () => {
       gestopt = true;
-      clearTimeout(wachten);
+      clearInterval(klok);
     };
   }, [quote]);
 
@@ -106,6 +143,7 @@ export default function PrintQuote() {
               customer={quote.customer}
               blocks={quote.blocks}
               currency={quote.currency}
+              tenant={tenant}
               signature={signature}
             />
           </>
