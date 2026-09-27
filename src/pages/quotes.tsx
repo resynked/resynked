@@ -311,8 +311,7 @@ export default function Quotes() {
                         Versturen
                       </Link>
                       <Link
-                        href={`/quotes/${quote.id}/afdrukken`}
-                        target="_blank"
+                        href={`/api/quotes/${quote.id}/pdf`}
                         className="edit"
                         onClick={() => setOpenDropdownId(null)}
                       >

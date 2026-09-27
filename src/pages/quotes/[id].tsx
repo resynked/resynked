@@ -165,9 +165,8 @@ export default function EditQuote() {
   };
 
   /**
-   * De offerte wordt geopend op een pagina zonder menu, die zichzelf laat
-   * afdrukken. De browser maakt daar de PDF van, met echte tekst en de
-   * pagina-einden uit het eigen sjabloon.
+   * De server maakt de PDF en stuurt hem als bestand terug, zodat er geen
+   * printvenster aan te pas komt.
    */
   const handleDownload = async () => {
     // Eerst het openstaande werk vastleggen, anders staat er een oudere versie in
@@ -176,7 +175,7 @@ export default function EditQuote() {
     } catch {
       // Lukt dat niet, dan drukken we af wat er is opgeslagen
     }
-    window.open(`/quotes/${id}/afdrukken`, '_blank');
+    window.location.href = `/api/quotes/${id}/pdf`;
   };
 
   const handleSend = async () => {

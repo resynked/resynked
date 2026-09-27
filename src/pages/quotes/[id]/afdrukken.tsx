@@ -64,6 +64,10 @@ export default function PrintQuote() {
   useEffect(() => {
     if (!quote) return;
 
+    // Haalt de server deze pagina op om er een PDF van te maken, dan hoeft
+    // het printvenster niet open: die doet het werk zelf
+    if (router.query.pdf) return;
+
     let gestopt = false;
 
     const isKlaar = () => {
@@ -101,7 +105,7 @@ export default function PrintQuote() {
       gestopt = true;
       clearInterval(klok);
     };
-  }, [quote]);
+  }, [quote, router.query.pdf]);
 
   const signature: SignatureState | null = quote
     ? { image: quote.signature_image, name: quote.signed_name, signedAt: quote.signed_at }
