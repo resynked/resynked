@@ -310,6 +310,14 @@ export default function Quotes() {
                       >
                         Versturen
                       </Link>
+                      <Link
+                        href={`/quotes/${quote.id}/afdrukken`}
+                        target="_blank"
+                        className="edit"
+                        onClick={() => setOpenDropdownId(null)}
+                      >
+                        Downloaden
+                      </Link>
                       {quote.converted_to_invoice_id ? (
                         <Link href={`/invoices/${quote.converted_to_invoice_id}`} className="edit">
                           Bekijk factuur

@@ -270,6 +270,18 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 
+/* De offerte klaar om af te drukken: alleen het document, geen menu.
+   Bij het afdrukken valt ook de knop weg, zodat het sjabloon met zijn eigen
+   @media print-regels bepaalt hoe de PDF eruitziet. */
+.print-page {max-width: var(--max-width); margin: 0 auto; padding: var(--space20); box-sizing: border-box;}
+.print-page .print-actions {display: flex; justify-content: flex-end; margin: 0 0 var(--space20) 0;}
+
+@media print {
+  body {background: #fff;}
+  .print-page {max-width: none; margin: 0; padding: 0;}
+  .print-page .print-actions {display: none;}
+}
+
 /* De offerte zoals de klant hem via de mail te zien krijgt: geen menu, geen
    zijbalk, alleen het document en het vak om te ondertekenen */
 .public-document {max-width: var(--max-width-small); margin: 0 auto; padding: var(--space20); box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space20);}

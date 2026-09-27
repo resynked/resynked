@@ -164,6 +164,21 @@ export default function EditQuote() {
     }
   };
 
+  /**
+   * De offerte wordt geopend op een pagina zonder menu, die zichzelf laat
+   * afdrukken. De browser maakt daar de PDF van, met echte tekst en de
+   * pagina-einden uit het eigen sjabloon.
+   */
+  const handleDownload = async () => {
+    // Eerst het openstaande werk vastleggen, anders staat er een oudere versie in
+    try {
+      await persist(formData, true);
+    } catch {
+      // Lukt dat niet, dan drukken we af wat er is opgeslagen
+    }
+    window.open(`/quotes/${id}/afdrukken`, '_blank');
+  };
+
   const handleSend = async () => {
     const confirmed = await confirm({
       title: 'Offerte versturen',
@@ -253,6 +268,9 @@ export default function EditQuote() {
           )}
           <button type="button" className="button cancel" onClick={handleSend} disabled={isSending}>
             {isSending ? 'Versturen...' : 'Versturen'}
+          </button>
+          <button type="button" className="button cancel" onClick={handleDownload}>
+            Downloaden
           </button>
           {convertedInvoiceId ? (
             <Link href={`/invoices/${convertedInvoiceId}`} className="button cancel">
