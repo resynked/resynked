@@ -82,6 +82,13 @@ export async function renderPdf({ url, cookie }: PdfOptions): Promise<Buffer> {
       await (document as any).fonts?.ready;
     });
 
+    // Pas als de lettertypes en plaatjes er zijn, staat vast hoeveel er op een
+    // vel past. Het document verdeelt zichzelf dan over de vellen; daar moet
+    // de PDF op wachten, anders valt hij midden in het opdelen
+    await page.waitForSelector('[data-indeling="klaar"]', { timeout: 20000 }).catch(() => {
+      // Een sjabloonloos document deelt niets op en meldt zich dus nooit klaar
+    });
+
     // preferCSSPageSize houdt zich aan de @page-regel uit het eigen sjabloon
     const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true });
     return Buffer.from(pdf);

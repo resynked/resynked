@@ -1,8 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import { Skeleton } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, DocumentElement, Tenant } from '@/lib/supabase';
 import { isRichTextEmpty, toDisplayHtml } from '@/lib/richtext';
+import {
+  eersteIndeling,
+  elementenVanVel,
+  gelijkeIndeling,
+  knipVel,
+  snijTekst,
+  type Knip,
+  type Vel,
+} from '@/lib/pagination';
 import {
   calculateDocumentTotal,
   calculateElementTotals,
@@ -38,6 +47,12 @@ interface DocumentPreviewProps {
   onSelectBlock?: (index: number) => void;
   /** Voegt een blok toe op een bepaalde plek in de lijst */
   onAddBlock?: (atIndex: number) => void;
+  /**
+   * Hoe groot het papier op het scherm staat. "passend" verkleint het vel tot
+   * het in beeld past, zoals in de editor; "vol" laat het op ware grootte
+   * staan, wat de afdrukpagina nodig heeft.
+   */
+  papier?: 'passend' | 'vol';
 }
 
 /**
@@ -48,22 +63,41 @@ interface DocumentPreviewProps {
  * richtext. De opmaak hangt aan het element zelf, zodat er geen tweede div om
  * heen komt: die hoort bij het blok en niet bij de tekst.
  */
-function TextElement({ body, bewerkbaar }: { body: string | null; bewerkbaar: boolean }) {
+function TextElement({
+  body,
+  bewerkbaar,
+  stuk,
+  van,
+  tot,
+}: {
+  body: string | null;
+  bewerkbaar: boolean;
+  stuk: number;
+  van?: number;
+  tot?: number;
+}) {
   if (!body || isRichTextEmpty(body)) {
     // Zonder tekst valt het element weg; alleen in de editor staat er een hint,
     // want anders belandt "Tekst toevoegen" in de PDF die de klant krijgt
     return bewerkbaar ? (
-      <div data-element="tekst" className="rich-text">
+      <div data-element="tekst" className="rich-text" data-stuk={stuk}>
         <p>Tekst toevoegen</p>
       </div>
     ) : null;
   }
 
+  // Loopt de tekst over het vel, dan staat hier alleen het deel dat past;
+  // de rest komt op het volgende vel onder hetzelfde opschrift
+  const html = snijTekst(toDisplayHtml(body), van, tot);
+  if (!html.trim()) return null;
+
   return (
     <div
       data-element="tekst"
       className="rich-text"
-      dangerouslySetInnerHTML={{ __html: toDisplayHtml(body) }}
+      data-stuk={stuk}
+      data-van={van ?? 0}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }
@@ -137,7 +171,8 @@ function PriceTable({ element, currency }: { element: DocumentElement; currency:
 }
 
 interface BlockViewProps {
-  block: DocumentBlock;
+  /** Wat er van dit blok op dít vel staat, in volgorde */
+  onderdelen: { element: DocumentElement; van?: number; tot?: number }[];
   currency: string;
   customer?: Partial<Customer> | null;
   meta: { label: string; value: string }[];
@@ -148,18 +183,18 @@ interface BlockViewProps {
 }
 
 /** Alles wat er in één blok staat, in volgorde. */
-function BlockView({ block, currency, customer, meta, signature, signatureField, bewerkbaar }: BlockViewProps) {
-  if (block.elements.length === 0) {
+function BlockView({ onderdelen, currency, customer, meta, signature, signatureField, bewerkbaar }: BlockViewProps) {
+  if (onderdelen.length === 0) {
     return bewerkbaar ? <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p> : null;
   }
 
   return (
     <>
-      {block.elements.map((element, index) =>
+      {onderdelen.map(({ element, van, tot }, index) =>
         element.kind === 'tekst' ? (
-          <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} />
+          <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} stuk={index} van={van} tot={tot} />
         ) : (
-        <div key={index} data-element={element.kind}>
+        <div key={index} data-element={element.kind} data-stuk={index}>
           {element.kind === 'gegevens' && (
             <>
               {/* Naam, straat met huisnummer, postcode met plaats */}
@@ -264,6 +299,99 @@ function SignatureElement({
   );
 }
 
+/**
+ * Zoekt op een vel het eerste onderdeel dat er niet meer op past.
+ *
+ * Er wordt niet gerekend maar gemeten: elk onderdeel heeft een plek op het
+ * papier, en wie daarbuiten valt gaat mee naar het volgende vel. Zo werkt het
+ * ook bij een pagina in twee kolommen, waar het overlopen naar rechts gebeurt
+ * in plaats van naar beneden.
+ */
+function zoekKnip(pagina: HTMLElement, slot: HTMLElement, schaal: number): Knip | null {
+  const vel = pagina.getBoundingClientRect();
+
+  // De witruimte onderaan en rechts hoort bij de marge, niet bij de ruimte
+  let onder = 0;
+  let rechts = 0;
+  for (let el: HTMLElement | null = slot; el && el !== pagina; el = el.parentElement) {
+    const stijl = getComputedStyle(el);
+    onder += parseFloat(stijl.paddingBottom) || 0;
+    rechts += parseFloat(stijl.paddingRight) || 0;
+  }
+
+  const grensOnder = vel.bottom - onder * schaal;
+  const grensRechts = vel.right - rechts * schaal;
+
+  const past = (el: Element) => {
+    const r = el.getBoundingClientRect();
+    // Iets zonder afmeting staat nergens in de weg
+    if (r.height === 0 && r.width === 0) return true;
+    return r.bottom <= grensOnder + 1 && r.right <= grensRechts + 1;
+  };
+
+  for (const kind of Array.from(slot.children)) {
+    const el = kind as HTMLElement;
+    const stuk = Number(el.dataset.stuk);
+    if (Number.isNaN(stuk) || past(el)) continue;
+
+    // Een tekst mag tussen de alinea's door in tweeën; alle andere
+    // onderdelen schuiven in hun geheel op
+    if (el.dataset.element === 'tekst') {
+      const van = Number(el.dataset.van) || 0;
+      const knopen = Array.from(el.children);
+      for (let i = 0; i < knopen.length; i++) {
+        if (!past(knopen[i])) return { stuk, knoop: van + i };
+      }
+    }
+
+    return { stuk };
+  }
+
+  return null;
+}
+
+/** Een vel zonder inhoud heeft geen zin; daar mag de knip niet op uitkomen. */
+function heeftInhoud(vel: Vel): boolean {
+  return vel.stukken.some(stuk => stuk.van === undefined || stuk.tot === undefined || stuk.tot > stuk.van);
+}
+
+/**
+ * Loopt alle vellen na en splitst wat overloopt. Levert niets op als alles
+ * past, zodat het meten vanzelf tot rust komt.
+ */
+function herverdeel(papier: HTMLElement, vellen: Vel[], schaal: number): Vel[] | null {
+  const paginas = papier.querySelectorAll<HTMLElement>('[data-blok-titel]');
+  // Het papier loopt nog achter op de indeling; volgende ronde opnieuw
+  if (paginas.length !== vellen.length) return null;
+
+  const nieuw: Vel[] = [];
+  let veranderd = false;
+
+  vellen.forEach((vel, i) => {
+    const slot = paginas[i].querySelector<HTMLElement>('[data-slot^="blok-"]');
+    const knip = slot ? zoekKnip(paginas[i], slot, schaal) : null;
+
+    if (!knip) {
+      nieuw.push(vel);
+      return;
+    }
+
+    const [eerste, rest] = knipVel(vel, knip);
+
+    // Past één onderdeel op zichzelf al niet op een vel, dan valt er niets te
+    // verschuiven en laten we het staan — anders blijft het opdelen doorgaan
+    if (!heeftInhoud(eerste) || !heeftInhoud(rest)) {
+      nieuw.push(vel);
+      return;
+    }
+
+    nieuw.push(eerste, rest);
+    veranderd = true;
+  });
+
+  return veranderd ? nieuw : null;
+}
+
 /** Strook waar bij hover een plusje verschijnt om een blok toe te voegen. */
 function AddBlockDivider({ onAdd }: { onAdd: () => void }) {
   return (
@@ -297,9 +425,77 @@ export default function DocumentPreview({
   activeBlock,
   onSelectBlock,
   onAddBlock,
+  papier = 'passend',
 }: DocumentPreviewProps) {
   const [fetchedTenant, setFetchedTenant] = useState<Tenant | null>(null);
   const [isLoadingTenant, setIsLoadingTenant] = useState(!givenTenant);
+
+  // De verdeling over de vellen, en hoe klein het papier op het scherm staat
+  const [vellen, setVellen] = useState<Vel[]>(() => eersteIndeling(blocks));
+  const [schaal, setSchaal] = useState(1);
+  // Zolang dit niet klaar is, kan er nog een vel bij komen. De server wacht
+  // erop voordat hij er een PDF van maakt
+  const [indelingKlaar, setIndelingKlaar] = useState(false);
+  const vensterRef = useRef<HTMLDivElement>(null);
+  const papierRef = useRef<HTMLDivElement>(null);
+  const rondes = useRef(0);
+
+  // Verandert er iets aan de offerte, dan begint het opdelen opnieuw. Anders
+  // zou een verwijderde alinea een leeg vel achterlaten
+  const blokkenSleutel = JSON.stringify(blocks);
+  useEffect(() => {
+    setVellen(eersteIndeling(blocks));
+    setIndelingKlaar(false);
+    rondes.current = 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blokkenSleutel]);
+
+  // Het papier op ware verhouding tonen, verkleind tot het in beeld past
+  useEffect(() => {
+    if (papier === 'vol') return;
+
+    const pas = () => {
+      const venster = vensterRef.current;
+      const vel = papierRef.current?.querySelector<HTMLElement>('[data-blok-titel]');
+      if (!venster || !vel?.offsetWidth) return;
+
+      const nieuw = Math.min(1, venster.clientWidth / vel.offsetWidth);
+      setSchaal(huidig => (Math.abs(huidig - nieuw) < 0.001 ? huidig : nieuw));
+
+      // Het verkleinen gebeurt met transform en telt niet mee voor de hoogte,
+      // dus die zetten we er zelf bij — anders blijft er wit onder het papier
+      const hoog = papierRef.current?.offsetHeight;
+      if (hoog) venster.style.height = `${hoog * nieuw}px`;
+    };
+
+    pas();
+    window.addEventListener('resize', pas);
+    return () => window.removeEventListener('resize', pas);
+  });
+
+  // Na elke tekening nameten of alles nog op zijn vel staat. Wat overloopt
+  // verhuist naar een volgend vel, net zolang tot er niets meer verschuift
+  useEffect(() => {
+    if (!papierRef.current || rondes.current > 40) return;
+
+    const frame = requestAnimationFrame(() => {
+      const papierEl = papierRef.current;
+      if (!papierEl) return;
+
+      // Het papier loopt nog achter op de indeling; volgende ronde opnieuw
+      if (papierEl.querySelectorAll('[data-blok-titel]').length !== vellen.length) return;
+
+      const opnieuw = herverdeel(papierEl, vellen, schaal);
+      if (opnieuw && !gelijkeIndeling(opnieuw, vellen)) {
+        rondes.current += 1;
+        setVellen(opnieuw);
+      } else {
+        setIndelingKlaar(true);
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  });
 
   useEffect(() => {
     // Zijn de gegevens meegegeven, dan valt er niets op te halen
@@ -331,9 +527,9 @@ export default function DocumentPreview({
   const documentTotal = calculateDocumentTotal(blocks);
   const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
 
-  const blokInhoud = (index: number) => (
+  const toon = (onderdelen: { element: DocumentElement; van?: number; tot?: number }[]) => (
     <BlockView
-      block={blocks[index]}
+      onderdelen={onderdelen}
       currency={currency}
       customer={customer}
       meta={meta}
@@ -378,19 +574,35 @@ export default function DocumentPreview({
 
     const labels: Record<string, string> = {};
 
-    blocks.forEach((block, index) => {
-      slots[`blok-${index}`] = blokInhoud(index);
+    // Eén slot per vel, niet per blok: een blok dat overloopt vult twee vellen
+    // en krijgt op beide hetzelfde opschrift, met een doorlopend nummer
+    vellen.forEach((vel, index) => {
+      const block = blocks[vel.blok];
+      if (!block) return;
+
+      slots[`blok-${index}`] = toon(elementenVanVel(block, vel));
       slots[`bloktitel-${index}`] = block.title;
       labels[`blok-${index}`] = block.title || 'Blok';
     });
 
+    const actiefVel = activeBlock === null || activeBlock === undefined
+      ? -1
+      : vellen.findIndex(vel => vel.blok === activeBlock);
+
     return (
       <>
+        <div className="document-window" ref={vensterRef}>
+          <div
+            className="document-paper"
+            ref={papierRef}
+            data-indeling={indelingKlaar ? 'klaar' : 'bezig'}
+            style={papier === 'vol' ? undefined : { transform: `scale(${schaal})`, width: `${100 / schaal}%` }}
+          >
         <TemplatedDocument
           html={template}
           values={values}
           labels={labels}
-          activeSlot={activeBlock === null || activeBlock === undefined ? null : `blok-${activeBlock}`}
+          activeSlot={actiefVel < 0 ? null : `blok-${actiefVel}`}
           // Alleen tijdens het bewerken; anders krijgt de klant op zijn eigen
           // offertepagina de omlijning en het label van een bewerkbaar vlak
           onSelect={
@@ -399,15 +611,18 @@ export default function DocumentPreview({
                   const match = slot.match(/^blok-(\d+)$/);
                   if (!match) return;
 
-                  const index = Number(match[1]);
-                  if (index < blocks.length) onSelectBlock(index);
+                  // Een klik op een vervolgvel bewerkt gewoon het blok zelf
+                  const vel = vellen[Number(match[1])];
+                  if (vel && vel.blok < blocks.length) onSelectBlock(vel.blok);
                 }
               : undefined
           }
-          repeatCounts={{ blok: blocks.length }}
-          repeatTitles={blocks.map(block => block.title)}
+          repeatCounts={{ blok: vellen.length }}
+          repeatTitles={vellen.map(vel => blocks[vel.blok]?.title ?? '')}
           slots={slots}
         />
+          </div>
+        </div>
 
         {onAddBlock && (
           <div className="add-block-footer">
@@ -447,7 +662,7 @@ export default function DocumentPreview({
             }
           >
             {block.title && <h2>{block.title}</h2>}
-            {blokInhoud(index)}
+            {toon(block.elements.map(element => ({ element })))}
           </div>
         </div>
       ))}

@@ -199,6 +199,30 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .editable-region:hover::after, .editable-region.active::after {opacity: 1;}
 .editable-region:empty {min-height: 20px;}
 
+/* Het papier op ware grootte.
+
+   Een vel staat op de maat die het ook bij het afdrukken heeft, en wordt als
+   geheel verkleind tot het in beeld past. Daardoor breekt de tekst op het
+   scherm precies waar hij in de PDF breekt: wat je in de editor ziet is wat
+   er uit de printer komt. Een sjabloon dat staand papier wil, zet zelf
+   --sheet-width en --sheet-height. */
+.document-window {overflow: hidden;}
+.document-paper {transform-origin: top left;}
+.document-paper [data-blok-titel][data-blok-titel] {
+  width: var(--sheet-width, 297mm);
+  height: var(--sheet-height, 210mm);
+  min-height: var(--sheet-height, 210mm);
+  max-height: var(--sheet-height, 210mm);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media print {
+  /* Bij het afdrukken staat het papier al op ware grootte */
+  .document-window {overflow: visible; height: auto !important;}
+  .document-paper {transform: none !important; width: auto !important;}
+}
+
 /* Strook tussen twee blokken: de knoppen verschijnen pas bij hover */
 .add-block-divider {position: relative; height: var(--space20); display: flex; align-items: center; justify-content: center;}
 .add-block-divider:hover::before {opacity: 1;}
@@ -287,6 +311,15 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .public-document {max-width: var(--max-width-small); margin: 0 auto; padding: var(--space20); box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space20);}
 .public-document .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 .public-document .empty-state {padding: var(--space50) var(--space20);}
+
+/* Drukt de klant zijn eigen offertepagina af, dan hoort er geen marge omheen
+   te staan. Die zou elk vel een stukje opschuiven, en wat er onderaan afvalt
+   duwt er dan een blanco blad achteraan */
+@media print {
+  .public-document {max-width: none; margin: 0; padding: 0; gap: 0;}
+  .public-document .block {padding: 0; border: 0; border-radius: 0; background: none;}
+  .public-document .signature-block {display: none;}
+}
 
 .signature-block .form-row {margin: var(--space20) 0 0 0;}
 .signature-block .signed .confirmation {display: flex; align-items: center; gap: var(--space10); color: var(--color7); font-weight: 500;}

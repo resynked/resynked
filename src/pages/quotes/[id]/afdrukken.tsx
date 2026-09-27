@@ -149,6 +149,7 @@ export default function PrintQuote() {
               currency={quote.currency}
               tenant={tenant}
               signature={signature}
+              papier="vol"
             />
           </>
         )}
