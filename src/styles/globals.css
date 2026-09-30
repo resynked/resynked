@@ -220,10 +220,21 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 
 /* De knop op een vervolgvel ligt over het papier heen, zodat hij de inhoud
    niet verschuift en dus ook niet meetelt voor wat er op een vel past */
-.sheet-actions {position: absolute; top: var(--space10); right: var(--space10); z-index: 3;}
+.sheet-actions {position: absolute; top: var(--space10); right: var(--space10); z-index: 3; display: flex; align-items: center; gap: var(--space5);}
+
+/* Het handvat om te slepen. Alleen hieraan begint een sleep, zodat je in de
+   velden eromheen gewoon tekst kunt blijven selecteren */
+.drag-handle {display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex: 0 0 auto; cursor: grab; color: var(--font-color2); border-radius: var(--border-radius1); background: var(--color2); border: 1px solid var(--border-color);}
+.drag-handle:hover {color: var(--font-color1); border-color: var(--color4);}
+.drag-handle:active {cursor: grabbing;}
+
+/* Wat je oppakt vervaagt, en waar het terechtkomt licht op */
+.dragging {opacity: .4;}
+.drop-target {outline: 2px solid var(--color4); outline-offset: 4px;}
+.sheet-drop-mark {position: absolute; inset: 0; z-index: 2; pointer-events: none; outline: 3px solid var(--color4); outline-offset: -3px; background: var(--color3);}
 
 @media print {
-  .sheet-actions {display: none;}
+  .sheet-actions, .sheet-drop-mark {display: none;}
   /* Bij het afdrukken staat het papier al op ware grootte */
   .document-window {overflow: visible; height: auto !important; contain: none;}
   .document-paper {transform: none !important; width: auto !important;}

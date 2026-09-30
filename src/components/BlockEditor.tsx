@@ -1,10 +1,12 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { X, Copy } from 'lucide-react';
+import { X, Copy, GripVertical } from 'lucide-react';
 import Select from '@/components/Select';
 import RichTextEditor from '@/components/RichTextEditor';
 import { UNITS } from '@/lib/constants';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
+import { verplaats } from '@/lib/sorteren';
+import { useSortable } from '@/hooks/useSortable';
 import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from '@/lib/supabase';
 
 interface BlockEditorProps {
@@ -64,6 +66,11 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
     onChange({ ...block, elements: block.elements.filter((_, i) => i !== index) });
   };
 
+  // Slepen aan het handvat zet een element hoger of lager op de pagina
+  const sorteer = useSortable((van, naar) => {
+    onChange({ ...block, elements: verplaats(block.elements, van, naar) });
+  });
+
   const copyElement = (index: number) => {
     const copy = duplicateElement(block.elements[index]);
     onChange({
@@ -105,8 +112,21 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
       </div>
 
       {block.elements.map((element, elementIndex) => (
-        <div key={elementIndex} className="form-section edit-holder">
+        <div
+          key={elementIndex}
+          className={`form-section edit-holder ${sorteer.klasse(elementIndex)}`.trim()}
+          {...sorteer.item(elementIndex)}
+        >
           <div className="form-row invoice-product-line">
+            <span
+              className="drag-handle"
+              title="Sleep om de volgorde te veranderen"
+              aria-label="Verplaatsen"
+              {...sorteer.greep(elementIndex)}
+            >
+              <GripVertical size={16} />
+            </span>
+
             <div className="form-group">
               <label>{ELEMENT_NAMEN[element.kind]}</label>
             </div>

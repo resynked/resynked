@@ -4,6 +4,7 @@ import SidePanel from '@/components/SidePanel';
 import BlockEditor from '@/components/BlockEditor';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
 import { splitsBlok, type Stuk } from '@/lib/pagination';
+import { verplaats } from '@/lib/sorteren';
 import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 
@@ -73,6 +74,19 @@ export default function DocumentEditor({
     setActiveBlock(index + 1);
   };
 
+  /**
+   * Een pagina naar een andere plek slepen. Het paneel blijft bij hetzelfde
+   * blok openstaan, ook al staat dat nu ergens anders in de rij.
+   */
+  const moveBlock = (van: number, naar: number) => {
+    if (!onBlocksChange) return;
+
+    onBlocksChange(verplaats(blocks, van, naar));
+
+    const volgorde = verplaats(blocks.map((_, i) => i), van, naar);
+    setActiveBlock(huidig => (huidig === null ? null : volgorde.indexOf(huidig)));
+  };
+
   const deleteBlock = (index: number) => {
     onBlocksChange?.(blocks.filter((_, i) => i !== index));
     close();
@@ -95,6 +109,7 @@ export default function DocumentEditor({
             onSelectBlock={onBlocksChange ? setActiveBlock : undefined}
             onAddBlock={onBlocksChange ? addBlock : undefined}
             onSplitBlock={onBlocksChange ? splitBlock : undefined}
+            onMoveBlock={onBlocksChange ? moveBlock : undefined}
           />
         </div>
       </div>

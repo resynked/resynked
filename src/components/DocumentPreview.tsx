@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { GripVertical } from 'lucide-react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import { Skeleton } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, DocumentElement, Tenant } from '@/lib/supabase';
@@ -53,6 +54,8 @@ interface DocumentPreviewProps {
    * vel begon. Daarna is het vervolg los te bewerken.
    */
   onSplitBlock?: (blok: number, vanaf: Stuk) => void;
+  /** Zet een blok op een andere plek in het document */
+  onMoveBlock?: (van: number, naar: number) => void;
   /**
    * Hoe groot het papier op het scherm staat. "passend" verkleint het vel tot
    * het in beeld past, zoals in de editor; "vol" laat het op ware grootte
@@ -449,6 +452,7 @@ export default function DocumentPreview({
   onSelectBlock,
   onAddBlock,
   onSplitBlock,
+  onMoveBlock,
   papier = 'passend',
 }: DocumentPreviewProps) {
   const [fetchedTenant, setFetchedTenant] = useState<Tenant | null>(null);
@@ -460,6 +464,19 @@ export default function DocumentPreview({
   // Zolang dit niet klaar is, kan er nog een vel bij komen. De server wacht
   // erop voordat hij er een PDF van maakt
   const [indelingKlaar, setIndelingKlaar] = useState(false);
+
+  // Welk vel er gesleept wordt en waar het heen gaat. Het slepen zelf leest
+  // uit de ref: die is meteen bij, terwijl de toestand pas bij de volgende
+  // tekening klopt — en de eerste sleepbeweging komt daar soms vóór
+  const [sleeptVel, setSleeptVel] = useState<number | null>(null);
+  const [doelVel, setDoelVel] = useState<number | null>(null);
+  const sleept = useRef<number | null>(null);
+
+  const pakOp = (index: number | null) => {
+    sleept.current = index;
+    setSleeptVel(index);
+    if (index === null) setDoelVel(null);
+  };
   const vensterRef = useRef<HTMLDivElement>(null);
   const papierRef = useRef<HTMLDivElement>(null);
   const rondes = useRef(0);
@@ -579,6 +596,19 @@ export default function DocumentPreview({
   const documentTotal = calculateDocumentTotal(blocks);
   const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
 
+  /** Welk vel er onder de muis ligt, op hoogte alleen: ze staan onder elkaar. */
+  const velOnderMuis = (y: number): number | null => {
+    const paginas = papierRef.current?.querySelectorAll<HTMLElement>('[data-blok-titel]');
+    if (!paginas) return null;
+
+    for (let i = 0; i < paginas.length; i++) {
+      const r = paginas[i].getBoundingClientRect();
+      if (y >= r.top && y <= r.bottom) return i;
+    }
+
+    return null;
+  };
+
   const toon = (onderdelen: { element: DocumentElement; van?: number; tot?: number }[]) => (
     <BlockView
       onderdelen={onderdelen}
@@ -637,30 +667,56 @@ export default function DocumentPreview({
       labels[`blok-${index}`] = block.title || 'Blok';
     });
 
-    // Een vel dat bij hetzelfde blok hoort als het vorige is een vervolg.
-    // Daar komt de knop om het los te maken
+    // Op elk vel een handvat om het te verplaatsen. Een vel dat bij hetzelfde
+    // blok hoort als het vorige is een vervolg; daar komt ook de knop om het
+    // los te maken
     const overlays: Record<string, React.ReactNode> = {};
-    if (onSplitBlock) {
+    if (onSelectBlock) {
       vellen.forEach((vel, index) => {
-        if (index === 0 || vellen[index - 1].blok !== vel.blok) return;
-
+        const vervolg = index > 0 && vellen[index - 1].blok === vel.blok;
         const begin = vel.stukken[0];
-        if (!begin) return;
+        const raakt =
+          doelVel === index && sleeptVel !== null && vellen[sleeptVel]?.blok !== vel.blok;
 
         overlays[`blok-${index}`] = (
-          <div className="sheet-actions">
-            <button
-              type="button"
-              className="button add-item"
-              title="Zet het vervolg in een eigen blok, zodat je het apart kunt bewerken"
-              onClick={(event) => {
-                event.stopPropagation();
-                onSplitBlock(vel.blok, begin);
-              }}
-            >
-              Losmaken als eigen blok
-            </button>
-          </div>
+          <>
+            <div className="sheet-actions">
+              {onMoveBlock && (
+                <span
+                  className="drag-handle"
+                  title="Sleep om deze pagina te verplaatsen"
+                  aria-label="Pagina verplaatsen"
+                  draggable
+                  onClick={(event) => event.stopPropagation()}
+                  onDragStart={(event) => {
+                    event.stopPropagation();
+                    pakOp(index);
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', String(index));
+                  }}
+                  onDragEnd={() => pakOp(null)}
+                >
+                  <GripVertical size={16} />
+                </span>
+              )}
+
+              {vervolg && begin && onSplitBlock && (
+                <button
+                  type="button"
+                  className="button add-item"
+                  title="Zet het vervolg in een eigen blok, zodat je het apart kunt bewerken"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSplitBlock(vel.blok, begin);
+                  }}
+                >
+                  Losmaken als eigen blok
+                </button>
+              )}
+            </div>
+
+            {raakt && <div className="sheet-drop-mark" />}
+          </>
         );
       });
     }
@@ -675,6 +731,36 @@ export default function DocumentPreview({
           <div
             className="document-paper"
             ref={papierRef}
+            onDragOver={
+              onMoveBlock
+                ? (event) => {
+                    if (sleept.current === null) return;
+
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+
+                    const onder = velOnderMuis(event.clientY);
+                    if (onder !== null && onder !== doelVel) setDoelVel(onder);
+                  }
+                : undefined
+            }
+            onDrop={
+              onMoveBlock
+                ? (event) => {
+                    event.preventDefault();
+
+                    const onder = velOnderMuis(event.clientY);
+                    const opgepakt = sleept.current;
+                    const van = opgepakt === null ? undefined : vellen[opgepakt]?.blok;
+                    const naar = onder === null ? undefined : vellen[onder]?.blok;
+
+                    // Een vel van hetzelfde blok is geen verplaatsing
+                    if (van !== undefined && naar !== undefined && van !== naar) onMoveBlock(van, naar);
+
+                    pakOp(null);
+                  }
+                : undefined
+            }
             data-indeling={indelingKlaar ? 'klaar' : 'bezig'}
             style={papier === 'vol' ? undefined : { transform: `scale(${schaal})`, width: `${100 / schaal}%` }}
           >
