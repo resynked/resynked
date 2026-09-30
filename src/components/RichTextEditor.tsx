@@ -112,20 +112,31 @@ const GROUPS: ToolbarButton[][] = [
 export default function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const editableRef = useRef<HTMLDivElement>(null);
   const savedRange = useRef<Range | null>(null);
+  // Wat we zelf als laatste hebben doorgegeven. Komt dat onveranderd terug,
+  // dan staat het al in het vel en hoeft er niets overschreven te worden
+  const laatstGestuurd = useRef<string | null>(null);
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
   const [linkValue, setLinkValue] = useState<string | null>(null);
 
   // Platte tekst uit een oude offerte krijgt eenmalig zijn opmaak
   const html = isRichText(value) ? value : plainTextToRichText(value);
 
-  // Alleen schrijven als er van buitenaf iets anders in staat dan in het vel:
-  // bij elke toetsaanslag opnieuw vullen zou de cursor naar het begin gooien
+  /**
+   * Het vel bijwerken als er van buitenaf iets anders in komt te staan, zoals
+   * bij ongedaan maken.
+   *
+   * Wat wij zelf net hebben doorgegeven slaan we over. De browser schrijft
+   * tijdens het typen niet precies dezelfde HTML als wat wij ervan maken — na
+   * de eerste letter staat er nog geen alinea omheen, bij ons wel. Zou je dan
+   * het vel opnieuw vullen, dan springt de cursor naar het begin en belandt de
+   * tweede letter vóór de eerste.
+   */
   useEffect(() => {
     const editable = editableRef.current;
-    if (editable && editable.innerHTML !== html) {
-      editable.innerHTML = html;
-    }
-  }, [html]);
+    if (!editable || value === laatstGestuurd.current) return;
+
+    if (editable.innerHTML !== html) editable.innerHTML = html;
+  }, [value, html]);
 
   // Alinea's in plaats van div's, zodat de opmaak overeenkomt met wat we bewaren
   useEffect(() => {
@@ -145,10 +156,14 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
   const emit = useCallback(
     (tidy = false) => {
       const editable = editableRef.current;
-      if (!editable) return;
+      if (!editable) return null;
 
       const clean = sanitizeRichText(editable.innerHTML);
-      onChange(tidy ? tidyRichText(clean) : clean);
+      const uit = tidy ? tidyRichText(clean) : clean;
+
+      laatstGestuurd.current = uit;
+      onChange(uit);
+      return uit;
     },
     [onChange]
   );
@@ -322,15 +337,29 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         aria-label="Tekst"
         data-placeholder={placeholder || 'Begin met typen...'}
         onInput={() => emit()}
-        onBlur={() => emit(true)}
+        onBlur={() => {
+          const opgeruimd = emit(true);
+          const editable = editableRef.current;
+          if (editable && opgeruimd !== null && editable.innerHTML !== opgeruimd) {
+            editable.innerHTML = opgeruimd;
+          }
+        }}
         onKeyUp={refreshStates}
         onMouseUp={refreshStates}
         // Plakken gaat als platte tekst naar binnen: opmaak uit Word of van een
-        // website sleept stijlen en tags mee die hier niets te zoeken hebben
+        // website sleept stijlen en tags mee die hier niets te zoeken hebben.
+        // Regelafbrekingen worden wel alinea's — zou de tekst regel voor regel
+        // ingetikt worden, dan staat er na elke witregel een lege alinea
         onPaste={(event) => {
           event.preventDefault();
           const text = event.clipboardData.getData('text/plain');
-          document.execCommand('insertText', false, text);
+
+          if (text.includes('\n')) {
+            document.execCommand('insertHTML', false, plainTextToRichText(text));
+          } else {
+            document.execCommand('insertText', false, text);
+          }
+
           emit();
         }}
       />

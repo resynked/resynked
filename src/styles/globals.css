@@ -87,6 +87,11 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .button.add-item {width: 100%; padding: var(--space10); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); background: var(--color2); color: var(--font-color2); font-size: var(--fontsize2);}
 .button.add-item:hover {color: var(--font-color1); background-color: var(--color4);}
 
+/* Een knop met alleen een icoon, zoals ongedaan maken en opnieuw */
+.button.icon {display: inline-flex; align-items: center; justify-content: center; width: 40px; padding: 12px 0; background: var(--color2); border: 1px solid var(--border-color); color: var(--font-color1);}
+.button.icon:hover:not(:disabled) {background: var(--color4);}
+.button.icon:disabled {color: var(--font-color2); opacity: .5; cursor: default;}
+
 .checkbox {width: 16px; height: 16px; background: unset; padding: 0; border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
 .checkbox[aria-checked="true"] {background: var(--color5); border-color: var(--color5); color: var(--color2);}
 .checkbox[data-state="indeterminate"] {color: var(--color1);}
@@ -296,7 +301,18 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .form-section .field-note {font-size: 12px; line-height: 1.5em; color: var(--font-color2); margin: 0;}
 
 .form-section .react-select__control {border-color: var(--border-color); border-radius: var(--border-radius1);}
-.form-section .form-row.invoice-product-line {grid-template-columns: 1fr 65px 30px;}
+.form-section .form-row.invoice-product-line {display: grid; grid-template-columns: 1fr 76px 24px; align-items: center;}
+
+/* De kop van een element: handvat, naam, kopieren, weggooien */
+.form-section .form-row.element-line {display: grid; grid-template-columns: 24px 1fr 24px 24px; align-items: center;}
+
+/* Een tussenkop in een prijstabel heeft geen bedrag */
+.form-section .form-row.heading-line {display: grid; grid-template-columns: 1fr 24px; align-items: end;}
+
+/* Zonder de pijltjes van het getalveld past het bedrag in een smallere kolom */
+.form-section .form-group input[type="number"] {-moz-appearance: textfield; appearance: textfield;}
+.form-section .form-group input[type="number"]::-webkit-outer-spin-button,
+.form-section .form-group input[type="number"]::-webkit-inner-spin-button {-webkit-appearance: none; margin: 0;}
 .form-section h2, .form-section h3 {margin: 0;}
 
 .row-section {display: grid; grid-template-columns: 1fr 3fr; gap: var(--space30); padding: var(--space10) 0; box-sizing: border-box;}

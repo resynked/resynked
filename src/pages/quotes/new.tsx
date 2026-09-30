@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { Undo2, Redo2 } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { useHistory } from '@/hooks/useHistory';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
@@ -81,6 +83,9 @@ export default function NewQuote() {
     label: getCustomerOptionLabel(c),
   }));
 
+  // Cmd+Z en Cmd+Shift+Z draaien de laatste stappen terug
+  const geschiedenis = useHistory(formData, setFormData);
+
   const handleSubmit = async () => {
 
     if (!formData.customer_id) {
@@ -131,6 +136,26 @@ export default function NewQuote() {
       <div className="header">
         <h1>Nieuwe offerte aanmaken</h1>
         <div className="actions">
+          <button
+            type="button"
+            className="button icon"
+            title="Ongedaan maken (Cmd+Z)"
+            aria-label="Ongedaan maken"
+            onClick={geschiedenis.terug}
+            disabled={!geschiedenis.kanTerug}
+          >
+            <Undo2 size={16} />
+          </button>
+          <button
+            type="button"
+            className="button icon"
+            title="Opnieuw (Cmd+Shift+Z)"
+            aria-label="Opnieuw"
+            onClick={geschiedenis.opnieuw}
+            disabled={!geschiedenis.kanOpnieuw}
+          >
+            <Redo2 size={16} />
+          </button>
           <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
             Annuleren
           </button>

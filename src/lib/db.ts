@@ -333,7 +333,7 @@ export async function getCustomers(tenantId: string) {
     .select('*')
     .eq('tenant_id', tenantId)
     // Op klantnummer; wie er nog geen heeft komt onderaan
-    .order('customer_number', { ascending: true, nullsFirst: false })
+    .order('customer_number', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) throw error;

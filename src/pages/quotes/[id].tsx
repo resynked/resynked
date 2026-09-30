@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { Undo2, Redo2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
@@ -11,6 +12,7 @@ import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useHistory } from '@/hooks/useHistory';
 import { autosaveLabel, useAutosave } from '@/hooks/useAutosave';
 import { SkeletonCard } from '@/components/Skeleton';
 
@@ -146,6 +148,9 @@ export default function EditQuote() {
     { enabled: !isLoadingData }
   );
 
+  // Cmd+Z en Cmd+Shift+Z draaien de laatste stappen terug
+  const geschiedenis = useHistory(formData, setFormData, { enabled: !isLoadingData });
+
   const handleSubmit = async () => {
     const problem = validateBlocks(formData.blocks);
     if (problem) {
@@ -257,6 +262,26 @@ export default function EditQuote() {
       <div className="header">
         <h1>Offerte bewerken</h1>
         <div className="actions">
+          <button
+            type="button"
+            className="button icon"
+            title="Ongedaan maken (Cmd+Z)"
+            aria-label="Ongedaan maken"
+            onClick={geschiedenis.terug}
+            disabled={!geschiedenis.kanTerug}
+          >
+            <Undo2 size={16} />
+          </button>
+          <button
+            type="button"
+            className="button icon"
+            title="Opnieuw (Cmd+Shift+Z)"
+            aria-label="Opnieuw"
+            onClick={geschiedenis.opnieuw}
+            disabled={!geschiedenis.kanOpnieuw}
+          >
+            <Redo2 size={16} />
+          </button>
           <span className={`autosave-status ${autosaveStatus}`}>
             {autosaveLabel(autosaveStatus, savedAt)}
           </span>

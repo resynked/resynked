@@ -1,9 +1,8 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { X, Copy, GripVertical } from 'lucide-react';
+import { Copy, GripVertical, Trash2 } from 'lucide-react';
 import Select from '@/components/Select';
 import RichTextEditor from '@/components/RichTextEditor';
-import { UNITS } from '@/lib/constants';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
 import { verplaats } from '@/lib/sorteren';
 import { useSortable } from '@/hooks/useSortable';
@@ -17,11 +16,6 @@ interface BlockEditorProps {
   /** De velden die bij het gegevens-element horen: klant, nummer en datums */
   dataFields?: ReactNode;
 }
-
-const unitOptions = [
-  { value: '', label: 'Geen' },
-  ...UNITS.map(unit => ({ value: unit, label: unit })),
-];
 
 const taxOptions = [
   { value: '0', label: '0%' },
@@ -117,7 +111,7 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
           className={`form-section edit-holder ${sorteer.klasse(elementIndex)}`.trim()}
           {...sorteer.item(elementIndex)}
         >
-          <div className="form-row invoice-product-line">
+          <div className="form-row element-line">
             <span
               className="drag-handle"
               title="Sleep om de volgorde te veranderen"
@@ -152,7 +146,7 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
                 removeElement(elementIndex);
               }}
             >
-              <X size={16} />
+              <Trash2 size={16} />
             </Link>
           </div>
 
@@ -215,7 +209,7 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
 
               {element.items.map((item, itemIndex) =>
                 item.is_heading ? (
-                  <div key={itemIndex} className="form-row invoice-product-line">
+                  <div key={itemIndex} className="form-row heading-line">
                     <div className="form-group">
                       <label>Tussenkop</label>
                       <input
@@ -233,13 +227,13 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
                         e.preventDefault();
                         removeItem(elementIndex, itemIndex);
                       }}
+                      title="Verwijderen"
                     >
-                      <X size={16} />
+                      <Trash2 size={16} />
                     </Link>
                   </div>
                 ) : (
-                  <div key={itemIndex} className="form-section">
-                    <div className="form-row invoice-product-line">
+                  <div key={itemIndex} className="form-row invoice-product-line">
                       <div className="form-group">
                         <input
                           type="text"
@@ -270,36 +264,10 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
                           e.preventDefault();
                           removeItem(elementIndex, itemIndex);
                         }}
+                        title="Verwijderen"
                       >
-                        <X size={16} />
+                        <Trash2 size={16} />
                       </Link>
-                    </div>
-
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Aantal</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(elementIndex, itemIndex, { quantity: parseFloat(e.target.value) || 0 })
-                          }
-                          className="center-input"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Eenheid</label>
-                        <Select
-                          value={unitOptions.find(o => o.value === (item.unit || '')) || null}
-                          onChange={(option) => updateItem(elementIndex, itemIndex, { unit: option?.value || null })}
-                          options={unitOptions}
-                          placeholder="Geen"
-                        />
-                      </div>
-                    </div>
                   </div>
                 )
               )}
