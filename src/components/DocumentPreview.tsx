@@ -111,9 +111,33 @@ function TextElement({
   );
 }
 
-/** De tabel met regels en de subtotalen van één prijstabel. */
-function PriceTable({ element, currency }: { element: DocumentElement; currency: string }) {
+/**
+ * De tabel met regels en de subtotalen van één prijstabel.
+ *
+ * Een lange tabel loopt door op het volgende vel. `van` en `tot` zeggen welk
+ * stuk hier staat: de regels zijn genummerd van nul af, en het blokje met de
+ * subtotalen telt als de regel daarachter. Zo staan de totalen altijd onder
+ * de laatste regel en nooit halverwege, en krijgt elk vel zijn eigen koprij.
+ */
+function PriceTable({
+  element,
+  currency,
+  van,
+  tot,
+}: {
+  element: DocumentElement;
+  currency: string;
+  van?: number;
+  tot?: number;
+}) {
   const totals = calculateElementTotals(element);
+
+  // De totalen gaan over de hele tabel, ook als er maar een deel op dit vel staat
+  const totalenIndex = element.items.length;
+  const vanaf = van ?? 0;
+  const totEn = tot ?? totalenIndex + 1;
+  const regels = element.items.slice(vanaf, Math.min(totEn, totalenIndex));
+  const toonTotalen = totEn > totalenIndex;
 
   // Aantal en eenheid alleen tonen als ze in deze tabel gebruikt worden
   const showQuantity = element.items.some(
@@ -122,7 +146,7 @@ function PriceTable({ element, currency }: { element: DocumentElement; currency:
 
   return (
     <>
-      {element.items.length > 0 && (
+      {regels.length > 0 && (
         <div className="table-container">
           <table className="product-table">
             <thead>
@@ -134,9 +158,10 @@ function PriceTable({ element, currency }: { element: DocumentElement; currency:
               </tr>
             </thead>
             <tbody>
-              {element.items.map((item, index) =>
-                item.is_heading ? (
-                  <tr key={index}>
+              {regels.map((item, regelIndex) => {
+                const index = vanaf + regelIndex;
+                return item.is_heading ? (
+                  <tr key={index} data-kop="1">
                     <td colSpan={showQuantity ? 4 : 2}>
                       <strong>{item.description}</strong>
                     </td>
@@ -148,13 +173,14 @@ function PriceTable({ element, currency }: { element: DocumentElement; currency:
                     {showQuantity && <td>{item.unit || ''}</td>}
                     <td>{formatCurrency(lineTotal(item), currency)}</td>
                   </tr>
-                )
-              )}
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
+      {toonTotalen && (
       <div className="invoice-total">
         <div className="invoice-total-row">
           <span>Subtotaal excl. btw</span>
@@ -175,6 +201,7 @@ function PriceTable({ element, currency }: { element: DocumentElement; currency:
           <span>{formatCurrency(totals.total, currency)}</span>
         </div>
       </div>
+      )}
     </>
   );
 }
@@ -203,7 +230,7 @@ function BlockView({ onderdelen, currency, customer, meta, signature, signatureF
         element.kind === 'tekst' ? (
           <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} stuk={index} van={van} tot={tot} />
         ) : (
-        <div key={index} data-element={element.kind} data-stuk={index}>
+        <div key={index} data-element={element.kind} data-stuk={index} data-van={van ?? 0}>
           {element.kind === 'gegevens' && (
             <>
               {/* Naam, straat met huisnummer, postcode met plaats */}
@@ -241,7 +268,9 @@ function BlockView({ onderdelen, currency, customer, meta, signature, signatureF
             <SignatureElement signature={signature} field={signatureField} />
           )}
 
-          {element.kind === 'prijstabel' && <PriceTable element={element} currency={currency} />}
+          {element.kind === 'prijstabel' && (
+            <PriceTable element={element} currency={currency} van={van} tot={tot} />
+          )}
         </div>
         )
       )}
@@ -358,6 +387,28 @@ function zoekKnip(pagina: HTMLElement, slot: HTMLElement, schaal: number): Knip 
         while (knip > 0 && isKop(knopen[knip - 1])) knip--;
 
         return { stuk, knoop: van + knip };
+      }
+    }
+
+    // Een prijstabel mag tussen twee regels doormidden. De regels zijn
+    // genummerd van nul af en het blokje met de subtotalen telt als de regel
+    // daarachter, zodat de totalen altijd onder de laatste regel belanden
+    if (el.dataset.element === 'prijstabel') {
+      const van = Number(el.dataset.van) || 0;
+      const rijen = Array.from(el.querySelectorAll<HTMLElement>('tbody > tr'));
+      const totalen = el.querySelector<HTMLElement>('.invoice-total');
+      const knopen: Element[] = totalen ? [...rijen, totalen] : rijen;
+
+      for (let i = 0; i < knopen.length; i++) {
+        if (past(knopen[i])) continue;
+
+        // Een tussenkop hoort bij de regels eronder
+        let knip = i;
+        while (knip > 0 && (knopen[knip - 1] as HTMLElement).dataset?.kop === '1') knip--;
+
+        // Past zelfs de eerste regel niet, dan gaat de hele tabel mee
+        if (knip > 0) return { stuk, knoop: van + knip };
+        break;
       }
     }
 

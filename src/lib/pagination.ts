@@ -119,6 +119,27 @@ export function splitsBlok(block: DocumentBlock, vanaf: Stuk): [DocumentBlock, D
 
   const knoop = vanaf.van ?? 0;
 
+  // Een prijstabel valt uiteen in twee tabellen, elk met eigen subtotalen.
+  // Dat is wat je krijgt als je ze echt los wilt kunnen bewerken
+  if (element.kind === 'prijstabel') {
+    const eersteHelft = duplicateElement(element);
+    const tweedeHelft = duplicateElement(element);
+    const knip = Math.min(knoop, element.items.length);
+
+    // Blijft er aan één kant niets over, dan schuift de hele tabel door
+    if (knip > 0 && knip < element.items.length) {
+      return [
+        { title: block.title, elements: [...voor, { ...eersteHelft, items: eersteHelft.items.slice(0, knip) }] },
+        { title: block.title, elements: [{ ...tweedeHelft, items: tweedeHelft.items.slice(knip) }, ...na] },
+      ];
+    }
+
+    return [
+      { title: block.title, elements: voor },
+      { title: block.title, elements: [duplicateElement(element), ...na] },
+    ];
+  }
+
   // Begint het vervolg bij een heel element, dan hoeft er niets gesneden
   if (element.kind !== 'tekst' || knoop === 0) {
     return [
