@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { datumNaarTekst, tekstNaarDatum } from '@/lib/utils';
 
 interface DatePickerProps {
   value?: string;
@@ -32,7 +33,7 @@ export default function DatePicker({
   // Initialize currentMonth based on value
   useEffect(() => {
     if (value) {
-      setCurrentMonth(new Date(value));
+      setCurrentMonth(tekstNaarDatum(value));
     }
   }, [value]);
 
@@ -49,8 +50,11 @@ export default function DatePicker({
   }, []);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return tekstNaarDatum(dateStr).toLocaleDateString('nl-NL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -78,8 +82,7 @@ export default function DatePicker({
 
   const handleDateClick = (day: number) => {
     const selectedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const formattedDate = selectedDate.toISOString().split('T')[0];
-    onChange(formattedDate);
+    onChange(datumNaarTekst(selectedDate));
     setIsOpen(false);
     setView('days');
   };
@@ -109,8 +112,8 @@ export default function DatePicker({
   };
 
   const days = getDaysInMonth(currentMonth);
-  const today = new Date().toISOString().split('T')[0];
-  const selectedDate = value ? new Date(value) : null;
+  const today = datumNaarTekst(new Date());
+  const selectedDate = value ? tekstNaarDatum(value) : null;
   const selectedDay = selectedDate ? selectedDate.getDate() : null;
   const isCurrentMonth = selectedDate &&
     selectedDate.getMonth() === currentMonth.getMonth() &&
@@ -174,7 +177,9 @@ export default function DatePicker({
                     return <div key={`empty-${index}`} className="day empty"></div>;
                   }
 
-                  const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
+                  const dateStr = datumNaarTekst(
+                    new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+                  );
                   const isToday = dateStr === today;
                   const isSelected = isCurrentMonth && day === selectedDay;
 

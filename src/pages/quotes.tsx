@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
-import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/components/Toast';
 import { copyBlocks } from '@/lib/blocks';
@@ -125,7 +125,7 @@ export default function Quotes() {
         body: JSON.stringify({
           customer_id: fullQuote.customer_id,
           quote_number: `${fullQuote.quote_number}-kopie`,
-          quote_date: new Date().toISOString().split('T')[0],
+          quote_date: vandaag(),
           valid_until: fullQuote.valid_until,
           currency: fullQuote.currency,
           intro_text: fullQuote.intro_text,

@@ -9,7 +9,7 @@ import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { startBlocks, validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
+import { formatDate, getCustomerOptionLabel, vandaag, overDagen } from '@/lib/utils';
 
 const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
@@ -24,8 +24,8 @@ export default function NewQuote() {
 
   const [formData, setFormData] = useState({
     quote_number: '',
-    quote_date: new Date().toISOString().split('T')[0],
-    valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    quote_date: vandaag(),
+    valid_until: overDagen(30),
     customer_id: '',
     currency: 'EUR',
     blocks: startBlocks() as DocumentBlock[],

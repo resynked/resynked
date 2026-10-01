@@ -10,7 +10,7 @@ import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
+import { formatDate, getCustomerOptionLabel, vandaag, overDagen } from '@/lib/utils';
 import { SkeletonCard } from '@/components/Skeleton';
 
 const currencyOptions = [
@@ -36,8 +36,8 @@ export default function EditInvoice() {
 
   const [formData, setFormData] = useState({
     invoice_number: '',
-    invoice_date: new Date().toISOString().split('T')[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    invoice_date: vandaag(),
+    due_date: overDagen(30),
     customer_id: '',
     currency: 'EUR',
     status: 'draft',
@@ -67,8 +67,8 @@ export default function EditInvoice() {
       setSourceQuoteId(invoice.quote_id || null);
       setFormData({
         invoice_number: invoice.invoice_number || '',
-        invoice_date: invoice.invoice_date || new Date().toISOString().split('T')[0],
-        due_date: invoice.due_date || new Date().toISOString().split('T')[0],
+        invoice_date: invoice.invoice_date || vandaag(),
+        due_date: invoice.due_date || vandaag(),
         customer_id: String(invoice.customer_id),
         currency: invoice.currency || 'EUR',
         status: invoice.status,

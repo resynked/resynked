@@ -10,7 +10,7 @@ import DocumentEditor from '@/components/DocumentEditor';
 import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
+import { formatDate, getCustomerOptionLabel, vandaag, overDagen } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useHistory } from '@/hooks/useHistory';
 import { autosaveLabel, useAutosave } from '@/hooks/useAutosave';
@@ -41,8 +41,8 @@ export default function EditQuote() {
 
   const [formData, setFormData] = useState({
     quote_number: '',
-    quote_date: new Date().toISOString().split('T')[0],
-    valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    quote_date: vandaag(),
+    valid_until: overDagen(30),
     customer_id: '',
     currency: 'EUR',
     status: 'draft',
@@ -80,8 +80,8 @@ export default function EditQuote() {
       });
       setFormData({
         quote_number: quote.quote_number || '',
-        quote_date: quote.quote_date || new Date().toISOString().split('T')[0],
-        valid_until: quote.valid_until || new Date().toISOString().split('T')[0],
+        quote_date: quote.quote_date || vandaag(),
+        valid_until: quote.valid_until || vandaag(),
         customer_id: String(quote.customer_id),
         currency: quote.currency || 'EUR',
         status: quote.status,

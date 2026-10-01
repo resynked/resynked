@@ -9,7 +9,7 @@ import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { startBlocks, validateBlocks } from '@/lib/blocks';
-import { formatDate, getCustomerOptionLabel } from '@/lib/utils';
+import { formatDate, getCustomerOptionLabel, vandaag, overDagen } from '@/lib/utils';
 
 const currencyOptions = [
   { value: 'EUR', label: 'EUR (€)' },
@@ -23,8 +23,8 @@ export default function NewInvoice() {
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   const [formData, setFormData] = useState({
-    invoice_date: new Date().toISOString().split('T')[0],
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    invoice_date: vandaag(),
+    due_date: overDagen(30),
     customer_id: '',
     currency: 'EUR',
     blocks: startBlocks() as DocumentBlock[],

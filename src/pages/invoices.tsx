@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
-import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { copyBlocks } from '@/lib/blocks';
 import type { Customer } from '@/lib/supabase';
@@ -124,7 +124,7 @@ export default function Invoices() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer_id: fullInvoice.customer_id,
-          invoice_date: new Date().toISOString().split('T')[0],
+          invoice_date: vandaag(),
           due_date: fullInvoice.due_date,
           currency: fullInvoice.currency,
           intro_text: fullInvoice.intro_text,

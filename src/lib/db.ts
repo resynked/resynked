@@ -10,6 +10,20 @@ const supabase = supabaseAdmin;
 // Helper function to get updated_at timestamp
 const now = () => new Date().toISOString();
 
+/**
+ * Vandaag in Nederland, als jjjj-mm-dd. De server draait op Greenwich-tijd,
+ * dus daar is het 's avonds al de volgende dag — en zou een factuur die om
+ * elf uur 's avonds gemaakt wordt de datum van morgen krijgen.
+ */
+const vandaagHier = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date());
+
+/** Een aantal dagen bij een datum van de vorm jjjj-mm-dd. */
+const dagenErbij = (datum: string, aantal: number) => {
+  const [jaar, maand, dag] = datum.split('-').map(Number);
+  return new Date(Date.UTC(jaar, maand - 1, dag + aantal)).toISOString().split('T')[0];
+};
+
 /** Offertes en facturen zijn identiek opgebouwd, alleen de tabellen verschillen. */
 type Soort = 'quote' | 'invoice';
 
@@ -681,14 +695,14 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
   // splitsing tussen bijvoorbeeld 9% en 21% op de factuur intact blijft
   const blocks: DocumentBlock[] = copyBlocks(quote.blocks);
 
-  const today = new Date();
+  const today = vandaagHier();
 
   const invoice = await createInvoice(
     {
       tenant_id: tenantId,
       customer_id: quote.customer_id,
-      invoice_date: today.toISOString().split('T')[0],
-      due_date: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      invoice_date: today,
+      due_date: dagenErbij(today, 30),
       total: calculateDocumentTotal(blocks),
       status: 'draft',
       currency: quote.currency,

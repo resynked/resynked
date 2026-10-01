@@ -91,5 +91,39 @@ export function formatCurrency(amount: number, currency = 'EUR'): string {
 /** Datum als 14-08-2026 */
 export function formatDate(date: string | null | undefined): string {
   if (!date) return '';
-  return new Date(date).toLocaleDateString('nl-NL');
+
+  // Een kale datum is een dag hier, geen tijdstip in Greenwich
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(date) ? tekstNaarDatum(date) : new Date(date);
+  return d.toLocaleDateString('nl-NL');
+}
+
+/**
+ * Een datum als jjjj-mm-dd, in de tijdzone van wie het scherm voor zich heeft.
+ *
+ * Niet via toISOString: dat rekent om naar de tijd in Greenwich, en middernacht
+ * in Nederland is daar nog de avond ervoor. Elke datum zou dan een dag
+ * terugschuiven — 1 oktober werd zo 30 september.
+ */
+export function datumNaarTekst(datum: Date): string {
+  const maand = String(datum.getMonth() + 1).padStart(2, '0');
+  const dag = String(datum.getDate()).padStart(2, '0');
+  return `${datum.getFullYear()}-${maand}-${dag}`;
+}
+
+/** Leest jjjj-mm-dd als een dag hier, en niet als middernacht in Greenwich. */
+export function tekstNaarDatum(waarde: string): Date {
+  const [jaar, maand, dag] = waarde.split('-').map(Number);
+  return new Date(jaar, (maand || 1) - 1, dag || 1);
+}
+
+/** Vandaag, als jjjj-mm-dd. */
+export function vandaag(): string {
+  return datumNaarTekst(new Date());
+}
+
+/** Een datum een aantal dagen verderop, als jjjj-mm-dd. */
+export function overDagen(aantal: number): string {
+  const datum = new Date();
+  datum.setDate(datum.getDate() + aantal);
+  return datumNaarTekst(datum);
 }
