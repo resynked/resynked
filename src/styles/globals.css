@@ -301,13 +301,13 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .form-section .field-note {font-size: 12px; line-height: 1.5em; color: var(--font-color2); margin: 0;}
 
 .form-section .react-select__control {border-color: var(--border-color); border-radius: var(--border-radius1);}
-.form-section .form-row.invoice-product-line {display: grid; grid-template-columns: 1fr 76px 24px; align-items: center;}
+.form-section .form-row.invoice-product-line {display: grid; grid-template-columns: 24px 1fr 76px 24px; align-items: center;}
 
 /* De kop van een element: handvat, naam, kopieren, weggooien */
 .form-section .form-row.element-line {display: grid; grid-template-columns: 24px 1fr 24px 24px; align-items: center;}
 
 /* Een tussenkop in een prijstabel heeft geen bedrag */
-.form-section .form-row.heading-line {display: grid; grid-template-columns: 1fr 24px; align-items: end;}
+.form-section .form-row.heading-line {display: grid; grid-template-columns: 24px 1fr 24px; align-items: end;}
 
 /* Zonder de pijltjes van het getalveld past het bedrag in een smallere kolom */
 .form-section .form-group input[type="number"] {-moz-appearance: textfield; appearance: textfield;}

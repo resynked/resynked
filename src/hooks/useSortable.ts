@@ -1,16 +1,23 @@
 import { useState } from 'react';
 
 /**
+ * Waarmee een rij herkend wordt. Meestal zijn dat de plekken in één lijst,
+ * maar bij regels in een prijstabel staan er meer lijsten onder elkaar; dan
+ * is het bijvoorbeeld "2:5" voor de zesde regel van het derde element.
+ */
+export type Sleutel = string | number;
+
+/**
  * Slepen om de volgorde te veranderen, met wat de browser er zelf voor heeft.
  *
  * Alleen het handvat begint een sleep: de rij zelf wordt pas sleepbaar zodra
  * de muisknop op het handvat ingedrukt wordt. Anders zou je geen tekst meer
  * kunnen selecteren in de velden die in zo'n rij staan.
  */
-export function useSortable(onMove: (van: number, naar: number) => void) {
-  const [sleept, setSleept] = useState<number | null>(null);
-  const [doel, setDoel] = useState<number | null>(null);
-  const [losgelaten, setLosgelaten] = useState<number | null>(null);
+export function useSortable(onMove: (van: Sleutel, naar: Sleutel) => void) {
+  const [sleept, setSleept] = useState<Sleutel | null>(null);
+  const [doel, setDoel] = useState<Sleutel | null>(null);
+  const [losgelaten, setLosgelaten] = useState<Sleutel | null>(null);
 
   const stop = () => {
     setSleept(null);
@@ -25,13 +32,13 @@ export function useSortable(onMove: (van: number, naar: number) => void) {
     doel,
 
     /** Op het handvat: pas hier wordt de rij sleepbaar */
-    greep: (index: number) => ({
+    greep: (index: Sleutel) => ({
       onMouseDown: () => setLosgelaten(index),
       onMouseUp: () => setLosgelaten(null),
     }),
 
     /** Op de rij zelf */
-    item: (index: number) => ({
+    item: (index: Sleutel) => ({
       draggable: losgelaten === index,
       onDragStart: (event: React.DragEvent) => {
         setSleept(index);
@@ -54,7 +61,7 @@ export function useSortable(onMove: (van: number, naar: number) => void) {
     }),
 
     /** De toestand als klassenaam, voor de opmaak */
-    klasse: (index: number) =>
+    klasse: (index: Sleutel) =>
       [sleept === index ? 'dragging' : '', doel === index && sleept !== index ? 'drop-target' : '']
         .filter(Boolean)
         .join(' '),

@@ -34,6 +34,11 @@ const TAG_ALIASES: Record<string, string> = {
   strike: 's',
   del: 's',
   div: 'p',
+  // Wij kennen twee kopniveaus; wat geplakt wordt schikt zich daarnaar
+  h1: 'h2',
+  h4: 'h3',
+  h5: 'h3',
+  h6: 'h3',
 };
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -122,6 +127,24 @@ export function sanitizeRichText(html: string): string {
   }
 
   return result + escapeText(withoutComments.slice(readUpTo));
+}
+
+/**
+ * Opmaak uit een andere offerte, uit Word of van een website, teruggebracht tot
+ * wat wij kennen.
+ *
+ * De opschoning hierboven werkt op de losse tags, en dat is niet genoeg voor
+ * geplakte HTML: bij een <style>-blok zou de tag verdwijnen maar de opmaakregels
+ * erin als gewone tekst in de offerte belanden. Daarom gaat het eerst door de
+ * ontleder van de browser, zodat die stukken met inhoud en al weggaan.
+ */
+export function htmlNaarRichText(html: string): string {
+  if (typeof window === 'undefined') return '';
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('style, script, title, meta, link, noscript').forEach(el => el.remove());
+
+  return sanitizeRichText(doc.body.innerHTML);
 }
 
 /** Tags die een blok op zichzelf zijn; de rest hoort binnen een blok te staan. */

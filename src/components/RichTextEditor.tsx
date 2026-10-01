@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import {
+  htmlNaarRichText,
   isRichText,
   isRichTextEmpty,
   plainTextToRichText,
@@ -346,12 +347,22 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         }}
         onKeyUp={refreshStates}
         onMouseUp={refreshStates}
-        // Plakken gaat als platte tekst naar binnen: opmaak uit Word of van een
-        // website sleept stijlen en tags mee die hier niets te zoeken hebben.
-        // Regelafbrekingen worden wel alinea's — zou de tekst regel voor regel
-        // ingetikt worden, dan staat er na elke witregel een lege alinea
+        // Geplakte opmaak blijft behouden, teruggebracht tot wat wij kennen:
+        // koppen, opsommingen en vet of cursief. Stijlen, kleuren en de rest
+        // gaan eruit, zodat tekst uit een andere offerte er meteen goed staat
+        // en niet eerst met de hand opgemaakt hoeft te worden
         onPaste={(event) => {
           event.preventDefault();
+
+          const opgemaakt = htmlNaarRichText(event.clipboardData.getData('text/html'));
+          if (opgemaakt && !isRichTextEmpty(opgemaakt)) {
+            document.execCommand('insertHTML', false, opgemaakt);
+            emit();
+            return;
+          }
+
+          // Zonder opmaak op het klembord: regelafbrekingen worden alinea's,
+          // anders staat er na elke witregel een lege alinea
           const text = event.clipboardData.getData('text/plain');
 
           if (text.includes('\n')) {

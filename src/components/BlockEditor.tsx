@@ -62,7 +62,23 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
 
   // Slepen aan het handvat zet een element hoger of lager op de pagina
   const sorteer = useSortable((van, naar) => {
-    onChange({ ...block, elements: verplaats(block.elements, van, naar) });
+    onChange({ ...block, elements: verplaats(block.elements, Number(van), Number(naar)) });
+  });
+
+  /**
+   * Hetzelfde voor de regels in een prijstabel. De sleutel is "element:regel",
+   * zodat één handvat-administratie voor alle tabellen in dit blok volstaat.
+   * Een regel naar een andere tabel slepen doen we niet: de btw en de korting
+   * horen bij de tabel waar hij in staat.
+   */
+  const sorteerRegels = useSortable((van, naar) => {
+    const [vanElement, vanRegel] = String(van).split(':').map(Number);
+    const [naarElement, naarRegel] = String(naar).split(':').map(Number);
+    if (vanElement !== naarElement) return;
+
+    updateElement(vanElement, {
+      items: verplaats(block.elements[vanElement].items, vanRegel, naarRegel),
+    });
   });
 
   const copyElement = (index: number) => {
@@ -209,7 +225,20 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
 
               {element.items.map((item, itemIndex) =>
                 item.is_heading ? (
-                  <div key={itemIndex} className="form-row heading-line">
+                  <div
+                    key={itemIndex}
+                    className={`form-row heading-line ${sorteerRegels.klasse(`${elementIndex}:${itemIndex}`)}`.trim()}
+                    {...sorteerRegels.item(`${elementIndex}:${itemIndex}`)}
+                  >
+                    <span
+                      className="drag-handle"
+                      title="Sleep om de volgorde te veranderen"
+                      aria-label="Verplaatsen"
+                      {...sorteerRegels.greep(`${elementIndex}:${itemIndex}`)}
+                    >
+                      <GripVertical size={16} />
+                    </span>
+
                     <div className="form-group">
                       <label>Tussenkop</label>
                       <input
@@ -233,7 +262,20 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
                     </Link>
                   </div>
                 ) : (
-                  <div key={itemIndex} className="form-row invoice-product-line">
+                  <div
+                    key={itemIndex}
+                    className={`form-row invoice-product-line ${sorteerRegels.klasse(`${elementIndex}:${itemIndex}`)}`.trim()}
+                    {...sorteerRegels.item(`${elementIndex}:${itemIndex}`)}
+                  >
+                      <span
+                        className="drag-handle"
+                        title="Sleep om de volgorde te veranderen"
+                        aria-label="Verplaatsen"
+                        {...sorteerRegels.greep(`${elementIndex}:${itemIndex}`)}
+                      >
+                        <GripVertical size={16} />
+                      </span>
+
                       <div className="form-group">
                         <input
                           type="text"
