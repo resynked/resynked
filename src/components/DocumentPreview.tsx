@@ -726,6 +726,15 @@ export default function DocumentPreview({
       vellen.forEach((vel, index) => {
         const vervolg = index > 0 && vellen[index - 1].blok === vel.blok;
         const begin = vel.stukken[0];
+
+        // Begint dit vel midden in een prijstabel, dan valt er niets los te
+        // maken: je zou twee tabellen krijgen met elk eigen subtotalen, en
+        // dat is niet wat een doorlopende tabel hoort te doen
+        const inTabel =
+          !!begin &&
+          begin.van !== undefined &&
+          begin.van > 0 &&
+          blocks[vel.blok]?.elements[begin.element]?.kind === 'prijstabel';
         const raakt =
           doelVel === index && sleeptVel !== null && vellen[sleeptVel]?.blok !== vel.blok;
 
@@ -751,7 +760,7 @@ export default function DocumentPreview({
                 </span>
               )}
 
-              {vervolg && begin && onSplitBlock && (
+              {vervolg && begin && !inTabel && onSplitBlock && (
                 <button
                   type="button"
                   className="button add-item"
