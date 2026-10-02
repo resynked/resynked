@@ -169,6 +169,7 @@ h3 {font-size: var(--h3-size);}
 .autosave-status {font-size: var(--fontsize2); color: var(--font-color2); white-space: nowrap;}
 .autosave-status.error {color: var(--color6);}
 .autosave-status.saved {color: var(--color7);}
+.autosave-status:empty {display: none;}
 
 .content .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 
