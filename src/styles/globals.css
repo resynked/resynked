@@ -69,7 +69,9 @@ h1 {font-size: var(--h1-size);}
 h2 {font-size: var(--h2-size);}
 h3 {font-size: var(--h3-size);}
 
-.button {font-family: var(--font-family1); font-size: var(--fontsize2); background: var(--color1); color: var(--color2); border: 0; outline: 0; margin: 0; padding: 10px; border-radius: var(--border-radius1); font-weight: 500; line-height: 1; text-align: center; text-decoration: none; box-sizing: border-box; display: inline-block; cursor: pointer; transition: .3s all ease;}
+button {font-family: var(--font-family1); font-size: var(--fontsize2); background: unset; border: 0; outline: 0; padding: 0; margin: 0; text-align: left; cursor: pointer; transition: .3s all ease;}
+.button {background: var(--color1); font-size: var(--fontsize2); text-align: center; border-radius: var(--border-radius1); font-weight: 500; line-height: 1; padding: 10px; box-sizing: border-box; text-decoration: none; color: var(--color2);}
+
 .button.secondary {background: var(--color5);}
 .button.tertiary {background: var(--color2); color: var(--font-color1); border: 1px solid var(--border-color);}
 
