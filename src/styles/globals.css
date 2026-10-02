@@ -56,9 +56,6 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
 
 input:focus, textarea:focus {border-color: var(--color1);}
 
-/* De hint staat lichter dan wat er ingevuld is. De opacity moet erbij: Firefox
-   zet daar zelf een waarde op, waardoor het grijs anders lichter uitvalt.
-   .placeholder is voor de eigen keuzelijsten, die geen echt invoerveld zijn. */
 ::placeholder {color: var(--font-color2); opacity: 1;}
 .placeholder {color: var(--font-color2);}
 
@@ -72,10 +69,7 @@ h1 {font-size: var(--h1-size);}
 h2 {font-size: var(--h2-size);}
 h3 {font-size: var(--h3-size);}
 
-button {font-family: var(--font-family1); font-size: var(--fontsize1); background: unset; border: 0; outline: 0; padding: 0; margin: 0; text-align: left; cursor: pointer; transition: .3s all ease;}
-
-.button {background: var(--color1); text-align: center; border-radius: var(--border-radius1); font-weight: 500; line-height: 1; padding: 12px 15px; box-sizing: border-box; text-decoration: none; color: var(--color2);}
-
+.button {font-family: var(--font-family1); font-size: var(--fontsize2); background: var(--color1); color: var(--color2); border: 0; outline: 0; margin: 0; padding: 10px; border-radius: var(--border-radius1); font-weight: 500; line-height: 1; text-align: center; text-decoration: none; box-sizing: border-box; display: inline-block; cursor: pointer; transition: .3s all ease;}
 .button.secondary {background: var(--color5);}
 .button.tertiary {background: var(--color2); color: var(--font-color1); border: 1px solid var(--border-color);}
 
@@ -87,8 +81,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize1); backgroun
 .button.add-item {width: 100%; padding: var(--space10); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); background: var(--color2); color: var(--font-color2); font-size: var(--fontsize2);}
 .button.add-item:hover {color: var(--font-color1); background-color: var(--color4);}
 
-/* Een knop met alleen een icoon, zoals ongedaan maken en opnieuw */
-.button.icon {display: inline-flex; align-items: center; justify-content: center; width: 40px; padding: 12px 0; background: var(--color2); border: 1px solid var(--border-color); color: var(--font-color1);}
+.button.icon {display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; background: var(--color2); border: 1px solid var(--border-color); color: var(--font-color1);}
 .button.icon:hover:not(:disabled) {background: var(--color4);}
 .button.icon:disabled {color: var(--font-color2); opacity: .5; cursor: default;}
 
@@ -368,7 +361,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .signature-fields .field .filled + .line {margin-top: 0;}
 .signature-fields .field .caption {font-size: 11px;}
 
-/* Op de pagina van de klant staat hier het tekenvak in plaats van de lijnen */
 .signature-fields.signing {display: block;}
 
 /* Vak waarin de klant tekent, met de vinger of met de muis */
@@ -380,7 +372,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .signature-pad .footer .clear:hover:not(:disabled) {background: var(--color4); color: var(--font-color1);}
 .signature-pad .footer .clear:disabled {opacity: .5; cursor: not-allowed;}
 
-/* Tekstverwerker: balk met knoppen en daaronder het vel waarin je typt */
 .rich-editor {background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); overflow: hidden;}
 
 .rich-editor .toolbar {display: flex; flex-wrap: wrap; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); box-sizing: border-box; background: var(--color3); border-bottom: 1px solid var(--border-color);}
@@ -400,7 +391,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .rich-editor .editable {min-height: 220px; padding: var(--space15); box-sizing: border-box; outline: 0; overflow-y: auto; color: var(--font-color1); line-height: 1.85em;}
 .rich-editor .editable.empty::before {content: attr(data-placeholder); color: var(--font-color2); pointer-events: none;}
 
-/* De opmaak binnen het vel en in het document; dezelfde regels op beide plekken */
 .rich-editor .editable > *:first-child, .rich-text > *:first-child {margin-top: 0;}
 .rich-editor .editable > *:last-child, .rich-text > *:last-child {margin-bottom: 0;}
 .rich-editor .editable h2, .rich-text h2 {font-size: var(--h2-size); margin: var(--space20) 0 var(--space10) 0;}
@@ -411,7 +401,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .rich-editor .editable blockquote, .rich-text blockquote {margin: 0 0 1em 0; padding: 0 0 0 var(--space15); border-left: 3px solid var(--border-color); color: var(--font-color2);}
 .rich-editor .editable a, .rich-text a {color: var(--color5);}
 
-/* Bestand kiezen: een vlak om in te slepen, met het gekozen bestand eronder */
 .file-upload {display: flex; flex-direction: column; gap: var(--space10);}
 
 .file-upload .dropzone {display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: var(--space30) var(--space20); box-sizing: border-box; text-align: center; background: var(--color2); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); cursor: pointer;}
@@ -452,13 +441,15 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .toast.error {color: var(--color6);}
 .toast.success {color: var(--color7);}
 
+.error-message {padding: var(--space15); background-color: #fee2e2; border-left: 4px solid #ef4444; color: #991b1b; margin-bottom: var(--space20); border-radius: var(--border-radius1);}
+
 .modal-overlay {position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; z-index: 10; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8.5px); transition: opacity 0.3s ease 0s;}
 .modal {background: var(--color2); border-radius: var(--border-radius2); color: var(--font-color2); width: 100%; max-width: 500px; padding: var(--space15); box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;}
 .modal .modal-title {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space10) 0;}
 .modal .modal-title h3 {margin: 0;}
 .modal .modal-content .buttons {display: flex; gap: var(--space10); justify-content: flex-end; margin: var(--space20) 0 0 0;}
 
-.modal-container {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 100%; max-width: 600px; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
+.modal-container {position: fixed; top: 0; right: 0; bottom: 0; z-index: 11; width: 100%; max-width: 700px; background: var(--color2); border-left: 1px solid var(--border-color); padding: var(--space20); box-sizing: border-box; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) -10px 0px 15px -3px; animation: slideInPanel .25s ease-out;}
 .modal-container .header {display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--space20) 0;}
 .modal-container .header h2 {margin: 0;}
 .modal-container .header button {color: var(--font-color2); line-height: 0; padding: var(--space5);}
@@ -473,16 +464,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
     transform: translateX(0);
     opacity: 1;
   }
-}
-
-/* Error Message */
-.error-message {
-  padding: var(--space15);
-  background-color: #fee2e2;
-  border-left: 4px solid #ef4444;
-  color: #991b1b;
-  margin-bottom: var(--space20);
-  border-radius: var(--border-radius1);
 }
 
 /* Skeleton Loader */
