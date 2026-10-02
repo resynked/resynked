@@ -80,7 +80,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .button.cancel {background: var(--color2); border: 1px solid var(--border-color); color: var(--font-color1);}
 .button.cancel:hover {background: var(--color4);}
 
-.button.add-item {width: 100%; padding: var(--space10); border: 2px dashed var(--border-color); border-radius: var(--border-radius2); background: var(--color2); color: var(--font-color2); font-size: var(--fontsize2);}
+.button.add-item {width: 100%; border: 2px dashed var(--border-color); border-radius: var(--border-radius2); background: var(--color2); color: var(--font-color2);}
 .button.add-item:hover {color: var(--font-color1); background-color: var(--color4);}
 
 .button.icon {display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; background: var(--color2); border: 1px solid var(--border-color); color: var(--font-color1);}
