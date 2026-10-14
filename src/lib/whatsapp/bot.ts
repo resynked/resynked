@@ -45,6 +45,7 @@ export async function handleMessage(message: IncomingMessage) {
 
   const account = await findAccountByPhone(message.from);
   if (!account) {
+    console.warn('WhatsApp: bericht van een nummer dat bij niemand gekoppeld is:', message.from);
     return reply(
       'Dit nummer is nog niet gekoppeld aan Resynked. Vul in Resynked bij Instellingen › Plug-ins › WhatsApp je mobiele nummer in, dan kun je meteen beginnen.'
     );

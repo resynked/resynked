@@ -31,6 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (mode === 'subscribe' && isVerifyToken(token)) {
       return res.status(200).send(String(challenge));
     }
+    console.warn('WhatsApp-webhook: verify token klopt niet met WHATSAPP_VERIFY_TOKEN');
     return res.status(403).end();
   }
 
@@ -38,6 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const body = await rawBody(req);
   if (!verifySignature(body, req.headers['x-hub-signature-256'] as string | undefined)) {
+    console.warn('WhatsApp-webhook: handtekening klopt niet; controleer WHATSAPP_APP_SECRET');
     return res.status(401).end();
   }
 
@@ -48,10 +50,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end();
   }
 
-  const messages: IncomingMessage[] = (payload?.entry || [])
+  const values = (payload?.entry || [])
     .flatMap((entry: any) => entry.changes || [])
     .filter((change: any) => change.field === 'messages')
-    .flatMap((change: any) => change.value?.messages || [])
+    .map((change: any) => change.value || {});
+
+  // Een antwoord dat Meta niet kon afleveren, zoals naar een nummer dat bij een
+  // testnummer niet in de lijst met ontvangers staat, komt alleen hier terug
+  values
+    .flatMap((value: any) => value.statuses || [])
+    .filter((status: any) => status.status === 'failed')
+    .forEach((status: any) => console.warn('WhatsApp-bericht niet afgeleverd aan', status.recipient_id, status.errors));
+
+  const messages: IncomingMessage[] = values
+    .flatMap((value: any) => value.messages || [])
     .map((message: any) => ({
       id: String(message.id),
       from: String(message.from).replace(/\D/g, ''),
