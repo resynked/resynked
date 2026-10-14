@@ -12,6 +12,7 @@ import {
   Reply,
   Search,
   Send,
+  SquarePen,
   Star,
   Tag,
   Trash2,
@@ -81,7 +82,8 @@ export default function InboxPage() {
   const [composerMode, setComposerMode] = useState<ComposerMode>('reply');
   const [composerMinimized, setComposerMinimized] = useState(true);
   const [draft, setDraft] = useState('');
-  const [forwardTo, setForwardTo] = useState('');
+  const [to, setTo] = useState('');
+  const [subject, setSubject] = useState('');
   const [forwardMessageId, setForwardMessageId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
@@ -160,8 +162,44 @@ export default function InboxPage() {
     setComposerMode('reply');
     setComposerMinimized(true);
     setDraft('');
-    setForwardTo('');
+    setTo('');
+    setSubject('');
     setForwardMessageId(null);
+  };
+
+  /** Een nieuw bericht, los van het gesprek dat open staat. */
+  const startNew = () => {
+    resetComposer();
+    setComposerMode('new');
+    setComposerMinimized(false);
+  };
+
+  /**
+   * Een ster (Gmail) of vlag (Outlook) op één bericht. Het scherm loopt
+   * meteen mee; lukt het bij de aanbieder niet, dan gaat het terug.
+   */
+  const toggleStar = async (messageId: string, starred: boolean) => {
+    if (!selectedId) return;
+
+    const mark = (value: boolean) =>
+      setThread(current =>
+        current && {
+          ...current,
+          messages: current.messages.map(m => (m.id === messageId ? { ...m, starred: value } : m)),
+        }
+      );
+
+    mark(starred);
+    try {
+      await request(`/api/mail/messages/${encodeURIComponent(selectedId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId, starred }),
+      });
+    } catch (error: any) {
+      mark(!starred);
+      toast.error('Inbox', error.message);
+    }
   };
 
   const chooseFolder = (id: string) => {
@@ -218,7 +256,28 @@ export default function InboxPage() {
     setComposerMinimized(false);
   };
 
+  const recipients = () => to.split(/[,;\s]+/).filter(Boolean);
+
   const send = async () => {
+    if (composerMode === 'new') {
+      setIsSending(true);
+      try {
+        await request('/api/mail/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: recipients(), subject, html: draft }),
+        });
+        toast.success('Verstuurd', 'Je bericht is verstuurd');
+        resetComposer();
+        if (currentFolder?.kind === 'sent') loadList();
+      } catch (error: any) {
+        toast.error('Versturen mislukt', error.message);
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
     if (!selectedId) return;
     const id = encodeURIComponent(selectedId);
 
@@ -238,7 +297,7 @@ export default function InboxPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messageId: forwardMessageId,
-            to: forwardTo.split(/[,;\s]+/).filter(Boolean),
+            to: recipients(),
             html: draft,
           }),
         });
@@ -279,6 +338,11 @@ export default function InboxPage() {
     <Layout title="Inbox">
       <div className="inbox">
         <nav className="inbox-folders">
+          <button type="button" className="button with-icon" onClick={startNew}>
+            <SquarePen size={15} />
+            Mail opstellen
+          </button>
+
           {folders.length === 0
             ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height="1.75rem" style={{ marginBottom: 'var(--space5)' }} />)
             : folders.map(f => {
@@ -386,7 +450,25 @@ export default function InboxPage() {
         </div>
 
         <div className="inbox-detail">
-          {!selectedId ? (
+          {composerMode === 'new' ? (
+            <MailComposer
+              mode="new"
+              recipient={null}
+              to={to}
+              onToChange={setTo}
+              subject={subject}
+              onSubjectChange={setSubject}
+              html={draft}
+              onHtmlChange={setDraft}
+              signature={signature}
+              minimized={false}
+              onMinimizedChange={() => {}}
+              onClose={resetComposer}
+              onDiscard={resetComposer}
+              onSend={send}
+              isSending={isSending}
+            />
+          ) : !selectedId ? (
             <div className="empty-state">
               <MailOpen size={22} />
               <h2>Selecteer een bericht</h2>
@@ -415,6 +497,18 @@ export default function InboxPage() {
                       </span>
                       <span className="message-actions">
                         <span className="meta">{timeAgo(message.date)}</span>
+                        {/* Gmail kent een ster, Outlook een vlag; het werkt hetzelfde */}
+                        <ToolButton
+                          title={
+                            account?.provider === 'microsoft'
+                              ? message.starred ? 'Vlag weghalen' : 'Markeren met vlag'
+                              : message.starred ? 'Ster weghalen' : 'Ster toevoegen'
+                          }
+                          className={message.starred ? 'starred' : undefined}
+                          onClick={() => toggleStar(message.id, !message.starred)}
+                        >
+                          {account?.provider === 'microsoft' ? <Flag size={15} /> : <Star size={15} />}
+                        </ToolButton>
                         <ToolButton title="Antwoorden" onClick={startReply}>
                           <Reply size={15} />
                         </ToolButton>
@@ -431,8 +525,10 @@ export default function InboxPage() {
               <MailComposer
                 mode={composerMode}
                 recipient={replyRecipient()}
-                forwardTo={forwardTo}
-                onForwardToChange={setForwardTo}
+                to={to}
+                onToChange={setTo}
+                subject={subject}
+                onSubjectChange={setSubject}
                 html={draft}
                 onHtmlChange={setDraft}
                 signature={signature}

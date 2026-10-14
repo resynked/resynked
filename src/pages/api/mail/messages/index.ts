@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
-import { INBOX_FOLDER, openMailbox, sendMailError } from '@/lib/mail';
+import { INBOX_FOLDER, openMailbox, sendMailError, withSignature } from '@/lib/mail';
+import { isEmailAddress } from '@/lib/email';
+import { isRichTextEmpty, sanitizeRichText } from '@/lib/richtext';
 
 /**
  * De inbox, een pagina tegelijk. Wordt rechtstreeks bij Gmail of Outlook
@@ -9,12 +11,16 @@ import { INBOX_FOLDER, openMailbox, sendMailError } from '@/lib/mail';
  *
  * ?folder=... welke map (standaard de inbox), ?q=... zoeken in alle mail,
  * ?unread=1 alleen ongelezen, ?page=... de volgende pagina.
+ *
+ * POST verstuurt een nieuw bericht: { to: ['iemand@voorbeeld.nl'], subject, html }.
+ * Het gaat via Gmail of Outlook zelf, met de handtekening eronder.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-
   const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(401).json({ error: 'Unauthorized' });
+
+  if (req.method === 'POST') return compose(req, res, (session.user as any).id);
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { provider, accessToken } = await openMailbox((session.user as any).id);
@@ -28,6 +34,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json(page);
+  } catch (error) {
+    return sendMailError(res, error);
+  }
+}
+
+async function compose(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  const recipients: string[] = (Array.isArray(req.body?.to) ? req.body.to : [])
+    .map((address: unknown) => String(address).trim())
+    .filter(Boolean);
+  if (recipients.length === 0) return res.status(400).json({ error: 'Vul in naar wie het bericht moet' });
+
+  const invalid = recipients.find(address => !isEmailAddress(address));
+  if (invalid) return res.status(400).json({ error: `${invalid} is geen geldig e-mailadres` });
+
+  const subject = String(req.body?.subject || '').trim();
+  const html = sanitizeRichText(String(req.body?.html || ''));
+  if (isRichTextEmpty(html)) return res.status(400).json({ error: 'Je bericht is nog leeg' });
+
+  try {
+    const { provider, accessToken, email } = await openMailbox(userId);
+    const signature = await provider.signature(accessToken, email).catch(() => '');
+    await provider.compose(accessToken, recipients, subject || '(geen onderwerp)', withSignature(html, signature), email);
+    return res.status(200).json({ ok: true });
   } catch (error) {
     return sendMailError(res, error);
   }

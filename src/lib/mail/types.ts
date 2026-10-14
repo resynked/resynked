@@ -30,6 +30,8 @@ export interface MailMessage {
   date: string;
   /** De inhoud als HTML; platte tekst is al omgezet */
   html: string;
+  /** Met ster in Gmail, gemarkeerd (vlag) in Outlook */
+  starred: boolean;
 }
 
 /** Een heel gesprek, oudste bericht eerst. */
@@ -95,6 +97,10 @@ export interface MailProvider {
   markRead(accessToken: string, id: string): Promise<void>;
   /** Antwoordt op het laatste bericht in het gesprek; komt ook in Verzonden te staan */
   reply(accessToken: string, id: string, html: string, ownAddress: string): Promise<void>;
+  /** Een ster (Gmail) of vlag (Outlook) op één bericht zetten of weghalen */
+  setStarred(accessToken: string, messageId: string, starred: boolean): Promise<void>;
+  /** Een nieuw bericht, los van een bestaand gesprek */
+  compose(accessToken: string, to: string[], subject: string, html: string, ownAddress: string): Promise<void>;
   /** Stuurt één bericht uit het gesprek door, met het origineel eronder */
   forward(accessToken: string, threadId: string, messageId: string, to: string[], html: string, ownAddress: string): Promise<void>;
   /** Trekt de toegang in bij de aanbieder, voor zover die dat kent */

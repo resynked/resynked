@@ -79,6 +79,7 @@ function toMessage(message: GmailMessage): MailMessage {
     cc: parseAddressList(header(message, 'Cc')),
     date: new Date(Number(message.internalDate) || Date.parse(header(message, 'Date'))).toISOString(),
     html: html ?? textToHtml(text || ''),
+    starred: !!message.labelIds?.includes('STARRED'),
   };
 }
 
@@ -110,7 +111,7 @@ function formatAddresses(value: string): string {
 }
 
 /** Verstuurt een zelfgebouwd bericht, in het gesprek waar het bij hoort. */
-async function sendMime(accessToken: string, threadId: string, headers: string[], html: string) {
+async function sendMime(accessToken: string, threadId: string | undefined, headers: string[], html: string) {
   const mime = [
     ...headers,
     'MIME-Version: 1.0',
@@ -284,6 +285,22 @@ export const google: MailProvider = {
         `Subject: ${encodeHeader(replySubject(header(messages[0], 'Subject')))}`,
         ...(messageId ? [`In-Reply-To: ${messageId}`, `References: ${references}`] : []),
       ],
+      html
+    );
+  },
+
+  async setStarred(accessToken, messageId, starred) {
+    await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}/modify`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify(starred ? { addLabelIds: ['STARRED'] } : { removeLabelIds: ['STARRED'] }),
+    });
+  },
+
+  async compose(accessToken, to, subject, html, ownAddress) {
+    await sendMime(
+      accessToken,
+      undefined,
+      [`From: ${ownAddress}`, `To: ${formatAddresses(to.join(', '))}`, `Subject: ${encodeHeader(subject)}`],
       html
     );
   },

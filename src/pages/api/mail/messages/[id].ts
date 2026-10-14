@@ -4,8 +4,9 @@ import { authOptions } from '../../auth/[...nextauth]';
 import { openMailbox, sendMailError } from '@/lib/mail';
 
 /**
- * Eén gesprek. GET haalt het op met alle berichten erin, PATCH markeert het
- * als gelezen — ook in Gmail of Outlook zelf.
+ * Eén gesprek. GET haalt het op met alle berichten erin. PATCH markeert het
+ * als gelezen, of zet met { messageId, starred } een ster (Gmail) of vlag
+ * (Outlook) op één bericht — ook in Gmail of Outlook zelf.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -22,6 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PATCH') {
+      const { messageId, starred } = req.body || {};
+
+      if (typeof starred === 'boolean') {
+        if (typeof messageId !== 'string' || !messageId) return res.status(400).json({ error: 'Invalid message' });
+        await provider.setStarred(accessToken, messageId, starred);
+        return res.status(200).json({ ok: true });
+      }
+
       await provider.markRead(accessToken, id);
       return res.status(200).json({ ok: true });
     }

@@ -6,15 +6,24 @@ import { isRichTextEmpty } from '@/lib/richtext';
 import { initials } from '@/lib/mail/display';
 import type { MailAddress } from '@/lib/mail/types';
 
-export type ComposerMode = 'reply' | 'forward';
+export type ComposerMode = 'reply' | 'forward' | 'new';
+
+const LABELS: Record<ComposerMode, string> = {
+  reply: 'Antwoorden aan',
+  forward: 'Doorsturen aan',
+  new: 'Nieuw bericht aan',
+};
 
 interface MailComposerProps {
   mode: ComposerMode;
   /** Bij antwoorden: naar wie het gaat */
   recipient: MailAddress | null;
-  /** Bij doorsturen: de adressen die je zelf intypt */
-  forwardTo: string;
-  onForwardToChange: (value: string) => void;
+  /** Bij doorsturen en een nieuw bericht: de adressen die je zelf intypt */
+  to: string;
+  onToChange: (value: string) => void;
+  /** Alleen bij een nieuw bericht; anders volgt het onderwerp het gesprek */
+  subject: string;
+  onSubjectChange: (value: string) => void;
   html: string;
   onHtmlChange: (html: string) => void;
   /** De handtekening uit Gmail; komt er bij het versturen onder */
@@ -36,8 +45,10 @@ interface MailComposerProps {
 export default function MailComposer({
   mode,
   recipient,
-  forwardTo,
-  onForwardToChange,
+  to,
+  onToChange,
+  subject,
+  onSubjectChange,
   html,
   onHtmlChange,
   signature,
@@ -48,15 +59,17 @@ export default function MailComposer({
   onSend,
   isSending,
 }: MailComposerProps) {
-  const canSend = mode === 'reply' ? !isRichTextEmpty(html) : forwardTo.trim() !== '';
+  // Doorsturen mag zonder eigen tekst; antwoorden en een nieuw bericht niet
+  const canSend =
+    (mode === 'reply' || to.trim() !== '') && (mode === 'forward' || !isRichTextEmpty(html));
 
   return (
-    <div className={`composer${minimized ? ' minimized' : ''}`}>
+    <div className={`composer${minimized ? ' minimized' : ''}${mode === 'new' ? ' standalone' : ''}`}>
       <div
         className="composer-header"
         onClick={minimized ? () => onMinimizedChange(false) : undefined}
       >
-        <span className="label">{mode === 'reply' ? 'Antwoorden aan' : 'Doorsturen aan'}</span>
+        <span className="label">{LABELS[mode]}</span>
 
         {mode === 'reply' ? (
           recipient && (
@@ -69,22 +82,24 @@ export default function MailComposer({
         ) : (
           <input
             type="text"
-            value={forwardTo}
+            value={to}
             autoFocus
             placeholder="naam@voorbeeld.nl, meerdere met een komma"
             onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onForwardToChange(event.target.value)}
+            onChange={(event) => onToChange(event.target.value)}
           />
         )}
 
         <span className="actions" onClick={(event) => event.stopPropagation()}>
-          <ToolButton
-            title={minimized ? 'Openklappen' : 'Inklappen'}
-            onClick={() => onMinimizedChange(!minimized)}
-          >
-            {minimized ? <ChevronUp size={15} /> : <Minus size={15} />}
-          </ToolButton>
-          {mode === 'forward' && (
+          {mode !== 'new' && (
+            <ToolButton
+              title={minimized ? 'Openklappen' : 'Inklappen'}
+              onClick={() => onMinimizedChange(!minimized)}
+            >
+              {minimized ? <ChevronUp size={15} /> : <Minus size={15} />}
+            </ToolButton>
+          )}
+          {mode !== 'reply' && (
             <ToolButton title="Sluiten" onClick={onClose}>
               <X size={15} />
             </ToolButton>
@@ -94,10 +109,24 @@ export default function MailComposer({
 
       {!minimized && (
         <>
+          {mode === 'new' && (
+            <div className="composer-subject">
+              <input
+                type="text"
+                value={subject}
+                placeholder="Onderwerp"
+                aria-label="Onderwerp"
+                onChange={(event) => onSubjectChange(event.target.value)}
+              />
+            </div>
+          )}
+
           <RichTextEditor
             value={html}
             onChange={onHtmlChange}
-            placeholder={mode === 'reply' ? 'Schrijf je antwoord...' : 'Schrijf er iets bij (mag leeg blijven)...'}
+            placeholder={
+              mode === 'forward' ? 'Schrijf er iets bij (mag leeg blijven)...' : mode === 'new' ? 'Schrijf je bericht...' : 'Schrijf je antwoord...'
+            }
           />
 
           {signature && (
@@ -111,7 +140,7 @@ export default function MailComposer({
               <Trash2 size={15} />
             </ToolButton>
             <button type="button" className="button with-icon" disabled={!canSend || isSending} onClick={onSend}>
-              {isSending ? 'Versturen...' : mode === 'reply' ? 'Antwoorden' : 'Doorsturen'}
+              {isSending ? 'Versturen...' : mode === 'reply' ? 'Antwoorden' : mode === 'forward' ? 'Doorsturen' : 'Versturen'}
               <Send size={14} />
             </button>
           </div>

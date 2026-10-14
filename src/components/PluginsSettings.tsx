@@ -146,8 +146,10 @@ export default function PluginsSettings() {
         {PLUGINS.map(({ provider, icon: Icon, description }) => {
           const connected = account?.provider === provider;
 
+          // Een label om de hele rij: een klik waar dan ook op de rij zet de
+          // schakelaar om, net als een klik op de schakelaar zelf
           return (
-            <div key={provider} className="plugin">
+            <label key={provider} className="plugin">
               <span className="plugin-icon">
                 <Icon size={24} />
               </span>
@@ -161,7 +163,7 @@ export default function PluginsSettings() {
                 disabled={account === undefined || disconnecting}
                 onChange={(on) => (on ? setDialogFor(provider) : disconnect())}
               />
-            </div>
+            </label>
           );
         })}
       </div>

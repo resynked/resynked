@@ -49,7 +49,7 @@ function folderPath(folder: string): string {
 }
 
 const LIST_FIELDS = 'id,subject,bodyPreview,from,receivedDateTime,isRead';
-const MESSAGE_FIELDS = 'id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,body,conversationId';
+const MESSAGE_FIELDS = 'id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,body,conversationId,flag';
 
 /** De berichten van het gesprek waar dit bericht bij hoort, oudste eerst. */
 async function conversation(accessToken: string, id: string) {
@@ -220,6 +220,7 @@ export const microsoft: MailProvider = {
         cc: (message.ccRecipients || []).map(toAddress),
         date: message.receivedDateTime,
         html: message.body?.contentType === 'text' ? textToHtml(message.body.content || '') : message.body?.content || '',
+        starred: message.flag?.flagStatus === 'flagged',
       })),
     };
   },
@@ -253,6 +254,29 @@ export const microsoft: MailProvider = {
     await apiFetch(`${API}/messages/${encodeURIComponent(target.id)}/reply`, accessToken, {
       method: 'POST',
       body: JSON.stringify({ comment: html }),
+    });
+  },
+
+  async setStarred(accessToken, messageId, starred) {
+    // Outlook kent geen ster; het dichtstbij is de vlag
+    await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify({ flag: { flagStatus: starred ? 'flagged' : 'notFlagged' } }),
+    });
+  },
+
+  async compose(accessToken, to, subject, html) {
+    // saveToSentItems: dan staat hij gewoon in Verzonden in Outlook
+    await apiFetch(`${API}/sendMail`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({
+        message: {
+          subject,
+          body: { contentType: 'HTML', content: html },
+          toRecipients: to.map(address => ({ emailAddress: { address } })),
+        },
+        saveToSentItems: true,
+      }),
     });
   },
 
