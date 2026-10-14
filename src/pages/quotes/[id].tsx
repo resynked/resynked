@@ -12,6 +12,7 @@ import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerOptionLabel, vandaag, overDagen } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useMailAccount } from '@/hooks/useMailAccount';
 import { useHistory } from '@/hooks/useHistory';
 import { autosaveLabel, useAutosave } from '@/hooks/useAutosave';
 import { SkeletonCard } from '@/components/Skeleton';
@@ -34,6 +35,7 @@ export default function EditQuote() {
   const toast = useToast();
   const router = useRouter();
   const { confirm } = useConfirm();
+  const mailAccount = useMailAccount();
   const { id } = router.query;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -293,9 +295,12 @@ export default function EditQuote() {
               Getekend door {signature.name} op {formatDate(signature.signedAt)}
             </span>
           )}
-          <button type="button" className="button cancel" onClick={handleSend} disabled={isSending}>
-            {isSending ? 'Versturen...' : 'Versturen'}
-          </button>
+          {/* Versturen gaat via de eigen Gmail of Outlook; zonder koppeling is er geen knop */}
+          {mailAccount && (
+            <button type="button" className="button cancel" onClick={handleSend} disabled={isSending}>
+              {isSending ? 'Versturen...' : 'Versturen'}
+            </button>
+          )}
           <button type="button" className="button cancel" onClick={handleDownload}>
             Downloaden
           </button>

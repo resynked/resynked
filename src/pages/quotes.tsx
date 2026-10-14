@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Ellipsis, Check, Trash2, Mail, Download, FileOutput } from 'lucide-react';
 import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useMailAccount } from '@/hooks/useMailAccount';
 import { useToast } from '@/components/Toast';
 import { copyBlocks } from '@/lib/blocks';
 import { QUOTE_STATUS } from '@/lib/constants';
@@ -33,6 +34,8 @@ export default function Quotes() {
   const router = useRouter();
   const { confirm } = useConfirm();
   const toast = useToast();
+  // Versturen gaat via de eigen Gmail of Outlook; zonder koppeling is er geen knop
+  const canSend = !!useMailAccount();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   // Tot de eerste lijst binnen is: anders staat er even "Geen ..." in beeld
   const [isLoading, setIsLoading] = useState(true);
@@ -399,17 +402,19 @@ export default function Quotes() {
                       <Link href="" className="copy" onClick={() => handleDuplicate(quote)}>
                         Kopiëren
                       </Link>
-                      <Link
-                        href=""
-                        className="edit"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenDropdownId(null);
-                          handleSend(quote.id);
-                        }}
-                      >
-                        Versturen
-                      </Link>
+                      {canSend && (
+                        <Link
+                          href=""
+                          className="edit"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setOpenDropdownId(null);
+                            handleSend(quote.id);
+                          }}
+                        >
+                          Versturen
+                        </Link>
+                      )}
                       <Link
                         href={`/api/quotes/${quote.id}/pdf`}
                         className="edit"
@@ -462,9 +467,11 @@ export default function Quotes() {
         </>
       )}
       <SelectionBar count={selectedIds.length} noun={['offerte', 'offertes']} onClear={() => setSelectedIds([])}>
-        <ToolButton title="Versturen" onClick={handleBulkSend}>
-          <Mail size={15} />
-        </ToolButton>
+        {canSend && (
+          <ToolButton title="Versturen" onClick={handleBulkSend}>
+            <Mail size={15} />
+          </ToolButton>
+        )}
         <ToolButton title="Downloaden" onClick={handleBulkDownload}>
           <Download size={15} />
         </ToolButton>

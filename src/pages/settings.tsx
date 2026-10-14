@@ -40,7 +40,6 @@ export default function Settings() {
         invoice_template_html: '',
     });
     const [emailSettings, setEmailSettings] = useState({
-        email_from: '',
         quote_email_subject: '',
         quote_email_intro_text: '',
         invoice_email_subject: '',
@@ -63,7 +62,6 @@ export default function Settings() {
                     invoice_template_html: tenant.invoice_template_html || '',
                 });
                 setEmailSettings({
-                    email_from: tenant.email_from || '',
                     quote_email_subject: tenant.quote_email_subject || '',
                     quote_email_intro_text: tenant.quote_email_intro_text || '',
                     invoice_email_subject: tenant.invoice_email_subject || '',
@@ -385,28 +383,10 @@ export default function Settings() {
                         <>
                             <h2>E-mail</h2>
 
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="email_from">Afzendadres</label>
-                                    <span className="description">
-                                        Hiervandaan gaat je post de deur uit. Leeg = het adres van het
-                                        systeem, met jouw adres als antwoordadres. Heb je bij Plug-ins Google
-                                        of Microsoft gekoppeld, dan gaan offertes via je eigen mailbox en is
-                                        dit niet nodig.
-                                    </span>
-                                </div>
-                                <div>
-                                    <input
-                                        id="email_from"
-                                        type="email"
-                                        value={emailSettings.email_from}
-                                        onChange={(e) =>
-                                            setEmailSettings({ ...emailSettings, email_from: e.target.value })
-                                        }
-                                        placeholder="offertes@jouwdomein.nl"
-                                    />
-                                </div>
-                            </div>
+                            <p className="field-note">
+                                Offertes gaan vanuit de Gmail of Outlook die je bij Plug-ins hebt gekoppeld.
+                                Hieronder stel je de tekst van die mail in.
+                            </p>
 
                             <h3>Offertemail</h3>
 

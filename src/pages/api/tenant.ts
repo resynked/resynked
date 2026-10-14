@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { getTenant, updateTenant } from '@/lib/db';
-import { isEmailAddress } from '@/lib/email';
 
 // Velden die de aannemer zelf mag aanpassen
 const EDITABLE_FIELDS = [
@@ -20,7 +19,6 @@ const EDITABLE_FIELDS = [
   'terms_and_conditions',
   'quote_template_html',
   'invoice_template_html',
-  'email_from',
   'quote_email_subject',
   'quote_email_intro_text',
   'invoice_email_subject',
@@ -59,12 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field] || null;
         }
-      }
-
-      // Het afzendadres belandt in een mailkop, dus een typefout hoort hier op
-      // te vallen en niet pas als er een offerte de deur uit moet
-      if (updates.email_from && !isEmailAddress(String(updates.email_from))) {
-        return res.status(400).json({ error: 'Vul een geldig afzendadres in, bijvoorbeeld offertes@jouwdomein.nl' });
       }
 
       const tenant = await updateTenant(tenantId, updates);

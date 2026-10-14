@@ -39,9 +39,7 @@ RLS-policies op de tabellen vormen de tweede laag.
    NEXTAUTH_SECRET=...
    NEXTAUTH_URL=http://localhost:3000
 
-   # Offertes versturen
-   RESEND_API_KEY=...
-   EMAIL_FROM=Resynked <offertes@jouwdomein.nl>
+   # Het adres van de app, voor de link in de offertemail
    APP_URL=http://localhost:3000
 
    # Inbox (Instellingen > Plug-ins)
@@ -56,14 +54,9 @@ RLS-policies op de tabellen vormen de tweede laag.
    GEMINI_MODEL=...   # standaard gemini-flash-latest
    ```
 
-   Deze drie zijn systeembreed. Het afzendadres per aannemer staat niet hier
-   maar in de app, bij **Instellingen > E-mail**; `EMAIL_FROM` is het adres
-   waarop wordt teruggevallen als een aannemer daar niets invult.
-
-   Elk afzendadres — dat van de aannemer én `EMAIL_FROM` — moet op een domein
-   zitten dat in Resend geverifieerd is, anders weigert Resend de mail. Wil een
-   aannemer vanaf zijn eigen domein versturen, dan moet dat domein er in Resend
-   bij, met de DNS-records die Resend aangeeft.
+   Offertes gaan per mail vanuit de Gmail of Outlook die een gebruiker bij
+   **Instellingen > Plug-ins** koppelt (zie hieronder); zonder koppeling staat
+   de knop Versturen er niet.
 
    `APP_URL` is het adres waarop de app te bereiken is; daarmee wordt de link in
    de mail opgebouwd. Op Vercel zet je die op de echte domeinnaam — zonder die

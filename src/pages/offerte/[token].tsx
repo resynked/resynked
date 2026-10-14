@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { CircleCheck } from 'lucide-react';
 import DocumentPreview from '@/components/DocumentPreview';
+import Modal from '@/components/Modal';
 import SignaturePad from '@/components/SignaturePad';
 import { SkeletonCard } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
@@ -23,8 +24,12 @@ interface PublicQuote {
 
 /**
  * De pagina waar de klant terechtkomt via de knop in de mail. Geen inlog, geen
- * menu: alleen de offerte en het vak om te ondertekenen. De sleutel in het
- * adres is het enige wat deze pagina aan die ene klant koppelt.
+ * menu: alleen de offerte, en onderin een balk met de knop om te ondertekenen.
+ * De sleutel in het adres is het enige wat deze pagina aan die ene klant koppelt.
+ *
+ * Het tekenen zelf gebeurt in een venster en niet in het document: een kolom
+ * van het sjabloon is vaak te smal voor een naamveld en een tekenvak. In het
+ * document staan tot dan de lijnen, en daarna de handtekening zelf.
  */
 export default function PublicQuote() {
   const router = useRouter();
@@ -39,6 +44,7 @@ export default function PublicQuote() {
   const [signature, setSignature] = useState<string | null>(null);
   const [isSigning, setIsSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [signOpen, setSignOpen] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -93,6 +99,7 @@ export default function PublicQuote() {
           ? { ...current, signed_at: data.signed_at, signed_name: name.trim(), signature_image: signature }
           : current
       );
+      setSignOpen(false);
     } catch {
       setSignError('Er is iets misgegaan. Probeer het opnieuw.');
     } finally {
@@ -102,20 +109,11 @@ export default function PublicQuote() {
 
   const isSigned = !!quote?.signed_at;
 
-  /**
-   * Staat er een handtekening-element in de offerte, dan tekent de klant daar —
-   * op de plek die de aannemer zelf heeft gekozen. Offertes van vóór dat element
-   * hebben het niet; die houden het losse blok onder het document.
-   */
-  const hasSignatureElement = (quote?.blocks || []).some((block) =>
-    block.elements.some((element) => element.kind === 'handtekening')
-  );
-
   const signingForm = (
     <>
       <p>
-        Gaat u akkoord met deze offerte? Vul uw naam in en zet uw handtekening in het vak
-        hieronder. Dat kan met uw vinger op de telefoon of met de muis.
+        Vul uw naam in en zet uw handtekening in het vak hieronder. Dat kan met uw vinger op
+        de telefoon of met de muis.
       </p>
 
       <div className="form-section">
@@ -135,7 +133,10 @@ export default function PublicQuote() {
 
       {signError && <p className="error-message">{signError}</p>}
 
-      <div className="form-row">
+      <div className="buttons">
+        <button type="button" className="button cancel" onClick={() => setSignOpen(false)} disabled={isSigning}>
+          Annuleren
+        </button>
         <button type="button" className="button" onClick={handleSign} disabled={isSigning}>
           {isSigning ? 'Bezig...' : 'Offerte ondertekenen'}
         </button>
@@ -185,28 +186,38 @@ export default function PublicQuote() {
                   name: quote.signed_name,
                   signedAt: quote.signed_at,
                 }}
-                signatureField={hasSignatureElement && !isSigned ? signingForm : undefined}
               />
             </div>
 
-            {/* Bevestiging na het tekenen, en het vak zelf voor offertes zonder element */}
-            {isSigned ? (
-              <div className="block signature-block">
-                <p className="confirmation">
-                  <CircleCheck size={18} />
-                  <span>
-                    Ondertekend door {quote.signed_name} op {formatDate(quote.signed_at!)}
-                  </span>
-                </p>
+            {/* Onderin, altijd in beeld: tekenen, of de bevestiging daarvan */}
+            <div className="island-bar rich-editor">
+              <div className="toolbar">
+                {isSigned ? (
+                  <div className="group selection-count">
+                    <CircleCheck size={15} />
+                    <span>
+                      Ondertekend door {quote.signed_name} op {formatDate(quote.signed_at!)}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="group selection-count">
+                      <span>Gaat u akkoord met deze offerte?</span>
+                    </div>
+                    <div className="group">
+                      <button type="button" className="button" onClick={() => setSignOpen(true)}>
+                        Ondertekenen
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
-            ) : (
-              !hasSignatureElement && (
-                <div className="block signature-block">
-                  <h2>Handtekening klant</h2>
-                  {signingForm}
-                </div>
-              )
-            )}
+            </div>
+
+            <Modal isOpen={signOpen && !isSigned} onClose={() => setSignOpen(false)} title="Offerte ondertekenen">
+              {signingForm}
+            </Modal>
+
           </>
         )}
       </div>

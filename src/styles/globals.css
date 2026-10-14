@@ -231,6 +231,9 @@ button[data-label]:hover::after {display: block;}
 .island-bar {position: fixed; bottom: var(--space20); left: 50%; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 2 * var(--space20));}
 .island-bar .toolbar {border-bottom: 0; border-radius: var(--border-radius2);}
 .island-bar .toolbar button.delete {color: var(--color6);}
+/* Een gewone knop in de balk, zoals Ondertekenen: niet het kleine icoonformaat */
+.island-bar .toolbar .button {width: auto; height: auto; padding: var(--space10) var(--space15); background: var(--color1); color: var(--color2);}
+.island-bar .toolbar .button:hover {background: var(--color1); color: var(--color2); opacity: .85;}
 .island-bar .selection-count {font-size: var(--fontsize2); gap: var(--space5) !important; color: var(--font-color2);}
 .island-bar .selection-count .count {display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0 var(--space5); box-sizing: border-box; border-radius: var(--border-radius1); background: var(--color1); color: var(--color2);}
 .island-bar .toolbar button:disabled {opacity: .4; pointer-events: none;}
@@ -392,6 +395,8 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .public-document {max-width: var(--max-width-small); margin: 0 auto; padding: var(--space20); box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space20);}
 .public-document .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 .public-document .empty-state {padding: var(--space50) var(--space20);}
+/* Ruimte onderaan, zodat de balk met Ondertekenen niets van de offerte afdekt */
+.public-document:has(.island-bar) {padding-bottom: 100px;}
 
 /* Drukt de klant zijn eigen offertepagina af, dan hoort er geen marge omheen
    te staan. Die zou elk vel een stukje opschuiven, en wat er onderaan afvalt
@@ -399,12 +404,9 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 @media print {
   .public-document {max-width: none; margin: 0; padding: 0; gap: 0;}
   .public-document .block {padding: 0; border: 0; border-radius: 0; background: none;}
-  .public-document .signature-block {display: none;}
+  .public-document .island-bar {display: none;}
 }
 
-.signature-block .form-row {margin: var(--space20) 0 0 0;}
-.signature-block .signed .confirmation {display: flex; align-items: center; gap: var(--space10); color: var(--color7); font-weight: 500;}
-.signature-block .signed img {max-width: 320px; height: auto; display: block; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2);}
 
 /* De plek in het document waar de klant tekent: twee lijnen naast elkaar,
    zoals op een offerte die je uitprint en met de hand laat tekenen */

@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useMailAccount } from '@/hooks/useMailAccount';
 import { useMailUnread } from '@/hooks/useMailUnread';
-import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, PanelLeft } from 'lucide-react';
 
 // Of de zijbalk ingeklapt staat, onthouden voor de volgende keer
 const COLLAPSED_KEY = 'resynked:sidebar-collapsed';
@@ -83,13 +83,13 @@ export default function Sidebar() {
           // Ingeklapt is het logo de knop om uit te klappen; bij hover zie je dat
           <button type="button" className="expand" aria-label="Zijbalk uitklappen" onClick={() => toggleCollapsed(false)}>
             <Image src="/logo.svg" alt="Resynked Logo" width={30} height={30} className="sidebar-logo" />
-            <PanelLeftOpen size={18} className="expand-icon" />
+            <PanelLeft size={18} className="expand-icon" />
           </button>
         ) : (
           <>
             <Image src="/logo.svg" alt="Resynked Logo" width={30} height={30} className="sidebar-logo" />
             <button type="button" className="collapse" aria-label="Zijbalk inklappen" onClick={() => toggleCollapsed(true)}>
-              <PanelLeftClose size={18} />
+              <PanelLeft size={18} />
             </button>
           </>
         )}
