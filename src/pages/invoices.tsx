@@ -219,7 +219,7 @@ export default function Invoices() {
             ''
           ]}
         >
-          {pagination.pageItems.map((invoice) => (
+          {pagination.pageItems.map((invoice, index) => (
             <tr
               key={invoice.id}
               className={selectedIds.includes(invoice.id) ? 'selected' : ''}
@@ -242,7 +242,11 @@ export default function Invoices() {
               <td>{getStatusBadge(invoice.status)}</td>
               <td>{formatDate(invoice.invoice_date || invoice.created_at)}</td>
               <td className="actions">
-                <div className="action-dropdown" ref={openDropdownId === invoice.id ? dropdownRef : null}>
+                <div
+                  // Onderaan de tabel klapt het menu omhoog, anders valt het buiten beeld
+                  className={`action-dropdown${index >= pagination.pageItems.length - 4 && pagination.pageItems.length > 4 ? ' up' : ''}`}
+                  ref={openDropdownId === invoice.id ? dropdownRef : null}
+                >
                   <button
                     className="action-trigger"
                     onClick={() => setOpenDropdownId(openDropdownId === invoice.id ? null : invoice.id)}

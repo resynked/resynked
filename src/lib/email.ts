@@ -237,6 +237,15 @@ export async function sendMail(options: {
   if (error) {
     const message = error.message || 'De mail kon niet verstuurd worden';
 
+    // Met het testadres van Resend mag je alleen naar je eigen Resend-account
+    // mailen. Die melding noemt ook "domain", maar het domein is niet het probleem
+    if (/testing emails|own email address/i.test(message)) {
+      throw new Error(
+        `Resend staat nog in testmodus: met ${from} kun je alleen mailen naar het adres waarmee je bij Resend bent ingelogd. ` +
+          'Om naar klanten te mailen: verifieer je eigen domein in Resend en vul bij Instellingen > E-mail een afzendadres op dat domein in.'
+      );
+    }
+
     if (/not verified|domain/i.test(message)) {
       throw new Error(
         `Het afzendadres ${from} kan niet gebruikt worden: dat domein is niet geverifieerd in Resend. ` +

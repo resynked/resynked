@@ -354,7 +354,7 @@ export default function Quotes() {
             ''
           ]}
         >
-          {pagination.pageItems.map((quote) => (
+          {pagination.pageItems.map((quote, index) => (
             <tr
               key={quote.id}
               className={selectedIds.includes(quote.id) ? 'selected' : ''}
@@ -377,7 +377,11 @@ export default function Quotes() {
               <td>{getStatusBadge(quote.status)}</td>
               <td>{formatDate(quote.valid_until)}</td>
               <td className="actions">
-                <div className="action-dropdown" ref={openDropdownId === quote.id ? dropdownRef : null}>
+                <div
+                  // Onderaan de tabel klapt het menu omhoog, anders valt het buiten beeld
+                  className={`action-dropdown${index >= pagination.pageItems.length - 4 && pagination.pageItems.length > 4 ? ' up' : ''}`}
+                  ref={openDropdownId === quote.id ? dropdownRef : null}
+                >
                   <button
                     className="action-trigger"
                     onClick={() => setOpenDropdownId(openDropdownId === quote.id ? null : quote.id)}

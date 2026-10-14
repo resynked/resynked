@@ -188,7 +188,7 @@ export default function Customers() {
             ''
           ]}
         >
-          {pagination.pageItems.map((customer) => (
+          {pagination.pageItems.map((customer, index) => (
             <tr
               key={customer.id}
               className={selectedIds.includes(customer.id) ? 'selected' : ''}
@@ -209,7 +209,11 @@ export default function Customers() {
               <td>{getCustomerDisplayName(customer)}</td>
               <td>{customer.email || '-'}</td>
               <td className="actions">
-                <div className="action-dropdown" ref={openDropdownId === customer.id ? dropdownRef : null}>
+                <div
+                  // Onderaan de tabel klapt het menu omhoog, anders valt het buiten beeld
+                  className={`action-dropdown${index >= pagination.pageItems.length - 4 && pagination.pageItems.length > 4 ? ' up' : ''}`}
+                  ref={openDropdownId === customer.id ? dropdownRef : null}
+                >
                   <button
                     onClick={() => setOpenDropdownId(openDropdownId === customer.id ? null : customer.id)}
                   >

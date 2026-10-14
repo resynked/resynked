@@ -225,7 +225,7 @@ export default function Settings() {
                         </Link>
                     </nav>
                     <nav>
-                        <span className="section-title">API instellingen</span>
+                        <span className="section-title">Overige instellingen</span>
                         <Link
                             href="#email"
                             className={`${activeTab === 'email' ? 'active' : ''}`}

@@ -206,7 +206,7 @@ export default function Notes() {
             ''
           ]}
         >
-          {pagination.pageItems.map((note) => (
+          {pagination.pageItems.map((note, index) => (
             <tr
               key={note.id}
               className={selectedIds.includes(note.id) ? 'selected' : ''}
@@ -234,7 +234,11 @@ export default function Notes() {
               </td>
               <td>{formatDate(note.created_at)}</td>
               <td className="actions">
-                <div className="action-dropdown" ref={openDropdownId === note.id ? dropdownRef : null}>
+                <div
+                  // Onderaan de tabel klapt het menu omhoog, anders valt het buiten beeld
+                  className={`action-dropdown${index >= pagination.pageItems.length - 4 && pagination.pageItems.length > 4 ? ' up' : ''}`}
+                  ref={openDropdownId === note.id ? dropdownRef : null}
+                >
                   <button
                     onClick={() => setOpenDropdownId(openDropdownId === note.id ? null : note.id)}
                   >

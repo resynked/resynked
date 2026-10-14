@@ -290,6 +290,14 @@ button[data-label]:hover::after {display: block;}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a {text-align: left; outline: 0; padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: var(--fontsize1); box-sizing: border-box; border-radius: var(--border-radius1);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a:hover {background: var(--color4);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a.delete {color: var(--color6);}
+.table-container .data-table tr td.actions .action-dropdown.up .action-menu {top: auto; bottom: 100%;}
+
+/* Status in een tabel: een omlijnd label met een gekleurde stip */
+.table-container .status-badge {display: inline-flex; align-items: center; gap: 6px; padding: 2px var(--space10) 2px 7px; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2); color: var(--font-color1); font-size: var(--fontsize2); font-weight: 500; line-height: 1.5; white-space: nowrap;}
+.table-container .status-badge::before {content: ''; width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--font-color2);}
+.table-container .status-badge.status-sent::before {background: var(--color5);}
+.table-container .status-badge.status-paid::before {background: var(--color7);}
+.table-container .status-badge.status-cancelled::before {background: var(--color6);}
 
 /* Bladeren onder een lange tabel */
 .pagination {display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space20); margin: var(--space20) 0 0 0; font-size: var(--fontsize1); font-weight: 500;}
@@ -557,6 +565,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail h3 {padding: 0 0 var(--space10) 0; margin: var(--space20) 0 var(--space10) 0; border-bottom: 1px solid var(--border-color);}
 .plugin-detail h3 .description {color: var(--font-color2); font-weight: 400;}
 .plugin-detail .plugin-parts .plugin {display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: var(--space15); padding: var(--space5) 0; cursor: unset; border: 0;}
+.plugin-detail .plugin-parts .plugin:hover {background: unset;}
 .plugin-detail .plugin-parts .plugin .plugin-icon {display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
 .plugin-detail .plugin-parts .plugin .information .title {display: block; font-weight: 500;}
 .plugin-detail .plugin-parts .plugin .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
