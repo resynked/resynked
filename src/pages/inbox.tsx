@@ -8,14 +8,15 @@ import {
   Inbox,
   MailOpen,
   OctagonAlert,
+  Plus,
   RefreshCw,
   Reply,
   Search,
   Send,
-  SquarePen,
   Star,
   Tag,
   Trash2,
+  X,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import MailBody from '@/components/MailBody';
@@ -190,6 +191,13 @@ export default function InboxPage() {
       );
 
     mark(starred);
+
+    // In "Met ster" verdwijnt een gesprek zodra er geen ster meer op staat
+    const stillStarred = !!thread?.messages.some(m => (m.id === messageId ? starred : m.starred));
+    const removeFromList = currentFolder?.kind === 'starred' && !stillStarred;
+    const previousItems = items;
+    if (removeFromList) setItems(current => current.filter(item => item.id !== selectedId));
+
     try {
       await request(`/api/mail/messages/${encodeURIComponent(selectedId)}`, {
         method: 'PATCH',
@@ -198,6 +206,37 @@ export default function InboxPage() {
       });
     } catch (error: any) {
       mark(!starred);
+      if (removeFromList) setItems(previousItems);
+      toast.error('Inbox', error.message);
+    }
+  };
+
+  /**
+   * Archiveren of verwijderen. Het gesprek verdwijnt meteen uit de lijst;
+   * lukt het bij de aanbieder niet, dan komt het terug.
+   */
+  const removeThread = async (action: 'archive' | 'trash') => {
+    if (!selectedId) return;
+
+    const id = selectedId;
+    const item = items.find(i => i.id === id);
+    const previousItems = items;
+
+    setItems(current => current.filter(i => i.id !== id));
+    setSelectedId(null);
+    setThread(null);
+    resetComposer();
+    if (item?.unread && folder === INBOX_FOLDER) decreaseMailUnread();
+
+    try {
+      await request(`/api/mail/messages/${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      toast.success(action === 'archive' ? 'Gearchiveerd' : 'Verwijderd', action === 'archive' ? 'Het gesprek staat nu in je archief' : 'Het gesprek staat nu in de prullenbak');
+    } catch (error: any) {
+      setItems(previousItems);
       toast.error('Inbox', error.message);
     }
   };
@@ -338,11 +377,6 @@ export default function InboxPage() {
     <Layout title="Inbox">
       <div className="inbox">
         <nav className="inbox-folders">
-          <button type="button" className="button with-icon" onClick={startNew}>
-            <SquarePen size={15} />
-            Mail opstellen
-          </button>
-
           {folders.length === 0
             ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height="1.75rem" style={{ marginBottom: 'var(--space5)' }} />)
             : folders.map(f => {
@@ -450,25 +484,7 @@ export default function InboxPage() {
         </div>
 
         <div className="inbox-detail">
-          {composerMode === 'new' ? (
-            <MailComposer
-              mode="new"
-              recipient={null}
-              to={to}
-              onToChange={setTo}
-              subject={subject}
-              onSubjectChange={setSubject}
-              html={draft}
-              onHtmlChange={setDraft}
-              signature={signature}
-              minimized={false}
-              onMinimizedChange={() => {}}
-              onClose={resetComposer}
-              onDiscard={resetComposer}
-              onSend={send}
-              isSending={isSending}
-            />
-          ) : !selectedId ? (
+          {!selectedId ? (
             <div className="empty-state">
               <MailOpen size={22} />
               <h2>Selecteer een bericht</h2>
@@ -482,7 +498,21 @@ export default function InboxPage() {
           ) : (
             <>
               <div className="thread">
-                <h2>{thread.subject}</h2>
+                <div className="thread-header">
+                  <h2>{thread.subject}</h2>
+                  <span className="message-actions">
+                    {currentFolder?.kind !== 'archive' && currentFolder?.kind !== 'trash' && (
+                      <ToolButton title="Archiveren" onClick={() => removeThread('archive')}>
+                        <Archive size={15} />
+                      </ToolButton>
+                    )}
+                    {currentFolder?.kind !== 'trash' && (
+                      <ToolButton title="Verwijderen" className="delete" onClick={() => removeThread('trash')}>
+                        <Trash2 size={15} />
+                      </ToolButton>
+                    )}
+                  </span>
+                </div>
 
                 {thread.messages.map(message => (
                   <div key={message.id} className="message">
@@ -522,6 +552,7 @@ export default function InboxPage() {
                 ))}
               </div>
 
+              {composerMode !== 'new' && (
               <MailComposer
                 mode={composerMode}
                 recipient={replyRecipient()}
@@ -539,9 +570,40 @@ export default function InboxPage() {
                 onSend={send}
                 isSending={isSending}
               />
+              )}
             </>
           )}
         </div>
+
+        {/* Een nieuw bericht zweeft rechtsonder over het gesprek heen, zodat je
+            kunt blijven lezen terwijl je schrijft */}
+        {composerMode === 'new' && (
+          <MailComposer
+            mode="new"
+            recipient={null}
+            to={to}
+            onToChange={setTo}
+            subject={subject}
+            onSubjectChange={setSubject}
+            html={draft}
+            onHtmlChange={setDraft}
+            signature={signature}
+            minimized={composerMinimized}
+            onMinimizedChange={setComposerMinimized}
+            onClose={resetComposer}
+            onDiscard={resetComposer}
+            onSend={send}
+            isSending={isSending}
+          />
+        )}
+
+        <ToolButton
+          title={composerMode === 'new' ? 'Bericht sluiten' : 'Mail opstellen'}
+          className="compose-button"
+          onClick={composerMode === 'new' ? resetComposer : startNew}
+        >
+          {composerMode === 'new' ? <X size={20} /> : <Plus size={20} />}
+        </ToolButton>
       </div>
     </Layout>
   );

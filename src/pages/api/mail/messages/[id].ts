@@ -4,7 +4,8 @@ import { authOptions } from '../../auth/[...nextauth]';
 import { openMailbox, sendMailError } from '@/lib/mail';
 
 /**
- * Eén gesprek. GET haalt het op met alle berichten erin. PATCH markeert het
+ * Eén gesprek. GET haalt het op met alle berichten erin. POST met
+ * { action: 'archive' | 'trash' } archiveert of verwijdert het. PATCH markeert het
  * als gelezen, of zet met { messageId, starred } een ster (Gmail) of vlag
  * (Outlook) op één bericht — ook in Gmail of Outlook zelf.
  */
@@ -20,6 +21,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'GET') {
       return res.status(200).json(await provider.thread(accessToken, id));
+    }
+
+    if (req.method === 'POST') {
+      const { action } = req.body || {};
+      if (action === 'archive') await provider.archive(accessToken, id);
+      else if (action === 'trash') await provider.trash(accessToken, id);
+      else return res.status(400).json({ error: 'Onbekende actie' });
+      return res.status(200).json({ ok: true });
     }
 
     if (req.method === 'PATCH') {

@@ -541,7 +541,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Een knop met een logo ervoor, zoals "Inloggen met Google" */
 .button.with-icon {display: inline-flex; align-items: center; justify-content: center; gap: var(--space10); font-size: var(--fontsize1);}
-.modal .button.with-icon, .inbox .inbox-folders .button.with-icon {display: flex; width: 100%; padding: 12px;}
+.modal .button.with-icon {display: flex; width: 100%; padding: 12px;}
 .button.tertiary:hover:not(:disabled) {background: var(--color4);}
 
 /* Aan/uit-schakelaar; groen als hij aan staat */
@@ -553,7 +553,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .toggle-label {display: inline-flex; align-items: center; gap: var(--space5); font-size: var(--fontsize2); color: var(--font-color2); cursor: pointer;}
 
 /* Inbox: links de gesprekken, rechts het geopende gesprek */
-.inbox {display: grid; grid-template-columns: 200px 380px 1fr; height: calc(100vh - 2 * var(--space20)); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); overflow: hidden;}
+.inbox {position: relative; display: grid; grid-template-columns: 200px 380px 1fr; height: calc(100vh - 2 * var(--space20)); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); overflow: hidden;}
 .inbox .inbox-list {border-right: 1px solid var(--border-color); overflow-y: auto;}
 .inbox .list-header {position: sticky; top: 0; z-index: 1; display: flex; flex-direction: column; gap: var(--space10); padding: var(--space15) var(--space20); background: var(--color2); border-bottom: 1px solid var(--border-color);}
 .inbox .list-header .title-row {display: flex; align-items: center; justify-content: space-between; gap: var(--space10);}
@@ -563,7 +563,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* De mappen of labels uit Gmail of Outlook */
 .inbox .inbox-folders {display: flex; flex-direction: column; gap: 3px; padding: var(--space15) var(--space10); border-right: 1px solid var(--border-color); background: var(--color3); overflow-y: auto;}
-.inbox .inbox-folders .button.with-icon {margin: 0 0 var(--space10) 0;}
 .inbox .inbox-folders button:not(.button) {display: flex; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); font-size: 13px; color: var(--font-color2); border-radius: var(--border-radius1);}
 .inbox .inbox-folders button:not(.button):hover, .inbox .inbox-folders button.active {background-color: #efefef; color: var(--font-color1);}
 .inbox .inbox-folders button .name {flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
@@ -587,7 +586,9 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-detail > .empty-state {margin: auto; padding: 0; display: flex; flex-direction: column; align-items: center;}
 .inbox .inbox-detail > .empty-state h2 {margin: var(--space10) 0 var(--space5) 0;}
 .inbox .thread {padding: var(--space20);}
-.inbox .thread > h2 {margin: 0 0 var(--space20) 0;}
+.inbox .thread-header {display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space10); margin: 0 0 var(--space20) 0;}
+.inbox .thread-header h2 {margin: 0;}
+.inbox .message-actions button.delete {color: var(--color6);}
 .inbox .message {padding: 0 0 var(--space20) 0; margin: 0 0 var(--space20) 0; border-bottom: 1px solid var(--border-color);}
 .inbox .message-header {display: grid; grid-template-columns: 30px 1fr auto; gap: var(--space10); align-items: center; margin: 0 0 var(--space15) 0;}
 .inbox .message-actions {display: flex; align-items: center; gap: 2px;}
@@ -597,7 +598,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-header .sender {display: flex; flex-direction: column; min-width: 0;}
 .inbox .message-header .from {font-weight: 600;}
 /* Antwoorden of doorsturen: vast onderin het gesprek, ook tijdens het lezen */
-.composer {position: sticky; bottom: 0; z-index: 2; margin: auto var(--space20) var(--space20); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
+.composer {position: sticky; bottom: 0; z-index: 2; margin: auto calc(var(--space20) * 2 + 52px) var(--space20) var(--space20); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
 .composer-header {display: flex; align-items: center; gap: var(--space10); padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
 .composer.minimized .composer-header {border-bottom: 0; cursor: pointer;}
 .composer-header .label {color: var(--font-color2); font-size: var(--fontsize2); white-space: nowrap;}
@@ -613,7 +614,11 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .composer-footer {display: flex; align-items: center; justify-content: space-between; padding: var(--space10) var(--space15); background: var(--color3); border-top: 1px solid var(--border-color); border-radius: 0 0 var(--border-radius2) var(--border-radius2);}
 .composer-footer > button.delete {color: var(--color6);}
 .composer-footer .button.with-icon {gap: var(--space5); padding: var(--space10) var(--space15);}
-.composer.standalone {margin-top: var(--space20);}
+
+/* Mail opstellen: de ronde knop rechtsonder, en het venster dat erboven opent */
+.inbox .compose-button {position: absolute; right: var(--space20); bottom: var(--space20); z-index: 6; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: var(--color1); color: var(--color2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
+.inbox .compose-button:hover {opacity: .85;}
+.composer.floating {position: absolute; right: var(--space20); bottom: calc(var(--space20) * 2 + 52px); z-index: 5; width: min(600px, calc(100% - 2 * var(--space20))); margin: 0;}
 .composer-subject {padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
 .composer-subject input {width: 100%; box-sizing: border-box;}
 

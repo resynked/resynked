@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
+import { SkeletonTable } from '@/components/Skeleton';
 import Pagination from '@/components/Pagination';
 import SelectionBar from '@/components/SelectionBar';
 import ToolButton from '@/components/ToolButton';
@@ -33,6 +34,8 @@ const statusLabels: Record<string, string> = {
 export default function Invoices() {
   const { confirm } = useConfirm();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  // Tot de eerste lijst binnen is: anders staat er even "Geen ..." in beeld
+  const [isLoading, setIsLoading] = useState(true);
   // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
   const pagination = usePagination(invoices);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -60,6 +63,8 @@ export default function Invoices() {
       setInvoices(data);
     } catch (error) {
       console.error('Error fetching invoices:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -171,7 +176,9 @@ export default function Invoices() {
         </div>
       </div>
 
-      {invoices.length === 0 ? (
+      {isLoading ? (
+        <SkeletonTable rows={10} columns={7} />
+      ) : invoices.length === 0 ? (
         <div className="empty-state">
           <h2>Geen facturen</h2>
           <p>Je hebt nog geen facturen aangemaakt. Begin met het maken van je eerste factuur.</p>

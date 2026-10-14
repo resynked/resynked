@@ -257,6 +257,21 @@ export const microsoft: MailProvider = {
     });
   },
 
+  async archive(accessToken, id) {
+    await apiFetch(`${API}/messages/${encodeURIComponent(id)}/move`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ destinationId: 'archive' }),
+    });
+  },
+
+  async trash(accessToken, id) {
+    // Naar Verwijderde items, niet meteen weg; zo doet Outlook het zelf ook
+    await apiFetch(`${API}/messages/${encodeURIComponent(id)}/move`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ destinationId: 'deleteditems' }),
+    });
+  },
+
   async setStarred(accessToken, messageId, starred) {
     // Outlook kent geen ster; het dichtstbij is de vlag
     await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}`, accessToken, {

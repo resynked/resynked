@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
+import { SkeletonTable } from '@/components/Skeleton';
 import Pagination from '@/components/Pagination';
 import SelectionBar from '@/components/SelectionBar';
 import ToolButton from '@/components/ToolButton';
@@ -33,6 +34,8 @@ export default function Quotes() {
   const { confirm } = useConfirm();
   const toast = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  // Tot de eerste lijst binnen is: anders staat er even "Geen ..." in beeld
+  const [isLoading, setIsLoading] = useState(true);
   // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
   const pagination = usePagination(quotes);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -60,6 +63,8 @@ export default function Quotes() {
       setQuotes(data);
     } catch (error) {
       console.error('Error fetching quotes:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -306,7 +311,9 @@ export default function Quotes() {
         </div>
       </div>
 
-      {quotes.length === 0 ? (
+      {isLoading ? (
+        <SkeletonTable rows={10} columns={7} />
+      ) : quotes.length === 0 ? (
         <div className="empty-state">
           <h2>Geen offertes</h2>
           <p>Je hebt nog geen offertes aangemaakt. Begin met het maken van je eerste offerte.</p>

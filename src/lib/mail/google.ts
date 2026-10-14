@@ -289,6 +289,18 @@ export const google: MailProvider = {
     );
   },
 
+  async archive(accessToken, id) {
+    // Archiveren is in Gmail niets anders dan het label Inbox eraf halen
+    await apiFetch(`${API}/threads/${encodeURIComponent(id)}/modify`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ removeLabelIds: ['INBOX'] }),
+    });
+  },
+
+  async trash(accessToken, id) {
+    await apiFetch(`${API}/threads/${encodeURIComponent(id)}/trash`, accessToken, { method: 'POST' });
+  },
+
   async setStarred(accessToken, messageId, starred) {
     await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}/modify`, accessToken, {
       method: 'POST',

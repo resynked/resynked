@@ -64,7 +64,7 @@ export default function MailComposer({
     (mode === 'reply' || to.trim() !== '') && (mode === 'forward' || !isRichTextEmpty(html));
 
   return (
-    <div className={`composer${minimized ? ' minimized' : ''}${mode === 'new' ? ' standalone' : ''}`}>
+    <div className={`composer${minimized ? ' minimized' : ''}${mode === 'new' ? ' floating' : ''}`}>
       <div
         className="composer-header"
         onClick={minimized ? () => onMinimizedChange(false) : undefined}
@@ -91,14 +91,12 @@ export default function MailComposer({
         )}
 
         <span className="actions" onClick={(event) => event.stopPropagation()}>
-          {mode !== 'new' && (
-            <ToolButton
-              title={minimized ? 'Openklappen' : 'Inklappen'}
-              onClick={() => onMinimizedChange(!minimized)}
-            >
-              {minimized ? <ChevronUp size={15} /> : <Minus size={15} />}
-            </ToolButton>
-          )}
+          <ToolButton
+            title={minimized ? 'Openklappen' : 'Inklappen'}
+            onClick={() => onMinimizedChange(!minimized)}
+          >
+            {minimized ? <ChevronUp size={15} /> : <Minus size={15} />}
+          </ToolButton>
           {mode !== 'reply' && (
             <ToolButton title="Sluiten" onClick={onClose}>
               <X size={15} />

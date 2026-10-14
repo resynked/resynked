@@ -97,6 +97,10 @@ export interface MailProvider {
   markRead(accessToken: string, id: string): Promise<void>;
   /** Antwoordt op het laatste bericht in het gesprek; komt ook in Verzonden te staan */
   reply(accessToken: string, id: string, html: string, ownAddress: string): Promise<void>;
+  /** Uit de inbox halen, maar bewaren: Archief in Outlook, "Alle e-mail" in Gmail */
+  archive(accessToken: string, id: string): Promise<void>;
+  /** Naar de prullenbak; daar haal je het nog terug */
+  trash(accessToken: string, id: string): Promise<void>;
   /** Een ster (Gmail) of vlag (Outlook) op één bericht zetten of weghalen */
   setStarred(accessToken: string, messageId: string, starred: boolean): Promise<void>;
   /** Een nieuw bericht, los van een bestaand gesprek */
