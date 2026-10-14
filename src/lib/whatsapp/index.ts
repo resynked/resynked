@@ -111,6 +111,7 @@ export async function sendText(to: string, body: string) {
     // Een bericht mag hooguit 4096 tekens zijn
     text: { body: body.slice(0, 4096), preview_url: false },
   });
+  console.info('WhatsApp: antwoord verstuurd naar', to);
 }
 
 /**

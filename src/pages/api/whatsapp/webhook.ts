@@ -55,12 +55,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .filter((change: any) => change.field === 'messages')
     .map((change: any) => change.value || {});
 
-  // Een antwoord dat Meta niet kon afleveren, zoals naar een nummer dat bij een
-  // testnummer niet in de lijst met ontvangers staat, komt alleen hier terug
+  // Hoe het met een antwoord van de bot afliep: verzonden, afgeleverd, gelezen of mislukt. Een antwoord
+  // dat Meta niet kon afleveren, zoals naar een nummer dat bij een testnummer niet in de lijst met
+  // ontvangers staat, komt alleen hier terug
   values
     .flatMap((value: any) => value.statuses || [])
-    .filter((status: any) => status.status === 'failed')
-    .forEach((status: any) => console.warn('WhatsApp-bericht niet afgeleverd aan', status.recipient_id, status.errors));
+    .forEach((status: any) =>
+      status.status === 'failed'
+        ? console.warn('WhatsApp-bericht niet afgeleverd aan', status.recipient_id, status.errors)
+        : console.info(`WhatsApp-bericht ${status.status} bij`, status.recipient_id)
+    );
 
   const messages: IncomingMessage[] = values
     .flatMap((value: any) => value.messages || [])
@@ -72,6 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }));
 
   for (const message of messages) {
+    console.info(`WhatsApp: ${message.type}bericht binnen van`, message.from);
     if (!(await claimMessage(message.id))) continue;
 
     try {
