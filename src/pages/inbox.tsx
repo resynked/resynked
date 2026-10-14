@@ -555,10 +555,13 @@ export default function InboxPage() {
                     </button>
                   </span>
                   <span className="summary">
-                    <span className="from">{displayName(item.from)}</span>
+                    {/* Afzender en tijd op één regel, zodat de lijst compact blijft */}
+                    <span className="top">
+                      <span className="from">{displayName(item.from)}</span>
+                      <span className="meta">{timeAgo(item.date)}</span>
+                    </span>
                     <span className="subject">{item.subject}</span>
                     <span className="snippet">{item.snippet}</span>
-                    <span className="meta">{timeAgo(item.date)}</span>
                   </span>
                 </div>
                 );

@@ -138,24 +138,26 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 .sidebar {width: 230px; background-color: var(--color3); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;}
 .sidebar .logo {display: flex; align-items: center; justify-content: space-between; padding: var(--space10); box-sizing: border-box; line-height: 0;}
-.sidebar .logo button {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: var(--font-color2); border-radius: var(--border-radius1);}
-.sidebar .logo button:hover {background-color: #efefef; color: var(--font-color1);}
-.sidebar .logo .expand {position: relative;}
+.sidebar .logo button {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: 0 0 auto; color: var(--font-color2); border-radius: var(--border-radius1);}
+.sidebar .logo .collapse:hover {background-color: #efefef; color: var(--font-color1);}
+.sidebar .logo .expand {position: relative; cursor: default;}
 .sidebar .logo .expand .expand-icon {position: absolute; inset: 0; margin: auto; opacity: 0; transition: .2s all ease;}
-.sidebar .logo .expand:hover .sidebar-logo {opacity: 0;}
-.sidebar .logo .expand:hover .expand-icon {opacity: 1;}
 
-/* Ingeklapt: alleen de iconen, met de naam als label bij hover */
-.sidebar.collapsed {width: 56px;}
-.sidebar.collapsed .logo {justify-content: center;}
-.sidebar.collapsed .navigation {align-items: center;}
-.sidebar.collapsed .navigation a {position: relative; justify-content: center; width: 34px; height: 34px; margin: 0; padding: 0; box-sizing: border-box;}
-.sidebar.collapsed .navigation a .label {display: none;}
-.sidebar.collapsed .navigation a .count {position: absolute; top: -4px; right: 0; min-width: 16px; padding: 0 4px; font-size: 9px;}
+/* Ingeklapt: alleen de breedte verandert. Logo, iconen en avatar blijven op
+   hun plek (precies in het midden van 50px), de teksten vervagen */
+.sidebar.collapsed {width: 50px;}
+.sidebar.animated {transition: width .2s ease;}
+.sidebar .navigation a .label, .sidebar .profile .info, .sidebar .logo .collapse {white-space: nowrap; transition: opacity .15s ease, visibility .15s ease;}
+.sidebar.collapsed .navigation a .label, .sidebar.collapsed .profile .info, .sidebar.collapsed .logo .collapse {opacity: 0; visibility: hidden;}
+.sidebar.collapsed .logo .expand {cursor: pointer;}
+.sidebar.collapsed .logo .expand:hover {background-color: #efefef;}
+.sidebar.collapsed .logo .expand:hover .sidebar-logo {opacity: 0;}
+.sidebar.collapsed .logo .expand:hover .expand-icon {opacity: 1; color: var(--font-color1);}
+.sidebar.collapsed .navigation a {position: relative; padding-left: 12px;}
+.sidebar.collapsed .navigation a .count {position: absolute; top: 1px; left: 24px; min-width: 16px; padding: 0 4px; font-size: 9px;}
 .sidebar.collapsed .navigation a::after {top: 50%; left: calc(100% + var(--space10)); transform: translateY(-50%); z-index: 20; color: var(--font-color1); display: none;}
 .sidebar.collapsed .navigation a:hover::after {display: block; opacity: 1;}
-.sidebar.collapsed .profile {justify-content: center; width: 40px; height: 40px; margin: var(--space5) auto; padding: 0;}
-.sidebar.collapsed .profile .info {display: none;}
+.sidebar.collapsed .profile {padding-left: var(--space5);}
 
 .sidebar .navigation {flex: 1; padding: var(--space10) 0; display: flex; flex-direction: column; gap: 3px;}
 .sidebar .navigation a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
@@ -643,7 +645,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .list-header .actions {display: flex; align-items: center; gap: var(--space10);}
 .inbox .list-loading, .inbox .list-empty, .inbox .list-more {padding: var(--space20); margin: 0; color: var(--font-color2); text-align: center;}
 
-.inbox .inbox-item {display: grid; grid-template-columns: 6px 30px 1fr; gap: var(--space10); width: 100%; font-size: var(--fontsize1); color: var(--font-color1); padding: var(--space15) var(--space20) var(--space15) var(--space10); box-sizing: border-box; text-align: left; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: .3s all ease;}
+.inbox .inbox-item {display: grid; grid-template-columns: 6px 30px 1fr; gap: var(--space10); width: 100%; font-size: var(--fontsize1); line-height: 1.45; color: var(--font-color1); padding: var(--space10) var(--space20) var(--space10) var(--space10); box-sizing: border-box; text-align: left; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: .3s all ease;}
 .inbox .inbox-item:hover, .inbox .inbox-item.active, .inbox .inbox-item.checked {background: var(--color3);}
 .inbox .inbox-item .pick {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;}
 .inbox .inbox-item .pick .checkbox {display: none; align-items: center; justify-content: center;}
@@ -651,10 +653,13 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-item:hover .pick .checkbox, .inbox .inbox-list.selecting .inbox-item .pick .checkbox {display: flex;}
 .inbox .list-header .title-row .checkbox {display: flex; align-items: center; justify-content: center; flex: 0 0 auto;}
 .inbox .list-header .title-row h1 {flex: 1;}
-.inbox .inbox-item .dot {width: 6px; height: 6px; margin-top: 12px; border-radius: 50%;}
+.inbox .inbox-item .dot {width: 6px; height: 6px; margin-top: 7px; border-radius: 50%;}
 .inbox .inbox-item.unread .dot {background: var(--color5);}
-.inbox .inbox-item .summary {display: flex; flex-direction: column; gap: 2px; min-width: 0;}
-.inbox .inbox-item .subject {font-weight: 500;}
+.inbox .inbox-item .summary {display: flex; flex-direction: column; gap: 1px; min-width: 0;}
+.inbox .inbox-item .summary .top {display: flex; align-items: baseline; justify-content: space-between; gap: var(--space10); min-width: 0;}
+.inbox .inbox-item .summary .from {min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.inbox .inbox-item .summary .meta {flex: 0 0 auto; white-space: nowrap;}
+.inbox .inbox-item .subject {font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .inbox .inbox-item.unread .from, .inbox .inbox-item.unread .subject {font-weight: 600;}
 .inbox .inbox-item .snippet {color: var(--font-color2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
