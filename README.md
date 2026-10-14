@@ -44,7 +44,7 @@ RLS-policies op de tabellen vormen de tweede laag.
    EMAIL_FROM=Resynked <offertes@jouwdomein.nl>
    APP_URL=http://localhost:3000
 
-   # Inbox (Instellingen > Modules)
+   # Inbox (Instellingen > Plug-ins)
    MAIL_ENCRYPTION_KEY=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
    GOOGLE_CLIENT_ID=...
    GOOGLE_CLIENT_SECRET=...
@@ -76,7 +76,7 @@ RLS-policies op de tabellen vormen de tweede laag.
 ## Inbox koppelen
 
 Gebruikers koppelen hun eigen Gmail- of Outlook-mailbox bij **Instellingen >
-Modules**. De mail wordt elke keer live bij Google of Microsoft opgehaald en niet
+Plug-ins**. De mail wordt elke keer live bij Google of Microsoft opgehaald en niet
 bij ons bewaard; alleen de toegangssleutels staan in `mail_accounts`, versleuteld
 met `MAIL_ENCRYPTION_KEY`. Raak je die sleutel kwijt of verander je hem, dan moet
 iedereen zijn Inbox opnieuw koppelen.

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { ComponentType } from 'react';
 import Modal from '@/components/Modal';
+import { GoogleIcon, MicrosoftIcon } from '@/components/BrandIcons';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -8,21 +10,31 @@ import { MAIL_CHANNEL, type MailProviderName } from '@/lib/mail/types';
 
 const PROVIDER_NAMES: Record<MailProviderName, string> = {
   google: 'Google',
-  microsoft: 'Outlook',
+  microsoft: 'Microsoft',
 };
 
+/** De plug-ins die je kunt aanzetten, met hun logo en wat ze doen. */
+const PLUGINS: { provider: MailProviderName; icon: ComponentType<{ size?: number }>; description: string }[] = [
+  { provider: 'google', icon: GoogleIcon, description: 'Lees en beantwoord je Gmail in je Inbox' },
+  { provider: 'microsoft', icon: MicrosoftIcon, description: 'Lees en beantwoord je Outlook-mail in je Inbox' },
+];
+
 /**
- * Instellingen > Modules: de onderdelen die je zelf aanzet.
+ * Instellingen > Plug-ins: koppelingen met andere diensten.
  *
- * Inbox aanzetten opent een venster waarin je kiest tussen Google en Outlook.
+ * Een schakelaar aanzetten opent een venster met de inlogknop van die dienst.
  * Het inloggen gebeurt in een popup bij de aanbieder zelf; is dat gelukt, dan
  * sluit alles vanzelf en staat de schakelaar op groen.
+ *
+ * Er is één mailbox per gebruiker: wie Microsoft koppelt terwijl Google
+ * gekoppeld is, vervangt die koppeling.
  */
-export default function ModulesSettings() {
+export default function PluginsSettings() {
   const toast = useToast();
   const { confirm } = useConfirm();
   const account = useMailAccount();
-  const [connectOpen, setConnectOpen] = useState(false);
+  // Voor welke dienst het inlogvenster open staat
+  const [dialogFor, setDialogFor] = useState<MailProviderName | null>(null);
   const [connecting, setConnecting] = useState<MailProviderName | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
   const popup = useRef<Window | null>(null);
@@ -39,7 +51,7 @@ export default function ModulesSettings() {
       }
 
       const connected = await reloadMailAccount();
-      setConnectOpen(false);
+      setDialogFor(null);
       toast.success('Inbox geactiveerd', connected ? `Je mail van ${connected.email} staat nu in je Inbox` : 'Je mailbox is gekoppeld');
     };
 
@@ -72,7 +84,7 @@ export default function ModulesSettings() {
       clearInterval(timer);
       setConnecting(null);
       const connected = await reloadMailAccount();
-      if (connected) setConnectOpen(false);
+      if (connected) setDialogFor(null);
     }, 800);
 
     return () => clearInterval(timer);
@@ -119,52 +131,60 @@ export default function ModulesSettings() {
     }
   };
 
+  const dialogPlugin = PLUGINS.find(plugin => plugin.provider === dialogFor);
+
   return (
     <>
-      <h2>Modules</h2>
+      <h2>Plug-ins</h2>
 
-      <div className="row-section">
-        <div className="information">
-          <span className="title">Inbox</span>
-          <span className="description">
-            {account
-              ? `Gekoppeld met ${account.email} via ${PROVIDER_NAMES[account.provider]}.`
-              : 'Koppel je Gmail- of Outlook-mailbox en lees en beantwoord je mail vanuit Resynked.'}
-          </span>
-        </div>
-        <div>
-          <Toggle
-            label="Inbox"
-            checked={!!account}
-            disabled={account === undefined || disconnecting}
-            onChange={(on) => (on ? setConnectOpen(true) : disconnect())}
-          />
-        </div>
+      <div className="plugin-list">
+        {PLUGINS.map(({ provider, icon: Icon, description }) => {
+          const connected = account?.provider === provider;
+
+          return (
+            <div key={provider} className="plugin">
+              <span className="plugin-icon">
+                <Icon size={24} />
+              </span>
+              <span className="information">
+                <span className="title">{PROVIDER_NAMES[provider]}</span>
+                <span className="description">{connected ? `Gekoppeld met ${account.email}` : description}</span>
+              </span>
+              <Toggle
+                label={PROVIDER_NAMES[provider]}
+                checked={connected}
+                disabled={account === undefined || disconnecting}
+                onChange={(on) => (on ? setDialogFor(provider) : disconnect())}
+              />
+            </div>
+          );
+        })}
       </div>
 
-      <Modal isOpen={connectOpen} onClose={() => setConnectOpen(false)} title="Inbox koppelen">
-        <p>
-          Log in bij je mailaanbieder en geef Resynked toestemming om je mail te lezen en te
-          versturen. Antwoorden die je hier schrijft staan daarna ook gewoon in je eigen mailbox.
-        </p>
-        <div className="buttons">
-          <button
-            type="button"
-            className="button cancel"
-            disabled={connecting !== null}
-            onClick={() => connect('google')}
-          >
-            {connecting === 'google' ? 'Bezig met inloggen...' : 'Inloggen met Google'}
-          </button>
-          <button
-            type="button"
-            className="button cancel"
-            disabled={connecting !== null}
-            onClick={() => connect('microsoft')}
-          >
-            {connecting === 'microsoft' ? 'Bezig met inloggen...' : 'Inloggen met Outlook'}
-          </button>
-        </div>
+      <Modal
+        isOpen={!!dialogPlugin}
+        onClose={() => setDialogFor(null)}
+        title={dialogPlugin ? `Koppelen met ${PROVIDER_NAMES[dialogPlugin.provider]}` : ''}
+      >
+        {dialogPlugin && (
+          <>
+            <p>
+              Log in en geef Resynked toestemming om je mail te lezen en te versturen. Antwoorden
+              die je in je Inbox schrijft staan daarna ook gewoon in je eigen mailbox.
+              {account && account.provider !== dialogPlugin.provider &&
+                ` Je koppeling met ${PROVIDER_NAMES[account.provider]} (${account.email}) wordt hiermee vervangen.`}
+            </p>
+            <button
+              type="button"
+              className="button tertiary with-icon"
+              disabled={connecting !== null}
+              onClick={() => connect(dialogPlugin.provider)}
+            >
+              <dialogPlugin.icon size={18} />
+              {connecting ? 'Bezig met inloggen...' : `Inloggen met ${PROVIDER_NAMES[dialogPlugin.provider]}`}
+            </button>
+          </>
+        )}
       </Modal>
     </>
   );

@@ -153,10 +153,10 @@ export default function InboxPage() {
           <p>
             {needsReconnect
               ? 'De toegang tot je mailbox is verlopen of ingetrokken. Zet de Inbox opnieuw aan om je mail weer te zien.'
-              : 'Koppel je Gmail- of Outlook-mailbox bij Instellingen > Modules om je mail hier te lezen en te beantwoorden.'}
+              : 'Koppel je Gmail- of Outlook-mailbox bij Instellingen > Plug-ins om je mail hier te lezen en te beantwoorden.'}
           </p>
-          <Link href="/settings?tab=modules" className="button">
-            Naar Modules
+          <Link href="/settings?tab=plugins" className="button">
+            Naar Plug-ins
           </Link>
         </div>
       </Layout>

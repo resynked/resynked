@@ -14,7 +14,7 @@ import { MAIL_CHANNEL, STATE_COOKIE, isMailProvider, mailProvider, redirectUri, 
  */
 function finish(res: NextApiResponse, result: { ok: boolean; error?: string }) {
   const message = JSON.stringify({ type: 'mail-connected', ...result }).replace(/</g, '\\u003c');
-  const fallback = `/settings?tab=modules${result.ok ? '' : `&mail_error=${encodeURIComponent(result.error || '')}`}`;
+  const fallback = `/settings?tab=plugins${result.ok ? '' : `&mail_error=${encodeURIComponent(result.error || '')}`}`;
 
   res.setHeader('Set-Cookie', `${STATE_COOKIE}=; Path=/api/mail/callback; HttpOnly; SameSite=Lax; Max-Age=0`);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');

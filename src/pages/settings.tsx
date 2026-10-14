@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate, CircleQuestionMark, Blocks } from 'lucide-react';
+import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate, CircleQuestionMark, Plug } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
 import RichTextEditor from '@/components/RichTextEditor';
 import SidePanel from '@/components/SidePanel';
-import ModulesSettings from '@/components/ModulesSettings';
+import PluginsSettings from '@/components/PluginsSettings';
 import type { Tenant } from '@/lib/supabase';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
@@ -20,7 +20,7 @@ export default function Settings() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('account');
 
-    // Een tabblad kan in het adres staan, zoals ?tab=modules na het koppelen
+    // Een tabblad kan in het adres staan, zoals ?tab=plugins na het koppelen
     // van de Inbox zonder popup
     useEffect(() => {
         if (!router.isReady) return;
@@ -213,15 +213,15 @@ export default function Settings() {
                             <span>Gebruikers</span>
                         </Link>
                         <Link
-                            href="#modules"
-                            className={`${activeTab === 'modules' ? 'active' : ''}`}
+                            href="#plugins"
+                            className={`${activeTab === 'plugins' ? 'active' : ''}`}
                             onClick={(e) => {
                                 e.preventDefault();
-                                setActiveTab('modules');
+                                setActiveTab('plugins');
                             }}
                         >
-                            <Blocks size={18} />
-                            <span>Modules</span>
+                            <Plug size={18} />
+                            <span>Plug-ins</span>
                         </Link>
                     </nav>
                     <nav>
@@ -379,7 +379,7 @@ export default function Settings() {
 
                     )}
 
-                    {activeTab === 'modules' && <ModulesSettings />}
+                    {activeTab === 'plugins' && <PluginsSettings />}
 
                     {activeTab === 'email' && (
                         <>
