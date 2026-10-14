@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bold,
   Italic,
@@ -87,7 +87,7 @@ const GROUPS: ToolbarButton[][] = [
 ];
 
 /** Een tekstelement op het papier, zoals InlineEditing het neerzet. */
-const PAPER_TEXT_FIELD = '[data-element="tekst"][contenteditable="true"]';
+const PAPER_TEXT_FIELD = '[data-bewerk^="tekst:"][contenteditable="true"]';
 
 /** Het tekstveld waar een node in staat, als dat een van de onze is. */
 function fieldAround(node: Node | null, getField?: () => HTMLElement | null): HTMLElement | null {
@@ -108,6 +108,8 @@ interface FormattingToolbarProps {
    * het papier waar de cursor op dat moment in staat.
    */
   getField?: () => HTMLElement | null;
+  /** Meer knoppen in dezelfde balk, achter de opmaakknoppen */
+  children?: ReactNode;
 }
 
 /**
@@ -121,7 +123,7 @@ interface FormattingToolbarProps {
  * bijhouden. De browser meldt elke wijziging aan het tekstveld, dat de
  * uitvoer opschoont en bewaart.
  */
-export default function FormattingToolbar({ getField }: FormattingToolbarProps) {
+export default function FormattingToolbar({ getField, children }: FormattingToolbarProps) {
   const savedRange = useRef<Range | null>(null);
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
   const [linkValue, setLinkValue] = useState<string | null>(null);
@@ -265,6 +267,8 @@ export default function FormattingToolbar({ getField }: FormattingToolbarProps) 
             <Link2Off size={15} />
           </button>
         </div>
+
+        {children}
       </div>
 
       {linkValue !== null && (

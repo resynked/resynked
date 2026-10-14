@@ -66,6 +66,8 @@ interface DocumentPreviewProps {
   onChangeBlock?: (index: number, block: DocumentBlock) => void;
   /** Zet de cursor in dit veld, bijvoorbeeld in een kop die net is toegevoegd */
   focusField?: { field: string } | null;
+  /** Een element dat op het papier naar een andere plek is gesleept */
+  onMoveElement?: (from: EditTarget, to: EditTarget) => void;
   /** Voegt een blok toe op een bepaalde plek in de lijst */
   onAddBlock?: (atIndex: number) => void;
   /**
@@ -375,16 +377,47 @@ const ELEMENT_LABELS: Record<DocumentElement['kind'], string> = {
 /** Alles wat er in één blok staat, in volgorde. */
 function BlockView({ onderdelen, currency, customer, meta, signature, signatureField, bewerkbaar, edit }: BlockViewProps) {
   const editing = useContext(InlineEditContext);
+  const drag = editing?.drag;
+
+  /**
+   * Waar een gesleept element terechtkomt. Een leeg blok is zelf ook een
+   * plek, zodat je er een element naartoe kunt slepen.
+   */
+  const dropZone = (element: number) =>
+    edit && drag?.from
+      ? {
+          onDragOver: (event: React.DragEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.dataTransfer.dropEffect = 'move';
+            const over = drag.over;
+            if (over?.block !== edit.block || over?.element !== element) drag.hover({ block: edit.block, element });
+          },
+          onDrop: (event: React.DragEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            drag.drop({ block: edit.block, element });
+          },
+        }
+      : {};
 
   if (onderdelen.length === 0) {
-    return bewerkbaar ? <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p> : null;
+    return bewerkbaar ? <p {...dropZone(0)}>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p> : null;
   }
 
-  // Het gekozen element licht op, met zijn soort erboven
-  const region = (index: number) => {
+  const isSelected = (index: number) => {
     const selected = editing?.selected;
-    const active = selected?.block === edit?.block && selected?.element === index;
-    return `editable-region${active ? ' active' : ''}`;
+    return !!edit && selected?.block === edit.block && selected?.element === index;
+  };
+
+  // Het gekozen element licht op, met zijn soort erboven. Bij het slepen
+  // vervaagt wat je vasthoudt en licht op waar het heen gaat
+  const region = (index: number) => {
+    const isDragged = drag?.from?.block === edit?.block && drag?.from?.element === index;
+    const isTarget = !isDragged && drag?.over?.block === edit?.block && drag?.over?.element === index;
+    return ['editable-region', isSelected(index) && 'active', isDragged && 'dragging', isTarget && 'drop-target']
+      .filter(Boolean)
+      .join(' ');
   };
 
   const select = (index: number) => () => {
@@ -394,22 +427,13 @@ function BlockView({ onderdelen, currency, customer, meta, signature, signatureF
   return (
     <>
       {onderdelen.map(({ element, index, van, tot }, stuk) => {
-        if (element.kind === 'tekst') {
-          return edit ? (
-            <EditableRichText
-              key={index}
-              field={fieldKeys.text(edit.block, index)}
-              value={element.body || ''}
-              from={van}
-              to={tot}
-              part={stuk}
-              className={`rich-text ${region(index)}`}
-              label={ELEMENT_LABELS.tekst}
-              onFocus={select(index)}
-              onChange={(body) => edit.onChange(index, { body })}
-            />
-          ) : (
+        if (!edit) {
+          return element.kind === 'tekst' ? (
             <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} stuk={stuk} van={van} tot={tot} />
+          ) : (
+            <div key={index} data-element={element.kind} data-stuk={stuk} data-van={van ?? 0}>
+              <ElementContent element={element} van={van} tot={tot} currency={currency} customer={customer} meta={meta} signature={signature} signatureField={signatureField} bewerkbaar={bewerkbaar} />
+            </div>
           );
         }
 
@@ -419,81 +443,148 @@ function BlockView({ onderdelen, currency, customer, meta, signature, signatureF
             data-element={element.kind}
             data-stuk={stuk}
             data-van={van ?? 0}
-            className={edit && element.kind !== 'kop' ? region(index) : undefined}
-            data-label={edit ? ELEMENT_LABELS[element.kind] : undefined}
+            className={region(index)}
+            data-label={ELEMENT_LABELS[element.kind]}
             // Een klik in een veld kiest dat veld zelf, met de regel erbij
-            onClick={
-              edit
-                ? (event) => {
-                    if (!(event.target as HTMLElement).closest('[data-bewerk]')) select(index)();
-                  }
-                : undefined
-            }
+            onClick={(event) => {
+              if (!(event.target as HTMLElement).closest('[data-bewerk]')) select(index)();
+            }}
+            {...dropZone(index)}
           >
-            {element.kind === 'gegevens' && (
-              <>
-                {/* Naam, straat met huisnummer, postcode met plaats */}
-                <div className="customer-details">
-                  {customer ? (
-                    <>
-                      <div>{getCustomerDisplayName(customer)}</div>
-                      {customer.street_address && <div>{customer.street_address}</div>}
-                      {(customer.postal_code || customer.city) && (
-                        <div>{[customer.postal_code, customer.city].filter(Boolean).join(' ')}</div>
-                      )}
-                    </>
-                  ) : (
-                    bewerkbaar && <div>Nog geen klant gekozen</div>
-                  )}
-                </div>
-
-                {/* Label en waarde elk in een span, zodat ze los te stijlen zijn */}
-                <div className="document-meta">
-                  {meta
-                    .filter(row => row.value)
-                    .map(row => (
-                      <div key={row.label}>
-                        <span className="label">{row.label}</span>
-                        <span className="value">{row.value}</span>
-                      </div>
-                    ))}
-                </div>
-              </>
+            {/* Aan het handvat sleep je het element naar een andere plek op het
+                papier, ook naar een ander blok */}
+            {isSelected(index) && (
+              <span
+                className="drag-handle"
+                title="Sleep om dit element te verplaatsen"
+                aria-label="Element verplaatsen"
+                contentEditable={false}
+                draggable
+                onDragStart={(event) => {
+                  event.stopPropagation();
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData('text/plain', `${edit.block}:${index}`);
+                  drag?.start({ block: edit.block, element: index });
+                }}
+                onDragEnd={() => drag?.end()}
+              >
+                <GripVertical size={16} />
+              </span>
             )}
 
-            {element.kind === 'kop' &&
-              (edit ? (
-                <EditableText
-                  as="h2"
-                  field={fieldKeys.heading(edit.block, index)}
-                  value={element.body || ''}
-                  className={region(index)}
-                  data-label={ELEMENT_LABELS.kop}
-                  onFocus={select(index)}
-                  onChange={(body) => edit.onChange(index, { body })}
-                />
-              ) : element.body ? (
-                <h2>{element.body}</h2>
-              ) : (
-                bewerkbaar && <h2>Kop toevoegen</h2>
-              ))}
-
-            {element.kind === 'handtekening' && (
-              <SignatureElement signature={signature} field={signatureField} />
-            )}
-
-            {element.kind === 'prijstabel' && (
-              <PriceTable
+            {element.kind === 'tekst' ? (
+              <EditableRichText
+                field={fieldKeys.text(edit.block, index)}
+                value={element.body || ''}
+                from={van}
+                to={tot}
+                className="rich-text"
+                onFocus={select(index)}
+                onChange={(body) => edit.onChange(index, { body })}
+              />
+            ) : element.kind === 'kop' ? (
+              <EditableText
+                as="h2"
+                field={fieldKeys.heading(edit.block, index)}
+                value={element.body || ''}
+                onFocus={select(index)}
+                onChange={(body) => edit.onChange(index, { body })}
+              />
+            ) : (
+              <ElementContent
                 element={element}
-                currency={currency}
                 van={van}
                 tot={tot}
-                edit={edit && { block: edit.block, element: index, onChange: (items) => edit.onChange(index, { items }) }}
+                currency={currency}
+                customer={customer}
+                meta={meta}
+                signature={signature}
+                signatureField={signatureField}
+                bewerkbaar={bewerkbaar}
+                onItemsChange={(items) => edit.onChange(index, { items })}
+                editTarget={{ block: edit.block, element: index }}
               />
             )}
           </div>
         );
       })}
+    </>
+  );
+}
+
+/** De inhoud van een element dat geen lopende tekst is. */
+function ElementContent({
+  element,
+  van,
+  tot,
+  currency,
+  customer,
+  meta,
+  signature,
+  signatureField,
+  bewerkbaar,
+  onItemsChange,
+  editTarget,
+}: {
+  element: DocumentElement;
+  van?: number;
+  tot?: number;
+  currency: string;
+  customer?: Partial<Customer> | null;
+  meta: { label: string; value: string }[];
+  signature?: SignatureState | null;
+  signatureField?: React.ReactNode;
+  bewerkbaar: boolean;
+  /** Op het papier bewerken: waar gewijzigde regels van een prijstabel heen gaan */
+  onItemsChange?: (items: LineItem[]) => void;
+  editTarget?: { block: number; element: number };
+}) {
+  return (
+    <>
+      {element.kind === 'gegevens' && (
+        <>
+          {/* Naam, straat met huisnummer, postcode met plaats */}
+          <div className="customer-details">
+            {customer ? (
+              <>
+                <div>{getCustomerDisplayName(customer)}</div>
+                {customer.street_address && <div>{customer.street_address}</div>}
+                {(customer.postal_code || customer.city) && (
+                  <div>{[customer.postal_code, customer.city].filter(Boolean).join(' ')}</div>
+                )}
+              </>
+            ) : (
+              bewerkbaar && <div>Nog geen klant gekozen</div>
+            )}
+          </div>
+
+          {/* Label en waarde elk in een span, zodat ze los te stijlen zijn */}
+          <div className="document-meta">
+            {meta
+              .filter(row => row.value)
+              .map(row => (
+                <div key={row.label}>
+                  <span className="label">{row.label}</span>
+                  <span className="value">{row.value}</span>
+                </div>
+              ))}
+          </div>
+        </>
+      )}
+
+      {element.kind === 'kop' && (element.body ? <h2>{element.body}</h2> : bewerkbaar && <h2>Kop toevoegen</h2>)}
+
+      {element.kind === 'handtekening' && <SignatureElement signature={signature} field={signatureField} />}
+
+      {element.kind === 'prijstabel' && (
+        <PriceTable
+          element={element}
+          currency={currency}
+          van={van}
+          tot={tot}
+          edit={editTarget && onItemsChange && { ...editTarget, onChange: onItemsChange }}
+        />
+      )}
     </>
   );
 }
@@ -596,7 +687,9 @@ function zoekKnip(pagina: HTMLElement, slot: HTMLElement, schaal: number): Knip 
     // onderdelen schuiven in hun geheel op
     if (el.dataset.element === 'tekst') {
       const van = Number(el.dataset.van) || 0;
-      const knopen = Array.from(el.children);
+      // In de editor staan de alinea's in het tekstveld, naast het handvat
+      const tekst = el.querySelector<HTMLElement>('[data-bewerk]') ?? el;
+      const knopen = Array.from(tekst.children);
       for (let i = 0; i < knopen.length; i++) {
         if (past(knopen[i])) continue;
 
@@ -723,6 +816,7 @@ export default function DocumentPreview({
   onSelect,
   onChangeBlock,
   focusField,
+  onMoveElement,
   onAddBlock,
   onSplitBlock,
   onMoveBlock,
@@ -766,6 +860,9 @@ export default function DocumentPreview({
     setIndelingKlaar(false);
     rondes.current = 0;
   }
+
+  // Welk element er over het papier gesleept wordt, en waar het boven hangt
+  const [elementSleep, setElementSleep] = useState<{ from: EditTarget; over: EditTarget | null } | null>(null);
 
   // Waar de cursor stond toen er getypt werd. Verhuist de tekst naar een
   // ander vel, dan komt hij daar terug zodra de indeling stilligt
@@ -985,6 +1082,19 @@ export default function DocumentPreview({
     rememberCaret,
     select: (target: EditTarget) => onSelect?.(target),
     selected: selected ?? null,
+    drag: {
+      from: elementSleep?.from ?? null,
+      over: elementSleep?.over ?? null,
+      start: (from: EditTarget) => setElementSleep({ from, over: null }),
+      hover: (over: EditTarget) => setElementSleep(huidig => (huidig ? { ...huidig, over } : huidig)),
+      drop: (to: EditTarget) => {
+        const from = elementSleep?.from;
+        setElementSleep(null);
+        if (!from || (from.block === to.block && from.element === to.element)) return;
+        onMoveElement?.(from, to);
+      },
+      end: () => setElementSleep(null),
+    },
   };
 
   // Eigen sjabloon van de aannemer: dat bepaalt de vormgeving, wij leveren

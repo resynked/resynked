@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import DocumentPreview from '@/components/DocumentPreview';
-import BlockEditor from '@/components/BlockEditor';
+import IslandBar from '@/components/IslandBar';
 import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
 import { splitsBlok, type Stuk } from '@/lib/pagination';
@@ -23,11 +23,12 @@ interface DocumentEditorProps {
 
 /**
  * Het document over de volle breedte, en je bewerkt het op het papier zelf:
- * klik in een tekst, kop, titel of regel en typ. Zo zie je meteen hoe het
- * eruit komt te zien, en blijf je op de plek waar je mee bezig was.
+ * klik in een tekst, kop, titel of regel en typ, of sleep een element naar
+ * een andere plek. Zo zie je meteen hoe het eruit komt te zien, en blijf je op
+ * de plek waar je mee bezig was.
  *
- * Ernaast staat een balk voor het blok waar je in zit, met wat niet op het
- * papier past: elementen toevoegen of verplaatsen, opmaak, btw en de klant.
+ * Zodra je iets kiest, duikt onderin een kleine balk op met wat niet op het
+ * papier kan: opmaak, toevoegen, verwijderen en de instellingen.
  */
 export default function DocumentEditor({
   title,
@@ -109,6 +110,35 @@ export default function DocumentEditor({
     setSelected(huidig => (huidig === null ? null : { block: volgorde.indexOf(huidig.block) }));
   };
 
+  /**
+   * Een element dat op het papier versleept is. Binnen een blok schuift het
+   * de rest op; naar een ander blok verhuist het en komt het op de plek van
+   * het element waar je het op losliet.
+   */
+  const moveElement = (from: EditTarget, to: EditTarget) => {
+    if (!onBlocksChange || from.element === undefined || to.element === undefined) return;
+
+    const source = blocks[from.block];
+    const element = source?.elements[from.element];
+    if (!element) return;
+
+    if (from.block === to.block) {
+      onBlocksChange(
+        blocks.map((b, i) => (i === from.block ? { ...b, elements: verplaats(b.elements, from.element!, to.element!) } : b))
+      );
+    } else {
+      onBlocksChange(
+        blocks.map((b, i) => {
+          if (i === from.block) return { ...b, elements: b.elements.filter((_, e) => e !== from.element) };
+          if (i === to.block) return { ...b, elements: [...b.elements.slice(0, to.element), element, ...b.elements.slice(to.element)] };
+          return b;
+        })
+      );
+    }
+
+    setSelected({ block: to.block, element: to.element });
+  };
+
   const deleteBlock = (index: number) => {
     onBlocksChange?.(blocks.filter((_, i) => i !== index));
     close();
@@ -117,46 +147,42 @@ export default function DocumentEditor({
   const openBlock = selected !== null ? blocks[selected.block] : null;
 
   return (
-    <div className="grid two left-3fr">
-      <div className="block">
-        <DocumentPreview
-          title={title}
-          meta={meta}
-          customer={customer}
-          blocks={blocks}
-          currency={currency}
-          signature={signature}
-          selected={selected}
-          onSelect={onBlocksChange ? setSelected : undefined}
-          onChangeBlock={onBlocksChange ? changeBlock : undefined}
-          focusField={focusField}
-          onAddBlock={onBlocksChange ? addBlock : undefined}
-          onSplitBlock={onBlocksChange ? splitBlock : undefined}
-          onMoveBlock={onBlocksChange ? moveBlock : undefined}
-        />
+    <>
+      <div className="grid">
+        <div className="block">
+          <DocumentPreview
+            title={title}
+            meta={meta}
+            customer={customer}
+            blocks={blocks}
+            currency={currency}
+            signature={signature}
+            selected={selected}
+            onSelect={onBlocksChange ? setSelected : undefined}
+            onChangeBlock={onBlocksChange ? changeBlock : undefined}
+            focusField={focusField}
+            onMoveElement={onBlocksChange ? moveElement : undefined}
+            onAddBlock={onBlocksChange ? addBlock : undefined}
+            onSplitBlock={onBlocksChange ? splitBlock : undefined}
+            onMoveBlock={onBlocksChange ? moveBlock : undefined}
+          />
+        </div>
       </div>
 
-      <div className="block">
-        {openBlock && selected ? (
-          <BlockEditor
-            block={openBlock}
-            blockIndex={selected.block}
-            selected={selected}
-            onChange={(block) => changeBlock(selected.block, block)}
-            onSelect={setSelected}
-            onFocusField={focus}
-            onDuplicate={() => copyBlock(selected.block)}
-            onRemove={() => deleteBlock(selected.block)}
-            onClose={close}
-            dataFields={dataFields}
-          />
-        ) : (
-          <p className="field-note">
-            Klik op een tekst, kop of regel in de offerte om hem daar meteen aan te passen.
-            Hier verschijnen dan de opties voor dat onderdeel.
-          </p>
-        )}
-      </div>
-    </div>
+      {openBlock && selected && (
+        <IslandBar
+          block={openBlock}
+          blockIndex={selected.block}
+          selected={selected}
+          onChange={(block) => changeBlock(selected.block, block)}
+          onSelect={setSelected}
+          onFocusField={focus}
+          onDuplicate={() => copyBlock(selected.block)}
+          onRemove={() => deleteBlock(selected.block)}
+          onClose={close}
+          dataFields={dataFields}
+        />
+      )}
+    </>
   );
 }

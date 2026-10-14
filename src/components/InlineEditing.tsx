@@ -46,6 +46,16 @@ export interface InlineEditing {
   select: (target: EditTarget) => void;
   /** Welk onderdeel er nu bewerkt wordt */
   selected: EditTarget | null;
+  /** Een element naar een andere plek slepen, ook naar een ander blok */
+  drag: {
+    /** Wat er gesleept wordt, en boven welk element het nu hangt */
+    from: EditTarget | null;
+    over: EditTarget | null;
+    start: (from: EditTarget) => void;
+    hover: (over: EditTarget) => void;
+    drop: (to: EditTarget) => void;
+    end: () => void;
+  };
 }
 
 export const InlineEditContext = createContext<InlineEditing | null>(null);
@@ -177,6 +187,8 @@ export function EditableText({ as: Tag = 'span', field, value, onChange, onKeyDo
 
     sent.current = null;
     if (el.textContent !== value) el.textContent = value;
+    // Leeg zou het veld geen hoogte hebben en valt er niets aan te klikken
+    if (!value && !el.firstChild) el.innerHTML = '<br>';
   }, [value]);
 
   const Element = Tag as any;
@@ -226,10 +238,7 @@ interface EditableRichTextProps {
   to?: number;
   /** Krijgt de hele tekst terug, niet alleen het stuk van dit vel */
   onChange: (html: string) => void;
-  /** Voor de indeling: het hoeveelste onderdeel van het vel dit is */
-  part: number;
   className?: string;
-  label?: string;
   onFocus?: () => void;
 }
 
@@ -240,7 +249,7 @@ interface EditableRichTextProps {
  * van de alinea's. Wat je in het ene deel typt wordt weer aan de rest geplakt,
  * zodat er altijd één tekst opgeslagen wordt.
  */
-export function EditableRichText({ field, value, from, to, onChange, part, className, label, onFocus }: EditableRichTextProps) {
+export function EditableRichText({ field, value, from, to, onChange, className, onFocus }: EditableRichTextProps) {
   const ref = useRef<HTMLDivElement>(null);
   const editing = useContext(InlineEditContext);
   const sent = useRef<{ value: string; from?: number; to?: number } | null>(null);
@@ -252,7 +261,8 @@ export function EditableRichText({ field, value, from, to, onChange, part, class
   const paragraphs = splitParagraphs(html);
   const start = from ?? 0;
   const end = to ?? paragraphs.length;
-  const partHtml = paragraphs.slice(start, end).join('');
+  // Een lege tekst krijgt één lege alinea, anders is er geen regel om in te klikken
+  const partHtml = paragraphs.slice(start, end).join('') || '<p><br></p>';
 
   // Alleen bijwerken als er iets anders in moet dan wat er al staat, anders
   // springt de cursor bij elke letter naar het begin
@@ -294,11 +304,8 @@ export function EditableRichText({ field, value, from, to, onChange, part, class
     <div
       ref={ref}
       className={className}
-      data-element="tekst"
-      data-stuk={part}
       data-van={start}
       data-bewerk={field}
-      data-label={label}
       contentEditable
       suppressContentEditableWarning
       role="textbox"

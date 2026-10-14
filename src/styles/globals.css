@@ -199,6 +199,12 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .editable-region::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
 .editable-region:hover::after, .editable-region.active::after {opacity: 1;}
 .editable-region:empty {min-height: 20px;}
+.editable-region > .drag-handle {position: absolute; top: 0; left: calc(-24px - var(--space10)); z-index: 3;}
+
+/* Bewerkbalk onderin, zodra er iets op het papier gekozen is */
+.island-bar {position: fixed; bottom: var(--space20); left: 50%; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 2 * var(--space20));}
+.island-bar .toolbar button.delete {color: var(--color6);}
+.island-bar .toolbar button:disabled {opacity: .4; pointer-events: none;}
 
 /* Het papier op ware grootte.
 
