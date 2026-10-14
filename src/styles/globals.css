@@ -650,7 +650,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-item:hover .pick .checkbox, .inbox .inbox-item.checked .pick .checkbox {display: flex;}
 .inbox .list-header .title-row .checkbox {display: flex; align-items: center; justify-content: center; flex: 0 0 auto;}
 .inbox .list-header .title-row h1 {flex: 1;}
-.inbox .inbox-item .pick .dot {position: absolute; top: 0; left: 0; z-index: 1; width: 8px; height: 8px; border-radius: 50%; background: var(--color5);}
+.inbox .inbox-item .pick .dot {position: absolute; top: 0; left: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--color5);}
 .inbox .inbox-item .summary {display: flex; flex-direction: column; gap: 1px; min-width: 0;}
 .inbox .inbox-item .summary .top {display: flex; align-items: baseline; justify-content: space-between; gap: var(--space10); min-width: 0;}
 .inbox .inbox-item .summary .from {min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
