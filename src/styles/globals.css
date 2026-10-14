@@ -646,11 +646,11 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-item:hover, .inbox .inbox-item.active, .inbox .inbox-item.checked {background: var(--color3);}
 .inbox .inbox-item .pick {position: relative; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;}
 .inbox .inbox-item .pick .checkbox {display: none; align-items: center; justify-content: center;}
-.inbox .inbox-item:hover .pick .avatar, .inbox .inbox-list.selecting .inbox-item .pick .avatar {display: none;}
-.inbox .inbox-item:hover .pick .checkbox, .inbox .inbox-list.selecting .inbox-item .pick .checkbox {display: flex;}
+.inbox .inbox-item:hover .pick .avatar, .inbox .inbox-item.checked .pick .avatar {display: none;}
+.inbox .inbox-item:hover .pick .checkbox, .inbox .inbox-item.checked .pick .checkbox {display: flex;}
 .inbox .list-header .title-row .checkbox {display: flex; align-items: center; justify-content: center; flex: 0 0 auto;}
 .inbox .list-header .title-row h1 {flex: 1;}
-.inbox .inbox-item .pick .dot {position: absolute; top: 0; left: 0; z-index: 1; width: 8px; height: 8px; border-radius: 50%; background: var(--color5); border: 2px solid var(--color2);}
+.inbox .inbox-item .pick .dot {position: absolute; top: 0; left: 0; z-index: 1; width: 8px; height: 8px; border-radius: 50%; background: var(--color5);}
 .inbox .inbox-item .summary {display: flex; flex-direction: column; gap: 1px; min-width: 0;}
 .inbox .inbox-item .summary .top {display: flex; align-items: baseline; justify-content: space-between; gap: var(--space10); min-width: 0;}
 .inbox .inbox-item .summary .from {min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
@@ -716,7 +716,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .mail-attachments {margin: var(--space15) 0 0 0;}
 .inbox .mail-attachments .label {display: block; margin: 0 0 var(--space5) 0; font-size: var(--fontsize2); color: var(--font-color2);}
 .inbox .mail-attachments .list {display: flex; flex-wrap: wrap; gap: var(--space10);}
-.inbox .mail-attachments .attachment {display: inline-flex; align-items: center; max-width: 100%; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2); transition: .3s all ease;}
+.inbox .mail-attachments .attachment {display: inline-flex; align-items: center; max-width: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2); transition: .3s all ease;}
 .inbox .mail-attachments .attachment:hover {border-color: var(--font-color2);}
 .inbox .mail-attachments .open {display: flex; align-items: center; gap: var(--space10); min-width: 0; padding: var(--space5) var(--space10) var(--space5) var(--space5); color: var(--font-color1); text-decoration: none;}
 .inbox .mail-attachments .icon {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex: 0 0 auto; border-radius: var(--border-radius1); background: var(--color4); color: var(--font-color2);}

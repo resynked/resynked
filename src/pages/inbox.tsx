@@ -459,7 +459,7 @@ export default function InboxPage() {
               })}
         </nav>
 
-        <div className={`inbox-list${checkedIds.length > 0 ? ' selecting' : ''}`}>
+        <div className="inbox-list">
           <div className="list-header">
             <div className="title-row">
               {items.length > 0 && (
@@ -536,7 +536,7 @@ export default function InboxPage() {
                     if (event.key === 'Enter') open(item);
                   }}
                 >
-                  {/* De initialen, of het vinkje als je erover gaat of al iets aanvinkte;
+                  {/* De initialen, of het vinkje als je erover gaat of dit bericht hebt aangevinkt;
                       een ongelezen bericht heeft een stip linksboven op de avatar */}
                   <span className="pick">
                     {item.unread && <span className="dot" aria-label="Ongelezen" />}
