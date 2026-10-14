@@ -148,11 +148,9 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 /* Ingeklapt: alleen de iconen, met de naam als label bij hover */
 .sidebar.collapsed {width: 56px;}
 .sidebar.collapsed .logo {justify-content: center;}
-.sidebar.collapsed .navigation a {position: relative; justify-content: center; padding: var(--space5);}
+.sidebar.collapsed .navigation a {position: relative; justify-content: center; padding: var(--space5); margin: 0 auto;}
 .sidebar.collapsed .navigation a .label {display: none;}
 .sidebar.collapsed .navigation a .count {position: absolute; top: -4px; right: 0; min-width: 16px; padding: 0 4px; font-size: 9px;}
-.sidebar.collapsed .navigation a::after {top: 50%; left: calc(100% + var(--space10)); transform: translateY(-50%); z-index: 20; color: var(--font-color1); display: none;}
-.sidebar.collapsed .navigation a:hover::after {display: block; opacity: 1;}
 .sidebar.collapsed .profile {justify-content: center; padding: var(--space5);}
 .sidebar.collapsed .profile .info {display: none;}
 
@@ -215,6 +213,11 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .editable-region.active {outline-color: var(--color4); background: var(--color3);}
 .editable-region::after, button[data-label]::after, .sidebar.collapsed .navigation a::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
 .editable-region:hover::after, .editable-region.active::after, button[data-label]:hover::after {opacity: 1;}
+
+/* In de ingeklapte zijbalk staat het label rechts naast het icoon. Deze regels
+   moeten ná de gedeelde regel hierboven staan, anders wint die met top: -28px */
+.sidebar.collapsed .navigation a::after {top: 50%; left: calc(100% + var(--space10)); transform: translateY(-50%); z-index: 20; color: var(--font-color1); display: none;}
+.sidebar.collapsed .navigation a:hover::after {display: block; opacity: 1;}
 
 /* Hetzelfde label als tooltip boven een icoonknop, zodat je ziet wat hij doet */
 button[data-label] {position: relative;}
