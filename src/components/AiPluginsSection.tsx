@@ -7,10 +7,11 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { setAiAccount, useAiAccount } from '@/hooks/useAiAccount';
 import type { AiProviderName } from '@/lib/ai/types';
 
-const NAMES: Record<AiProviderName, string> = { anthropic: 'Anthropic', openai: 'OpenAI' };
+const NAMES: Record<AiProviderName, string> = { anthropic: 'Anthropic', openai: 'OpenAI', gemini: 'Google Gemini' };
 
 /**
- * De AI-plug-ins bij Instellingen > Plug-ins. Eén AI-dienst per gebruiker,
+ * De AI-plug-ins bij Instellingen > Plug-ins, als groep binnen de lijst van
+ * PluginsSettings (een kopje en de rijen). Eén AI-dienst per gebruiker,
  * met zijn eigen sleutel: wie OpenAI aanzet terwijl Anthropic aan staat,
  * vervangt die.
  */
@@ -69,8 +70,7 @@ export default function AiPluginsSection() {
 
   return (
     <>
-      <h3>AI</h3>
-      <div className="plugin-list">
+      <h4>AI</h4>
         {AI_PLUGINS.map(({ provider, icon: Icon, summary }) => {
           const connected = account?.provider === provider;
 
@@ -103,7 +103,6 @@ export default function AiPluginsSection() {
             </div>
           );
         })}
-      </div>
 
       <Modal isOpen={!!dialogPlugin} onClose={() => setDialogFor(null)} title="">
         {dialogPlugin && (

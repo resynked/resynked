@@ -160,8 +160,9 @@ export default function PluginsSettings() {
     <>
       <h2>Plug-ins</h2>
 
-      <h3>E-mail en agenda</h3>
+      {/* Eén lijst, met per groep een kopje over de volle breedte */}
       <div className="plugin-list">
+        <h4>E-mail en agenda</h4>
         {PLUGINS.map(({ provider, icon: Icon, summary }) => {
           const connected = account?.provider === provider;
 
@@ -196,6 +197,8 @@ export default function PluginsSettings() {
             </div>
           );
         })}
+
+        <AiPluginsSection />
       </div>
 
       <Modal isOpen={!!dialogPlugin} onClose={() => setDialogFor(null)} title="">
@@ -218,8 +221,6 @@ export default function PluginsSettings() {
           />
         )}
       </Modal>
-
-      <AiPluginsSection />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { ComponentType, Fragment, useState } from 'react';
 import { ExternalLink, FileText, MailQuestion } from 'lucide-react';
-import { AnthropicIcon, OpenAiIcon } from '@/components/BrandIcons';
+import { AnthropicIcon, GeminiIcon, OpenAiIcon } from '@/components/BrandIcons';
 import type { AiProviderName } from '@/lib/ai/types';
 
 /** Alles wat er over een AI-plug-in te vertellen valt, voor de lijst en het venster. */
@@ -33,6 +33,15 @@ export const AI_PLUGINS: AiPlugin[] = [
     keysUrl: 'https://platform.openai.com/api-keys',
     keyPlaceholder: 'sk-...',
     links: { website: 'https://openai.com', privacy: 'https://openai.com/policies/privacy-policy' },
+  },
+  {
+    provider: 'gemini',
+    name: 'Google Gemini',
+    icon: GeminiIcon,
+    summary: 'Gemini zet je mail om naar een offerte, met een gratis laag',
+    keysUrl: 'https://aistudio.google.com/apikey',
+    keyPlaceholder: 'AIza...',
+    links: { website: 'https://ai.google.dev', privacy: 'https://policies.google.com/privacy' },
   },
 ];
 
@@ -124,8 +133,10 @@ export default function AiPluginDetail({ plugin, connected, replaces, saving, on
             <a href={plugin.keysUrl} target="_blank" rel="noreferrer">
               {new URL(plugin.keysUrl).host}
             </a>{' '}
-            en plak hem hieronder. Het gebruik wordt rechtstreeks bij {plugin.name} afgerekend; per mail
-            gaat het om een paar cent.
+            en plak hem hieronder.{' '}
+            {plugin.provider === 'gemini'
+              ? 'Google AI Studio heeft een gratis laag met een limiet per minuut en per dag; daar kun je zonder kosten mee testen. Let op: in de gratis laag mag Google je gegevens gebruiken om hun diensten te verbeteren.'
+              : `Het gebruik wordt rechtstreeks bij ${plugin.name} afgerekend; per mail gaat het om een paar cent.`}
           </p>
           <div className="form-section">
             <input

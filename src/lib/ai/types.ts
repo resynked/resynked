@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 /** De AI-diensten waarmee een gebruiker zijn eigen sleutel kan koppelen. */
-export type AiProviderName = 'anthropic' | 'openai';
+export type AiProviderName = 'anthropic' | 'openai' | 'gemini';
 
-export const AI_PROVIDERS: AiProviderName[] = ['anthropic', 'openai'];
+export const AI_PROVIDERS: AiProviderName[] = ['anthropic', 'openai', 'gemini'];
 
 /**
  * Wat de AI uit een mail haalt: de klant, een voorstel voor de offerte, en wat

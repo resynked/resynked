@@ -299,7 +299,7 @@ CREATE TRIGGER update_mail_accounts_updated_at
 ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
--- 7. AI: een eigen sleutel per gebruiker voor Anthropic of OpenAI
+-- 7. AI: een eigen sleutel per gebruiker voor Anthropic, OpenAI of Gemini
 --
 -- Om een mail om te zetten naar een offerte. Versleuteld, net als de mail.
 -- ------------------------------------------------------------
@@ -307,8 +307,9 @@ CREATE TABLE IF NOT EXISTS ai_accounts (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   -- Eén AI-koppeling per gebruiker, met zijn eigen sleutel: hij betaalt zelf
+  -- (Gemini heeft een gratis laag, handig om te testen)
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai')),
+  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai', 'gemini')),
   -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de mailtoegang
   api_key TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -316,6 +317,11 @@ CREATE TABLE IF NOT EXISTS ai_accounts (
 );
 
 CREATE INDEX IF NOT EXISTS ai_accounts_tenant_id_idx ON ai_accounts(tenant_id);
+
+-- Wie dit onderdeel al eerder draaide, heeft een tabel zonder Gemini
+ALTER TABLE ai_accounts DROP CONSTRAINT IF EXISTS ai_accounts_provider_check;
+ALTER TABLE ai_accounts ADD CONSTRAINT ai_accounts_provider_check
+  CHECK (provider IN ('anthropic', 'openai', 'gemini'));
 
 DROP TRIGGER IF EXISTS update_ai_accounts_updated_at ON ai_accounts;
 CREATE TRIGGER update_ai_accounts_updated_at

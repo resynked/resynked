@@ -51,8 +51,9 @@ RLS-policies op de tabellen vormen de tweede laag.
    MICROSOFT_CLIENT_ID=...
    MICROSOFT_CLIENT_SECRET=...
 
-   # Optioneel: welk OpenAI-model de AI-plug-in gebruikt (standaard gpt-5)
-   OPENAI_MODEL=...
+   # Optioneel: welk model de AI-plug-ins gebruiken
+   OPENAI_MODEL=...   # standaard gpt-5
+   GEMINI_MODEL=...   # standaard gemini-flash-latest
    ```
 
    Deze drie zijn systeembreed. Het afzendadres per aannemer staat niet hier
@@ -112,7 +113,7 @@ registrations*:
 
 ## AI: mail omzetten naar offerte
 
-Bij **Instellingen > Plug-ins > AI** zet een gebruiker Anthropic of OpenAI aan met
+Bij **Instellingen > Plug-ins > AI** zet een gebruiker Anthropic, OpenAI of Google Gemini aan met
 zijn **eigen API-sleutel**; het gebruik betaalt hij zelf bij die dienst. De
 sleutel wordt bij het installeren geprobeerd en staat daarna versleuteld in
 `ai_accounts` (met dezelfde `MAIL_ENCRYPTION_KEY` als de mailtoegang).
@@ -126,8 +127,11 @@ antwoord komt klaar te staan onderin het gesprek. De AI verzint geen prijzen:
 zonder vergelijkbaar eerder werk blijft de prijs leeg.
 
 Anthropic draait op Claude Opus 5.5 (`src/lib/ai/anthropic.ts`), OpenAI op
-`OPENAI_MODEL` (`src/lib/ai/openai.ts`); de opdracht is voor beide gelijk
-(`src/lib/ai/prompt.ts`).
+`OPENAI_MODEL` (`src/lib/ai/openai.ts`) en Gemini op `GEMINI_MODEL`
+(`src/lib/ai/gemini.ts`); de opdracht is voor alle drie gelijk
+(`src/lib/ai/prompt.ts`). Gemini heeft via Google AI Studio een gratis laag,
+handig om te testen; Google mag gegevens uit die gratis laag gebruiken om hun
+diensten te verbeteren.
 
 ## Database
 

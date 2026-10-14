@@ -538,11 +538,13 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Plug-ins: logo, naam met uitleg, en de schakelaar */
 .plugin-list {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space20) var(--space40); padding: var(--space10) 0; box-sizing: border-box;}
-.plugin {display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius1); transition: .3s all ease; cursor: pointer;}
-.plugin:hover {background: var(--color4);}
-.plugin .plugin-icon {display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
-.plugin .information .title {display: block; font-weight: 500;}
-.plugin .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
+.plugin-list h4 {grid-column: 1 / -1; margin: var(--space10) 0 0 0;}
+.plugin-list h4:first-child {margin-top: 0;}
+.plugin-list .plugin {display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius1); transition: .3s all ease; cursor: pointer;}
+.plugin-list .plugin:hover {background: var(--color4);}
+.plugin-list .plugin .plugin-icon {display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
+.plugin-list .plugin .information .title {display: block; font-weight: 500;}
+.plugin-list .plugin .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
 
 /* Het venster bij een plug-in, zoals een pagina in een app-winkel */
 .modal:has(.plugin-detail) {max-width: 640px;}
@@ -554,9 +556,10 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail p {line-height: 1.6; margin: 0 0 var(--space10) 0;}
 .plugin-detail h3 {padding: 0 0 var(--space10) 0; margin: var(--space20) 0 var(--space10) 0; border-bottom: 1px solid var(--border-color);}
 .plugin-detail h3 .description {color: var(--font-color2); font-weight: 400;}
-.plugin-detail .plugin-parts .plugin {grid-template-columns: 40px 1fr; padding: var(--space5) 0; cursor: default;}
-.plugin-detail .plugin-parts .plugin:hover {background: none;}
-.plugin-detail .plugin-parts .plugin-icon {width: 40px; height: 40px;}
+.plugin-detail .plugin-parts .plugin {display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: var(--space15); padding: var(--space5) 0;}
+.plugin-detail .plugin-parts .plugin .plugin-icon {display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
+.plugin-detail .plugin-parts .plugin .information .title {display: block; font-weight: 500;}
+.plugin-detail .plugin-parts .plugin .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
 .plugin-detail .plugin-approval.highlight {padding: var(--space15); border: 1px solid var(--color6); border-radius: var(--border-radius2);}
 .plugin-detail .copy-field {display: flex; align-items: center; gap: var(--space10); margin: 0 0 var(--space10) 0; padding: var(--space5) var(--space5) var(--space5) var(--space10); background: var(--color4); border-radius: var(--border-radius1);}
 .plugin-detail .copy-field code {flex: 1; min-width: 0; font-size: var(--fontsize2); overflow-wrap: anywhere;}

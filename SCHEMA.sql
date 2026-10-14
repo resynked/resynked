@@ -347,8 +347,9 @@ CREATE TABLE ai_accounts (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   -- Eén AI-koppeling per gebruiker, met zijn eigen sleutel: hij betaalt zelf
+  -- (Gemini heeft een gratis laag, handig om te testen)
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai')),
+  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai', 'gemini')),
   -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de mailtoegang
   api_key TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

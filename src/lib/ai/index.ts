@@ -3,11 +3,12 @@ import { decrypt, encrypt } from '@/lib/crypto';
 import type { MailThread } from '@/lib/mail/types';
 import { anthropic } from './anthropic';
 import { openai } from './openai';
+import { gemini } from './gemini';
 import { AI_PROVIDERS, AiKeyError, type AiProvider, type AiProviderName, type PastQuoteLine } from './types';
 
 export * from './types';
 
-const PROVIDERS: Record<AiProviderName, AiProvider> = { anthropic, openai };
+const PROVIDERS: Record<AiProviderName, AiProvider> = { anthropic, openai, gemini };
 
 export function isAiProvider(value: unknown): value is AiProviderName {
   return AI_PROVIDERS.includes(value as AiProviderName);
@@ -50,7 +51,7 @@ export async function openAi(userId: string) {
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) throw new AiKeyError('Zet eerst Anthropic of OpenAI aan bij Plug-ins');
+  if (!data) throw new AiKeyError('Zet eerst een AI-plug-in aan bij Plug-ins');
 
   return { name: data.provider as AiProviderName, provider: aiProvider(data.provider), apiKey: decrypt(data.api_key) };
 }
