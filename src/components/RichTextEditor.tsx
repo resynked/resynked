@@ -1,21 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  Link2,
-  Link2Off,
-  Undo2,
-  Redo2,
-  RemoveFormatting,
-  X,
-} from 'lucide-react';
+import { useCallback, useEffect, useRef } from 'react';
+import FormattingToolbar from '@/components/FormattingToolbar';
 import {
   htmlNaarRichText,
   isRichText,
@@ -33,75 +17,6 @@ interface RichTextEditorProps {
 }
 
 /**
- * De knoppen in de balk. Een blok-knop zet de hele alinea om, een opmaak-knop
- * werkt op de selectie. `state` is wat de browser als aan of uit meldt.
- */
-type ToolbarButton = {
-  command: string;
-  value?: string;
-  icon: typeof Bold;
-  title: string;
-  /** Waarmee gekeken wordt of deze knop nu aan staat */
-  state?: { kind: 'inline'; command: string } | { kind: 'block'; tag: string };
-};
-
-const GROUPS: ToolbarButton[][] = [
-  [
-    { command: 'bold', icon: Bold, title: 'Vet', state: { kind: 'inline', command: 'bold' } },
-    { command: 'italic', icon: Italic, title: 'Cursief', state: { kind: 'inline', command: 'italic' } },
-    { command: 'underline', icon: Underline, title: 'Onderstreept', state: { kind: 'inline', command: 'underline' } },
-    {
-      command: 'strikeThrough',
-      icon: Strikethrough,
-      title: 'Doorgehaald',
-      state: { kind: 'inline', command: 'strikeThrough' },
-    },
-  ],
-  [
-    {
-      command: 'formatBlock',
-      value: 'h2',
-      icon: Heading2,
-      title: 'Kop',
-      state: { kind: 'block', tag: 'h2' },
-    },
-    {
-      command: 'formatBlock',
-      value: 'h3',
-      icon: Heading3,
-      title: 'Tussenkop',
-      state: { kind: 'block', tag: 'h3' },
-    },
-    {
-      command: 'formatBlock',
-      value: 'blockquote',
-      icon: Quote,
-      title: 'Citaat',
-      state: { kind: 'block', tag: 'blockquote' },
-    },
-  ],
-  [
-    {
-      command: 'insertUnorderedList',
-      icon: List,
-      title: 'Opsomming',
-      state: { kind: 'inline', command: 'insertUnorderedList' },
-    },
-    {
-      command: 'insertOrderedList',
-      icon: ListOrdered,
-      title: 'Genummerde lijst',
-      state: { kind: 'inline', command: 'insertOrderedList' },
-    },
-  ],
-  [
-    { command: 'removeFormat', icon: RemoveFormatting, title: 'Opmaak weghalen' },
-    { command: 'undo', icon: Undo2, title: 'Ongedaan maken' },
-    { command: 'redo', icon: Redo2, title: 'Opnieuw' },
-  ],
-];
-
-/**
  * Tekstverwerker voor een tekstelement: een balk met knoppen en daaronder het
  * vel waarin je typt. De opmaak gaat als HTML naar buiten.
  *
@@ -112,12 +27,9 @@ const GROUPS: ToolbarButton[][] = [
  */
 export default function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const editableRef = useRef<HTMLDivElement>(null);
-  const savedRange = useRef<Range | null>(null);
   // Wat we zelf als laatste hebben doorgegeven. Komt dat onveranderd terug,
   // dan staat het al in het vel en hoeft er niets overschreven te worden
   const laatstGestuurd = useRef<string | null>(null);
-  const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
-  const [linkValue, setLinkValue] = useState<string | null>(null);
 
   // Platte tekst uit een oude offerte krijgt eenmalig zijn opmaak
   const html = isRichText(value) ? value : plainTextToRichText(value);
@@ -169,164 +81,11 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     [onChange]
   );
 
-  /** Leest bij de browser op welke knoppen nu aan staan. */
-  const refreshStates = useCallback(() => {
-    const editable = editableRef.current;
-    if (!editable || !editable.contains(document.getSelection()?.anchorNode ?? null)) return;
-
-    const states: Record<string, boolean> = {};
-
-    GROUPS.flat().forEach((button) => {
-      if (!button.state) return;
-
-      if (button.state.kind === 'inline') {
-        try {
-          states[button.title] = document.queryCommandState(button.state.command);
-        } catch {
-          states[button.title] = false;
-        }
-        return;
-      }
-
-      try {
-        states[button.title] =
-          document.queryCommandValue('formatBlock').toLowerCase() === button.state.tag;
-      } catch {
-        states[button.title] = false;
-      }
-    });
-
-    setActiveStates(states);
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('selectionchange', refreshStates);
-    return () => document.removeEventListener('selectionchange', refreshStates);
-  }, [refreshStates]);
-
-  const run = (button: ToolbarButton) => {
-    editableRef.current?.focus();
-
-    // Een tweede klik op dezelfde kop zet de alinea weer terug naar gewoon
-    const value =
-      button.command === 'formatBlock'
-        ? activeStates[button.title]
-          ? '<p>'
-          : `<${button.value}>`
-        : undefined;
-
-    document.execCommand(button.command, false, value);
-    emit();
-    refreshStates();
-  };
-
-  /** Bewaart waar de cursor staat, want die gaat verloren zodra je in het invoerveld klikt. */
-  const openLinkField = () => {
-    const selection = document.getSelection();
-    savedRange.current = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
-    setLinkValue('');
-  };
-
-  const restoreSelection = () => {
-    const selection = document.getSelection();
-    if (!savedRange.current || !selection) return;
-
-    selection.removeAllRanges();
-    selection.addRange(savedRange.current);
-  };
-
-  const applyLink = () => {
-    const href = (linkValue || '').trim();
-    editableRef.current?.focus();
-    restoreSelection();
-
-    if (href) {
-      document.execCommand('createLink', false, href);
-    }
-
-    setLinkValue(null);
-    emit();
-  };
-
-  const removeLink = () => {
-    editableRef.current?.focus();
-    document.execCommand('unlink');
-    emit();
-    refreshStates();
-  };
+  const getField = useCallback(() => editableRef.current, []);
 
   return (
     <div className="rich-editor">
-      <div className="toolbar">
-        {GROUPS.map((group, groupIndex) => (
-          <div key={groupIndex} className="group">
-            {group.map((button) => {
-              const Icon = button.icon;
-              return (
-                <button
-                  key={button.title}
-                  type="button"
-                  className={activeStates[button.title] ? 'active' : ''}
-                  title={button.title}
-                  aria-label={button.title}
-                  aria-pressed={button.state ? !!activeStates[button.title] : undefined}
-                  // Zonder dit verliest het vel zijn selectie bij het aanklikken
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => run(button)}
-                >
-                  <Icon size={15} />
-                </button>
-              );
-            })}
-          </div>
-        ))}
-
-        <div className="group">
-          <button
-            type="button"
-            title="Link toevoegen"
-            aria-label="Link toevoegen"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={openLinkField}
-          >
-            <Link2 size={15} />
-          </button>
-          <button
-            type="button"
-            title="Link weghalen"
-            aria-label="Link weghalen"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={removeLink}
-          >
-            <Link2Off size={15} />
-          </button>
-        </div>
-      </div>
-
-      {linkValue !== null && (
-        <div className="link-row">
-          <input
-            type="url"
-            value={linkValue}
-            autoFocus
-            placeholder="https://"
-            onChange={(event) => setLinkValue(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                applyLink();
-              }
-              if (event.key === 'Escape') setLinkValue(null);
-            }}
-          />
-          <button type="button" className="button" onClick={applyLink}>
-            Toevoegen
-          </button>
-          <button type="button" className="cancel" title="Annuleren" onClick={() => setLinkValue(null)}>
-            <X size={15} />
-          </button>
-        </div>
-      )}
+      <FormattingToolbar getField={getField} />
 
       <div
         ref={editableRef}
@@ -345,8 +104,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
             editable.innerHTML = opgeruimd;
           }
         }}
-        onKeyUp={refreshStates}
-        onMouseUp={refreshStates}
         // Geplakte opmaak blijft behouden, teruggebracht tot wat wij kennen:
         // koppen, opsommingen en vet of cursief. Stijlen, kleuren en de rest
         // gaan eruit, zodat tekst uit een andere offerte er meteen goed staat

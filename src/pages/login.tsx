@@ -37,8 +37,11 @@ export default function Login() {
         setIsLoading(false);
       } else {
         toast.success('Gelukt', 'Succesvol ingelogd!');
-        // Redirect to dashboard on successful login
-        setTimeout(() => router.push('/'), 1000);
+        // Terug naar de pagina waar je heen wilde, of anders het dashboard.
+        // Alleen een pad binnen de app, geen adres van buiten
+        const terug = router.query.callbackUrl;
+        const doel = typeof terug === 'string' && terug.startsWith('/') && !terug.startsWith('//') ? terug : '/';
+        setTimeout(() => router.push(doel), 1000);
       }
     } catch (err) {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');

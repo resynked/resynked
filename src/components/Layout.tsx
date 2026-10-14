@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
@@ -15,6 +15,12 @@ interface LayoutProps {
 export default function Layout({ children, title }: LayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  // De middleware stuurt je normaal al door voordat de pagina laadt; dit vangt
+  // een sessie op die verloopt terwijl de pagina open staat
+  useEffect(() => {
+    if (status === 'unauthenticated') router.replace('/login');
+  }, [status, router]);
 
   // Ook tijdens het laden en het doorsturen staat de titel er al, anders
   // ziet de bezoeker het adres van de pagina in zijn tabblad staan
@@ -45,10 +51,7 @@ export default function Layout({ children, title }: LayoutProps) {
     );
   }
 
-  if (!session) {
-    router.push('/login');
-    return head;
-  }
+  if (!session) return head;
 
   return (
     <div className="layout">

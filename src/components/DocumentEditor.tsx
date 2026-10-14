@@ -1,7 +1,7 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import DocumentPreview from '@/components/DocumentPreview';
-import SidePanel from '@/components/SidePanel';
 import BlockEditor from '@/components/BlockEditor';
+import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
 import { splitsBlok, type Stuk } from '@/lib/pagination';
 import { verplaats } from '@/lib/sorteren';
@@ -22,9 +22,12 @@ interface DocumentEditorProps {
 }
 
 /**
- * Toont het document over de volle breedte. Klik je op een blok, dan schuift
- * rechts het paneel open met de titel van dat blok en de elementen erin —
- * zo staat niet het hele formulier tegelijk op het scherm.
+ * Het document over de volle breedte, en je bewerkt het op het papier zelf:
+ * klik in een tekst, kop, titel of regel en typ. Zo zie je meteen hoe het
+ * eruit komt te zien, en blijf je op de plek waar je mee bezig was.
+ *
+ * Ernaast staat een balk voor het blok waar je in zit, met wat niet op het
+ * papier past: elementen toevoegen of verplaatsen, opmaak, btw en de klant.
  */
 export default function DocumentEditor({
   title,
@@ -36,16 +39,35 @@ export default function DocumentEditor({
   dataFields,
   onBlocksChange,
 }: DocumentEditorProps) {
-  const [activeBlock, setActiveBlock] = useState<number | null>(null);
+  const [selected, setSelected] = useState<EditTarget | null>(null);
+  // Een veld dat de cursor moet krijgen, zoals de titel van een nieuw blok.
+  // Elke keer een nieuw object, zodat dezelfde vraag twee keer kan komen
+  const [focusField, setFocusField] = useState<{ field: string } | null>(null);
 
-  const close = () => setActiveBlock(null);
+  const close = () => setSelected(null);
+  const focus = (field: string) => setFocusField({ field });
 
-  // Een nieuw blok opent meteen, zodat je de titel kunt typen
+  // Escape stopt met bewerken, zoals bij elk ander venster
+  useEffect(() => {
+    if (!selected) return;
+
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      (document.activeElement as HTMLElement | null)?.blur();
+      setSelected(null);
+    };
+
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [selected]);
+
+  // Een nieuw blok krijgt meteen de cursor in zijn titel
   const addBlock = (atIndex: number) => {
     if (!onBlocksChange) return;
 
     onBlocksChange([...blocks.slice(0, atIndex), emptyBlock(), ...blocks.slice(atIndex)]);
-    setActiveBlock(atIndex);
+    setSelected({ block: atIndex });
+    focus(fieldKeys.title(atIndex));
   };
 
   const changeBlock = (index: number, block: DocumentBlock) => {
@@ -58,7 +80,7 @@ export default function DocumentEditor({
       duplicateBlock(blocks[index]),
       ...blocks.slice(index + 1),
     ]);
-    setActiveBlock(index + 1);
+    setSelected({ block: index + 1 });
   };
 
   /**
@@ -71,12 +93,12 @@ export default function DocumentEditor({
 
     const [eerste, tweede] = splitsBlok(blocks[index], vanaf);
     onBlocksChange([...blocks.slice(0, index), eerste, tweede, ...blocks.slice(index + 1)]);
-    setActiveBlock(index + 1);
+    setSelected({ block: index + 1 });
   };
 
   /**
-   * Een pagina naar een andere plek slepen. Het paneel blijft bij hetzelfde
-   * blok openstaan, ook al staat dat nu ergens anders in de rij.
+   * Een pagina naar een andere plek slepen. De balk blijft bij hetzelfde
+   * blok, ook al staat dat nu ergens anders in de rij.
    */
   const moveBlock = (van: number, naar: number) => {
     if (!onBlocksChange) return;
@@ -84,7 +106,7 @@ export default function DocumentEditor({
     onBlocksChange(verplaats(blocks, van, naar));
 
     const volgorde = verplaats(blocks.map((_, i) => i), van, naar);
-    setActiveBlock(huidig => (huidig === null ? null : volgorde.indexOf(huidig)));
+    setSelected(huidig => (huidig === null ? null : { block: volgorde.indexOf(huidig.block) }));
   };
 
   const deleteBlock = (index: number) => {
@@ -92,39 +114,49 @@ export default function DocumentEditor({
     close();
   };
 
-  const openBlock = activeBlock !== null ? blocks[activeBlock] : null;
+  const openBlock = selected !== null ? blocks[selected.block] : null;
 
   return (
-    <>
-      <div className="grid">
-        <div className="block">
-          <DocumentPreview
-            title={title}
-            meta={meta}
-            customer={customer}
-            blocks={blocks}
-            currency={currency}
-            signature={signature}
-            activeBlock={activeBlock}
-            onSelectBlock={onBlocksChange ? setActiveBlock : undefined}
-            onAddBlock={onBlocksChange ? addBlock : undefined}
-            onSplitBlock={onBlocksChange ? splitBlock : undefined}
-            onMoveBlock={onBlocksChange ? moveBlock : undefined}
-          />
-        </div>
+    <div className="grid two left-3fr">
+      <div className="block">
+        <DocumentPreview
+          title={title}
+          meta={meta}
+          customer={customer}
+          blocks={blocks}
+          currency={currency}
+          signature={signature}
+          selected={selected}
+          onSelect={onBlocksChange ? setSelected : undefined}
+          onChangeBlock={onBlocksChange ? changeBlock : undefined}
+          focusField={focusField}
+          onAddBlock={onBlocksChange ? addBlock : undefined}
+          onSplitBlock={onBlocksChange ? splitBlock : undefined}
+          onMoveBlock={onBlocksChange ? moveBlock : undefined}
+        />
       </div>
 
-      {openBlock && activeBlock !== null && (
-        <SidePanel title="Blok" onClose={close}>
+      <div className="block">
+        {openBlock && selected ? (
           <BlockEditor
             block={openBlock}
-            onChange={(block) => changeBlock(activeBlock, block)}
-            onDuplicate={() => copyBlock(activeBlock)}
-            onRemove={() => deleteBlock(activeBlock)}
+            blockIndex={selected.block}
+            selected={selected}
+            onChange={(block) => changeBlock(selected.block, block)}
+            onSelect={setSelected}
+            onFocusField={focus}
+            onDuplicate={() => copyBlock(selected.block)}
+            onRemove={() => deleteBlock(selected.block)}
+            onClose={close}
             dataFields={dataFields}
           />
-        </SidePanel>
-      )}
-    </>
+        ) : (
+          <p className="field-note">
+            Klik op een tekst, kop of regel in de offerte om hem daar meteen aan te passen.
+            Hier verschijnen dan de opties voor dat onderdeel.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

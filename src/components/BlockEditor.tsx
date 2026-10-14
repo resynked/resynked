@@ -1,18 +1,25 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { Copy, GripVertical, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import Select from '@/components/Select';
-import RichTextEditor from '@/components/RichTextEditor';
+import FormattingToolbar from '@/components/FormattingToolbar';
+import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
 import { verplaats } from '@/lib/sorteren';
-import { useSortable } from '@/hooks/useSortable';
 import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from '@/lib/supabase';
 
 interface BlockEditorProps {
   block: DocumentBlock;
+  blockIndex: number;
+  /** Het element en de regel die op het papier gekozen zijn */
+  selected: EditTarget;
   onChange: (block: DocumentBlock) => void;
+  onSelect: (target: EditTarget) => void;
+  /** Zet de cursor in een veld op het papier, zoals een kop die net is toegevoegd */
+  onFocusField: (field: string) => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  onClose: () => void;
   /** De velden die bij het gegevens-element horen: klant, nummer en datums */
   dataFields?: ReactNode;
 }
@@ -31,7 +38,7 @@ const discountOptions = [
   { value: '20', label: '20%' },
 ];
 
-const ELEMENT_NAMEN: Record<ElementKind, string> = {
+const ELEMENT_NAMES: Record<ElementKind, string> = {
   gegevens: 'Gegevens',
   kop: 'Kop',
   tekst: 'Tekst',
@@ -39,132 +46,211 @@ const ELEMENT_NAMEN: Record<ElementKind, string> = {
   handtekening: 'Handtekening',
 };
 
+/** Een knopje met een icoon, zoals de acties in de rest van de app. */
+function IconAction({
+  className = 'action',
+  title,
+  onClick,
+  disabled,
+  children,
+}: {
+  className?: string;
+  title: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      className={className}
+      href=""
+      title={title}
+      aria-label={title}
+      aria-disabled={disabled || undefined}
+      // Zo blijft de cursor op het papier staan
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={(event) => {
+        event.preventDefault();
+        if (!disabled) onClick();
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 /**
- * Eén blok is één pagina van het document. Het heeft een titel — die komt in
- * het sjabloon op zijn kant in de zijbalk — en daarin zet je elementen:
- * de gegevens, een stuk tekst of een prijstabel, zoveel als je wilt.
+ * De balk boven het papier voor het blok waar je mee bezig bent.
+ *
+ * De tekst zelf typ je op het papier. Hier staat wat daar niet past: elementen
+ * toevoegen en verplaatsen, de opmaakknoppen bij een tekst, btw en korting bij
+ * een prijstabel, en de klant en datums bij de gegevens. Wat er staat hangt af
+ * van waar je op het papier geklikt hebt.
  */
-export default function BlockEditor({ block, onChange, onDuplicate, onRemove, dataFields }: BlockEditorProps) {
+export default function BlockEditor({
+  block,
+  blockIndex,
+  selected,
+  onChange,
+  onSelect,
+  onFocusField,
+  onDuplicate,
+  onRemove,
+  onClose,
+  dataFields,
+}: BlockEditorProps) {
+  const elementIndex = selected.element;
+  const element = elementIndex !== undefined ? block.elements[elementIndex] : undefined;
+  const itemIndex = element?.kind === 'prijstabel' ? selected.item : undefined;
+
+  const setElements = (elements: DocumentElement[]) => onChange({ ...block, elements });
+
   const updateElement = (index: number, changes: Partial<DocumentElement>) => {
-    onChange({
-      ...block,
-      elements: block.elements.map((el, i) => (i === index ? { ...el, ...changes } : el)),
-    });
+    setElements(block.elements.map((el, i) => (i === index ? { ...el, ...changes } : el)));
   };
 
+  /** Het eerste veld van een element, om meteen in te kunnen typen. */
+  const firstField = (kind: ElementKind, index: number) => {
+    if (kind === 'kop') return fieldKeys.heading(blockIndex, index);
+    if (kind === 'tekst') return fieldKeys.text(blockIndex, index);
+    if (kind === 'prijstabel') return fieldKeys.description(blockIndex, index, 0);
+    return null;
+  };
+
+  // Een nieuw element komt onder het gekozen element, of anders onderaan
   const addElement = (kind: ElementKind) => {
-    onChange({ ...block, elements: [...block.elements, emptyElement(kind)] });
+    const at = elementIndex !== undefined ? elementIndex + 1 : block.elements.length;
+    setElements([...block.elements.slice(0, at), emptyElement(kind), ...block.elements.slice(at)]);
+    onSelect({ block: blockIndex, element: at });
+
+    const field = firstField(kind, at);
+    if (field) onFocusField(field);
+  };
+
+  const moveElement = (from: number, to: number) => {
+    if (to < 0 || to >= block.elements.length) return;
+    setElements(verplaats(block.elements, from, to));
+    onSelect({ block: blockIndex, element: to });
+  };
+
+  const copyElement = (index: number) => {
+    setElements([
+      ...block.elements.slice(0, index + 1),
+      duplicateElement(block.elements[index]),
+      ...block.elements.slice(index + 1),
+    ]);
+    onSelect({ block: blockIndex, element: index + 1 });
   };
 
   const removeElement = (index: number) => {
-    onChange({ ...block, elements: block.elements.filter((_, i) => i !== index) });
+    setElements(block.elements.filter((_, i) => i !== index));
+    onSelect({ block: blockIndex });
   };
 
-  // Slepen aan het handvat zet een element hoger of lager op de pagina
-  const sorteer = useSortable((van, naar) => {
-    onChange({ ...block, elements: verplaats(block.elements, Number(van), Number(naar)) });
-  });
-
-  /**
-   * Hetzelfde voor de regels in een prijstabel. De sleutel is "element:regel",
-   * zodat één handvat-administratie voor alle tabellen in dit blok volstaat.
-   * Een regel naar een andere tabel slepen doen we niet: de btw en de korting
-   * horen bij de tabel waar hij in staat.
-   */
-  const sorteerRegels = useSortable((van, naar) => {
-    const [vanElement, vanRegel] = String(van).split(':').map(Number);
-    const [naarElement, naarRegel] = String(naar).split(':').map(Number);
-    if (vanElement !== naarElement) return;
-
-    updateElement(vanElement, {
-      items: verplaats(block.elements[vanElement].items, vanRegel, naarRegel),
-    });
-  });
-
-  const copyElement = (index: number) => {
-    const copy = duplicateElement(block.elements[index]);
-    onChange({
-      ...block,
-      elements: [...block.elements.slice(0, index + 1), copy, ...block.elements.slice(index + 1)],
-    });
+  const setItems = (items: LineItem[]) => {
+    if (elementIndex !== undefined) updateElement(elementIndex, { items });
   };
 
-  const updateItem = (elementIndex: number, itemIndex: number, changes: Partial<LineItem>) => {
-    const element = block.elements[elementIndex];
-    updateElement(elementIndex, {
-      items: element.items.map((item, i) => (i === itemIndex ? { ...item, ...changes } : item)),
-    });
+  const addItem = (item: LineItem) => {
+    if (!element || elementIndex === undefined) return;
+
+    // Onder de gekozen regel, of anders onderaan de tabel
+    const at = itemIndex !== undefined ? itemIndex + 1 : element.items.length;
+    setItems([...element.items.slice(0, at), item, ...element.items.slice(at)]);
+    onSelect({ block: blockIndex, element: elementIndex, item: at });
+    onFocusField(fieldKeys.description(blockIndex, elementIndex, at));
   };
 
-  const addItem = (elementIndex: number, item: LineItem) => {
-    updateElement(elementIndex, { items: [...block.elements[elementIndex].items, item] });
+  const moveItem = (from: number, to: number) => {
+    if (!element || elementIndex === undefined || to < 0 || to >= element.items.length) return;
+    setItems(verplaats(element.items, from, to));
+    onSelect({ block: blockIndex, element: elementIndex, item: to });
   };
 
-  const removeItem = (elementIndex: number, itemIndex: number) => {
-    updateElement(elementIndex, {
-      items: block.elements[elementIndex].items.filter((_, i) => i !== itemIndex),
-    });
+  const removeItem = (index: number) => {
+    if (!element || elementIndex === undefined) return;
+    setItems(element.items.filter((_, i) => i !== index));
+    onSelect({ block: blockIndex, element: elementIndex });
   };
 
   return (
     <>
       <div className="form-section">
-        <div className="form-group">
-          <label htmlFor="block_title">Titel</label>
-          <input
-            id="block_title"
-            type="text"
-            value={block.title}
-            onChange={(e) => onChange({ ...block, title: e.target.value })}
-            placeholder="Vul een titel in"
-          />
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="block_title">Titel</label>
+            <input
+              id="block_title"
+              type="text"
+              value={block.title}
+              onChange={(e) => onChange({ ...block, title: e.target.value })}
+              placeholder="Vul een titel in"
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <button type="button" className="button add-item" onClick={() => addElement('prijstabel')}>
+            + Prijstabel
+          </button>
+          <button type="button" className="button add-item" onClick={() => addElement('kop')}>
+            + Kop
+          </button>
+          <button type="button" className="button add-item" onClick={() => addElement('tekst')}>
+            + Tekst
+          </button>
+          <button type="button" className="button add-item" onClick={() => addElement('gegevens')}>
+            + Gegevens
+          </button>
+          <button type="button" className="button add-item" onClick={() => addElement('handtekening')}>
+            + Handtekening
+          </button>
+          <button type="button" className="button cancel" onClick={onDuplicate}>
+            Blok dupliceren
+          </button>
+          <button type="button" className="button negative" onClick={onRemove}>
+            Blok verwijderen
+          </button>
+          <button type="button" className="button cancel" onClick={onClose}>
+            Klaar
+          </button>
         </div>
       </div>
 
-      {block.elements.map((element, elementIndex) => (
-        <div
-          key={elementIndex}
-          className={`form-section edit-holder ${sorteer.klasse(elementIndex)}`.trim()}
-          {...sorteer.item(elementIndex)}
-        >
-          <div className="form-row element-line">
-            <span
-              className="drag-handle"
-              title="Sleep om de volgorde te veranderen"
-              aria-label="Verplaatsen"
-              {...sorteer.greep(elementIndex)}
-            >
-              <GripVertical size={16} />
-            </span>
-
+      {element && elementIndex !== undefined && (
+        <div className="form-section edit-holder">
+          <div className="form-row">
             <div className="form-group">
-              <label>{ELEMENT_NAMEN[element.kind]}</label>
+              <label>{ELEMENT_NAMES[element.kind]}</label>
             </div>
 
-            <Link
-              className="action copy"
-              href=""
-              title="Dupliceren"
-              onClick={(e) => {
-                e.preventDefault();
-                copyElement(elementIndex);
-              }}
+            <IconAction
+              title="Omhoog"
+              disabled={elementIndex === 0}
+              onClick={() => moveElement(elementIndex, elementIndex - 1)}
             >
+              <ArrowUp size={16} />
+            </IconAction>
+            <IconAction
+              title="Omlaag"
+              disabled={elementIndex === block.elements.length - 1}
+              onClick={() => moveElement(elementIndex, elementIndex + 1)}
+            >
+              <ArrowDown size={16} />
+            </IconAction>
+            <IconAction className="action copy" title="Dupliceren" onClick={() => copyElement(elementIndex)}>
               <Copy size={16} />
-            </Link>
-
-            <Link
-              className="action delete"
-              href=""
-              title="Verwijderen"
-              onClick={(e) => {
-                e.preventDefault();
-                removeElement(elementIndex);
-              }}
-            >
+            </IconAction>
+            <IconAction className="action delete" title="Verwijderen" onClick={() => removeElement(elementIndex)}>
               <Trash2 size={16} />
-            </Link>
+            </IconAction>
           </div>
+
+          {element.kind === 'tekst' && (
+            <div className="rich-editor">
+              <FormattingToolbar />
+            </div>
+          )}
 
           {element.kind === 'gegevens' && dataFields}
 
@@ -174,27 +260,6 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
               is staan hier de lijnen voor plaats, datum en handtekening; daarna staat
               de handtekening zelf op deze plek.
             </p>
-          )}
-
-          {element.kind === 'kop' && (
-            <div className="form-group">
-              <input
-                type="text"
-                value={element.body || ''}
-                onChange={(e) => updateElement(elementIndex, { body: e.target.value })}
-                placeholder="Vul een kop in"
-              />
-            </div>
-          )}
-
-          {element.kind === 'tekst' && (
-            <div className="form-group">
-              <RichTextEditor
-                value={element.body || ''}
-                onChange={(body) => updateElement(elementIndex, { body })}
-                placeholder="Begin met een korte inleiding."
-              />
-            </div>
           )}
 
           {element.kind === 'prijstabel' && (
@@ -223,154 +288,44 @@ export default function BlockEditor({ block, onChange, onDuplicate, onRemove, da
                 </div>
               </div>
 
-              {element.items.map((item, itemIndex) =>
-                item.is_heading ? (
-                  <div
-                    key={itemIndex}
-                    className={`form-row heading-line ${sorteerRegels.klasse(`${elementIndex}:${itemIndex}`)}`.trim()}
-                    {...sorteerRegels.item(`${elementIndex}:${itemIndex}`)}
-                  >
-                    <span
-                      className="drag-handle"
-                      title="Sleep om de volgorde te veranderen"
-                      aria-label="Verplaatsen"
-                      {...sorteerRegels.greep(`${elementIndex}:${itemIndex}`)}
-                    >
-                      <GripVertical size={16} />
-                    </span>
-
-                    <div className="form-group">
-                      <label>Tussenkop</label>
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => updateItem(elementIndex, itemIndex, { description: e.target.value })}
-                        placeholder="Dakwerkzaamheden"
-                      />
-                    </div>
-
-                    <Link
-                      className="action delete"
-                      href=""
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeItem(elementIndex, itemIndex);
-                      }}
-                      title="Verwijderen"
-                    >
-                      <Trash2 size={16} />
-                    </Link>
-                  </div>
-                ) : (
-                  <div
-                    key={itemIndex}
-                    className={`form-row invoice-product-line ${sorteerRegels.klasse(`${elementIndex}:${itemIndex}`)}`.trim()}
-                    {...sorteerRegels.item(`${elementIndex}:${itemIndex}`)}
-                  >
-                      <span
-                        className="drag-handle"
-                        title="Sleep om de volgorde te veranderen"
-                        aria-label="Verplaatsen"
-                        {...sorteerRegels.greep(`${elementIndex}:${itemIndex}`)}
-                      >
-                        <GripVertical size={16} />
-                      </span>
-
-                      <div className="form-group">
-                        <input
-                          type="text"
-                          value={item.description}
-                          onChange={(e) => updateItem(elementIndex, itemIndex, { description: e.target.value })}
-                          placeholder="Omschrijving"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.price}
-                          onChange={(e) =>
-                            updateItem(elementIndex, itemIndex, { price: parseFloat(e.target.value) || 0 })
-                          }
-                          placeholder="Bedrag"
-                          className="center-input"
-                        />
-                      </div>
-
-                      <Link
-                        className="action delete"
-                        href=""
-                        onClick={(e) => {
-                          e.preventDefault();
-                          removeItem(elementIndex, itemIndex);
-                        }}
-                        title="Verwijderen"
-                      >
-                        <Trash2 size={16} />
-                      </Link>
-                  </div>
-                )
-              )}
-
               <div className="form-row">
-                <button
-                  type="button"
-                  className="button add-item"
-                  onClick={() => addItem(elementIndex, emptyItem())}
-                >
+                <button type="button" className="button add-item" onClick={() => addItem(emptyItem())}>
                   + Regel
                 </button>
-
-                <button
-                  type="button"
-                  className="button add-item"
-                  onClick={() => addItem(elementIndex, emptyHeading())}
-                >
+                <button type="button" className="button add-item" onClick={() => addItem(emptyHeading())}>
                   + Tussenkop
                 </button>
               </div>
+
+              {itemIndex !== undefined && element.items[itemIndex] && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>{element.items[itemIndex].is_heading ? 'Tussenkop' : 'Regel'} {itemIndex + 1}</label>
+                  </div>
+
+                  <IconAction
+                    title="Regel omhoog"
+                    disabled={itemIndex === 0}
+                    onClick={() => moveItem(itemIndex, itemIndex - 1)}
+                  >
+                    <ArrowUp size={16} />
+                  </IconAction>
+                  <IconAction
+                    title="Regel omlaag"
+                    disabled={itemIndex === element.items.length - 1}
+                    onClick={() => moveItem(itemIndex, itemIndex + 1)}
+                  >
+                    <ArrowDown size={16} />
+                  </IconAction>
+                  <IconAction className="action delete" title="Regel verwijderen" onClick={() => removeItem(itemIndex)}>
+                    <Trash2 size={16} />
+                  </IconAction>
+                </div>
+              )}
             </>
           )}
         </div>
-      ))}
-
-      <div className="form-section">
-        <div className="form-row">
-          <button type="button" className="button add-item" onClick={() => addElement('prijstabel')}>
-            + Prijstabel
-          </button>
-
-          <button type="button" className="button add-item" onClick={() => addElement('kop')}>
-            + Kop
-          </button>
-
-          <button type="button" className="button add-item" onClick={() => addElement('tekst')}>
-            + Tekst
-          </button>
-
-          <button type="button" className="button add-item" onClick={() => addElement('gegevens')}>
-            + Gegevens
-          </button>
-
-          <button type="button" className="button add-item" onClick={() => addElement('handtekening')}>
-            + Handtekening
-          </button>
-        </div>
-      </div>
-
-      <div className="form-section">
-        <div className="form-row">
-          <button type="button" className="button cancel" onClick={onDuplicate}>
-            Blok dupliceren
-          </button>
-
-          <button type="button" className="button negative" onClick={onRemove}>
-            Blok verwijderen
-          </button>
-        </div>
-      </div>
+      )}
     </>
   );
 }

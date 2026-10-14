@@ -44,6 +44,24 @@ export function eersteIndeling(blocks: DocumentBlock[]): Vel[] {
 }
 
 /**
+ * Na een wijziging begint alleen het blok dat veranderde opnieuw op één vel;
+ * de rest houdt zijn indeling. Zo hoeft er bij het typen maar één blok
+ * opnieuw gemeten te worden, en blijven de andere vellen staan waar ze staan.
+ */
+export function resetChangedBlocks(sheets: Vel[], before: DocumentBlock[], after: DocumentBlock[]): Vel[] {
+  if (before.length !== after.length) return eersteIndeling(after);
+
+  return after.flatMap((block, blok) => {
+    const kept = sheets.filter((sheet) => sheet.blok === blok);
+    const unchanged = JSON.stringify(block) === JSON.stringify(before[blok]);
+
+    return unchanged && kept.length > 0
+      ? kept
+      : [{ blok, stukken: block.elements.map((_, element) => ({ element })) }];
+  });
+}
+
+/**
  * Knipt een vel in tweeën op de gegeven plek. Het eerste deel blijft staan,
  * de rest gaat naar een nieuw vel van hetzelfde blok.
  */

@@ -1,14 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { GripVertical } from 'lucide-react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import { Skeleton } from '@/components/Skeleton';
-import type { Customer, DocumentBlock, DocumentElement, Tenant } from '@/lib/supabase';
+import {
+  EditableRichText,
+  EditableText,
+  InlineEditContext,
+  fieldKeys,
+  readCaret,
+  restoreCaret,
+  sameCaret,
+  type CaretPosition,
+  type EditTarget,
+} from '@/components/InlineEditing';
+import type { Customer, DocumentBlock, DocumentElement, LineItem, Tenant } from '@/lib/supabase';
 import { isRichTextEmpty, toDisplayHtml } from '@/lib/richtext';
 import {
   eersteIndeling,
   elementenVanVel,
   gelijkeIndeling,
   knipVel,
+  resetChangedBlocks,
   snijTekst,
   type Knip,
   type Stuk,
@@ -43,10 +55,17 @@ interface DocumentPreviewProps {
    * blijft dit leeg en staan er lijnen.
    */
   signatureField?: React.ReactNode;
-  /** Welk blok op dit moment bewerkt wordt */
-  activeBlock?: number | null;
-  /** Aangeroepen bij een klik op een blok in het document */
-  onSelectBlock?: (index: number) => void;
+  /** Welk blok, element of regel er op dit moment bewerkt wordt */
+  selected?: EditTarget | null;
+  /** Aangeroepen bij een klik op een blok, element of regel in het document */
+  onSelect?: (target: EditTarget) => void;
+  /**
+   * Bewerken op het papier zelf: de tekst, koppen, titels en regels worden
+   * velden waarin je typt. Krijgt het gewijzigde blok terug.
+   */
+  onChangeBlock?: (index: number, block: DocumentBlock) => void;
+  /** Zet de cursor in dit veld, bijvoorbeeld in een kop die net is toegevoegd */
+  focusField?: { field: string } | null;
   /** Voegt een blok toe op een bepaalde plek in de lijst */
   onAddBlock?: (atIndex: number) => void;
   /**
@@ -112,6 +131,84 @@ function TextElement({
 }
 
 /**
+ * Een klik naast een leeg veld, op de rand van de cel, zet de cursor toch in
+ * dat veld. Anders valt er op een lege tussenkop niets aan te klikken.
+ */
+function focusInnerField(event: React.MouseEvent<HTMLElement>) {
+  if (event.target !== event.currentTarget) return;
+
+  const field = event.currentTarget.querySelector<HTMLElement>('[data-bewerk]');
+  if (!field) return;
+
+  event.preventDefault();
+  field.focus();
+
+  const range = document.createRange();
+  range.selectNodeContents(field);
+  range.collapse(false);
+  document.getSelection()?.removeAllRanges();
+  document.getSelection()?.addRange(range);
+}
+
+/** "1.250,50" of "1250.5" wordt 1250.5; wat geen getal is telt als nul. */
+function parseAmount(text: string): number {
+  const clean = text.replace(/[^\d,.-]/g, '');
+  const normalized = clean.includes(',') ? clean.replace(/\./g, '').replace(',', '.') : clean;
+  const amount = parseFloat(normalized);
+  return Number.isNaN(amount) ? 0 : amount;
+}
+
+/**
+ * Het bedrag van een regel. Zolang je erin typt staat er het kale getal, met
+ * een komma zoals je hem intikt; daarbuiten het bedrag zoals de klant het ziet.
+ */
+function PriceCell({
+  field,
+  price,
+  display,
+  onChange,
+}: {
+  field: string;
+  price: number;
+  display: string;
+  onChange: (price: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  // Bij het aanklikken staat het hele getal geselecteerd, klaar om over te typen
+  const startedEditing = useRef(false);
+  useLayoutEffect(() => {
+    if (!startedEditing.current) return;
+    startedEditing.current = false;
+
+    const el = document.activeElement as HTMLElement | null;
+    if (el?.dataset.bewerk !== field) return;
+
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    document.getSelection()?.removeAllRanges();
+    document.getSelection()?.addRange(range);
+  }, [draft, field]);
+
+  return (
+    <EditableText
+      as="td"
+      field={field}
+      value={draft ?? display}
+      onFocus={() => {
+        startedEditing.current = true;
+        setDraft(String(price).replace('.', ','));
+      }}
+      onBlur={() => setDraft(null)}
+      onChange={(text) => {
+        setDraft(text);
+        onChange(parseAmount(text));
+      }}
+    />
+  );
+}
+
+/**
  * De tabel met regels en de subtotalen van één prijstabel.
  *
  * Een lange tabel loopt door op het volgende vel. `van` en `tot` zeggen welk
@@ -124,13 +221,27 @@ function PriceTable({
   currency,
   van,
   tot,
+  edit,
 }: {
   element: DocumentElement;
   currency: string;
   van?: number;
   tot?: number;
+  /** Op het papier bewerken: welk blok en element dit is, en waar de wijziging heen gaat */
+  edit?: { block: number; element: number; onChange: (items: LineItem[]) => void };
 }) {
+  const editing = useContext(InlineEditContext);
   const totals = calculateElementTotals(element);
+
+  const changeItem = (index: number, changes: Partial<LineItem>) =>
+    edit?.onChange(element.items.map((item, i) => (i === index ? { ...item, ...changes } : item)));
+
+  // De regel waar je in klikt wordt de gekozen regel, voor de knoppen erboven
+  const selectItem = (index: number) => (event: React.FocusEvent) => {
+    if (!edit) return;
+    event.stopPropagation();
+    editing?.select({ block: edit.block, element: edit.element, item: index });
+  };
 
   // De totalen gaan over de hele tabel, ook als er maar een deel op dit vel staat
   const totalenIndex = element.items.length;
@@ -160,6 +271,39 @@ function PriceTable({
             <tbody>
               {regels.map((item, regelIndex) => {
                 const index = vanaf + regelIndex;
+
+                if (edit) {
+                  return item.is_heading ? (
+                    <tr key={index} data-kop="1" onFocus={selectItem(index)}>
+                      <td colSpan={showQuantity ? 4 : 2} onMouseDown={focusInnerField}>
+                        <EditableText
+                          as="strong"
+                          field={fieldKeys.description(edit.block, edit.element, index)}
+                          value={item.description}
+                          onChange={(description) => changeItem(index, { description })}
+                        />
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={index} onFocus={selectItem(index)}>
+                      <EditableText
+                        as="td"
+                        field={fieldKeys.description(edit.block, edit.element, index)}
+                        value={item.description}
+                        onChange={(description) => changeItem(index, { description })}
+                      />
+                      {showQuantity && <td>{item.quantity}</td>}
+                      {showQuantity && <td>{item.unit || ''}</td>}
+                      <PriceCell
+                        field={fieldKeys.price(edit.block, edit.element, index)}
+                        price={item.price}
+                        display={formatCurrency(lineTotal(item), currency)}
+                        onChange={(price) => changeItem(index, { price })}
+                      />
+                    </tr>
+                  );
+                }
+
                 return item.is_heading ? (
                   <tr key={index} data-kop="1">
                     <td colSpan={showQuantity ? 4 : 2}>
@@ -208,7 +352,7 @@ function PriceTable({
 
 interface BlockViewProps {
   /** Wat er van dit blok op dít vel staat, in volgorde */
-  onderdelen: { element: DocumentElement; van?: number; tot?: number }[];
+  onderdelen: { element: DocumentElement; index: number; van?: number; tot?: number }[];
   currency: string;
   customer?: Partial<Customer> | null;
   meta: { label: string; value: string }[];
@@ -216,64 +360,140 @@ interface BlockViewProps {
   signatureField?: React.ReactNode;
   /** In de editor staan er hints bij lege onderdelen; in het document niet */
   bewerkbaar: boolean;
+  /** Op het papier bewerken: het blok, en waar een gewijzigd element heen gaat */
+  edit?: { block: number; onChange: (element: number, changes: Partial<DocumentElement>) => void };
 }
 
+const ELEMENT_LABELS: Record<DocumentElement['kind'], string> = {
+  gegevens: 'Gegevens',
+  kop: 'Kop',
+  tekst: 'Tekst',
+  prijstabel: 'Prijstabel',
+  handtekening: 'Handtekening',
+};
+
 /** Alles wat er in één blok staat, in volgorde. */
-function BlockView({ onderdelen, currency, customer, meta, signature, signatureField, bewerkbaar }: BlockViewProps) {
+function BlockView({ onderdelen, currency, customer, meta, signature, signatureField, bewerkbaar, edit }: BlockViewProps) {
+  const editing = useContext(InlineEditContext);
+
   if (onderdelen.length === 0) {
     return bewerkbaar ? <p>Nog leeg. Klik hier om er tekst of een prijstabel in te zetten.</p> : null;
   }
 
+  // Het gekozen element licht op, met zijn soort erboven
+  const region = (index: number) => {
+    const selected = editing?.selected;
+    const active = selected?.block === edit?.block && selected?.element === index;
+    return `editable-region${active ? ' active' : ''}`;
+  };
+
+  const select = (index: number) => () => {
+    if (edit) editing?.select({ block: edit.block, element: index });
+  };
+
   return (
     <>
-      {onderdelen.map(({ element, van, tot }, index) =>
-        element.kind === 'tekst' ? (
-          <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} stuk={index} van={van} tot={tot} />
-        ) : (
-        <div key={index} data-element={element.kind} data-stuk={index} data-van={van ?? 0}>
-          {element.kind === 'gegevens' && (
-            <>
-              {/* Naam, straat met huisnummer, postcode met plaats */}
-              <div className="customer-details">
-                {customer ? (
-                  <>
-                    <div>{getCustomerDisplayName(customer)}</div>
-                    {customer.street_address && <div>{customer.street_address}</div>}
-                    {(customer.postal_code || customer.city) && (
-                      <div>{[customer.postal_code, customer.city].filter(Boolean).join(' ')}</div>
-                    )}
-                  </>
-                ) : (
-                  bewerkbaar && <div>Nog geen klant gekozen</div>
-                )}
-              </div>
+      {onderdelen.map(({ element, index, van, tot }, stuk) => {
+        if (element.kind === 'tekst') {
+          return edit ? (
+            <EditableRichText
+              key={index}
+              field={fieldKeys.text(edit.block, index)}
+              value={element.body || ''}
+              from={van}
+              to={tot}
+              part={stuk}
+              className={`rich-text ${region(index)}`}
+              label={ELEMENT_LABELS.tekst}
+              onFocus={select(index)}
+              onChange={(body) => edit.onChange(index, { body })}
+            />
+          ) : (
+            <TextElement key={index} body={element.body} bewerkbaar={bewerkbaar} stuk={stuk} van={van} tot={tot} />
+          );
+        }
 
-              {/* Label en waarde elk in een span, zodat ze los te stijlen zijn */}
-              <div className="document-meta">
-                {meta
-                  .filter(row => row.value)
-                  .map(row => (
-                    <div key={row.label}>
-                      <span className="label">{row.label}</span>
-                      <span className="value">{row.value}</span>
-                    </div>
-                  ))}
-              </div>
-            </>
-          )}
+        return (
+          <div
+            key={index}
+            data-element={element.kind}
+            data-stuk={stuk}
+            data-van={van ?? 0}
+            className={edit && element.kind !== 'kop' ? region(index) : undefined}
+            data-label={edit ? ELEMENT_LABELS[element.kind] : undefined}
+            // Een klik in een veld kiest dat veld zelf, met de regel erbij
+            onClick={
+              edit
+                ? (event) => {
+                    if (!(event.target as HTMLElement).closest('[data-bewerk]')) select(index)();
+                  }
+                : undefined
+            }
+          >
+            {element.kind === 'gegevens' && (
+              <>
+                {/* Naam, straat met huisnummer, postcode met plaats */}
+                <div className="customer-details">
+                  {customer ? (
+                    <>
+                      <div>{getCustomerDisplayName(customer)}</div>
+                      {customer.street_address && <div>{customer.street_address}</div>}
+                      {(customer.postal_code || customer.city) && (
+                        <div>{[customer.postal_code, customer.city].filter(Boolean).join(' ')}</div>
+                      )}
+                    </>
+                  ) : (
+                    bewerkbaar && <div>Nog geen klant gekozen</div>
+                  )}
+                </div>
 
-          {element.kind === 'kop' && (element.body ? <h2>{element.body}</h2> : bewerkbaar && <h2>Kop toevoegen</h2>)}
+                {/* Label en waarde elk in een span, zodat ze los te stijlen zijn */}
+                <div className="document-meta">
+                  {meta
+                    .filter(row => row.value)
+                    .map(row => (
+                      <div key={row.label}>
+                        <span className="label">{row.label}</span>
+                        <span className="value">{row.value}</span>
+                      </div>
+                    ))}
+                </div>
+              </>
+            )}
 
-          {element.kind === 'handtekening' && (
-            <SignatureElement signature={signature} field={signatureField} />
-          )}
+            {element.kind === 'kop' &&
+              (edit ? (
+                <EditableText
+                  as="h2"
+                  field={fieldKeys.heading(edit.block, index)}
+                  value={element.body || ''}
+                  className={region(index)}
+                  data-label={ELEMENT_LABELS.kop}
+                  onFocus={select(index)}
+                  onChange={(body) => edit.onChange(index, { body })}
+                />
+              ) : element.body ? (
+                <h2>{element.body}</h2>
+              ) : (
+                bewerkbaar && <h2>Kop toevoegen</h2>
+              ))}
 
-          {element.kind === 'prijstabel' && (
-            <PriceTable element={element} currency={currency} van={van} tot={tot} />
-          )}
-        </div>
-        )
-      )}
+            {element.kind === 'handtekening' && (
+              <SignatureElement signature={signature} field={signatureField} />
+            )}
+
+            {element.kind === 'prijstabel' && (
+              <PriceTable
+                element={element}
+                currency={currency}
+                van={van}
+                tot={tot}
+                edit={edit && { block: edit.block, element: index, onChange: (items) => edit.onChange(index, { items }) }}
+              />
+            )}
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -499,8 +719,10 @@ export default function DocumentPreview({
   tenant: givenTenant,
   signature,
   signatureField,
-  activeBlock,
-  onSelectBlock,
+  selected,
+  onSelect,
+  onChangeBlock,
+  focusField,
   onAddBlock,
   onSplitBlock,
   onMoveBlock,
@@ -532,15 +754,70 @@ export default function DocumentPreview({
   const papierRef = useRef<HTMLDivElement>(null);
   const rondes = useRef(0);
 
-  // Verandert er iets aan de offerte, dan begint het opdelen opnieuw. Anders
-  // zou een verwijderde alinea een leeg vel achterlaten
+  // Verandert er iets aan een blok, dan begint het opdelen van dat blok
+  // opnieuw. Anders zou een verwijderde alinea een leeg vel achterlaten.
+  // Dit gebeurt al tijdens het tekenen, zodat er nooit een vel met de oude
+  // indeling en de nieuwe tekst op het scherm staat
   const blokkenSleutel = JSON.stringify(blocks);
-  useEffect(() => {
-    setVellen(eersteIndeling(blocks));
+  const [getekend, setGetekend] = useState({ sleutel: blokkenSleutel, blocks });
+  if (getekend.sleutel !== blokkenSleutel) {
+    setGetekend({ sleutel: blokkenSleutel, blocks });
+    setVellen(huidig => resetChangedBlocks(huidig, getekend.blocks, blocks));
     setIndelingKlaar(false);
     rondes.current = 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blokkenSleutel]);
+  }
+
+  // Waar de cursor stond toen er getypt werd. Verhuist de tekst naar een
+  // ander vel, dan komt hij daar terug zodra de indeling stilligt
+  const caret = useRef<CaretPosition | null>(null);
+  const restorePending = useRef(false);
+
+  const rememberCaret = () => {
+    caret.current = readCaret();
+    restorePending.current = true;
+  };
+
+  // Een veld dat net is toegevoegd krijgt meteen de cursor
+  const gevraagdeFocus = useRef(focusField);
+  if (focusField !== gevraagdeFocus.current) {
+    gevraagdeFocus.current = focusField;
+    if (focusField) {
+      caret.current = { field: focusField.field, node: 0, offset: 0 };
+      restorePending.current = true;
+    }
+  }
+
+  const settleCaret = (binnen: HTMLElement | null) => {
+    if (!binnen || !restorePending.current || !caret.current) return;
+
+    restorePending.current = false;
+    if (!sameCaret(readCaret(), caret.current)) restoreCaret(binnen, caret.current);
+  };
+
+  /**
+   * Meten nog voordat de browser tekent. Loopt er iets over, dan wordt het
+   * meteen opnieuw ingedeeld en weer gemeten, net zolang tot alles past —
+   * zonder tussenstanden op het scherm terwijl iemand typt.
+   */
+  const meetMeteen = () => {
+    const papierEl = papierRef.current;
+    if (!papierEl || papierEl.querySelectorAll('[data-blok-titel]').length !== vellen.length) return;
+
+    const opnieuw = herverdeel(papierEl, vellen, schaal);
+    if (opnieuw && !gelijkeIndeling(opnieuw, vellen) && rondes.current <= 40) {
+      rondes.current += 1;
+      setVellen(opnieuw);
+      return;
+    }
+
+    settleCaret(papierEl);
+  };
+
+  // Zonder eigen sjabloon wordt er niet ingedeeld; de cursor kan meteen terug
+  const kaleWeergaveRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    settleCaret(kaleWeergaveRef.current);
+  });
 
   // Het papier op ware verhouding tonen, verkleind tot het in beeld past
   useEffect(() => {
@@ -660,7 +937,15 @@ export default function DocumentPreview({
     return null;
   };
 
-  const toon = (onderdelen: { element: DocumentElement; van?: number; tot?: number }[]) => (
+  const changeElement = (blok: number) => (element: number, changes: Partial<DocumentElement>) => {
+    const block = blocks[blok];
+    onChangeBlock?.(blok, {
+      ...block,
+      elements: block.elements.map((el, i) => (i === element ? { ...el, ...changes } : el)),
+    });
+  };
+
+  const toon = (blok: number, onderdelen: { element: DocumentElement; index: number; van?: number; tot?: number }[]) => (
     <BlockView
       onderdelen={onderdelen}
       currency={currency}
@@ -668,9 +953,39 @@ export default function DocumentPreview({
       meta={meta}
       signature={signature}
       signatureField={signatureField}
-      bewerkbaar={!!onSelectBlock}
+      bewerkbaar={!!onSelect}
+      edit={onChangeBlock ? { block: blok, onChange: changeElement(blok) } : undefined}
     />
   );
+
+  /** De titel van een blok; in de editor een veld waarin je hem typt. */
+  const blokTitel = (blok: number, as?: 'h2') => {
+    const block = blocks[blok];
+
+    if (!onChangeBlock) {
+      if (!as) return block.title;
+      return block.title ? <h2>{block.title}</h2> : null;
+    }
+
+    return (
+      <EditableText
+        as={as}
+        field={fieldKeys.title(blok)}
+        value={block.title}
+        onFocus={() => {
+          if (selected?.block !== blok) onSelect?.({ block: blok });
+        }}
+        onChange={(title) => onChangeBlock(blok, { ...block, title })}
+      />
+    );
+  };
+
+  // Alles wat op het papier bewerkt wordt, praat via dit kanaal terug
+  const inlineEditing = {
+    rememberCaret,
+    select: (target: EditTarget) => onSelect?.(target),
+    selected: selected ?? null,
+  };
 
   // Eigen sjabloon van de aannemer: dat bepaalt de vormgeving, wij leveren
   // de inhoud op de plekken met data-slot
@@ -713,16 +1028,17 @@ export default function DocumentPreview({
       const block = blocks[vel.blok];
       if (!block) return;
 
-      slots[`blok-${index}`] = toon(elementenVanVel(block, vel));
-      slots[`bloktitel-${index}`] = block.title;
+      slots[`blok-${index}`] = toon(vel.blok, elementenVanVel(block, vel));
+      slots[`bloktitel-${index}`] = blokTitel(vel.blok);
       labels[`blok-${index}`] = block.title || 'Blok';
+      labels[`bloktitel-${index}`] = 'Titel';
     });
 
     // Op elk vel een handvat om het te verplaatsen. Een vel dat bij hetzelfde
     // blok hoort als het vorige is een vervolg; daar komt ook de knop om het
     // los te maken
     const overlays: Record<string, React.ReactNode> = {};
-    if (onSelectBlock) {
+    if (onSelect) {
       vellen.forEach((vel, index) => {
         const vervolg = index > 0 && vellen[index - 1].blok === vel.blok;
         const begin = vel.stukken[0];
@@ -781,12 +1097,10 @@ export default function DocumentPreview({
       });
     }
 
-    const actiefVel = activeBlock === null || activeBlock === undefined
-      ? -1
-      : vellen.findIndex(vel => vel.blok === activeBlock);
+    const actiefVel = selected ? vellen.findIndex(vel => vel.blok === selected.block) : -1;
 
     return (
-      <>
+      <InlineEditContext.Provider value={inlineEditing}>
         <div className="document-window" ref={vensterRef}>
           <div
             className="document-paper"
@@ -832,17 +1146,28 @@ export default function DocumentPreview({
           // Alleen tijdens het bewerken; anders krijgt de klant op zijn eigen
           // offertepagina de omlijning en het label van een bewerkbaar vlak
           onSelect={
-            onSelectBlock
+            onSelect
               ? (slot) => {
-                  const match = slot.match(/^blok-(\d+)$/);
+                  const match = slot.match(/^(blok|bloktitel)-(\d+)$/);
                   if (!match) return;
 
                   // Een klik op een vervolgvel bewerkt gewoon het blok zelf
-                  const vel = vellen[Number(match[1])];
-                  if (vel && vel.blok < blocks.length) onSelectBlock(vel.blok);
+                  const vel = vellen[Number(match[2])];
+                  if (!vel || vel.blok >= blocks.length) return;
+
+                  // Wie in een veld klikte heeft zijn element al gekozen
+                  if (selected?.block !== vel.blok) onSelect({ block: vel.blok });
+
+                  // Een lege titel is te smal om in te klikken; een klik ernaast
+                  // zet de cursor er toch in
+                  const titelVeld = fieldKeys.title(vel.blok);
+                  if (match[1] === 'bloktitel' && onChangeBlock && (document.activeElement as HTMLElement | null)?.dataset?.bewerk !== titelVeld) {
+                    restoreCaret(papierRef.current!, { field: titelVeld, node: 0, offset: blocks[vel.blok].title.length });
+                  }
                 }
               : undefined
           }
+          onLayout={meetMeteen}
           repeatCounts={{ blok: vellen.length }}
           repeatTitles={vellen.map(vel => blocks[vel.blok]?.title ?? '')}
           slots={slots}
@@ -858,14 +1183,15 @@ export default function DocumentPreview({
             </button>
           </div>
         )}
-      </>
+      </InlineEditContext.Provider>
     );
   }
 
   // Zonder eigen sjabloon een kale weergave: de opmaak hoort in het
   // sjabloon te staan dat de aannemer bij Instellingen invult
   return (
-    <>
+    <InlineEditContext.Provider value={inlineEditing}>
+      <div ref={kaleWeergaveRef}>
       {tenant?.logo_url && (
         <img src={tenant.logo_url} alt={tenant.company_name || ''} style={{ maxWidth: '200px' }} />
       )}
@@ -877,19 +1203,20 @@ export default function DocumentPreview({
           {onAddBlock && <AddBlockDivider onAdd={() => onAddBlock(index)} />}
 
           <div
-            className={onSelectBlock ? `editable-region${activeBlock === index ? ' active' : ''}` : undefined}
+            className={onSelect ? `editable-region${selected?.block === index ? ' active' : ''}` : undefined}
             data-label={block.title || 'Blok'}
             onClick={
-              onSelectBlock
+              onSelect
                 ? (event) => {
                     event.stopPropagation();
-                    onSelectBlock(index);
+                    // Een klik in een element kiest dat element al zelf
+                    if (!(event.target as HTMLElement).closest('[data-element], [data-bewerk]')) onSelect({ block: index });
                   }
                 : undefined
             }
           >
-            {block.title && <h2>{block.title}</h2>}
-            {toon(block.elements.map(element => ({ element })))}
+            {blokTitel(index, 'h2')}
+            {toon(index, block.elements.map((element, i) => ({ element, index: i })))}
           </div>
         </div>
       ))}
@@ -902,6 +1229,7 @@ export default function DocumentPreview({
           <span>{formatCurrency(documentTotal, currency)}</span>
         </div>
       </div>
-    </>
+      </div>
+    </InlineEditContext.Provider>
   );
 }
