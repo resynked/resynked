@@ -79,8 +79,24 @@ export interface CalendarEvent {
   end: string;
   allDay: boolean;
   location: string;
+  /** De omschrijving als platte tekst */
+  description: string;
   /** De afspraak openen in Google Calendar of Outlook */
   url: string | null;
+}
+
+/**
+ * Een afspraak zoals je hem invult. Bij een hele dag zijn start en end datums
+ * (2026-10-14), en is end de dag ná de laatste dag; anders ISO-tijden.
+ * Wat je weglaat, blijft bij het wijzigen zoals het was.
+ */
+export interface CalendarEventInput {
+  title: string;
+  allDay: boolean;
+  start: string;
+  end: string;
+  location?: string;
+  description?: string;
 }
 
 /** De sleutels die de aanbieder na het inloggen teruggeeft. */
@@ -122,6 +138,9 @@ export interface MailProvider {
   forward(accessToken: string, threadId: string, messageId: string, to: string[], html: string, ownAddress: string): Promise<void>;
   /** De afspraken in de hoofdagenda tussen twee momenten, oudste eerst */
   events(accessToken: string, from: Date, to: Date): Promise<CalendarEvent[]>;
+  createEvent(accessToken: string, event: CalendarEventInput): Promise<void>;
+  updateEvent(accessToken: string, id: string, event: CalendarEventInput): Promise<void>;
+  deleteEvent(accessToken: string, id: string): Promise<void>;
   /** Trekt de toegang in bij de aanbieder, voor zover die dat kent */
   revoke(token: string): Promise<void>;
 }

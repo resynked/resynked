@@ -3,7 +3,7 @@ import { decrypt, encrypt } from '@/lib/crypto';
 import { appUrl } from '@/lib/email';
 import { google } from './google';
 import { microsoft } from './microsoft';
-import { MAIL_PROVIDERS, MailAuthError, type MailProvider, type MailProviderName, type MailTokens } from './types';
+import { MAIL_PROVIDERS, MailAuthError, type CalendarEventInput, type MailProvider, type MailProviderName, type MailTokens } from './types';
 
 export * from './types';
 
@@ -145,4 +145,32 @@ export function sendMailError(res: { status: (code: number) => { json: (body: un
 /** Het bericht met de handtekening eronder, met wat witruimte ertussen. */
 export function withSignature(html: string, signature: string): string {
   return signature ? `${html}<br><div class="signature">${signature}</div>` : html;
+}
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Controleert een afspraak zoals hij van het scherm komt. Geeft de afspraak
+ * terug, of een leesbare fout.
+ */
+export function parseEventInput(body: any): { event: CalendarEventInput } | { error: string } {
+  const title = String(body?.title || '').trim();
+  if (!title) return { error: 'Geef de afspraak een titel' };
+
+  const allDay = !!body?.allDay;
+  const start = String(body?.start || '');
+  const end = String(body?.end || '');
+
+  if (allDay ? !DATE.test(start) || !DATE.test(end) : Number.isNaN(Date.parse(start)) || Number.isNaN(Date.parse(end))) {
+    return { error: 'Vul een geldige begin- en eindtijd in' };
+  }
+  if (allDay ? end <= start : Date.parse(end) <= Date.parse(start)) {
+    return { error: 'Het einde moet na het begin liggen' };
+  }
+
+  const text = (value: unknown) => (value === undefined ? undefined : String(value));
+
+  return {
+    event: { title, allDay, start, end, location: text(body?.location), description: text(body?.description) },
+  };
 }

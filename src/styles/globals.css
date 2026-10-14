@@ -37,7 +37,7 @@ html, body {height: 100%;}
 
 body {font-family: var(--font-family1); font-weight: normal; color: var(--font-color1); background: var(--color3); font-size: var(--fontsize1); line-height: 1.75em; margin: 0; padding: 0;}
 
-textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"], input[type="search"], input[type="date" i] {
+textarea, input[type="text"], input[type="password"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"], input[type="search"], input[type="date" i], input[type="time"] {
   background-color: var(--color2);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius1);
@@ -564,7 +564,6 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Een knop met een logo ervoor, zoals "Inloggen met Google" */
 .button.with-icon {display: inline-flex; align-items: center; justify-content: center; gap: var(--space10); font-size: var(--fontsize1);}
-.modal .button.with-icon {display: flex; width: 100%; padding: 12px;}
 .button.tertiary:hover:not(:disabled) {background: var(--color4);}
 
 /* Aan/uit-schakelaar; groen als hij aan staat */
@@ -657,16 +656,18 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 /* Agenda: een week, dag voor dag */
 .calendar > h2 {margin: 0 0 var(--space10) 0;}
 .calendar .calendar-day {display: grid; grid-template-columns: 60px 1fr; gap: var(--space20); padding: var(--space15) 0; border-top: 1px solid var(--border-color);}
-.calendar .calendar-date {display: flex; flex-direction: column; align-items: center; gap: 2px;}
+.calendar .calendar-date {position: relative; display: flex; flex-direction: column; align-items: center; align-self: start; gap: 2px; padding: var(--space5) 0; border-radius: var(--border-radius1);}
+.calendar .calendar-date:hover {background: var(--color4);}
 .calendar .calendar-date .weekday {font-size: var(--fontsize2); color: var(--font-color2); text-transform: capitalize;}
 .calendar .calendar-date .day {display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: var(--h3-size); font-weight: 500;}
 .calendar .calendar-day.today .day {background: var(--color1); color: var(--color2);}
 .calendar .calendar-events {display: flex; flex-direction: column; gap: var(--space5); min-width: 0;}
 .calendar .calendar-empty {color: var(--font-color2); padding: var(--space5) 0;}
-.calendar .calendar-event {display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); border-radius: var(--border-radius1); background: var(--color3); border: 1px solid var(--border-color);}
+.calendar .calendar-event {cursor: pointer; transition: .3s all ease; display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); border-radius: var(--border-radius1); background: var(--color3); border: 1px solid var(--border-color);}
 .calendar .calendar-event .time {color: var(--font-color2); font-size: var(--fontsize2); white-space: nowrap;}
 .calendar .calendar-event .information {display: flex; flex-direction: column; min-width: 0;}
 .calendar .calendar-event .title {font-weight: 500;}
 .calendar .calendar-event .description {display: flex; align-items: center; gap: 3px; color: var(--font-color2); font-size: var(--fontsize2);}
+.calendar .calendar-event:hover {background: var(--color4);}
 .calendar .calendar-event a {color: var(--font-color2); line-height: 0;}
 .calendar .calendar-event a:hover {color: var(--font-color1);}

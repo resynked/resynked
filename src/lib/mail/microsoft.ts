@@ -1,4 +1,4 @@
-import { INBOX_FOLDER, type CalendarEvent, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
+import { INBOX_FOLDER, type CalendarEvent, type CalendarEventInput, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
 import { apiFetch, requestTokens, textToHtml } from './utils';
 
 /**
@@ -13,7 +13,27 @@ import { apiFetch, requestTokens, textToHtml } from './utils';
 const API = 'https://graph.microsoft.com/v1.0/me';
 const AUTHORITY = 'https://login.microsoftonline.com/common/oauth2/v2.0';
 
-const SCOPES = ['openid', 'email', 'offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send', 'Calendars.Read'];
+const SCOPES = ['openid', 'email', 'offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send', 'Calendars.ReadWrite'];
+
+/**
+ * Een afspraak zoals Outlook hem wil ontvangen, in UTC. Een hele dag moet van
+ * middernacht tot middernacht lopen.
+ */
+function toGraphEvent(event: CalendarEventInput) {
+  const moment = (value: string) => ({
+    dateTime: event.allDay ? `${value.slice(0, 10)}T00:00:00` : new Date(value).toISOString().replace(/\.\d+Z$/, ''),
+    timeZone: 'UTC',
+  });
+
+  return {
+    subject: event.title,
+    isAllDay: event.allDay,
+    start: moment(event.start),
+    end: moment(event.end),
+    ...(event.location !== undefined ? { location: { displayName: event.location } } : {}),
+    ...(event.description !== undefined ? { body: { contentType: 'text', content: event.description } } : {}),
+  };
+}
 
 function credentials() {
   const clientId = process.env.MICROSOFT_CLIENT_ID;
@@ -310,7 +330,7 @@ export const microsoft: MailProvider = {
     const params = new URLSearchParams({
       startDateTime: from.toISOString(),
       endDateTime: to.toISOString(),
-      $select: 'id,subject,start,end,isAllDay,location,webLink,isCancelled',
+      $select: 'id,subject,start,end,isAllDay,location,webLink,isCancelled,bodyPreview',
       $orderby: 'start/dateTime',
       $top: '250',
     });
@@ -335,6 +355,7 @@ export const microsoft: MailProvider = {
             end: time(item.end.dateTime),
             allDay,
             location: item.location?.displayName || '',
+            description: item.bodyPreview || '',
             url: item.webLink || null,
           });
         });
@@ -343,6 +364,21 @@ export const microsoft: MailProvider = {
     }
 
     return events;
+  },
+
+  async createEvent(accessToken, event) {
+    await apiFetch(`${API}/events`, accessToken, { method: 'POST', body: JSON.stringify(toGraphEvent(event)) });
+  },
+
+  async updateEvent(accessToken, id, event) {
+    await apiFetch(`${API}/events/${encodeURIComponent(id)}`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify(toGraphEvent(event)),
+    });
+  },
+
+  async deleteEvent(accessToken, id) {
+    await apiFetch(`${API}/events/${encodeURIComponent(id)}`, accessToken, { method: 'DELETE' });
   },
 
   async revoke() {

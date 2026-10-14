@@ -1,4 +1,4 @@
-import { INBOX_FOLDER, type CalendarEvent, type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
+import { INBOX_FOLDER, type CalendarEvent, type CalendarEventInput, type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
 import {
   apiFetch,
   decodeEntities,
@@ -22,13 +22,25 @@ import {
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
-// Mail lezen, als gelezen markeren en versturen, en de agenda alleen lezen
+// Mail lezen, als gelezen markeren en versturen, en afspraken in de agenda
 const SCOPES = [
   'openid',
   'email',
   'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
 ];
+
+/** Een afspraak zoals Google Agenda hem wil ontvangen. */
+function toGoogleEvent(event: CalendarEventInput) {
+  const moment = (value: string) => (event.allDay ? { date: value.slice(0, 10) } : { dateTime: value });
+  return {
+    summary: event.title,
+    start: moment(event.start),
+    end: moment(event.end),
+    ...(event.location !== undefined ? { location: event.location } : {}),
+    ...(event.description !== undefined ? { description: event.description } : {}),
+  };
+}
 
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
@@ -377,6 +389,7 @@ export const google: MailProvider = {
             end: item.end?.dateTime || item.end?.date,
             allDay,
             location: item.location || '',
+            description: item.description || '',
             url: item.htmlLink || null,
           });
         });
@@ -386,6 +399,22 @@ export const google: MailProvider = {
     }
 
     return events;
+  },
+
+  async createEvent(accessToken, event) {
+    await apiFetch(CALENDAR_API, accessToken, { method: 'POST', body: JSON.stringify(toGoogleEvent(event)) });
+  },
+
+  async updateEvent(accessToken, id, event) {
+    // PATCH: wat we niet meesturen, zoals gasten of een Meet-link, blijft staan
+    await apiFetch(`${CALENDAR_API}/${encodeURIComponent(id)}`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify(toGoogleEvent(event)),
+    });
+  },
+
+  async deleteEvent(accessToken, id) {
+    await apiFetch(`${CALENDAR_API}/${encodeURIComponent(id)}`, accessToken, { method: 'DELETE' });
   },
 
   async revoke(token) {

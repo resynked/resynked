@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, ExternalLink, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, MapPin, Plus } from 'lucide-react';
 import Layout from '@/components/Layout';
+import EventEditor from '@/components/EventEditor';
+import { useConfirm } from '@/hooks/useConfirm';
 import { Skeleton } from '@/components/Skeleton';
 import { useToast } from '@/components/Toast';
 import { useMailAccount } from '@/hooks/useMailAccount';
@@ -51,17 +53,80 @@ function weekLabel(start: Date): string {
 
 /**
  * De Agenda: de afspraken uit Google Agenda of de Outlook-agenda, per week.
- * Alleen bekijken; afspraken maken en wijzigen gebeurt in de agenda zelf, via
- * de link bij elke afspraak.
+ * Toevoegen, wijzigen en verwijderen gebeurt rechtstreeks in die agenda, dus
+ * het staat ook meteen op je telefoon.
  */
 export default function CalendarPage() {
   const toast = useToast();
+  const { confirm } = useConfirm();
   const account = useMailAccount();
 
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [needsReconnect, setNeedsReconnect] = useState(false);
+  // Het venster om een afspraak toe te voegen of te wijzigen
+  const [editing, setEditing] = useState<{ event: CalendarEvent | null; day: Date } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  /** Een verzoek dat iets in de agenda verandert; een ontbrekende toestemming wordt apart herkend. */
+  const change = async (url: string, init: RequestInit) => {
+    const response = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json' } });
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 409 && data.reconnect) {
+      setEditing(null);
+      setNeedsReconnect(true);
+      throw new Error(data.error);
+    }
+    if (!response.ok) throw new Error(data.error || 'Er is iets misgegaan');
+  };
+
+  const save = async (input: Record<string, unknown>) => {
+    if (!editing) return;
+
+    setIsSaving(true);
+    try {
+      if (editing.event) {
+        await change(`/api/mail/events/${encodeURIComponent(editing.event.id)}`, { method: 'PATCH', body: JSON.stringify(input) });
+        toast.success('Opgeslagen', 'De afspraak is gewijzigd');
+      } else {
+        await change('/api/mail/events', { method: 'POST', body: JSON.stringify(input) });
+        toast.success('Toegevoegd', 'De afspraak staat in je agenda');
+      }
+      setEditing(null);
+      load();
+    } catch (error: any) {
+      toast.error('Opslaan mislukt', error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    const event = editing?.event;
+    if (!event) return;
+
+    const confirmed = await confirm({
+      title: 'Afspraak verwijderen',
+      message: `"${event.title}" wordt uit je agenda verwijderd.`,
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren',
+    });
+    if (!confirmed) return;
+
+    setIsSaving(true);
+    try {
+      await change(`/api/mail/events/${encodeURIComponent(event.id)}`, { method: 'DELETE' });
+      toast.success('Verwijderd', 'De afspraak is uit je agenda gehaald');
+      setEditing(null);
+      load();
+    } catch (error: any) {
+      toast.error('Verwijderen mislukt', error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -95,7 +160,7 @@ export default function CalendarPage() {
           <h2>{needsReconnect ? 'Geef Resynked toegang tot je agenda' : 'Agenda staat nog uit'}</h2>
           <p>
             {needsReconnect
-              ? 'Je koppeling is van vóór de Agenda, of de toegang is verlopen. Zet de koppeling bij Plug-ins uit en weer aan om je afspraken hier te zien.'
+              ? 'Je koppeling mist nog toegang tot je agenda, of de toegang is verlopen. Zet de koppeling bij Plug-ins uit en weer aan; geef daarbij toegang tot je agenda.'
               : 'Koppel je Google- of Microsoft-account bij Instellingen > Plug-ins om je afspraken hier te zien.'}
           </p>
           <Link href="/settings?tab=plugins" className="button">
@@ -143,6 +208,18 @@ export default function CalendarPage() {
           >
             <ChevronRight size={16} />
           </button>
+          <button
+            type="button"
+            className="button with-icon"
+            onClick={() => {
+              // Vandaag als het in deze week valt, anders de maandag van de week
+              const now = new Date();
+              setEditing({ event: null, day: now >= weekStart && now < addDays(weekStart, 7) ? now : weekStart });
+            }}
+          >
+            <Plus size={15} />
+            Afspraak toevoegen
+          </button>
         </div>
       </div>
 
@@ -154,10 +231,15 @@ export default function CalendarPage() {
 
           return (
             <div key={day.toISOString()} className={`calendar-day${sameDay(day, today) ? ' today' : ''}`}>
-              <div className="calendar-date">
+              <button
+                type="button"
+                className="calendar-date"
+                data-label="Afspraak op deze dag"
+                onClick={() => setEditing({ event: null, day })}
+              >
                 <span className="weekday">{day.toLocaleDateString('nl-NL', { weekday: 'short' })}</span>
                 <span className="day">{day.getDate()}</span>
-              </div>
+              </button>
 
               <div className="calendar-events">
                 {isLoading ? (
@@ -170,7 +252,16 @@ export default function CalendarPage() {
                     const end = parseMoment(event.end, event.allDay);
 
                     return (
-                      <div key={`${event.id}-${day.getDate()}`} className="calendar-event">
+                      <div
+                        key={`${event.id}-${day.getDate()}`}
+                        className="calendar-event"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setEditing({ event, day })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setEditing({ event, day });
+                        }}
+                      >
                         <span className="time">
                           {event.allDay
                             ? 'Hele dag'
@@ -189,6 +280,7 @@ export default function CalendarPage() {
                             href={event.url}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             aria-label={`Openen in ${account?.provider === 'microsoft' ? 'Outlook' : 'Google Agenda'}`}
                           >
                             <ExternalLink size={15} />
@@ -203,6 +295,17 @@ export default function CalendarPage() {
           );
         })}
       </div>
+
+      {editing && (
+        <EventEditor
+          event={editing.event}
+          day={editing.day}
+          isSaving={isSaving}
+          onClose={() => setEditing(null)}
+          onSave={save}
+          onDelete={remove}
+        />
+      )}
     </Layout>
   );
 }

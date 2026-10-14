@@ -59,8 +59,11 @@ interface PluginDetailProps {
   plugin: Plugin;
   /** Er is al een andere dienst gekoppeld, die hiermee vervangen wordt */
   replaces: { name: string; email: string } | null;
+  /** Deze dienst is nu gekoppeld; dan staat er Verwijderen in plaats van Installeren */
+  connected: boolean;
   connecting: boolean;
   onConnect: () => void;
+  onRemove: () => void;
   /** De vorige poging liep vast op toestemming van een beheerder */
   adminRequired: boolean;
   config: { googleClientId: string | null; microsoftAdminConsentUrl: string | null } | null;
@@ -83,7 +86,16 @@ function ExternalRow({ label, href }: { label: string; href: string }) {
  * Het venster bij een plug-in: wat het is, wat het aanzet en wat er bij
  * goedkeuring komt kijken, met rechtsboven de knop om te koppelen.
  */
-export default function PluginDetail({ plugin, replaces, connecting, onConnect, adminRequired, config }: PluginDetailProps) {
+export default function PluginDetail({
+  plugin,
+  replaces,
+  connected,
+  connecting,
+  onConnect,
+  onRemove,
+  adminRequired,
+  config,
+}: PluginDetailProps) {
   const toast = useToast();
   const Icon = plugin.icon;
 
@@ -107,10 +119,15 @@ export default function PluginDetail({ plugin, replaces, connecting, onConnect, 
           <h2>{plugin.name}</h2>
           <span className="description">Door Resynked</span>
         </div>
-        <button type="button" className="button tertiary with-icon" disabled={connecting} onClick={onConnect}>
-          <Icon size={16} />
-          {connecting ? 'Bezig met inloggen...' : `Inloggen met ${plugin.name}`}
-        </button>
+        {connected ? (
+          <button type="button" className="button negative" onClick={onRemove}>
+            Verwijderen
+          </button>
+        ) : (
+          <button type="button" className="button" disabled={connecting} onClick={onConnect}>
+            {connecting ? 'Bezig...' : 'Installeren'}
+          </button>
+        )}
       </div>
 
       <p>

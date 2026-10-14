@@ -131,22 +131,29 @@ export default function PluginsSettings() {
       cancelText: 'Annuleren',
     });
 
-    if (!confirmed) return;
+    if (!confirmed) return false;
 
     setDisconnecting(true);
     try {
       const response = await fetch('/api/mail/account', { method: 'DELETE' });
       if (!response.ok) throw new Error();
       clearMailAccount();
-      toast.success('Uitgezet', 'Je account is ontkoppeld');
+      toast.success('Verwijderd', 'Je account is ontkoppeld');
+      return true;
     } catch {
       toast.error('Fout', 'Ontkoppelen mislukt');
+      return false;
     } finally {
       setDisconnecting(false);
     }
   };
 
   const dialogPlugin = PLUGINS.find(plugin => plugin.provider === dialogFor);
+
+  const openDetail = (provider: MailProviderName) => {
+    setAdminRequired(false);
+    setDialogFor(provider);
+  };
 
   return (
     <>
@@ -156,10 +163,19 @@ export default function PluginsSettings() {
         {PLUGINS.map(({ provider, icon: Icon, summary }) => {
           const connected = account?.provider === provider;
 
-          // Een label om de hele rij: een klik waar dan ook op de rij zet de
-          // schakelaar om, net als een klik op de schakelaar zelf
+          // Een klik op de rij opent het venster over deze plug-in; de
+          // schakelaar zelf zet hem direct aan of uit
           return (
-            <label key={provider} className="plugin">
+            <div
+              key={provider}
+              className="plugin"
+              role="button"
+              tabIndex={0}
+              onClick={() => openDetail(provider)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') openDetail(provider);
+              }}
+            >
               <span className="plugin-icon">
                 <Icon size={24} />
               </span>
@@ -167,17 +183,15 @@ export default function PluginsSettings() {
                 <span className="title">{PROVIDER_NAMES[provider]}</span>
                 <span className="description">{connected ? `Gekoppeld met ${account.email}` : summary}</span>
               </span>
-              <Toggle
-                label={PROVIDER_NAMES[provider]}
-                checked={connected}
-                disabled={account === undefined || disconnecting}
-                onChange={(on) => {
-                  if (!on) return disconnect();
-                  setAdminRequired(false);
-                  setDialogFor(provider);
-                }}
-              />
-            </label>
+              <span onClick={(event) => event.stopPropagation()}>
+                <Toggle
+                  label={PROVIDER_NAMES[provider]}
+                  checked={connected}
+                  disabled={account === undefined || disconnecting}
+                  onChange={(on) => (on ? openDetail(provider) : disconnect())}
+                />
+              </span>
+            </div>
           );
         })}
       </div>
@@ -191,8 +205,12 @@ export default function PluginsSettings() {
                 ? { name: PROVIDER_NAMES[account.provider], email: account.email }
                 : null
             }
+            connected={account?.provider === dialogPlugin.provider}
             connecting={connecting !== null}
             onConnect={() => connect(dialogPlugin.provider)}
+            onRemove={async () => {
+              if (await disconnect()) setDialogFor(null);
+            }}
             adminRequired={adminRequired}
             config={config}
           />
