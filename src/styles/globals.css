@@ -148,12 +148,13 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 /* Ingeklapt: alleen de iconen, met de naam als label bij hover */
 .sidebar.collapsed {width: 56px;}
 .sidebar.collapsed .logo {justify-content: center;}
-.sidebar.collapsed .navigation a {position: relative; justify-content: center; padding: var(--space5);}
+.sidebar.collapsed .navigation {align-items: center;}
+.sidebar.collapsed .navigation a {position: relative; justify-content: center; width: 34px; height: 34px; margin: 0; padding: 0; box-sizing: border-box;}
 .sidebar.collapsed .navigation a .label {display: none;}
 .sidebar.collapsed .navigation a .count {position: absolute; top: -4px; right: 0; min-width: 16px; padding: 0 4px; font-size: 9px;}
 .sidebar.collapsed .navigation a::after {top: 50%; left: calc(100% + var(--space10)); transform: translateY(-50%); z-index: 20; color: var(--font-color1); display: none;}
 .sidebar.collapsed .navigation a:hover::after {display: block; opacity: 1;}
-.sidebar.collapsed .profile {justify-content: center; padding: var(--space5);}
+.sidebar.collapsed .profile {justify-content: center; width: 40px; height: 40px; margin: var(--space5) auto; padding: 0;}
 .sidebar.collapsed .profile .info {display: none;}
 
 .sidebar .navigation {flex: 1; padding: var(--space10) 0; display: flex; flex-direction: column; gap: 3px;}
@@ -223,16 +224,14 @@ button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 
    ruimte, en dan krijgt een vak dat tot de rand loopt ineens een scrollbalk */
 button[data-label]:hover::after {display: block;}
 /* Bij de knoppen aan de rechterrand loopt het label naar links in plaats van eroverheen */
-.message-actions button:last-child::after, .composer .actions button:last-child::after, .copy-field button::after {left: auto; right: 0; transform: none;}
+.inbox .message-actions button:last-child::after, .inbox .composer .composer-header .actions button:last-child::after, .plugin-detail .copy-field button::after {left: auto; right: 0; transform: none;}
 .editable-region:empty {min-height: 20px;}
 .editable-region > .drag-handle {position: absolute; top: 0; left: calc(-24px - var(--space10)); z-index: 3;}
 
-/* Bewerkbalk onderin, zodra er iets op het papier gekozen is */
 .island-bar {position: fixed; bottom: var(--space20); left: 50%; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 2 * var(--space20));}
 .island-bar .toolbar {border-bottom: 0; border-radius: var(--border-radius2);}
 .island-bar .toolbar button.delete {color: var(--color6);}
-/* Een gewone knop in de balk, zoals Ondertekenen: niet het kleine icoonformaat */
-.island-bar .toolbar .button {width: auto; height: auto; padding: var(--space10) var(--space15); background: var(--color1); color: var(--color2);}
+.island-bar .toolbar .button {width: auto; height: auto; padding: var(--space10) var(--space15); background: var(--color1); color: var(--color2); line-height: 1;}
 .island-bar .toolbar .button:hover {background: var(--color1); color: var(--color2); opacity: .85;}
 .island-bar .selection-count {font-size: var(--fontsize2); gap: var(--space5) !important; color: var(--font-color2);}
 .island-bar .selection-count .count {display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0 var(--space5); box-sizing: border-box; border-radius: var(--border-radius1); background: var(--color1); color: var(--color2);}
@@ -645,7 +644,13 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .list-loading, .inbox .list-empty, .inbox .list-more {padding: var(--space20); margin: 0; color: var(--font-color2); text-align: center;}
 
 .inbox .inbox-item {display: grid; grid-template-columns: 6px 30px 1fr; gap: var(--space10); width: 100%; font-size: var(--fontsize1); color: var(--font-color1); padding: var(--space15) var(--space20) var(--space15) var(--space10); box-sizing: border-box; text-align: left; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: .3s all ease;}
-.inbox .inbox-item:hover, .inbox .inbox-item.active {background: var(--color3);}
+.inbox .inbox-item:hover, .inbox .inbox-item.active, .inbox .inbox-item.checked {background: var(--color3);}
+.inbox .inbox-item .pick {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;}
+.inbox .inbox-item .pick .checkbox {display: none; align-items: center; justify-content: center;}
+.inbox .inbox-item:hover .pick .avatar, .inbox .inbox-list.selecting .inbox-item .pick .avatar {display: none;}
+.inbox .inbox-item:hover .pick .checkbox, .inbox .inbox-list.selecting .inbox-item .pick .checkbox {display: flex;}
+.inbox .list-header .title-row .checkbox {display: flex; align-items: center; justify-content: center; flex: 0 0 auto;}
+.inbox .list-header .title-row h1 {flex: 1;}
 .inbox .inbox-item .dot {width: 6px; height: 6px; margin-top: 12px; border-radius: 50%;}
 .inbox .inbox-item.unread .dot {background: var(--color5);}
 .inbox .inbox-item .summary {display: flex; flex-direction: column; gap: 2px; min-width: 0;}
@@ -667,35 +672,35 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-header {display: grid; grid-template-columns: 30px 1fr auto; gap: var(--space10); align-items: center; margin: 0 0 var(--space15) 0;}
 .inbox .message-actions {display: flex; align-items: center; gap: 2px;}
 .inbox .message-actions .meta {margin-right: var(--space5);}
-.inbox .message-actions button, .composer .actions button, .composer-footer > button:not(.button) {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
-.inbox .message-actions button:hover, .composer .actions button:hover, .composer-footer > button:not(.button):hover {background: var(--color4); color: var(--font-color1);}
+.inbox .message-actions button, .inbox .composer .composer-header .actions button, .inbox .composer .composer-footer > button:not(.button) {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
+.inbox .message-actions button:hover, .inbox .composer .composer-header .actions button:hover, .inbox .composer .composer-footer > button:not(.button):hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-header .sender {display: flex; flex-direction: column; min-width: 0;}
 .inbox .thread-header h2, .inbox .message-header .meta {overflow-wrap: anywhere;}
 .inbox .message-header .from {font-weight: 600;}
 /* Antwoorden of doorsturen: vast onderin het gesprek, ook tijdens het lezen */
-.composer {position: sticky; bottom: 0; z-index: 2; margin: auto calc(var(--space20) * 2 + 52px) var(--space20) var(--space20); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
-.composer-header {display: flex; align-items: center; gap: var(--space10); padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
-.composer.minimized .composer-header {border-bottom: 0; cursor: pointer;}
-.composer-header .label {color: var(--font-color2); font-size: var(--fontsize2); white-space: nowrap;}
-.composer-header .recipient {display: flex; align-items: center; gap: var(--space10); flex: 1; min-width: 0;}
-.composer-header .recipient .avatar {width: 24px; height: 24px; font-size: 10px;}
-.composer-header .recipient .from {font-weight: 500;}
-.composer-header input {flex: 1;}
-.composer-header .actions {display: flex; align-items: center; gap: 2px; margin-left: auto;}
-.composer .rich-editor {border: 0; border-radius: 0; box-shadow: none;}
-.composer .rich-editor .toolbar {border-radius: 0;}
-.composer .rich-editor .editable {min-height: 100px; max-height: 260px;}
-.composer-signature {max-height: 120px; overflow-y: auto; padding: 0 var(--space15) var(--space10); border-top: 1px dashed var(--border-color);}
-.composer-footer {display: flex; align-items: center; justify-content: space-between; padding: var(--space10) var(--space15); background: var(--color3); border-top: 1px solid var(--border-color); border-radius: 0 0 var(--border-radius2) var(--border-radius2);}
-.composer-footer > button.delete {color: var(--color6);}
-.composer-footer .button.with-icon {gap: var(--space5); padding: var(--space10) var(--space15);}
+.inbox .composer {position: sticky; bottom: 0; z-index: 2; margin: auto calc(var(--space20) * 2 + 52px) var(--space20) var(--space20); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
+.inbox .composer .composer-header {display: flex; align-items: center; gap: var(--space10); padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
+.inbox .composer.minimized .composer-header {border-bottom: 0; cursor: pointer;}
+.inbox .composer .composer-header .label {color: var(--font-color2); font-size: var(--fontsize2); white-space: nowrap;}
+.inbox .composer .composer-header .recipient {display: flex; align-items: center; gap: var(--space10); flex: 1; min-width: 0;}
+.inbox .composer .composer-header .recipient .avatar {width: 24px; height: 24px; font-size: 10px;}
+.inbox .composer .composer-header .recipient .from {font-weight: 500;}
+.inbox .composer .composer-header input {flex: 1;}
+.inbox .composer .composer-header .actions {display: flex; align-items: center; gap: 2px; margin-left: auto;}
+.inbox .composer .rich-editor {border: 0; border-radius: 0; box-shadow: none;}
+.inbox .composer .rich-editor .toolbar {border-radius: 0;}
+.inbox .composer .rich-editor .editable {min-height: 100px; max-height: 260px;}
+.inbox .composer .composer-signature {max-height: 120px; overflow-y: auto; padding: 0 var(--space15) var(--space10); border-top: 1px dashed var(--border-color);}
+.inbox .composer .composer-footer {display: flex; align-items: center; justify-content: space-between; padding: var(--space10) var(--space15); background: var(--color3); border-top: 1px solid var(--border-color); border-radius: 0 0 var(--border-radius2) var(--border-radius2);}
+.inbox .composer .composer-footer > button.delete {color: var(--color6);}
+.inbox .composer .composer-footer .button.with-icon {gap: var(--space5); padding: var(--space10) var(--space15);}
 
 /* Mail opstellen: de ronde knop rechtsonder, en het venster dat erboven opent */
 .inbox .compose-button {position: absolute; right: var(--space20); bottom: var(--space20); z-index: 6; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: var(--color1); color: var(--color2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
 .inbox .compose-button:hover {opacity: .85;}
-.composer.floating {position: absolute; right: var(--space20); bottom: calc(var(--space20) * 2 + 52px); z-index: 5; width: min(600px, calc(100% - 2 * var(--space20))); margin: 0;}
-.composer-subject {padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
-.composer-subject input {width: 100%; box-sizing: border-box;}
+.inbox .composer.floating {position: absolute; right: var(--space20); bottom: calc(var(--space20) * 2 + 52px); z-index: 5; width: min(600px, calc(100% - 2 * var(--space20))); margin: 0;}
+.inbox .composer .composer-subject {padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
+.inbox .composer .composer-subject input {width: 100%; box-sizing: border-box;}
 
 /* Een bericht met ster (Gmail) of vlag (Outlook) */
 .inbox .message-actions button.starred {color: var(--font-color1);}
@@ -704,7 +709,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 /* Hoeveel ongelezen, achter een menu-item of map */
 .sidebar .navigation a .count, .inbox .inbox-folders .count {margin-left: auto; min-width: 20px; padding: 1px 6px; box-sizing: border-box; border-radius: 10px; background: var(--color1); color: var(--color2); font-size: 11px; font-weight: 600; line-height: 1.5; text-align: center;}
 
-.mail-body {display: block; width: 100%; height: 0; border: 0;}
+.inbox .mail-body {display: block; width: 100%; height: 0; border: 0;}
 
 /* Bijlagen onder een bericht */
 .inbox .mail-attachments {margin: var(--space15) 0 0 0;}

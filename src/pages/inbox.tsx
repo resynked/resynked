@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Archive,
+  Check,
   File,
   FilePlus2,
   Flag,
@@ -26,6 +27,7 @@ import MailComposer, { type ComposerMode } from '@/components/MailComposer';
 import QuoteFromMail from '@/components/QuoteFromMail';
 import Toggle from '@/components/Toggle';
 import ToolButton from '@/components/ToolButton';
+import SelectionBar from '@/components/SelectionBar';
 import { Skeleton } from '@/components/Skeleton';
 import { useToast } from '@/components/Toast';
 import { useMailAccount } from '@/hooks/useMailAccount';
@@ -83,6 +85,8 @@ export default function InboxPage() {
   const [needsReconnect, setNeedsReconnect] = useState(false);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Aangevinkte gesprekken, om in één keer te archiveren of te verwijderen
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [thread, setThread] = useState<MailThread | null>(null);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
 
@@ -248,8 +252,58 @@ export default function InboxPage() {
     }
   };
 
+  const toggleChecked = (id: string) =>
+    setCheckedIds(current => (current.includes(id) ? current.filter(i => i !== id) : [...current, id]));
+
+  const allChecked = items.length > 0 && items.every(item => checkedIds.includes(item.id));
+
+  /**
+   * Iets doen met alle aangevinkte gesprekken. Ze verdwijnen (of worden
+   * gelezen) meteen; wat bij de aanbieder mislukt, komt na het vernieuwen terug.
+   */
+  const bulk = async (action: 'archive' | 'trash' | 'read') => {
+    const ids = checkedIds;
+    const unreadCount = items.filter(i => ids.includes(i.id) && i.unread).length;
+    setCheckedIds([]);
+
+    if (action === 'read') {
+      setItems(current => current.map(i => (ids.includes(i.id) ? { ...i, unread: false } : i)));
+    } else {
+      setItems(current => current.filter(i => !ids.includes(i.id)));
+      if (selectedId && ids.includes(selectedId)) {
+        setSelectedId(null);
+        setThread(null);
+      }
+    }
+    if (folder === INBOX_FOLDER) for (let i = 0; i < unreadCount; i++) decreaseMailUnread();
+
+    const results = await Promise.allSettled(
+      ids.map(id =>
+        request(
+          `/api/mail/messages/${encodeURIComponent(id)}`,
+          action === 'read'
+            ? { method: 'PATCH' }
+            : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) }
+        )
+      )
+    );
+
+    const failed = results.filter(r => r.status === 'rejected').length;
+    const done = ids.length - failed;
+    const verb = action === 'archive' ? 'gearchiveerd' : action === 'trash' ? 'verwijderd' : 'als gelezen gemarkeerd';
+
+    if (failed) {
+      toast.error('Niet alles gelukt', `${done} van de ${ids.length} gesprekken ${verb}`);
+      loadList();
+    } else {
+      toast.success('Gelukt', `${done} ${done === 1 ? 'gesprek' : 'gesprekken'} ${verb}`);
+    }
+    loadFolders();
+  };
+
   const chooseFolder = (id: string) => {
     setFolder(id);
+    setCheckedIds([]);
     setSearchInput('');
     setSearch('');
     setSelectedId(null);
@@ -405,9 +459,22 @@ export default function InboxPage() {
               })}
         </nav>
 
-        <div className="inbox-list">
+        <div className={`inbox-list${checkedIds.length > 0 ? ' selecting' : ''}`}>
           <div className="list-header">
             <div className="title-row">
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  role="checkbox"
+                  className="checkbox"
+                  aria-checked={allChecked ? true : checkedIds.length === 0 ? false : 'mixed'}
+                  data-state={allChecked ? 'checked' : checkedIds.length === 0 ? 'unchecked' : 'indeterminate'}
+                  aria-label="Alles selecteren"
+                  onClick={() => setCheckedIds(allChecked ? [] : items.map(item => item.id))}
+                >
+                  {checkedIds.length > 0 && <Check size={12} />}
+                </button>
+              )}
               <h1>{search ? 'Zoekresultaten' : currentFolder?.name || 'Inbox'}</h1>
               <div className="actions">
                 <label className="toggle-label">
@@ -456,23 +523,46 @@ export default function InboxPage() {
             </p>
           ) : (
             <>
-              {items.map(item => (
-                <button
+              {items.map(item => {
+                const checked = checkedIds.includes(item.id);
+                return (
+                <div
                   key={item.id}
-                  type="button"
-                  className={`inbox-item${item.id === selectedId ? ' active' : ''}${item.unread ? ' unread' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  className={`inbox-item${item.id === selectedId ? ' active' : ''}${item.unread ? ' unread' : ''}${checked ? ' checked' : ''}`}
                   onClick={() => open(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') open(item);
+                  }}
                 >
                   <span className="dot" aria-label={item.unread ? 'Ongelezen' : undefined} />
-                  <span className="avatar">{initials(item.from)}</span>
+                  {/* De initialen, of het vinkje als je erover gaat of al iets aanvinkte */}
+                  <span className="pick">
+                    <span className="avatar">{initials(item.from)}</span>
+                    <button
+                      type="button"
+                      role="checkbox"
+                      className="checkbox"
+                      aria-checked={checked}
+                      aria-label={`${item.subject} selecteren`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleChecked(item.id);
+                      }}
+                    >
+                      {checked && <Check size={12} />}
+                    </button>
+                  </span>
                   <span className="summary">
                     <span className="from">{displayName(item.from)}</span>
                     <span className="subject">{item.subject}</span>
                     <span className="snippet">{item.snippet}</span>
                     <span className="meta">{timeAgo(item.date)}</span>
                   </span>
-                </button>
-              ))}
+                </div>
+                );
+              })}
 
               {nextPage && (
                 <div className="list-more">
@@ -609,6 +699,22 @@ export default function InboxPage() {
             isSending={isSending}
           />
         )}
+
+        <SelectionBar count={checkedIds.length} noun={['gesprek', 'gesprekken']} onClear={() => setCheckedIds([])}>
+          <ToolButton title="Als gelezen markeren" onClick={() => bulk('read')}>
+            <MailOpen size={15} />
+          </ToolButton>
+          {currentFolder?.kind !== 'archive' && currentFolder?.kind !== 'trash' && (
+            <ToolButton title="Archiveren" onClick={() => bulk('archive')}>
+              <Archive size={15} />
+            </ToolButton>
+          )}
+          {currentFolder?.kind !== 'trash' && (
+            <ToolButton title="Verwijderen" className="delete" onClick={() => bulk('trash')}>
+              <Trash2 size={15} />
+            </ToolButton>
+          )}
+        </SelectionBar>
 
         {convertingThread && (
           <QuoteFromMail
