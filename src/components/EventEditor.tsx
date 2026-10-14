@@ -173,6 +173,11 @@ export default function EventEditor({ event, day, isSaving, onClose, onSave, onD
       </div>
 
       <div className="buttons">
+        {event?.url && (
+          <a className="button cancel" href={event.url} target="_blank" rel="noreferrer">
+            Openen in agenda
+          </a>
+        )}
         {event && (
           <button type="button" className="button negative" disabled={isSaving} onClick={onDelete}>
             Verwijderen

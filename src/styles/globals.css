@@ -653,21 +653,44 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 .mail-body {display: block; width: 100%; height: 0; border: 0;}
 
-/* Agenda: een week, dag voor dag */
-.calendar > h2 {margin: 0 0 var(--space10) 0;}
-.calendar .calendar-day {display: grid; grid-template-columns: 60px 1fr; gap: var(--space20); padding: var(--space15) 0; border-top: 1px solid var(--border-color);}
-.calendar .calendar-date {position: relative; display: flex; flex-direction: column; align-items: center; align-self: start; gap: 2px; padding: var(--space5) 0; border-radius: var(--border-radius1);}
-.calendar .calendar-date:hover {background: var(--color4);}
-.calendar .calendar-date .weekday {font-size: var(--fontsize2); color: var(--font-color2); text-transform: capitalize;}
-.calendar .calendar-date .day {display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: var(--h3-size); font-weight: 500;}
-.calendar .calendar-day.today .day {background: var(--color1); color: var(--color2);}
-.calendar .calendar-events {display: flex; flex-direction: column; gap: var(--space5); min-width: 0;}
-.calendar .calendar-empty {color: var(--font-color2); padding: var(--space5) 0;}
-.calendar .calendar-event {cursor: pointer; transition: .3s all ease; display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); border-radius: var(--border-radius1); background: var(--color3); border: 1px solid var(--border-color);}
-.calendar .calendar-event .time {color: var(--font-color2); font-size: var(--fontsize2); white-space: nowrap;}
-.calendar .calendar-event .information {display: flex; flex-direction: column; min-width: 0;}
-.calendar .calendar-event .title {font-weight: 500;}
-.calendar .calendar-event .description {display: flex; align-items: center; gap: 3px; color: var(--font-color2); font-size: var(--fontsize2);}
-.calendar .calendar-event:hover {background: var(--color4);}
-.calendar .calendar-event a {color: var(--font-color2); line-height: 0;}
-.calendar .calendar-event a:hover {color: var(--font-color1);}
+/* Agenda: de maand of week als raster, een vakje per dag */
+.content .block.calendar {padding: 0; overflow: hidden;}
+.calendar .calendar-toolbar {display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space15); padding: var(--space20);}
+.calendar .calendar-heading {display: flex; align-items: center; gap: var(--space15);}
+.calendar .calendar-heading h2 {margin: 0;}
+.calendar .calendar-heading .description {color: var(--font-color2); font-size: var(--fontsize2);}
+.calendar .date-badge {display: flex; flex-direction: column; align-items: center; justify-content: center; width: 52px; height: 52px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2); line-height: 1.2;}
+.calendar .date-badge .month {font-size: 10px; text-transform: uppercase; color: var(--font-color2); background: var(--color3); width: 100%; text-align: center;}
+.calendar .date-badge .day {font-size: var(--h3-size); font-weight: 600;}
+.calendar .calendar-toolbar .actions {display: flex; align-items: center; gap: var(--space10);}
+.calendar .view-select {width: 160px;}
+
+/* Knoppen die aan elkaar vastzitten, zoals vorige / vandaag / volgende */
+.button-group {display: inline-flex;}
+.button-group .button {border-radius: 0; margin-left: -1px;}
+.button-group .button:first-child {border-radius: var(--border-radius1) 0 0 var(--border-radius1); margin-left: 0;}
+.button-group .button:last-child {border-radius: 0 var(--border-radius1) var(--border-radius1) 0;}
+.button-group .button.cancel {height: 34px; padding: 0 var(--space15);}
+
+.calendar .calendar-grid {display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--border-color);}
+.calendar .calendar-weekday {padding: var(--space10); text-align: center; font-size: var(--fontsize2); color: var(--font-color2); border-bottom: 1px solid var(--border-color);}
+.calendar .calendar-weekday:not(:nth-child(7n)) {border-right: 1px solid var(--border-color);}
+.calendar .calendar-cell {display: flex; flex-direction: column; gap: 3px; min-height: 120px; min-width: 0; padding: var(--space10); box-sizing: border-box; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: .3s all ease;}
+.calendar .calendar-cell:not(:nth-child(7n)) {border-right: 1px solid var(--border-color);}
+.calendar .calendar-cell:hover {background: var(--color3);}
+.calendar .calendar-cell.outside {background: var(--color3); color: var(--font-color2);}
+.calendar .calendar-cell.outside .calendar-chip {opacity: .6;}
+.calendar .calendar-grid.week .calendar-cell {min-height: 420px;}
+.calendar .day-number {display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0 0 var(--space5) 0; border-radius: 50%; font-size: var(--fontsize2); font-weight: 500;}
+.calendar .calendar-cell.today .day-number {background: var(--color1); color: var(--color2);}
+
+.calendar .calendar-chip {display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; column-gap: var(--space5); width: 100%; padding: 2px var(--space5); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2); color: var(--font-color1); font-size: var(--fontsize2); line-height: 1.6;}
+.calendar .calendar-chip:hover {border-color: var(--font-color2);}
+.calendar .calendar-chip .title {flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.calendar .calendar-chip .time {color: var(--font-color2); white-space: nowrap;}
+.calendar .calendar-chip .location {width: 100%; color: var(--font-color2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.calendar .calendar-chip.all-day {background: var(--color1); border-color: var(--color1); color: var(--color2);}
+.calendar .calendar-grid.week .calendar-chip {flex-direction: column; align-items: flex-start; padding: var(--space5);}
+.calendar .calendar-grid.week .calendar-chip .title {white-space: normal;}
+.calendar .calendar-more {padding: 0 var(--space5); color: var(--font-color2); font-size: var(--fontsize2);}
+.calendar .calendar-more:hover {color: var(--font-color1);}

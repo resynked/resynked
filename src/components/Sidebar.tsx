@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useMailAccount } from '@/hooks/useMailAccount';
 import { useMailUnread } from '@/hooks/useMailUnread';
-import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
+import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen } from 'lucide-react';
 
 export default function Sidebar() {
   const router = useRouter();
@@ -90,14 +90,6 @@ export default function Sidebar() {
         <Link href="/notes" className={isActive('/notes') || router.pathname.startsWith('/notes') ? 'active' : ''}>
           <FilePen size={16} />
           <span>Notities</span>
-        </Link>
-        <Link href="#">
-          <Euro size={16} />
-          <span>Uitgaven</span>
-        </Link>
-        <Link href="#">
-          <Calculator size={16} />
-          <span>BTW-overzicht</span>
         </Link>
       </nav>
 
