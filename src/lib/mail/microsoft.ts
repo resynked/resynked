@@ -1,5 +1,5 @@
-import { INBOX_FOLDER, type CalendarEvent, type CalendarEventInput, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
-import { apiFetch, requestTokens, textToHtml } from './utils';
+import { INBOX_FOLDER, attachmentUrl, type MailAttachment, type CalendarEvent, type CalendarEventInput, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
+import { apiFetch, replaceCidImages, requestTokens, textToHtml } from './utils';
 
 /**
  * Outlook, via Microsoft Graph. Werkt voor zakelijke Microsoft 365-accounts
@@ -69,7 +69,35 @@ function folderPath(folder: string): string {
 }
 
 const LIST_FIELDS = 'id,subject,bodyPreview,from,receivedDateTime,isRead';
-const MESSAGE_FIELDS = 'id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,body,conversationId,flag';
+const MESSAGE_FIELDS = 'id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,body,conversationId,flag,hasAttachments';
+
+/**
+ * De bijlagen van één bericht. Plaatjes in de tekst zelf hebben een Content-ID
+ * nodig om ze te kunnen tonen; dat vraagt Graph alleen per bijlage, dus dat
+ * gebeurt alleen voor die plaatjes.
+ */
+async function messageAttachments(accessToken: string, messageId: string) {
+  const path = `${API}/messages/${encodeURIComponent(messageId)}/attachments`;
+  const list = await apiFetch(`${path}?$select=id,name,contentType,size,isInline`, accessToken);
+
+  return Promise.all(
+    (list.value || []).map(async (item: any): Promise<MailAttachment & { cid: string }> => {
+      let cid = '';
+      if (item.isInline) {
+        const full = await apiFetch(`${path}/${encodeURIComponent(item.id)}`, accessToken).catch(() => null);
+        cid = full?.contentId || '';
+      }
+      return {
+        id: item.id,
+        name: item.name || 'bijlage',
+        mimeType: item.contentType || 'application/octet-stream',
+        size: item.size || 0,
+        inline: !!item.isInline && !!cid,
+        cid,
+      };
+    })
+  );
+}
 
 /** De berichten van het gesprek waar dit bericht bij hoort, oudste eerst. */
 async function conversation(accessToken: string, id: string) {
@@ -230,18 +258,36 @@ export const microsoft: MailProvider = {
   async thread(accessToken, id) {
     const { subject, messages } = await conversation(accessToken, id);
 
+    const withAttachments = await Promise.all(
+      messages.map(async (message: any) => ({
+        message,
+        attachments: message.hasAttachments ? await messageAttachments(accessToken, message.id) : [],
+      }))
+    );
+
     return {
       id,
       subject: subject || '(geen onderwerp)',
-      messages: messages.map((message: any) => ({
-        id: message.id,
-        from: toAddress(message.from),
-        to: (message.toRecipients || []).map(toAddress),
-        cc: (message.ccRecipients || []).map(toAddress),
-        date: message.receivedDateTime,
-        html: message.body?.contentType === 'text' ? textToHtml(message.body.content || '') : message.body?.content || '',
-        starred: message.flag?.flagStatus === 'flagged',
-      })),
+      messages: withAttachments.map(({ message, attachments }) => {
+        // Plaatjes in de tekst wijzen naar hun bijlage, via onze eigen route
+        const cidUrls = Object.fromEntries(
+          attachments.filter(a => a.cid).map(a => [a.cid, attachmentUrl(message.id, a.id)])
+        );
+
+        return {
+          id: message.id,
+          from: toAddress(message.from),
+          to: (message.toRecipients || []).map(toAddress),
+          cc: (message.ccRecipients || []).map(toAddress),
+          date: message.receivedDateTime,
+          html:
+            message.body?.contentType === 'text'
+              ? textToHtml(message.body.content || '')
+              : replaceCidImages(message.body?.content || '', cidUrls),
+          starred: message.flag?.flagStatus === 'flagged',
+          attachments: attachments.map(({ cid: _cid, ...attachment }) => attachment),
+        };
+      }),
     };
   },
 
@@ -290,6 +336,22 @@ export const microsoft: MailProvider = {
       method: 'POST',
       body: JSON.stringify({ destinationId: 'deleteditems' }),
     });
+  },
+
+  async attachment(accessToken, messageId, attachmentId) {
+    const item = await apiFetch(
+      `${API}/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+      accessToken
+    );
+
+    // Een doorgestuurde mail of agenda-item als bijlage heeft geen bestand
+    if (!item.contentBytes) throw new Error('Dit soort bijlage kan alleen in Outlook zelf worden geopend');
+
+    return {
+      name: item.name || 'bijlage',
+      mimeType: item.contentType || 'application/octet-stream',
+      data: Buffer.from(item.contentBytes, 'base64'),
+    };
   },
 
   async setStarred(accessToken, messageId, starred) {

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import MailBody from '@/components/MailBody';
+import MailAttachments from '@/components/MailAttachments';
 import MailComposer, { type ComposerMode } from '@/components/MailComposer';
 import QuoteFromMail from '@/components/QuoteFromMail';
 import Toggle from '@/components/Toggle';
@@ -559,6 +560,7 @@ export default function InboxPage() {
                       </span>
                     </div>
                     <MailBody html={message.html} />
+                    <MailAttachments messageId={message.id} attachments={message.attachments || []} />
                   </div>
                 ))}
               </div>

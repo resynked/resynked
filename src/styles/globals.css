@@ -556,7 +556,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail p {line-height: 1.6; margin: 0 0 var(--space10) 0;}
 .plugin-detail h3 {padding: 0 0 var(--space10) 0; margin: var(--space20) 0 var(--space10) 0; border-bottom: 1px solid var(--border-color);}
 .plugin-detail h3 .description {color: var(--font-color2); font-weight: 400;}
-.plugin-detail .plugin-parts .plugin {display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: var(--space15); padding: var(--space5) 0;}
+.plugin-detail .plugin-parts .plugin {display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: var(--space15); padding: var(--space5) 0; cursor: unset; border: 0;}
 .plugin-detail .plugin-parts .plugin .plugin-icon {display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
 .plugin-detail .plugin-parts .plugin .information .title {display: block; font-weight: 500;}
 .plugin-detail .plugin-parts .plugin .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
@@ -677,6 +677,19 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .sidebar .navigation a .count, .inbox .inbox-folders .count {margin-left: auto; min-width: 20px; padding: 1px 6px; box-sizing: border-box; border-radius: 10px; background: var(--color1); color: var(--color2); font-size: 11px; font-weight: 600; line-height: 1.5; text-align: center;}
 
 .mail-body {display: block; width: 100%; height: 0; border: 0;}
+
+/* Bijlagen onder een bericht */
+.inbox .mail-attachments {margin: var(--space15) 0 0 0;}
+.inbox .mail-attachments .label {display: block; margin: 0 0 var(--space5) 0; font-size: var(--fontsize2); color: var(--font-color2);}
+.inbox .mail-attachments .list {display: flex; flex-wrap: wrap; gap: var(--space10);}
+.inbox .mail-attachments .attachment {display: inline-flex; align-items: center; max-width: 100%; border: 1px solid var(--border-color); border-radius: var(--border-radius1); background: var(--color2); transition: .3s all ease;}
+.inbox .mail-attachments .attachment:hover {border-color: var(--font-color2);}
+.inbox .mail-attachments .open {display: flex; align-items: center; gap: var(--space10); min-width: 0; padding: var(--space5) var(--space10) var(--space5) var(--space5); color: var(--font-color1); text-decoration: none;}
+.inbox .mail-attachments .icon {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex: 0 0 auto; border-radius: var(--border-radius1); background: var(--color4); color: var(--font-color2);}
+.inbox .mail-attachments .name {font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.inbox .mail-attachments .size {font-size: var(--fontsize2); color: var(--font-color2); white-space: nowrap;}
+.inbox .mail-attachments .download {display: flex; align-items: center; justify-content: center; width: 32px; align-self: stretch; border-left: 1px solid var(--border-color); color: var(--font-color2);}
+.inbox .mail-attachments .download:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Agenda: de maand of week als raster, een vakje per dag */
 .content .block.calendar {padding: 0; overflow: hidden;}

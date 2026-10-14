@@ -21,6 +21,22 @@ export interface MailSummary {
   unread: boolean;
 }
 
+/** Een bijlage bij een bericht. */
+export interface MailAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  /** In bytes */
+  size: number;
+  /** Een plaatje dat in de tekst zelf staat, zoals een logo in de handtekening */
+  inline: boolean;
+}
+
+/** Waar het scherm een bijlage ophaalt; ook gebruikt voor plaatjes in de mail zelf. */
+export function attachmentUrl(messageId: string, attachmentId: string, download = false): string {
+  return `/api/mail/attachments/${encodeURIComponent(messageId)}/${encodeURIComponent(attachmentId)}${download ? '?download=1' : ''}`;
+}
+
 /** Eén bericht in een gesprek, met de inhoud. */
 export interface MailMessage {
   id: string;
@@ -32,6 +48,14 @@ export interface MailMessage {
   html: string;
   /** Met ster in Gmail, gemarkeerd (vlag) in Outlook */
   starred: boolean;
+  attachments: MailAttachment[];
+}
+
+/** Een bijlage om te openen of te downloaden. */
+export interface MailAttachmentFile {
+  name: string;
+  mimeType: string;
+  data: Buffer;
 }
 
 /** Een heel gesprek, oudste bericht eerst. */
@@ -130,6 +154,8 @@ export interface MailProvider {
   archive(accessToken: string, id: string): Promise<void>;
   /** Naar de prullenbak; daar haal je het nog terug */
   trash(accessToken: string, id: string): Promise<void>;
+  /** Een bijlage van een bericht ophalen */
+  attachment(accessToken: string, messageId: string, attachmentId: string): Promise<MailAttachmentFile>;
   /** Een ster (Gmail) of vlag (Outlook) op één bericht zetten of weghalen */
   setStarred(accessToken: string, messageId: string, starred: boolean): Promise<void>;
   /** Een nieuw bericht, los van een bestaand gesprek */

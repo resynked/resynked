@@ -336,6 +336,10 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
 COMMIT;
 
+-- Laat Supabase de nieuwe tabellen meteen kennen. Zonder dit zegt de API soms
+-- nog even "Could not find the table ... in the schema cache"
+NOTIFY pgrst, 'reload schema';
+
 -- ------------------------------------------------------------
 -- Controle achteraf
 --

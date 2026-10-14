@@ -1,4 +1,10 @@
-import { INBOX_FOLDER, type CalendarEvent, type CalendarEventInput, type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
+import {
+  INBOX_FOLDER,
+  attachmentUrl,
+  type MailAttachment,
+  type CalendarEvent,
+  type CalendarEventInput,
+  type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
 import {
   apiFetch,
   decodeEntities,
@@ -6,6 +12,7 @@ import {
   forwardSubject,
   parseAddress,
   parseAddressList,
+  replaceCidImages,
   replySubject,
   requestTokens,
   textToHtml,
@@ -52,10 +59,52 @@ function credentials() {
 }
 
 interface GmailPart {
+  partId?: string;
   mimeType?: string;
+  filename?: string;
   headers?: { name: string; value: string }[];
-  body?: { data?: string };
+  body?: { data?: string; attachmentId?: string; size?: number };
   parts?: GmailPart[];
+}
+
+function partHeader(part: GmailPart, name: string): string {
+  return part.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+}
+
+/**
+ * De bijlagen in een bericht, met hun Content-ID als ze in de tekst zelf
+ * staan. Het id is het partId: dat blijft gelijk, terwijl het attachmentId van
+ * Gmail bij elke aanvraag anders is.
+ */
+function findAttachments(part: GmailPart | undefined, found: (MailAttachment & { cid: string })[] = []) {
+  if (!part) return found;
+
+  const isFile = !!part.body?.attachmentId || (!!part.filename && !!part.body?.data);
+  if (isFile && part.partId) {
+    const cid = partHeader(part, 'Content-ID').replace(/^<|>$/g, '');
+    const disposition = partHeader(part, 'Content-Disposition').toLowerCase();
+    found.push({
+      id: part.partId,
+      name: part.filename || 'bijlage',
+      mimeType: part.mimeType || 'application/octet-stream',
+      size: part.body?.size || 0,
+      inline: !!cid && !disposition.startsWith('attachment'),
+      cid,
+    });
+  }
+
+  part.parts?.forEach(child => findAttachments(child, found));
+  return found;
+}
+
+function findPart(part: GmailPart | undefined, partId: string): GmailPart | null {
+  if (!part) return null;
+  if (part.partId === partId) return part;
+  for (const child of part.parts || []) {
+    const found = findPart(child, partId);
+    if (found) return found;
+  }
+  return null;
 }
 
 interface GmailMessage {
@@ -91,14 +140,21 @@ function toMessage(message: GmailMessage): MailMessage {
   const html = findBody(message.payload, 'text/html');
   const text = html === null ? findBody(message.payload, 'text/plain') : null;
 
+  // Plaatjes in de tekst wijzen naar hun bijlage, via onze eigen route
+  const attachments = findAttachments(message.payload);
+  const cidUrls = Object.fromEntries(
+    attachments.filter(a => a.cid).map(a => [a.cid, attachmentUrl(message.id, a.id)])
+  );
+
   return {
     id: message.id,
     from: parseAddress(header(message, 'From')),
     to: parseAddressList(header(message, 'To')),
     cc: parseAddressList(header(message, 'Cc')),
     date: new Date(Number(message.internalDate) || Date.parse(header(message, 'Date'))).toISOString(),
-    html: html ?? textToHtml(text || ''),
+    html: html !== null ? replaceCidImages(html, cidUrls) : textToHtml(text || ''),
     starred: !!message.labelIds?.includes('STARRED'),
+    attachments: attachments.map(({ cid: _cid, ...attachment }) => attachment),
   };
 }
 
@@ -318,6 +374,30 @@ export const google: MailProvider = {
 
   async trash(accessToken, id) {
     await apiFetch(`${API}/threads/${encodeURIComponent(id)}/trash`, accessToken, { method: 'POST' });
+  },
+
+  async attachment(accessToken, messageId, attachmentId) {
+    const message: GmailMessage = await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}?format=full`, accessToken);
+    const part = findPart(message.payload, attachmentId);
+    if (!part) throw new Error('Deze bijlage bestaat niet meer');
+
+    // Kleine bijlagen zitten in het bericht zelf; grotere halen we apart op
+    const data = part.body?.attachmentId
+      ? (
+          await apiFetch(
+            `${API}/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(part.body.attachmentId)}`,
+            accessToken
+          )
+        ).data
+      : part.body?.data;
+
+    if (!data) throw new Error('Deze bijlage is leeg');
+
+    return {
+      name: part.filename || 'bijlage',
+      mimeType: part.mimeType || 'application/octet-stream',
+      data: Buffer.from(data, 'base64url'),
+    };
   },
 
   async setStarred(accessToken, messageId, starred) {

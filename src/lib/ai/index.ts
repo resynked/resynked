@@ -119,6 +119,10 @@ export function threadToTranscript(thread: MailThread): string {
         '---',
         `Van: ${message.from.name} <${message.from.email}>`,
         `Datum: ${message.date}`,
+        // De AI kan de bestanden zelf niet lezen, maar weet zo wel wat er is meegestuurd
+        ...(message.attachments?.some(a => !a.inline)
+          ? [`Bijlagen: ${message.attachments.filter(a => !a.inline).map(a => a.name).join(', ')}`]
+          : []),
         '',
         htmlToText(message.html),
       ].join('\n')

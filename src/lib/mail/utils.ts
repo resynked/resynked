@@ -111,3 +111,11 @@ Datum: ${escapeHtml(date)}<br>
 Onderwerp: ${escapeHtml(original.subject)}<br>
 Aan: ${escapeHtml(original.to)}</div><br>`;
 }
+
+/**
+ * Plaatjes in de mail zelf verwijzen naar een bijlage met "cid:". Die
+ * verwijzingen wijzen we om naar onze eigen route, anders blijven ze leeg.
+ */
+export function replaceCidImages(html: string, urls: Record<string, string>): string {
+  return html.replace(/cid:([^"'\s)>]+)/gi, (match, cid) => urls[cid] || urls[decodeURIComponent(cid)] || match);
+}
