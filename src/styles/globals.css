@@ -581,6 +581,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail .plugin-detail-title {display: flex; align-items: center; justify-content: space-between; gap: var(--space20); margin: var(--space15) 0;}
 .plugin-detail .plugin-detail-title h2 {margin: 0;}
 .plugin-detail .plugin-detail-title .description {color: var(--font-color2);}
+.plugin-detail .plugin-detail-title .button:disabled {opacity: .5; cursor: default;}
 .plugin-detail p {line-height: 1.6; margin: 0 0 var(--space10) 0;}
 .plugin-detail h3 {padding: 0 0 var(--space10) 0; margin: var(--space20) 0 var(--space10) 0; border-bottom: 1px solid var(--border-color);}
 .plugin-detail h3 .description {color: var(--font-color2); font-weight: 400;}
