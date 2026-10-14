@@ -1,6 +1,6 @@
 import { ApiError, GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
-import { buildUserPrompt, SYSTEM_PROMPT } from './prompt';
+import { buildUserPrompt, systemPrompt } from './prompt';
 import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
 
 /**
@@ -54,7 +54,7 @@ export const gemini: AiProvider = {
         model: MODEL,
         contents: buildUserPrompt(input),
         config: {
-          systemInstruction: SYSTEM_PROMPT,
+          systemInstruction: systemPrompt(input.source),
           responseMimeType: 'application/json',
           responseJsonSchema: RESPONSE_SCHEMA,
         },

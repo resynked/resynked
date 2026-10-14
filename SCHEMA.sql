@@ -13,6 +13,7 @@
 --   notes                         notities per klant
 --   mail_accounts                 gekoppelde mailbox per gebruiker (Inbox)
 --   ai_accounts                   eigen AI-sleutel per gebruiker (Anthropic of OpenAI)
+--   whatsapp_accounts, ...        gekoppeld mobiel nummer voor de WhatsApp-bot
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -363,6 +364,44 @@ CREATE TRIGGER update_ai_accounts_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ------------------------------------------------------------
+-- WhatsApp: het mobiele nummer waarmee een gebruiker de bot berichten stuurt
+--
+-- Een aannemer stuurt wat hij bij de klant opmeet, en de bot zet er met zijn
+-- AI-plug-in een conceptofferte van klaar.
+-- ------------------------------------------------------------
+CREATE TABLE whatsapp_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Eén telefoonnummer per gebruiker; berichten daarvan worden zijn offertes
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  -- Alleen cijfers met landcode, zoals WhatsApp het doorgeeft (31612345678).
+  -- Leeg zolang de gebruiker zijn code nog niet vanaf zijn telefoon stuurde
+  phone TEXT UNIQUE,
+  -- De code waarmee hij bewijst dat het nummer van hem is, een kwartier geldig
+  link_code TEXT UNIQUE,
+  link_code_expires_at TIMESTAMPTZ,
+  -- Een bericht waar nog een klant bij ontbrak; het volgende bericht vult het aan
+  pending_text TEXT,
+  pending_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX whatsapp_accounts_tenant_id_idx ON whatsapp_accounts(tenant_id);
+
+CREATE TRIGGER update_whatsapp_accounts_updated_at
+  BEFORE UPDATE ON whatsapp_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- De berichten die al verwerkt zijn, op het id van WhatsApp. Meta stuurt een
+-- bericht soms twee keer; zo wordt het maar één offerte. Alleen het id staat
+-- hier, niet wat erin stond.
+CREATE TABLE whatsapp_messages (
+  id TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------
 -- Row Level Security
 --
 -- De app praat met de database via de service role key en filtert zelf
@@ -384,6 +423,8 @@ ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
 -- Rechten voor de service role

@@ -330,6 +330,48 @@ CREATE TRIGGER update_ai_accounts_updated_at
 
 ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 8. WhatsApp: offertes maken met een bericht aan de bot
+--
+-- Per gebruiker het mobiele nummer dat hij gekoppeld heeft, en de ids van
+-- berichten die al verwerkt zijn.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS whatsapp_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Eén telefoonnummer per gebruiker; berichten daarvan worden zijn offertes
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  -- Alleen cijfers met landcode, zoals WhatsApp het doorgeeft (31612345678).
+  -- Leeg zolang de gebruiker zijn code nog niet vanaf zijn telefoon stuurde
+  phone TEXT UNIQUE,
+  -- De code waarmee hij bewijst dat het nummer van hem is, een kwartier geldig
+  link_code TEXT UNIQUE,
+  link_code_expires_at TIMESTAMPTZ,
+  -- Een bericht waar nog een klant bij ontbrak; het volgende bericht vult het aan
+  pending_text TEXT,
+  pending_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS whatsapp_accounts_tenant_id_idx ON whatsapp_accounts(tenant_id);
+
+DROP TRIGGER IF EXISTS update_whatsapp_accounts_updated_at ON whatsapp_accounts;
+CREATE TRIGGER update_whatsapp_accounts_updated_at
+  BEFORE UPDATE ON whatsapp_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- De berichten die al verwerkt zijn, op het id van WhatsApp. Meta stuurt een
+-- bericht soms twee keer; zo wordt het maar één offerte. Alleen het id staat
+-- hier, niet wat erin stond.
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
+  id TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE whatsapp_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -344,7 +386,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen acht regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen negen regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -403,4 +445,10 @@ UNION ALL SELECT 'AI',
        CASE WHEN EXISTS (
          SELECT 1 FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name = 'ai_accounts'
-       ) THEN 'ja' ELSE 'NEE - onderdeel 7 niet gelukt' END;
+       ) THEN 'ja' ELSE 'NEE - onderdeel 7 niet gelukt' END
+
+UNION ALL SELECT 'WhatsApp',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name IN ('whatsapp_accounts', 'whatsapp_messages')
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 8 niet gelukt' END;

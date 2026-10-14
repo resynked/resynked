@@ -56,13 +56,20 @@ export interface PastQuoteLine {
   quoteNumber: string | null;
 }
 
-/** Alles wat de AI meekrijgt om een mail om te zetten. */
+/**
+ * Waar de aanvraag vandaan komt: een mail van de klant, of een WhatsApp-bericht
+ * van de aannemer zelf terwijl hij bij de klant aan het opmeten is.
+ */
+export type QuoteSource = 'mail' | 'whatsapp';
+
+/** Alles wat de AI meekrijgt om een aanvraag om te zetten. */
 export interface QuoteRequestInput {
-  /** Het gesprek als platte tekst, oudste bericht eerst */
+  source: QuoteSource;
+  /** Het mailgesprek of het WhatsApp-bericht als platte tekst, oudste bericht eerst */
   transcript: string;
   companyName: string;
   userName: string;
-  /** De klant als die al bekend is, op e-mailadres gevonden */
+  /** De klant als die al bekend is, op e-mailadres gevonden; bij WhatsApp zoeken we pas achteraf */
   knownCustomer: Record<string, string> | null;
   pastLines: PastQuoteLine[];
 }

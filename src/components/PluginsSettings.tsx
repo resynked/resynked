@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/Modal';
-import PluginDetail, { PLUGINS } from '@/components/PluginDetail';
+import PluginDetail, { PLUGINS, WHATSAPP_PLUGIN, type PluginProvider } from '@/components/PluginDetail';
 import AiPluginsSection from '@/components/AiPluginsSection';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useAiAccount } from '@/hooks/useAiAccount';
 import { clearMailAccount, reloadMailAccount, useMailAccount } from '@/hooks/useMailAccount';
 import { MAIL_CHANNEL, type MailProviderName } from '@/lib/mail/types';
+import type { WhatsAppAccountInfo, WhatsAppConfig } from '@/lib/whatsapp/types';
 
 const PROVIDER_NAMES: Record<MailProviderName, string> = {
   google: 'Google',
@@ -23,25 +25,61 @@ const PROVIDER_NAMES: Record<MailProviderName, string> = {
  *
  * Er is één mailbox per gebruiker: wie Microsoft koppelt terwijl Google
  * gekoppeld is, vervangt die koppeling.
+ *
+ * WhatsApp koppelt geen mailbox maar een telefoonnummer, en staat daar los
+ * van. Installeren geeft een code die de gebruiker vanaf zijn telefoon naar de
+ * bot stuurt; zolang die code openstaat kijken we af en toe of hij binnen is.
  */
 export default function PluginsSettings() {
   const toast = useToast();
   const { confirm } = useConfirm();
   const account = useMailAccount();
   // Voor welke dienst het inlogvenster open staat
-  const [dialogFor, setDialogFor] = useState<MailProviderName | null>(null);
+  const [dialogFor, setDialogFor] = useState<PluginProvider | null>(null);
   const [connecting, setConnecting] = useState<MailProviderName | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
   // De laatste poging strandde op toestemming van een beheerder
   const [adminRequired, setAdminRequired] = useState(false);
   const [config, setConfig] = useState<{ googleClientId: string | null; microsoftAdminConsentUrl: string | null } | null>(null);
+  const aiAccount = useAiAccount();
+  // undefined zolang het nog geladen wordt, null als er geen nummer gekoppeld is
+  const [whatsapp, setWhatsapp] = useState<WhatsAppAccountInfo | null | undefined>(undefined);
+  const [whatsappConfig, setWhatsappConfig] = useState<WhatsAppConfig | null>(null);
+  const [whatsappBusy, setWhatsappBusy] = useState(false);
 
   useEffect(() => {
     fetch('/api/mail/plugins')
       .then(res => (res.ok ? res.json() : null))
       .then(setConfig)
       .catch(() => {});
+    fetch('/api/whatsapp/account')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        setWhatsapp(data?.account ?? null);
+        setWhatsappConfig(data?.config ?? null);
+      })
+      .catch(() => {});
   }, []);
+
+  // Staat er een WhatsApp-code open, dan kijken we of hij al vanaf de telefoon gestuurd is
+  const whatsappWaiting = !!whatsapp?.linking && !whatsapp.phone;
+  useEffect(() => {
+    if (!whatsappWaiting) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/whatsapp/account');
+        if (!res.ok) return;
+        const { account: next }: { account: WhatsAppAccountInfo | null } = await res.json();
+        setWhatsapp(next);
+        if (next?.phone) toast.success('Gekoppeld', `Berichten van ${next.phone} worden nu offertes in Resynked`);
+      } catch {
+        // Volgende keer opnieuw
+      }
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [whatsappWaiting, toast]);
   const popup = useRef<Window | null>(null);
   // De popup meldt zich via twee wegen tegelijk (zie de terugkeer-route);
   // alleen de eerste melding telt, anders komt elke melding dubbel
@@ -149,9 +187,49 @@ export default function PluginsSettings() {
     }
   };
 
-  const dialogPlugin = PLUGINS.find(plugin => plugin.provider === dialogFor);
+  const connectWhatsapp = async () => {
+    setWhatsappBusy(true);
+    try {
+      const response = await fetch('/api/whatsapp/account', { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Er kon geen code worden gemaakt');
+      setWhatsapp(data.account);
+    } catch (error: any) {
+      toast.error('Installeren mislukt', error.message);
+    } finally {
+      setWhatsappBusy(false);
+    }
+  };
 
-  const openDetail = (provider: MailProviderName) => {
+  const disconnectWhatsapp = async () => {
+    const confirmed = await confirm({
+      title: 'WhatsApp uitzetten',
+      message: `${whatsapp?.phone || 'Je nummer'} wordt ontkoppeld; berichten aan de bot worden dan geen offertes meer. Offertes die al gemaakt zijn blijven staan.`,
+      confirmText: 'Uitzetten',
+      cancelText: 'Annuleren',
+    });
+
+    if (!confirmed) return false;
+
+    setWhatsappBusy(true);
+    try {
+      const response = await fetch('/api/whatsapp/account', { method: 'DELETE' });
+      if (!response.ok) throw new Error();
+      setWhatsapp(null);
+      toast.success('Verwijderd', 'Je nummer is ontkoppeld');
+      return true;
+    } catch {
+      toast.error('Fout', 'Ontkoppelen mislukt');
+      return false;
+    } finally {
+      setWhatsappBusy(false);
+    }
+  };
+
+  const dialogPlugin =
+    dialogFor === 'whatsapp' ? (whatsappConfig ? WHATSAPP_PLUGIN : undefined) : PLUGINS.find(plugin => plugin.provider === dialogFor);
+
+  const openDetail = (provider: PluginProvider) => {
     setAdminRequired(false);
     setDialogFor(provider);
   };
@@ -198,11 +276,59 @@ export default function PluginsSettings() {
           );
         })}
 
+        <h4>Berichten</h4>
+        <div
+          className="plugin"
+          role="button"
+          tabIndex={0}
+          onClick={() => openDetail('whatsapp')}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') openDetail('whatsapp');
+          }}
+        >
+          <span className="plugin-icon">
+            <WHATSAPP_PLUGIN.icon size={24} />
+          </span>
+          <span className="information">
+            <span className="title">{WHATSAPP_PLUGIN.name}</span>
+            <span className="description">
+              {whatsapp?.phone
+                ? `Gekoppeld met ${whatsapp.phone}`
+                : whatsappConfig && !whatsappConfig.configured
+                  ? 'Nog niet beschikbaar'
+                  : WHATSAPP_PLUGIN.summary}
+            </span>
+          </span>
+          <span onClick={(event) => event.stopPropagation()}>
+            <Toggle
+              label={WHATSAPP_PLUGIN.name}
+              checked={!!whatsapp?.phone}
+              disabled={whatsapp === undefined || !whatsappConfig?.configured || whatsappBusy}
+              onChange={(on) => (on ? openDetail('whatsapp') : disconnectWhatsapp())}
+            />
+          </span>
+        </div>
+
         <AiPluginsSection />
       </div>
 
       <Modal isOpen={!!dialogPlugin} onClose={() => setDialogFor(null)} title="">
-        {dialogPlugin && (
+        {dialogPlugin?.provider === 'whatsapp' && whatsappConfig && (
+          <PluginDetail
+            plugin={dialogPlugin}
+            replaces={null}
+            connected={!!whatsapp?.phone}
+            connecting={whatsappBusy}
+            onConnect={connectWhatsapp}
+            onRemove={async () => {
+              if (await disconnectWhatsapp()) setDialogFor(null);
+            }}
+            adminRequired={false}
+            config={null}
+            whatsapp={{ account: whatsapp ?? null, config: whatsappConfig, hasAi: !!aiAccount }}
+          />
+        )}
+        {dialogPlugin && dialogPlugin.provider !== 'whatsapp' && (
           <PluginDetail
             plugin={dialogPlugin}
             replaces={

@@ -78,6 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [tenant, pastLines] = await Promise.all([getTenant(user.tenantId), pastQuoteLines(user.tenantId)]);
 
     const proposal = await ai.provider.proposeQuote(ai.apiKey, {
+      source: 'mail',
       transcript: threadToTranscript(thread),
       companyName: tenant?.company_name || tenant?.name || '',
       userName: user.name || '',

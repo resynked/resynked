@@ -49,6 +49,13 @@ RLS-policies op de tabellen vormen de tweede laag.
    MICROSOFT_CLIENT_ID=...
    MICROSOFT_CLIENT_SECRET=...
 
+   # WhatsApp-bot (Instellingen > Plug-ins > WhatsApp); zie hieronder
+   WHATSAPP_TOKEN=...            # permanente token van een systeemgebruiker
+   WHATSAPP_PHONE_NUMBER_ID=...  # het id van het nummer, niet het nummer zelf
+   WHATSAPP_NUMBER=...           # het nummer van de bot met landcode, bijv. 31612345678
+   WHATSAPP_APP_SECRET=...       # app-geheim, om de webhook te controleren
+   WHATSAPP_VERIFY_TOKEN=...     # zelf verzonnen, zelfde als bij Meta ingevuld
+
    # Optioneel: welk model de AI-plug-ins gebruiken
    OPENAI_MODEL=...   # standaard gpt-5
    GEMINI_MODEL=...   # standaard gemini-flash-latest
@@ -138,3 +145,42 @@ diensten te verbeteren.
 
 Een offerte die is omgezet houdt `converted_to_invoice_id` vast; de factuur
 verwijst met `quote_id` terug.
+
+## WhatsApp: offerte maken met een bericht
+
+Bij **Instellingen > Plug-ins > WhatsApp** koppelt een gebruiker zijn eigen
+mobiele nummer aan de Resynked-bot. Hij krijgt een code (`Koppel ABC123`) en
+stuurt die vanaf zijn telefoon naar de bot; daarmee is bewezen dat het nummer
+van hem is. Daarna kan hij bij een klant gewoon appen wat hij opmeet:
+
+> Keuken 25 m² muren schilderen, plafond 12 m² sauzen. Klant Jan de Vries,
+> Dorpsstraat 1, 1234 AB Utrecht, 06 12345678
+
+De bot laat de AI-plug-in van de gebruiker (die moet dus ook aan staan) de klant
+en de regels uitlezen, met prijzen uit eerdere offertes of uit het bericht zelf.
+De klant wordt herkend op e-mailadres, telefoonnummer, of naam met postcode;
+lege velden van een bestaande klant worden aangevuld. Is de klant onbekend, dan
+komt er een nieuwe klant. De offerte wordt als **concept** aangemaakt en de
+aannemer krijgt een samenvatting met een link terug. Noemt het bericht geen
+klant, dan vraagt de bot erom en neemt hij het volgende bericht (binnen een uur)
+erbij. `stop` wist zo'n half afgemaakte offerte, `help` geeft een voorbeeld.
+Alleen tekstberichten; spraakberichten en foto's worden (nog) niet gelezen.
+
+Instellen bij [Meta for Developers](https://developers.facebook.com/):
+
+1. Maak een app van het type *Business* en voeg het product **WhatsApp** toe.
+2. Koppel een eigen telefoonnummer voor de bot (een nummer dat nog niet in de
+   gewone WhatsApp-app gebruikt wordt). `WHATSAPP_PHONE_NUMBER_ID` staat bij
+   *WhatsApp > API Setup*; `WHATSAPP_NUMBER` is het nummer zelf.
+3. Maak in Business Settings een *systeemgebruiker* met de rechten
+   `whatsapp_business_messaging` en `whatsapp_business_management`, en genereer
+   daarmee een permanente token voor `WHATSAPP_TOKEN`. (De tijdelijke token uit
+   API Setup verloopt na een dag.)
+4. Het app-geheim (`WHATSAPP_APP_SECRET`) staat bij *App settings > Basic*.
+5. Bij *WhatsApp > Configuration* als webhook `{APP_URL}/api/whatsapp/webhook`
+   met je eigen `WHATSAPP_VERIFY_TOKEN`, en abonneer op het veld `messages`.
+
+De bot antwoordt alleen op berichten die de gebruiker zelf stuurt, binnen het
+venster van 24 uur dat WhatsApp daarvoor geeft; er zijn dus geen goedgekeurde
+berichtsjablonen nodig. Draai na het bijwerken onderdeel 8 van
+[`MIGRATION.sql`](MIGRATION.sql) (of het hele bestand).

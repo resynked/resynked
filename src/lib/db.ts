@@ -15,11 +15,11 @@ const now = () => new Date().toISOString();
  * dus daar is het 's avonds al de volgende dag — en zou een factuur die om
  * elf uur 's avonds gemaakt wordt de datum van morgen krijgen.
  */
-const vandaagHier = () =>
+export const vandaagHier = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date());
 
 /** Een aantal dagen bij een datum van de vorm jjjj-mm-dd. */
-const dagenErbij = (datum: string, aantal: number) => {
+export const dagenErbij = (datum: string, aantal: number) => {
   const [jaar, maand, dag] = datum.split('-').map(Number);
   return new Date(Date.UTC(jaar, maand - 1, dag + aantal)).toISOString().split('T')[0];
 };

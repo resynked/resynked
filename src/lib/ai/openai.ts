@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
-import { buildUserPrompt, SYSTEM_PROMPT } from './prompt';
+import { buildUserPrompt, systemPrompt } from './prompt';
 import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
 
 /**
@@ -45,7 +45,7 @@ export const openai: AiProvider = {
     try {
       const response = await client(apiKey).responses.parse({
         model: MODEL,
-        instructions: SYSTEM_PROMPT,
+        instructions: systemPrompt(input.source),
         input: buildUserPrompt(input),
         text: { format: zodTextFormat(QuoteProposalSchema, 'quote_proposal') },
       });

@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { buildUserPrompt, SYSTEM_PROMPT } from './prompt';
+import { buildUserPrompt, systemPrompt } from './prompt';
 import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
 
 /**
@@ -51,7 +51,7 @@ export const anthropic: AiProvider = {
         // Weigert het model onterecht, dan probeert Anthropic het zelf op een ander model
         betas: ['server-side-fallback-2026-07-01'],
         fallbacks: 'default',
-        system: SYSTEM_PROMPT,
+        system: systemPrompt(input.source),
         messages: [{ role: 'user', content: buildUserPrompt(input) }],
         output_config: { effort: 'medium', format: zodOutputFormat(QuoteProposalSchema) },
       });

@@ -693,8 +693,8 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .composer .composer-header .actions {display: flex; align-items: center; gap: 2px; margin-left: auto;}
 .inbox .composer .rich-editor {border: 0; border-radius: 0; box-shadow: none;}
 .inbox .composer .rich-editor .toolbar {border-radius: 0;}
-.inbox .composer .rich-editor .editable {min-height: 100px; max-height: 260px;}
-.inbox .composer .composer-signature {max-height: 120px; overflow-y: auto; padding: 0 var(--space15) var(--space10); border-top: 1px dashed var(--border-color);}
+.inbox .composer .rich-editor .editable {min-height: 300px;}
+.inbox .composer .composer-signature {overflow-y: auto; padding: 0 var(--space15) var(--space10); border-top: 1px dashed var(--border-color);}
 .inbox .composer .composer-footer {display: flex; align-items: center; justify-content: space-between; padding: var(--space10) var(--space15); background: var(--color3); border-top: 1px solid var(--border-color); border-radius: 0 0 var(--border-radius2) var(--border-radius2);}
 .inbox .composer .composer-footer > button.delete {color: var(--color6);}
 .inbox .composer .composer-footer .button.with-icon {gap: var(--space5); padding: var(--space10) var(--space15);}
