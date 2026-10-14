@@ -11,6 +11,7 @@
 --   quotes, quote_blocks, ...     offertes in blokken met eigen BTW-tarief
 --   invoices, invoice_blocks, ... facturen, zelfde opzet
 --   notes                         notities per klant
+--   mail_accounts                 gekoppelde mailbox per gebruiker (Inbox)
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -309,6 +310,33 @@ CREATE TRIGGER update_notes_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ------------------------------------------------------------
+-- Mail: de gekoppelde Gmail- of Outlook-mailbox voor de Inbox
+--
+-- Alleen de sleutels om bij de mailbox te komen staan hier; de mail zelf
+-- wordt elke keer bij Google of Microsoft opgehaald en niet bewaard.
+-- ------------------------------------------------------------
+CREATE TABLE mail_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Eén mailbox per gebruiker; het is zijn eigen mail, niet die van het bedrijf
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('google', 'microsoft')),
+  email TEXT NOT NULL,
+  -- Versleuteld met MAIL_ENCRYPTION_KEY; zonder die sleutel is hier niets mee te doen
+  refresh_token TEXT NOT NULL,
+  access_token TEXT,
+  access_token_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX mail_accounts_tenant_id_idx ON mail_accounts(tenant_id);
+
+CREATE TRIGGER update_mail_accounts_updated_at
+  BEFORE UPDATE ON mail_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
 -- Row Level Security
 --
 -- De app praat met de database via de service role key en filtert zelf
@@ -328,6 +356,7 @@ ALTER TABLE invoice_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_elements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
 -- Rechten voor de service role

@@ -268,6 +268,37 @@ END $$;
 ALTER TABLE quote_elements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_elements ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 6. Inbox: een gekoppelde mailbox per gebruiker
+--
+-- Alleen de sleutels om bij Gmail of Outlook te komen, versleuteld. De mail
+-- zelf wordt elke keer daar opgehaald en niet bij ons bewaard.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS mail_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Eén mailbox per gebruiker; het is zijn eigen mail, niet die van het bedrijf
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('google', 'microsoft')),
+  email TEXT NOT NULL,
+  -- Versleuteld met MAIL_ENCRYPTION_KEY; zonder die sleutel is hier niets mee te doen
+  refresh_token TEXT NOT NULL,
+  access_token TEXT,
+  access_token_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS mail_accounts_tenant_id_idx ON mail_accounts(tenant_id);
+
+DROP TRIGGER IF EXISTS update_mail_accounts_updated_at ON mail_accounts;
+CREATE TRIGGER update_mail_accounts_updated_at
+  BEFORE UPDATE ON mail_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
+
+-- De rechten opnieuw, zodat de nieuwe tabel ze ook heeft
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
@@ -277,7 +308,7 @@ COMMIT;
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen zes regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen zeven regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -324,4 +355,10 @@ UNION ALL SELECT 'E-mail en nummering',
            AND column_name IN ('email_from', 'quote_email_subject', 'quote_email_intro_text',
                                'invoice_email_subject', 'invoice_email_intro_text',
                                'quote_number_next', 'invoice_number_next')
-       ) = 7 THEN 'ja - 7 van 7 kolommen' ELSE 'NEE - onderdeel 4 niet gelukt' END;
+       ) = 7 THEN 'ja - 7 van 7 kolommen' ELSE 'NEE - onderdeel 4 niet gelukt' END
+
+UNION ALL SELECT 'Inbox',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = 'mail_accounts'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 6 niet gelukt' END;

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate, CircleQuestionMark } from 'lucide-react';
+import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate, CircleQuestionMark, Blocks } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
 import RichTextEditor from '@/components/RichTextEditor';
 import SidePanel from '@/components/SidePanel';
+import ModulesSettings from '@/components/ModulesSettings';
 import type { Tenant } from '@/lib/supabase';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
@@ -15,7 +17,19 @@ const LOGO_ACCEPT = 'image/svg+xml,image/png,image/jpeg';
 
 export default function Settings() {
     const toast = useToast();
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState('account');
+
+    // Een tabblad kan in het adres staan, zoals ?tab=modules na het koppelen
+    // van de Inbox zonder popup
+    useEffect(() => {
+        if (!router.isReady) return;
+
+        const { tab, mail_error } = router.query;
+        if (typeof tab === 'string') setActiveTab(tab);
+        if (typeof mail_error === 'string' && mail_error) toast.error('Koppelen mislukt', mail_error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [router.isReady]);
     const [isSaving, setIsSaving] = useState(false);
     const [logo, setLogo] = useState('');
     // Naam en grootte kennen we alleen van een logo dat net gekozen is; van
@@ -198,6 +212,17 @@ export default function Settings() {
                             <UserRoundPlus size={18} />
                             <span>Gebruikers</span>
                         </Link>
+                        <Link
+                            href="#modules"
+                            className={`${activeTab === 'modules' ? 'active' : ''}`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab('modules');
+                            }}
+                        >
+                            <Blocks size={18} />
+                            <span>Modules</span>
+                        </Link>
                     </nav>
                     <nav>
                         <span className="section-title">API instellingen</span>
@@ -353,6 +378,8 @@ export default function Settings() {
                         <h2>Gebruikers</h2>
 
                     )}
+
+                    {activeTab === 'modules' && <ModulesSettings />}
 
                     {activeTab === 'email' && (
                         <>

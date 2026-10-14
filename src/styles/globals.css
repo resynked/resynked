@@ -209,8 +209,8 @@ button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 
 .island-bar {position: fixed; bottom: var(--space20); left: 50%; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 2 * var(--space20));}
 .island-bar .toolbar {border-bottom: 0; border-radius: var(--border-radius2);}
 .island-bar .toolbar button.delete {color: var(--color6);}
-.island-bar .selection-count {gap: var(--space5); font-size: var(--fontsize1); font-weight: 500; color: var(--font-color1);}
-.island-bar .selection-count .count {display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 22px; padding: 0 var(--space5); box-sizing: border-box; border-radius: var(--border-radius1); background: var(--color1); color: var(--color2);}
+.island-bar .selection-count {font-size: var(--fontsize2); gap: var(--space5) !important; color: var(--font-color2);}
+.island-bar .selection-count .count {display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0 var(--space5); box-sizing: border-box; border-radius: var(--border-radius1); background: var(--color1); color: var(--color2);}
 .island-bar .toolbar button:disabled {opacity: .4; pointer-events: none;}
 
 /* Het papier op ware grootte.
@@ -291,7 +291,7 @@ button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 
 .pagination .page-size, .pagination .page-nav, .pagination .pages {display: flex; align-items: center; gap: var(--space10);}
 .pagination .page-size .select {width: 80px;}
 .pagination .page-nav {gap: var(--space30);}
-.pagination .pages .button {min-width: 34px; height: 34px; padding: 0 var(--space10); font-size: var(--fontsize1);}
+.pagination .pages .button {width: 28px; height: 28px; padding: 0; font-size: var(--fontsize2);}
 .pagination .pages .button:disabled {color: var(--font-color2); opacity: .5; cursor: default;}
 .pagination .pages .gap {color: var(--font-color2);}
 
@@ -530,3 +530,45 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
   width: 60%;
   margin-bottom: 1rem;
 }
+
+/* Aan/uit-schakelaar; groen als hij aan staat */
+.toggle {position: relative; display: inline-flex; flex: 0 0 auto; width: 36px; height: 20px; padding: 0; border-radius: 10px; background: var(--color4); border: 1px solid var(--border-color); box-sizing: border-box; cursor: pointer; transition: .2s all ease;}
+.toggle .knob {position: absolute; top: 1px; left: 1px; width: 16px; height: 16px; border-radius: 50%; background: var(--color2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15); transition: .2s all ease;}
+.toggle.on {background: var(--color7); border-color: var(--color7);}
+.toggle.on .knob {left: 17px;}
+.toggle:disabled {opacity: .5; cursor: default;}
+.toggle-label {display: inline-flex; align-items: center; gap: var(--space5); font-size: var(--fontsize2); color: var(--font-color2); cursor: pointer;}
+
+/* Inbox: links de gesprekken, rechts het geopende gesprek */
+.inbox {display: grid; grid-template-columns: 400px 1fr; height: calc(100vh - 2 * var(--space20)); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); overflow: hidden;}
+.inbox .inbox-list {border-right: 1px solid var(--border-color); overflow-y: auto;}
+.inbox .list-header {position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: var(--space15) var(--space20); background: var(--color2); border-bottom: 1px solid var(--border-color);}
+.inbox .list-header h1 {margin: 0;}
+.inbox .list-header .actions {display: flex; align-items: center; gap: var(--space10);}
+.inbox .list-loading, .inbox .list-empty, .inbox .list-more {padding: var(--space20); margin: 0; color: var(--font-color2); text-align: center;}
+
+.inbox .inbox-item {display: grid; grid-template-columns: 6px 30px 1fr; gap: var(--space10); width: 100%; font-size: var(--fontsize1); color: var(--font-color1); padding: var(--space15) var(--space20) var(--space15) var(--space10); box-sizing: border-box; text-align: left; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: .3s all ease;}
+.inbox .inbox-item:hover, .inbox .inbox-item.active {background: var(--color3);}
+.inbox .inbox-item .dot {width: 6px; height: 6px; margin-top: 12px; border-radius: 50%;}
+.inbox .inbox-item.unread .dot {background: var(--color5);}
+.inbox .inbox-item .summary {display: flex; flex-direction: column; gap: 2px; min-width: 0;}
+.inbox .inbox-item .subject {font-weight: 500;}
+.inbox .inbox-item.unread .from, .inbox .inbox-item.unread .subject {font-weight: 600;}
+.inbox .inbox-item .snippet {color: var(--font-color2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+.inbox .avatar {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color4); color: var(--font-color1); font-size: 11px; font-weight: 600;}
+.inbox .meta {font-size: var(--fontsize2); color: var(--font-color2);}
+
+.inbox .inbox-detail {overflow-y: auto; display: flex; flex-direction: column;}
+.inbox .inbox-detail > .empty-state {margin: auto; padding: 0; display: flex; flex-direction: column; align-items: center;}
+.inbox .inbox-detail > .empty-state h2 {margin: var(--space10) 0 var(--space5) 0;}
+.inbox .thread {padding: var(--space20);}
+.inbox .thread > h2 {margin: 0 0 var(--space20) 0;}
+.inbox .message {padding: 0 0 var(--space20) 0; margin: 0 0 var(--space20) 0; border-bottom: 1px solid var(--border-color);}
+.inbox .message-header {display: grid; grid-template-columns: 30px 1fr auto; gap: var(--space10); align-items: center; margin: 0 0 var(--space15) 0;}
+.inbox .message-header .sender {display: flex; flex-direction: column; min-width: 0;}
+.inbox .message-header .from {font-weight: 600;}
+.inbox .reply .actions {display: flex; justify-content: flex-end; margin: var(--space10) 0 0 0;}
+.inbox .reply .rich-editor .editable {min-height: 120px;}
+
+.mail-body {display: block; width: 100%; height: 0; border: 0;}

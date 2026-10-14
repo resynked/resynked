@@ -21,12 +21,6 @@ export default function SelectionBar({ count, noun, onClear, children }: Selecti
   return (
     <div className="island-bar rich-editor">
       <div className="toolbar">
-        <div className="group">
-          <ToolButton title="Selectie opheffen" onClick={onClear}>
-            <X size={15} />
-          </ToolButton>
-        </div>
-
         <div className="group selection-count">
           <span className="count">{count}</span>
           <span>
@@ -35,6 +29,13 @@ export default function SelectionBar({ count, noun, onClear, children }: Selecti
         </div>
 
         <div className="group">{children}</div>
+
+        {/* Sluiten staat altijd als laatste, net als in de bewerkbalk */}
+        <div className="group">
+          <ToolButton title="Selectie opheffen" onClick={onClear}>
+            <X size={15} />
+          </ToolButton>
+        </div>
       </div>
     </div>
   );

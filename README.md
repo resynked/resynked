@@ -43,6 +43,13 @@ RLS-policies op de tabellen vormen de tweede laag.
    RESEND_API_KEY=...
    EMAIL_FROM=Resynked <offertes@jouwdomein.nl>
    APP_URL=http://localhost:3000
+
+   # Inbox (Instellingen > Modules)
+   MAIL_ENCRYPTION_KEY=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   MICROSOFT_CLIENT_ID=...
+   MICROSOFT_CLIENT_SECRET=...
    ```
 
    Deze drie zijn systeembreed. Het afzendadres per aannemer staat niet hier
@@ -65,6 +72,37 @@ RLS-policies op de tabellen vormen de tweede laag.
    zo vaak gedraaid worden als nodig
 4. `npm run dev` en maak via `/register` het eerste account aan — daarmee
    ontstaat meteen de tenant
+
+## Inbox koppelen
+
+Gebruikers koppelen hun eigen Gmail- of Outlook-mailbox bij **Instellingen >
+Modules**. De mail wordt elke keer live bij Google of Microsoft opgehaald en niet
+bij ons bewaard; alleen de toegangssleutels staan in `mail_accounts`, versleuteld
+met `MAIL_ENCRYPTION_KEY`. Raak je die sleutel kwijt of verander je hem, dan moet
+iedereen zijn Inbox opnieuw koppelen.
+
+**Google** — in de [Google Cloud Console](https://console.cloud.google.com/):
+
+1. Zet de **Gmail API** aan.
+2. Stel het OAuth-toestemmingsscherm in met de scope
+   `https://www.googleapis.com/auth/gmail.modify`.
+3. Maak een OAuth-client van het type *Web application* met als redirect-URI
+   `{APP_URL}/api/mail/callback/google`.
+
+Zolang de app in Google op *Testing* staat, kunnen alleen de testgebruikers die
+je daar invult koppelen. Voor iedereen moet de app door Google geverifieerd
+worden; `gmail.modify` is een *restricted scope*, dus daar hoort een
+beveiligingsbeoordeling bij.
+
+**Microsoft** — in [Microsoft Entra](https://entra.microsoft.com/) bij *App
+registrations*:
+
+1. Nieuwe registratie, accounttype *Accounts in any organizational directory and
+   personal Microsoft accounts*.
+2. Redirect-URI (platform *Web*): `{APP_URL}/api/mail/callback/microsoft`.
+3. Onder *API permissions* (Microsoft Graph, delegated): `Mail.ReadWrite`,
+   `Mail.Send`, `User.Read`, `offline_access`.
+4. Onder *Certificates & secrets* een client secret aanmaken.
 
 ## Database
 
