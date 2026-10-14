@@ -390,7 +390,9 @@ export default function Settings() {
                                     <label className="title" htmlFor="email_from">Afzendadres</label>
                                     <span className="description">
                                         Hiervandaan gaat je post de deur uit. Leeg = het adres van het
-                                        systeem, met jouw adres als antwoordadres.
+                                        systeem, met jouw adres als antwoordadres. Heb je bij Plug-ins Google
+                                        of Microsoft gekoppeld, dan gaan offertes via je eigen mailbox en is
+                                        dit niet nodig.
                                     </span>
                                 </div>
                                 <div>

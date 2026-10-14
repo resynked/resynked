@@ -209,7 +209,10 @@ export default function EditQuote() {
         return;
       }
 
-      toast.success('Verstuurd', `De offerte is naar ${data.sentTo} gestuurd`);
+      toast.success(
+        'Verstuurd',
+        `De offerte is naar ${data.sentTo} gestuurd${data.via === 'google' ? ' vanuit je Gmail' : data.via === 'microsoft' ? ' vanuit je Outlook' : ''}`
+      );
       setFormData((current) => ({ ...current, status: 'sent' }));
     } catch (err) {
       toast.error('Versturen mislukt', 'Er is iets misgegaan. Probeer het opnieuw.');

@@ -137,7 +137,24 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .main {flex: 1; display: flex; flex-direction: column;}
 
 .sidebar {width: 230px; background-color: var(--color3); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;}
-.sidebar .logo {padding: var(--space10); box-sizing: border-box; line-height: 0;}
+.sidebar .logo {display: flex; align-items: center; justify-content: space-between; padding: var(--space10); box-sizing: border-box; line-height: 0;}
+.sidebar .logo button {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: var(--font-color2); border-radius: var(--border-radius1);}
+.sidebar .logo button:hover {background-color: #efefef; color: var(--font-color1);}
+.sidebar .logo .expand {position: relative;}
+.sidebar .logo .expand .expand-icon {position: absolute; inset: 0; margin: auto; opacity: 0; transition: .2s all ease;}
+.sidebar .logo .expand:hover .sidebar-logo {opacity: 0;}
+.sidebar .logo .expand:hover .expand-icon {opacity: 1;}
+
+/* Ingeklapt: alleen de iconen, met de naam als label bij hover */
+.sidebar.collapsed {width: 56px;}
+.sidebar.collapsed .logo {justify-content: center;}
+.sidebar.collapsed .navigation a {position: relative; justify-content: center; padding: var(--space5);}
+.sidebar.collapsed .navigation a .label {display: none;}
+.sidebar.collapsed .navigation a .count {position: absolute; top: -4px; right: 0; min-width: 16px; padding: 0 4px; font-size: 9px;}
+.sidebar.collapsed .navigation a::after {top: 50%; left: calc(100% + var(--space10)); transform: translateY(-50%); z-index: 20; color: var(--font-color1); display: none;}
+.sidebar.collapsed .navigation a:hover::after {display: block; opacity: 1;}
+.sidebar.collapsed .profile {justify-content: center; padding: var(--space5);}
+.sidebar.collapsed .profile .info {display: none;}
 
 .sidebar .navigation {flex: 1; padding: var(--space10) 0; display: flex; flex-direction: column; gap: 3px;}
 .sidebar .navigation a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; font-size: 13px; margin: 0 var(--space5); border-radius: var(--border-radius1);}
@@ -196,7 +213,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .editable-region {position: relative; cursor: pointer; outline: 2px solid transparent; outline-offset: 6px; transition: .3s all ease;}
 .editable-region.active, .editable-region:hover {outline-color: var(--color4);}
 .editable-region.active {outline-color: var(--color4); background: var(--color3);}
-.editable-region::after, button[data-label]::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
+.editable-region::after, button[data-label]::after, .sidebar.collapsed .navigation a::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
 .editable-region:hover::after, .editable-region.active::after, button[data-label]:hover::after {opacity: 1;}
 
 /* Hetzelfde label als tooltip boven een icoonknop, zodat je ziet wat hij doet */

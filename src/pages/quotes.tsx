@@ -258,7 +258,10 @@ export default function Quotes() {
         return;
       }
 
-      toast.success('Verstuurd', `De offerte is naar ${data.sentTo} gestuurd`);
+      toast.success(
+        'Verstuurd',
+        `De offerte is naar ${data.sentTo} gestuurd${data.via === 'google' ? ' vanuit je Gmail' : data.via === 'microsoft' ? ' vanuit je Outlook' : ''}`
+      );
       fetchQuotes();
     } catch (error) {
       console.error('Error sending quote:', error);
