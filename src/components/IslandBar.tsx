@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import Modal from '@/components/Modal';
+import ToolButton from '@/components/ToolButton';
 import Select from '@/components/Select';
 import FormattingToolbar from '@/components/FormattingToolbar';
 import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
@@ -61,35 +62,6 @@ const NEW_ELEMENTS: { kind: ElementKind; title: string; icon: typeof Plus }[] = 
   { kind: 'gegevens', title: 'Gegevens', icon: IdCard },
   { kind: 'handtekening', title: 'Handtekening', icon: Signature },
 ];
-
-/** Een icoonknop in de balk. Hij pakt de focus niet, zodat de cursor op het papier blijft. */
-function ToolButton({
-  title,
-  onClick,
-  disabled,
-  className,
-  children,
-}: {
-  title: string;
-  onClick: () => void;
-  disabled?: boolean;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      className={className}
-      data-label={title}
-      aria-label={title}
-      disabled={disabled}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
 
 /**
  * De balk die onderin opduikt zodra je iets op het papier aanklikt.

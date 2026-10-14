@@ -3,9 +3,11 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Pagination from '@/components/Pagination';
+import SelectionBar from '@/components/SelectionBar';
+import ToolButton from '@/components/ToolButton';
 import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
-import { Ellipsis, Check } from 'lucide-react';
+import { Ellipsis, Check, Trash2, Mail, Download, FileOutput } from 'lucide-react';
 import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useToast } from '@/components/Toast';
@@ -116,6 +118,93 @@ export default function Quotes() {
     }
   };
 
+  // Offertes die nog geen factuur zijn geworden
+  const convertible = quotes.filter(q => selectedIds.includes(q.id) && !q.converted_to_invoice_id);
+
+  /** Verstuurt de geselecteerde offertes één voor één naar hun klant. */
+  const handleBulkSend = async () => {
+    const confirmed = await confirm({
+      title: 'Offertes versturen',
+      message: `${selectedIds.length} offerte(s) per mail naar de klant sturen? Elke klant krijgt een knop naar zijn offerte om hem te bekijken en te ondertekenen.`,
+      confirmText: 'Versturen',
+      cancelText: 'Annuleren',
+    });
+
+    if (!confirmed) return;
+
+    let sent = 0;
+    for (const id of selectedIds) {
+      try {
+        const response = await fetch(`/api/quotes/${id}/send`, { method: 'POST' });
+        if (response.ok) sent += 1;
+      } catch (error) {
+        console.error('Error sending quote:', error);
+      }
+    }
+
+    if (sent === selectedIds.length) {
+      toast.success('Verstuurd', `${sent} offerte(s) verstuurd`);
+    } else {
+      toast.error('Niet alles verstuurd', `${sent} van de ${selectedIds.length} offertes verstuurd`);
+    }
+
+    setSelectedIds([]);
+    fetchQuotes();
+  };
+
+  /**
+   * Downloadt de PDF van elke geselecteerde offerte. Een voor een, met even
+   * tussenruimte: anders houdt de browser er een paar tegen.
+   */
+  const handleBulkDownload = async () => {
+    for (const id of selectedIds) {
+      const link = document.createElement('a');
+      link.href = `/api/quotes/${id}/pdf`;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      await new Promise(resolve => setTimeout(resolve, 600));
+    }
+  };
+
+  /** Zet de geselecteerde offertes om naar facturen; bij één ga je meteen naar de factuur. */
+  const handleBulkConvert = async () => {
+    const confirmed = await confirm({
+      title: 'Omzetten naar factuur',
+      message: `${convertible.length} offerte(s) omzetten naar een factuur? Alle regels worden overgenomen.`,
+      confirmText: 'Omzetten',
+      cancelText: 'Annuleren',
+    });
+
+    if (!confirmed) return;
+
+    const created: string[] = [];
+    for (const quote of convertible) {
+      try {
+        const response = await fetch(`/api/quotes/${quote.id}/convert-to-invoice`, { method: 'POST' });
+        const data = await response.json();
+        if (response.ok) created.push(data.id);
+      } catch (error) {
+        console.error('Error converting quote to invoice:', error);
+      }
+    }
+
+    if (created.length === 1 && convertible.length === 1) {
+      router.push(`/invoices/${created[0]}`);
+      return;
+    }
+
+    if (created.length === convertible.length) {
+      toast.success('Omgezet', `${created.length} factu(u)r(en) aangemaakt`);
+    } else {
+      toast.error('Niet alles omgezet', `${created.length} van de ${convertible.length} offertes omgezet`);
+    }
+
+    setSelectedIds([]);
+    fetchQuotes();
+  };
+
   const handleDuplicate = async (quote: Quote) => {
     try {
       // Fetch full quote details with blocks
@@ -211,14 +300,6 @@ export default function Quotes() {
       <div className="header">
         <h1>Offertes</h1>
         <div className="actions">
-          {selectedIds.length > 0 && (
-            <>
-              <span className="selected-count">{selectedIds.length} geselecteerd</span>
-              <button onClick={handleBulkDelete} className="button negative">
-                Verwijder
-              </button>
-            </>
-          )}
           <Link href="/quotes/new" className="button">
             Offerte maken
           </Link>
@@ -366,6 +447,20 @@ export default function Quotes() {
         />
         </>
       )}
+      <SelectionBar count={selectedIds.length} noun={['offerte', 'offertes']} onClear={() => setSelectedIds([])}>
+        <ToolButton title="Versturen" onClick={handleBulkSend}>
+          <Mail size={15} />
+        </ToolButton>
+        <ToolButton title="Downloaden" onClick={handleBulkDownload}>
+          <Download size={15} />
+        </ToolButton>
+        <ToolButton title="Omzetten naar factuur" disabled={convertible.length === 0} onClick={handleBulkConvert}>
+          <FileOutput size={15} />
+        </ToolButton>
+        <ToolButton title="Verwijderen" className="delete" onClick={handleBulkDelete}>
+          <Trash2 size={15} />
+        </ToolButton>
+      </SelectionBar>
     </Layout>
   );
 }

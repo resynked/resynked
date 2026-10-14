@@ -209,6 +209,8 @@ button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 
 .island-bar {position: fixed; bottom: var(--space20); left: 50%; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 2 * var(--space20));}
 .island-bar .toolbar {border-bottom: 0; border-radius: var(--border-radius2);}
 .island-bar .toolbar button.delete {color: var(--color6);}
+.island-bar .selection-count {gap: var(--space5); font-size: var(--fontsize1); font-weight: 500; color: var(--font-color1);}
+.island-bar .selection-count .count {display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 22px; padding: 0 var(--space5); box-sizing: border-box; border-radius: var(--border-radius1); background: var(--color1); color: var(--color2);}
 .island-bar .toolbar button:disabled {opacity: .4; pointer-events: none;}
 
 /* Het papier op ware grootte.

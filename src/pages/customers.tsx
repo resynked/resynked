@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Pagination from '@/components/Pagination';
+import SelectionBar from '@/components/SelectionBar';
+import ToolButton from '@/components/ToolButton';
 import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
-import { Ellipsis, Check } from 'lucide-react';
+import { Ellipsis, Check, Trash2 } from 'lucide-react';
 import type { Customer } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
 import { getCustomerDisplayName } from '@/lib/utils';
@@ -141,14 +143,6 @@ export default function Customers() {
       <div className="header">
         <h1>Klanten</h1>
         <div className="actions">
-          {selectedIds.length > 0 && (
-            <>
-              <span className="selected-count">{selectedIds.length} geselecteerd</span>
-              <button onClick={handleBulkDelete} className="button negative">
-                Verwijder
-              </button>
-            </>
-          )}
           <Link href="/customers/new" className="button">
             Klant toevoegen
           </Link>
@@ -256,6 +250,11 @@ export default function Customers() {
         />
         </>
       )}
+      <SelectionBar count={selectedIds.length} noun={['klant', 'klanten']} onClear={() => setSelectedIds([])}>
+        <ToolButton title="Verwijderen" className="delete" onClick={handleBulkDelete}>
+          <Trash2 size={15} />
+        </ToolButton>
+      </SelectionBar>
     </Layout>
   );
 }

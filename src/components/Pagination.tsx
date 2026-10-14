@@ -40,7 +40,6 @@ function PageButton({
     <button
       type="button"
       className="button icon"
-      data-label={label}
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
