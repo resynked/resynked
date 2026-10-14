@@ -1,51 +1,69 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MailOpen, RefreshCw } from 'lucide-react';
+import {
+  Archive,
+  File,
+  Flag,
+  Forward,
+  Inbox,
+  MailOpen,
+  OctagonAlert,
+  RefreshCw,
+  Reply,
+  Search,
+  Send,
+  Star,
+  Tag,
+  Trash2,
+} from 'lucide-react';
 import Layout from '@/components/Layout';
 import MailBody from '@/components/MailBody';
-import RichTextEditor from '@/components/RichTextEditor';
+import MailComposer, { type ComposerMode } from '@/components/MailComposer';
 import Toggle from '@/components/Toggle';
+import ToolButton from '@/components/ToolButton';
 import { Skeleton } from '@/components/Skeleton';
 import { useToast } from '@/components/Toast';
 import { useMailAccount } from '@/hooks/useMailAccount';
+import { decreaseMailUnread, setMailUnread } from '@/hooks/useMailUnread';
 import { isRichTextEmpty } from '@/lib/richtext';
-import { formatDate } from '@/lib/utils';
-import type { MailAddress, MailSummary, MailThread } from '@/lib/mail/types';
+import { displayName, initials, timeAgo } from '@/lib/mail/display';
+import {
+  INBOX_FOLDER,
+  type MailAddress,
+  type MailFolder,
+  type MailFolderKind,
+  type MailSummary,
+  type MailThread,
+} from '@/lib/mail/types';
 
-/** "JJ" voor Jan Jansen, "J" voor jan@voorbeeld.nl. */
-function initials(address: MailAddress): string {
-  const name = address.name && address.name !== address.email ? address.name : address.email.split('@')[0];
-  return name
-    .split(/[\s._-]+/)
-    .filter(Boolean)
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-/** "zojuist", "20 min", "3 uur", "2 d", en daarna de datum. */
-function timeAgo(date: string): string {
-  const minutes = Math.floor((Date.now() - Date.parse(date)) / 60_000);
-  if (minutes < 1) return 'zojuist';
-  if (minutes < 60) return `${minutes} min`;
-  if (minutes < 60 * 24) return `${Math.floor(minutes / 60)} uur`;
-  if (minutes < 60 * 24 * 7) return `${Math.floor(minutes / (60 * 24))} d`;
-  return formatDate(date);
-}
-
-function displayName(address: MailAddress): string {
-  return address.name || address.email;
-}
+const FOLDER_ICONS: Record<MailFolderKind, typeof Inbox> = {
+  inbox: Inbox,
+  starred: Star,
+  important: Flag,
+  sent: Send,
+  drafts: File,
+  archive: Archive,
+  spam: OctagonAlert,
+  trash: Trash2,
+  custom: Tag,
+};
 
 /**
- * De Inbox: de mail uit Gmail of Outlook, links de gesprekken en rechts het
- * gesprek dat je openklikt. Antwoorden gaat via de mailbox zelf, dus het staat
+ * De Inbox: de mail uit Gmail of Outlook. Links de mappen of labels zoals de
+ * gebruiker ze daar heeft ingericht, dan de gesprekken, en rechts het gesprek
+ * dat je openklikt. Onderin dat gesprek staat altijd het venster om te
+ * antwoorden of door te sturen; dat gaat via de mailbox zelf, dus het staat
  * daar ook in Verzonden.
  */
 export default function InboxPage() {
   const toast = useToast();
   const account = useMailAccount();
+
+  const [folders, setFolders] = useState<MailFolder[]>([]);
+  const [folder, setFolder] = useState(INBOX_FOLDER);
+  const [searchInput, setSearchInput] = useState('');
+  // Waarop echt gezocht wordt; dat loopt even achter op het typen
+  const [search, setSearch] = useState('');
 
   const [items, setItems] = useState<MailSummary[]>([]);
   const [nextPage, setNextPage] = useState<string | null>(null);
@@ -58,7 +76,13 @@ export default function InboxPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [thread, setThread] = useState<MailThread | null>(null);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
-  const [reply, setReply] = useState('');
+
+  const [signature, setSignature] = useState('');
+  const [composerMode, setComposerMode] = useState<ComposerMode>('reply');
+  const [composerMinimized, setComposerMinimized] = useState(true);
+  const [draft, setDraft] = useState('');
+  const [forwardTo, setForwardTo] = useState('');
+  const [forwardMessageId, setForwardMessageId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
   /** Een verzoek aan de mail-API; een verlopen koppeling wordt apart herkend. */
@@ -74,9 +98,23 @@ export default function InboxPage() {
     return data;
   }, []);
 
+  const loadFolders = useCallback(async () => {
+    try {
+      const list: MailFolder[] = await request('/api/mail/folders');
+      setFolders(list);
+
+      // Het getal in de zijbalk meteen gelijk trekken
+      const inbox = list.find(f => f.kind === 'inbox');
+      if (inbox?.unread !== undefined) setMailUnread(inbox.unread);
+    } catch {
+      // Zonder mappen werkt de inbox nog steeds
+    }
+  }, [request]);
+
   const loadList = useCallback(
     async (page?: string) => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ folder });
+      if (search) params.set('q', search);
       if (unreadOnly) params.set('unread', '1');
       if (page) params.set('page', page);
 
@@ -94,18 +132,50 @@ export default function InboxPage() {
         setIsLoadingMore(false);
       }
     },
-    [unreadOnly, request, toast]
+    [folder, search, unreadOnly, request, toast]
   );
+
+  // Mappen en de handtekening één keer, zodra bekend is dat er een mailbox is
+  useEffect(() => {
+    if (!account) return;
+
+    loadFolders();
+    request('/api/mail/signature')
+      .then(data => setSignature(data.html || ''))
+      .catch(() => {});
+  }, [account, loadFolders, request]);
 
   useEffect(() => {
     if (account) loadList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, unreadOnly]);
+  }, [account, folder, search, unreadOnly]);
+
+  // Zoeken zodra iemand even stopt met typen
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const resetComposer = () => {
+    setComposerMode('reply');
+    setComposerMinimized(true);
+    setDraft('');
+    setForwardTo('');
+    setForwardMessageId(null);
+  };
+
+  const chooseFolder = (id: string) => {
+    setFolder(id);
+    setSearchInput('');
+    setSearch('');
+    setSelectedId(null);
+    setThread(null);
+  };
 
   const open = async (item: MailSummary) => {
     setSelectedId(item.id);
     setThread(null);
-    setReply('');
+    resetComposer();
     setIsLoadingThread(true);
 
     try {
@@ -119,24 +189,64 @@ export default function InboxPage() {
     // Openen is lezen, ook in Gmail of Outlook zelf
     if (item.unread) {
       setItems(current => current.map(i => (i.id === item.id ? { ...i, unread: false } : i)));
+      setFolders(current =>
+        current.map(f => (f.id === folder && f.unread ? { ...f, unread: f.unread - 1 } : f))
+      );
+      if (folder === INBOX_FOLDER) decreaseMailUnread();
       request(`/api/mail/messages/${encodeURIComponent(item.id)}`, { method: 'PATCH' }).catch(() => {});
     }
   };
 
+  /** Naar wie een antwoord gaat: wie het laatst iets stuurde, behalve jijzelf. */
+  const replyRecipient = (): MailAddress | null => {
+    if (!thread) return null;
+    const own = account?.email.toLowerCase();
+    const others = thread.messages.filter(message => message.from.email.toLowerCase() !== own);
+    const last = others[others.length - 1] || thread.messages[thread.messages.length - 1];
+    return last ? (last.from.email.toLowerCase() === own ? last.to[0] || null : last.from) : null;
+  };
+
+  const startReply = () => {
+    setComposerMode('reply');
+    setForwardMessageId(null);
+    setComposerMinimized(false);
+  };
+
+  const startForward = (messageId: string) => {
+    setComposerMode('forward');
+    setForwardMessageId(messageId);
+    setComposerMinimized(false);
+  };
+
   const send = async () => {
-    if (!selectedId || isRichTextEmpty(reply)) return;
+    if (!selectedId) return;
+    const id = encodeURIComponent(selectedId);
 
     setIsSending(true);
     try {
-      await request(`/api/mail/messages/${encodeURIComponent(selectedId)}/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ html: reply }),
-      });
+      if (composerMode === 'reply') {
+        if (isRichTextEmpty(draft)) return;
+        await request(`/api/mail/messages/${id}/reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ html: draft }),
+        });
+        toast.success('Verstuurd', 'Je antwoord is verstuurd');
+      } else {
+        await request(`/api/mail/messages/${id}/forward`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messageId: forwardMessageId,
+            to: forwardTo.split(/[,;\s]+/).filter(Boolean),
+            html: draft,
+          }),
+        });
+        toast.success('Doorgestuurd', 'Het bericht is doorgestuurd');
+      }
 
-      toast.success('Verstuurd', 'Je antwoord is verstuurd');
-      setReply('');
-      setThread(await request(`/api/mail/messages/${encodeURIComponent(selectedId)}`));
+      resetComposer();
+      setThread(await request(`/api/mail/messages/${id}`));
     } catch (error: any) {
       toast.error('Versturen mislukt', error.message);
     } finally {
@@ -152,7 +262,7 @@ export default function InboxPage() {
           <h2>{needsReconnect ? 'Koppel je mailbox opnieuw' : 'Inbox staat nog uit'}</h2>
           <p>
             {needsReconnect
-              ? 'De toegang tot je mailbox is verlopen of ingetrokken. Zet de Inbox opnieuw aan om je mail weer te zien.'
+              ? 'De toegang tot je mailbox is verlopen of ingetrokken. Zet de koppeling opnieuw aan om je mail weer te zien.'
               : 'Koppel je Gmail- of Outlook-mailbox bij Instellingen > Plug-ins om je mail hier te lezen en te beantwoorden.'}
           </p>
           <Link href="/settings?tab=plugins" className="button">
@@ -163,27 +273,70 @@ export default function InboxPage() {
     );
   }
 
+  const currentFolder = folders.find(f => f.id === folder);
+
   return (
     <Layout title="Inbox">
       <div className="inbox">
+        <nav className="inbox-folders">
+          {folders.length === 0
+            ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height="1.75rem" style={{ marginBottom: 'var(--space5)' }} />)
+            : folders.map(f => {
+                const Icon = FOLDER_ICONS[f.kind];
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={!search && f.id === folder ? 'active' : ''}
+                    onClick={() => chooseFolder(f.id)}
+                  >
+                    <Icon size={15} />
+                    <span className="name">{f.name}</span>
+                    {!!f.unread && f.kind !== 'sent' && f.kind !== 'drafts' && (
+                      <span className="count">{f.unread}</span>
+                    )}
+                  </button>
+                );
+              })}
+        </nav>
+
         <div className="inbox-list">
           <div className="list-header">
-            <h1>Inbox</h1>
-            <div className="actions">
-              <label className="toggle-label">
-                <Toggle label="Alleen ongelezen" checked={unreadOnly} onChange={setUnreadOnly} />
-                <span>Ongelezen</span>
-              </label>
-              <button
-                type="button"
-                className="button icon"
-                aria-label="Vernieuwen"
-                onClick={() => loadList()}
-                disabled={isLoadingList}
-              >
-                <RefreshCw size={15} />
-              </button>
+            <div className="title-row">
+              <h1>{search ? 'Zoekresultaten' : currentFolder?.name || 'Inbox'}</h1>
+              <div className="actions">
+                <label className="toggle-label">
+                  <Toggle label="Alleen ongelezen" checked={unreadOnly} onChange={setUnreadOnly} />
+                  <span>Ongelezen</span>
+                </label>
+                <button
+                  type="button"
+                  className="button icon"
+                  aria-label="Vernieuwen"
+                  onClick={() => {
+                    loadList();
+                    loadFolders();
+                  }}
+                  disabled={isLoadingList}
+                >
+                  <RefreshCw size={15} />
+                </button>
+              </div>
             </div>
+
+            <label className="search">
+              <Search size={15} />
+              <input
+                type="search"
+                value={searchInput}
+                placeholder="Zoeken in je mail"
+                aria-label="Zoeken in je mail"
+                onChange={(event) => setSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') setSearch(searchInput.trim());
+                }}
+              />
+            </label>
           </div>
 
           {isLoadingList ? (
@@ -193,7 +346,9 @@ export default function InboxPage() {
               ))}
             </div>
           ) : items.length === 0 ? (
-            <p className="list-empty">{unreadOnly ? 'Geen ongelezen mail.' : 'Je inbox is leeg.'}</p>
+            <p className="list-empty">
+              {search ? `Niets gevonden voor "${search}".` : unreadOnly ? 'Geen ongelezen mail.' : 'Deze map is leeg.'}
+            </p>
           ) : (
             <>
               {items.map(item => (
@@ -243,40 +398,52 @@ export default function InboxPage() {
               <Skeleton height="12rem" />
             </div>
           ) : (
-            <div className="thread">
-              <h2>{thread.subject}</h2>
+            <>
+              <div className="thread">
+                <h2>{thread.subject}</h2>
 
-              {thread.messages.map(message => (
-                <div key={message.id} className="message">
-                  <div className="message-header">
-                    <span className="avatar">{initials(message.from)}</span>
-                    <span className="sender">
-                      <span className="from">{displayName(message.from)}</span>
-                      <span className="meta">
-                        {message.from.email}
-                        {message.to.length > 0 && ` aan ${message.to.map(displayName).join(', ')}`}
+                {thread.messages.map(message => (
+                  <div key={message.id} className="message">
+                    <div className="message-header">
+                      <span className="avatar">{initials(message.from)}</span>
+                      <span className="sender">
+                        <span className="from">{displayName(message.from)}</span>
+                        <span className="meta">
+                          {message.from.email}
+                          {message.to.length > 0 && ` aan ${message.to.map(displayName).join(', ')}`}
+                        </span>
                       </span>
-                    </span>
-                    <span className="meta">{timeAgo(message.date)}</span>
+                      <span className="message-actions">
+                        <span className="meta">{timeAgo(message.date)}</span>
+                        <ToolButton title="Antwoorden" onClick={startReply}>
+                          <Reply size={15} />
+                        </ToolButton>
+                        <ToolButton title="Doorsturen" onClick={() => startForward(message.id)}>
+                          <Forward size={15} />
+                        </ToolButton>
+                      </span>
+                    </div>
+                    <MailBody html={message.html} />
                   </div>
-                  <MailBody html={message.html} />
-                </div>
-              ))}
-
-              <div className="reply">
-                <RichTextEditor value={reply} onChange={setReply} placeholder="Schrijf je antwoord..." />
-                <div className="actions">
-                  <button
-                    type="button"
-                    className="button"
-                    disabled={isSending || isRichTextEmpty(reply)}
-                    onClick={send}
-                  >
-                    {isSending ? 'Versturen...' : 'Antwoorden'}
-                  </button>
-                </div>
+                ))}
               </div>
-            </div>
+
+              <MailComposer
+                mode={composerMode}
+                recipient={replyRecipient()}
+                forwardTo={forwardTo}
+                onForwardToChange={setForwardTo}
+                html={draft}
+                onHtmlChange={setDraft}
+                signature={signature}
+                minimized={composerMinimized}
+                onMinimizedChange={setComposerMinimized}
+                onClose={resetComposer}
+                onDiscard={resetComposer}
+                onSend={send}
+                isSending={isSending}
+              />
+            </>
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]';
-import { openMailbox, sendMailError } from '@/lib/mail';
+import { openMailbox, sendMailError, withSignature } from '@/lib/mail';
 import { isRichTextEmpty, sanitizeRichText } from '@/lib/richtext';
 
 /**
@@ -23,7 +23,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { provider, accessToken, email } = await openMailbox((session.user as any).id);
-    await provider.reply(accessToken, id, html, email);
+    // De handtekening uit Gmail of Outlook komt eronder, zoals daar ook gebeurt
+    const signature = await provider.signature(accessToken, email).catch(() => '');
+    await provider.reply(accessToken, id, withSignature(html, signature), email);
     return res.status(200).json({ ok: true });
   } catch (error) {
     return sendMailError(res, error);

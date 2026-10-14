@@ -141,3 +141,8 @@ export function sendMailError(res: { status: (code: number) => { json: (body: un
   console.error('Mailbox:', error);
   return res.status(502).json({ error: (error as Error)?.message || 'De mailbox is niet bereikbaar' });
 }
+
+/** Het bericht met de handtekening eronder, met wat witruimte ertussen. */
+export function withSignature(html: string, signature: string): string {
+  return signature ? `${html}<br><div class="signature">${signature}</div>` : html;
+}

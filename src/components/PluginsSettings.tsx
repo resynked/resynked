@@ -38,11 +38,15 @@ export default function PluginsSettings() {
   const [connecting, setConnecting] = useState<MailProviderName | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
   const popup = useRef<Window | null>(null);
+  // De popup meldt zich via twee wegen tegelijk (zie de terugkeer-route);
+  // alleen de eerste melding telt, anders komt elke melding dubbel
+  const reported = useRef(false);
 
   // Het popupvenster meldt zich als het klaar is
   useEffect(() => {
     const handle = async (data: any) => {
-      if (data?.type !== 'mail-connected') return;
+      if (data?.type !== 'mail-connected' || reported.current) return;
+      reported.current = true;
 
       setConnecting(null);
       if (!data.ok) {
@@ -97,6 +101,7 @@ export default function PluginsSettings() {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
+    reported.current = false;
     popup.current = window.open(url, 'mail-connect', `width=${width},height=${height},left=${left},top=${top}`);
 
     // Popups tegengehouden: dan in dit venster, en komen we na afloop hier terug

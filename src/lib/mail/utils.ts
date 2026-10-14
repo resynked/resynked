@@ -85,3 +85,19 @@ export async function apiFetch(url: string, accessToken: string, init: RequestIn
 export function replySubject(subject: string): string {
   return /^re:/i.test(subject.trim()) ? subject : `Re: ${subject}`;
 }
+
+/** "Fwd: " ervoor, maar niet twee keer. */
+export function forwardSubject(subject: string): string {
+  return /^(fw|fwd):/i.test(subject.trim()) ? subject : `Fwd: ${subject}`;
+}
+
+/** Het kopje boven een doorgestuurd bericht, zoals Gmail en Outlook het ook zetten. */
+export function forwardHeader(original: { from: string; date: string; subject: string; to: string }): string {
+  const date = new Date(original.date).toLocaleString('nl-NL', { dateStyle: 'long', timeStyle: 'short' });
+
+  return `<br><br><div>---------- Doorgestuurd bericht ----------<br>
+Van: ${escapeHtml(original.from)}<br>
+Datum: ${escapeHtml(date)}<br>
+Onderwerp: ${escapeHtml(original.subject)}<br>
+Aan: ${escapeHtml(original.to)}</div><br>`;
+}

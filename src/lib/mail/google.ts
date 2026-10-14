@@ -1,7 +1,9 @@
-import type { MailMessage, MailProvider, MailSummary } from './types';
+import { INBOX_FOLDER, type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
 import {
   apiFetch,
   decodeEntities,
+  forwardHeader,
+  forwardSubject,
   parseAddress,
   parseAddressList,
   replySubject,
@@ -80,9 +82,48 @@ function toMessage(message: GmailMessage): MailMessage {
   };
 }
 
+/** De vaste labels van Gmail die als map in de inbox horen, in deze volgorde. */
+const SYSTEM_LABELS: { id: string; name: string; kind: MailFolderKind }[] = [
+  { id: 'INBOX', name: 'Inbox', kind: 'inbox' },
+  { id: 'STARRED', name: 'Met ster', kind: 'starred' },
+  { id: 'IMPORTANT', name: 'Belangrijk', kind: 'important' },
+  { id: 'SENT', name: 'Verzonden', kind: 'sent' },
+  { id: 'DRAFT', name: 'Concepten', kind: 'drafts' },
+  { id: 'SPAM', name: 'Spam', kind: 'spam' },
+  { id: 'TRASH', name: 'Prullenbak', kind: 'trash' },
+];
+
+/** De inbox heet bij ons overal "inbox"; Gmail noemt hem INBOX. */
+function labelId(folder: string): string {
+  return folder === INBOX_FOLDER ? 'INBOX' : folder;
+}
+
 /** Een onderwerp met andere tekens dan ASCII moet gecodeerd in de kop. */
 function encodeHeader(value: string): string {
   return /^[\x20-\x7e]*$/.test(value) ? value : `=?UTF-8?B?${Buffer.from(value, 'utf8').toString('base64')}?=`;
+}
+
+function formatAddresses(value: string): string {
+  return parseAddressList(value)
+    .map(address => (address.name !== address.email ? `${encodeHeader(address.name)} <${address.email}>` : address.email))
+    .join(', ');
+}
+
+/** Verstuurt een zelfgebouwd bericht, in het gesprek waar het bij hoort. */
+async function sendMime(accessToken: string, threadId: string, headers: string[], html: string) {
+  const mime = [
+    ...headers,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(html, 'utf8').toString('base64').replace(/.{76}/g, '$&\r\n'),
+  ].join('\r\n');
+
+  await apiFetch(`${API}/messages/send`, accessToken, {
+    method: 'POST',
+    body: JSON.stringify({ raw: Buffer.from(mime, 'utf8').toString('base64url'), threadId }),
+  });
 }
 
 export const google: MailProvider = {
@@ -126,9 +167,12 @@ export const google: MailProvider = {
     return profile.emailAddress;
   },
 
-  async list(accessToken, { unreadOnly, pageToken }) {
-    const params = new URLSearchParams({ labelIds: 'INBOX', maxResults: '25' });
-    if (unreadOnly) params.set('q', 'is:unread');
+  async list(accessToken, { folder, unreadOnly, search, pageToken }) {
+    const params = new URLSearchParams({ maxResults: '25' });
+    // Zoeken gaat door alle mail heen, zoals in Gmail zelf
+    if (!search) params.set('labelIds', labelId(folder));
+    const query = [search?.trim(), unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
+    if (query) params.set('q', query);
     if (pageToken) params.set('pageToken', pageToken);
 
     const page = await apiFetch(`${API}/threads?${params}`, accessToken);
@@ -157,6 +201,42 @@ export const google: MailProvider = {
     );
 
     return { items, nextPageToken: page.nextPageToken || null };
+  },
+
+  async folders(accessToken) {
+    const { labels = [] } = await apiFetch(`${API}/labels`, accessToken);
+    const ids = new Set(labels.map((label: any) => label.id));
+
+    const system: MailFolder[] = SYSTEM_LABELS.filter(label => ids.has(label.id)).map(label => ({
+      id: label.id === 'INBOX' ? INBOX_FOLDER : label.id,
+      name: label.name,
+      kind: label.kind,
+    }));
+
+    // De labels die de gebruiker zelf heeft gemaakt, op naam
+    const own: MailFolder[] = labels
+      .filter((label: any) => label.type === 'user')
+      .map((label: any) => ({ id: label.id, name: label.name, kind: 'custom' as const }))
+      .sort((a: MailFolder, b: MailFolder) => a.name.localeCompare(b.name, 'nl'));
+
+    const inbox = system.find(folder => folder.kind === 'inbox');
+    if (inbox) inbox.unread = await this.unreadCount(accessToken);
+
+    return [...system, ...own];
+  },
+
+  async unreadCount(accessToken) {
+    const inbox = await apiFetch(`${API}/labels/INBOX`, accessToken);
+    return Number(inbox.threadsUnread) || 0;
+  },
+
+  async signature(accessToken, ownAddress) {
+    const { sendAs = [] } = await apiFetch(`${API}/settings/sendAs`, accessToken);
+    const own =
+      sendAs.find((alias: any) => alias.sendAsEmail?.toLowerCase() === ownAddress.toLowerCase()) ||
+      sendAs.find((alias: any) => alias.isDefault) ||
+      sendAs.find((alias: any) => alias.isPrimary);
+    return own?.signature || '';
   },
 
   async thread(accessToken, id) {
@@ -190,29 +270,48 @@ export const google: MailProvider = {
     // naar wie jij het stuurde
     const fromSelf = parseAddress(header(last, 'From')).email.toLowerCase() === ownAddress.toLowerCase();
     // Gmail geeft de namen al ontsleuteld terug; voor de kop gaan ze er weer gecodeerd in
-    const to = parseAddressList(fromSelf ? header(last, 'To') : header(last, 'Reply-To') || header(last, 'From'))
-      .map(address => (address.name !== address.email ? `${encodeHeader(address.name)} <${address.email}>` : address.email))
-      .join(', ');
+    const to = formatAddresses(fromSelf ? header(last, 'To') : header(last, 'Reply-To') || header(last, 'From'));
 
     const messageId = header(last, 'Message-ID');
     const references = [header(last, 'References'), messageId].filter(Boolean).join(' ');
 
-    const mime = [
-      `From: ${ownAddress}`,
-      `To: ${to}`,
-      `Subject: ${encodeHeader(replySubject(header(messages[0], 'Subject')))}`,
-      ...(messageId ? [`In-Reply-To: ${messageId}`, `References: ${references}`] : []),
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=UTF-8',
-      'Content-Transfer-Encoding: base64',
-      '',
-      Buffer.from(html, 'utf8').toString('base64').replace(/.{76}/g, '$&\r\n'),
-    ].join('\r\n');
+    await sendMime(
+      accessToken,
+      id,
+      [
+        `From: ${ownAddress}`,
+        `To: ${to}`,
+        `Subject: ${encodeHeader(replySubject(header(messages[0], 'Subject')))}`,
+        ...(messageId ? [`In-Reply-To: ${messageId}`, `References: ${references}`] : []),
+      ],
+      html
+    );
+  },
 
-    await apiFetch(`${API}/messages/send`, accessToken, {
-      method: 'POST',
-      body: JSON.stringify({ raw: Buffer.from(mime, 'utf8').toString('base64url'), threadId: id }),
-    });
+  async forward(accessToken, threadId, messageId, to, html, ownAddress) {
+    const message: GmailMessage = await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}?format=full`, accessToken);
+    const original = toMessage(message);
+    const subject = header(message, 'Subject');
+    const originalId = header(message, 'Message-ID');
+
+    await sendMime(
+      accessToken,
+      threadId,
+      [
+        `From: ${ownAddress}`,
+        `To: ${formatAddresses(to.join(', '))}`,
+        `Subject: ${encodeHeader(forwardSubject(subject))}`,
+        ...(originalId ? [`References: ${originalId}`] : []),
+      ],
+      html +
+        forwardHeader({
+          from: header(message, 'From'),
+          date: original.date,
+          subject,
+          to: header(message, 'To'),
+        }) +
+        original.html
+    );
   },
 
   async revoke(token) {

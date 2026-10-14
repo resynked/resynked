@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useMailAccount } from '@/hooks/useMailAccount';
+import { useMailUnread } from '@/hooks/useMailUnread';
 import { LayoutDashboard, Inbox, Users, FileText, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
 
 export default function Sidebar() {
@@ -12,6 +13,7 @@ export default function Sidebar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   // De Inbox staat er alleen als de module aan staat: als er een mailbox gekoppeld is
   const mailAccount = useMailAccount();
+  const unreadMail = useMailUnread(!!mailAccount);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isActive = (path: string) => {
@@ -64,6 +66,7 @@ export default function Sidebar() {
           <Link href="/inbox" className={isActive('/inbox') ? 'active' : ''}>
             <Inbox size={16} />
             <span>Inbox</span>
+            {!!unreadMail && <span className="count">{unreadMail > 999 ? '999+' : unreadMail}</span>}
           </Link>
         )}
         <Link href="/customers" className={isActive('/customers') || router.pathname.startsWith('/customers') ? 'active' : ''}>

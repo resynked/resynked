@@ -1,4 +1,4 @@
-import type { MailAddress, MailProvider } from './types';
+import { INBOX_FOLDER, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
 import { apiFetch, requestTokens, textToHtml } from './utils';
 
 /**
@@ -31,6 +31,21 @@ interface GraphRecipient {
 function toAddress(recipient: GraphRecipient | undefined): MailAddress {
   const email = recipient?.emailAddress?.address || '';
   return { name: recipient?.emailAddress?.name || email, email };
+}
+
+/** De vaste mappen van Outlook, op hun vaste naam, in deze volgorde. */
+const WELL_KNOWN: { name: string; label: string; kind: MailFolderKind }[] = [
+  { name: 'inbox', label: 'Inbox', kind: 'inbox' },
+  { name: 'sentitems', label: 'Verzonden', kind: 'sent' },
+  { name: 'drafts', label: 'Concepten', kind: 'drafts' },
+  { name: 'archive', label: 'Archief', kind: 'archive' },
+  { name: 'junkemail', label: 'Ongewenste e-mail', kind: 'spam' },
+  { name: 'deleteditems', label: 'Verwijderde items', kind: 'trash' },
+];
+
+/** Een map uit de app: de inbox op zijn vaste naam, de rest op het id van Graph. */
+function folderPath(folder: string): string {
+  return `${API}/mailFolders/${encodeURIComponent(folder || INBOX_FOLDER)}`;
 }
 
 const LIST_FIELDS = 'id,subject,bodyPreview,from,receivedDateTime,isRead';
@@ -95,12 +110,21 @@ export const microsoft: MailProvider = {
     return me.mail || me.userPrincipalName;
   },
 
-  async list(accessToken, { unreadOnly, pageToken }) {
+  async list(accessToken, { folder, unreadOnly, search, pageToken }) {
     // De volgende pagina is een volledig adres van Graph; alleen dat accepteren
     let url: string;
     if (pageToken) {
       if (!pageToken.startsWith(`${API}/`)) throw new Error('Ongeldige pagina');
       url = pageToken;
+    } else if (search?.trim()) {
+      // Zoeken gaat door alle mail heen. Graph kan zoeken niet combineren met
+      // sorteren of filteren; de uitkomst komt al op relevantie
+      const params = new URLSearchParams({
+        $top: '25',
+        $select: LIST_FIELDS,
+        $search: `"${search.trim().replace(/"/g, '')}"`,
+      });
+      url = `${API}/messages?${params}`;
     } else {
       const params = new URLSearchParams({
         $top: '25',
@@ -109,7 +133,7 @@ export const microsoft: MailProvider = {
       });
       // Graph wil het veld waarop gesorteerd wordt ook vooraan in het filter
       if (unreadOnly) params.set('$filter', 'receivedDateTime ge 1900-01-01T00:00:00Z and isRead eq false');
-      url = `${API}/mailFolders/inbox/messages?${params}`;
+      url = `${folderPath(folder)}/messages?${params}`;
     }
 
     const page = await apiFetch(url, accessToken);
@@ -125,6 +149,62 @@ export const microsoft: MailProvider = {
       })),
       nextPageToken: page['@odata.nextLink'] || null,
     };
+  },
+
+  async folders(accessToken) {
+    const fields = '$select=id,displayName,unreadItemCount';
+
+    // Welke map welke vaste map is, vraagt Graph per naam; het archief
+    // bestaat niet in elke mailbox
+    const [known, top, underInbox] = await Promise.all([
+      Promise.all(
+        WELL_KNOWN.map(folder =>
+          apiFetch(`${API}/mailFolders/${folder.name}?${fields}`, accessToken).catch(() => null)
+        )
+      ),
+      apiFetch(`${API}/mailFolders?${fields}&$top=100`, accessToken),
+      // Eigen mappen staan vaak onder de inbox
+      apiFetch(`${API}/mailFolders/inbox/childFolders?${fields}&$top=100`, accessToken).catch(() => ({ value: [] })),
+    ]);
+
+    const knownIds = new Set<string>();
+    const system: MailFolder[] = [];
+    known.forEach((folder, i) => {
+      if (!folder) return;
+      knownIds.add(folder.id);
+      system.push({
+        id: WELL_KNOWN[i].name === 'inbox' ? INBOX_FOLDER : folder.id,
+        name: WELL_KNOWN[i].label,
+        kind: WELL_KNOWN[i].kind,
+        unread: Number(folder.unreadItemCount) || 0,
+      });
+    });
+
+    // Mappen van Outlook zelf die geen mail bevatten, zoals Gesprekgeschiedenis
+    // en Postvak UIT, laten we weg
+    const hidden = /^(outbox|postvak uit|conversation history|gespreksgeschiedenis|sync issues|synchronisatieproblemen|rss.*)$/i;
+
+    const own: MailFolder[] = [...(top.value || []), ...(underInbox.value || [])]
+      .filter((folder: any) => !knownIds.has(folder.id) && !hidden.test(folder.displayName))
+      .map((folder: any) => ({
+        id: folder.id,
+        name: folder.displayName,
+        kind: 'custom' as const,
+        unread: Number(folder.unreadItemCount) || 0,
+      }))
+      .sort((a: MailFolder, b: MailFolder) => a.name.localeCompare(b.name, 'nl'));
+
+    return [...system, ...own];
+  },
+
+  async unreadCount(accessToken) {
+    const inbox = await apiFetch(`${API}/mailFolders/inbox?$select=unreadItemCount`, accessToken);
+    return Number(inbox.unreadItemCount) || 0;
+  },
+
+  async signature() {
+    // Microsoft Graph geeft de handtekening uit Outlook niet vrij
+    return '';
   },
 
   async thread(accessToken, id) {
@@ -173,6 +253,17 @@ export const microsoft: MailProvider = {
     await apiFetch(`${API}/messages/${encodeURIComponent(target.id)}/reply`, accessToken, {
       method: 'POST',
       body: JSON.stringify({ comment: html }),
+    });
+  },
+
+  async forward(accessToken, _threadId, messageId, to, html) {
+    // Graph zet het origineel er zelf onder, met bijlagen en al
+    await apiFetch(`${API}/messages/${encodeURIComponent(messageId)}/forward`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({
+        comment: html,
+        toRecipients: to.map(address => ({ emailAddress: { address } })),
+      }),
     });
   },
 

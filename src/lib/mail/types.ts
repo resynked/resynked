@@ -39,6 +39,29 @@ export interface MailThread {
   messages: MailMessage[];
 }
 
+/** Wat voor map het is; de vaste mappen krijgen hun eigen icoon. */
+export type MailFolderKind = 'inbox' | 'starred' | 'important' | 'sent' | 'drafts' | 'archive' | 'spam' | 'trash' | 'custom';
+
+/** Een map in Outlook, of een label in Gmail. */
+export interface MailFolder {
+  id: string;
+  name: string;
+  kind: MailFolderKind;
+  /** Hoeveel ongelezen, als de aanbieder dat meteen meegeeft */
+  unread?: number;
+}
+
+/** De map waarmee de inbox opent. */
+export const INBOX_FOLDER = 'inbox';
+
+export interface MailListOptions {
+  folder: string;
+  unreadOnly: boolean;
+  /** Zoeken in alle mail; dan geldt de map niet */
+  search?: string;
+  pageToken?: string;
+}
+
 export interface MailPage {
   items: MailSummary[];
   /** Waarmee de volgende pagina opgehaald wordt; null als er niets meer is */
@@ -62,11 +85,18 @@ export interface MailProvider {
   refresh(refreshToken: string): Promise<MailTokens>;
   /** Het mailadres van de gekoppelde mailbox */
   address(accessToken: string): Promise<string>;
-  list(accessToken: string, options: { unreadOnly: boolean; pageToken?: string }): Promise<MailPage>;
+  list(accessToken: string, options: MailListOptions): Promise<MailPage>;
+  folders(accessToken: string): Promise<MailFolder[]>;
+  /** Hoeveel gesprekken er ongelezen in de inbox staan */
+  unreadCount(accessToken: string): Promise<number>;
+  /** De handtekening die in Gmail of Outlook is ingesteld, als HTML; leeg als er geen is */
+  signature(accessToken: string, ownAddress: string): Promise<string>;
   thread(accessToken: string, id: string): Promise<MailThread>;
   markRead(accessToken: string, id: string): Promise<void>;
   /** Antwoordt op het laatste bericht in het gesprek; komt ook in Verzonden te staan */
   reply(accessToken: string, id: string, html: string, ownAddress: string): Promise<void>;
+  /** Stuurt één bericht uit het gesprek door, met het origineel eronder */
+  forward(accessToken: string, threadId: string, messageId: string, to: string[], html: string, ownAddress: string): Promise<void>;
   /** Trekt de toegang in bij de aanbieder, voor zover die dat kent */
   revoke(token: string): Promise<void>;
 }
