@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ComponentType } from 'react';
 import Modal from '@/components/Modal';
-import { GoogleIcon, MicrosoftIcon } from '@/components/BrandIcons';
+import PluginDetail, { PLUGINS } from '@/components/PluginDetail';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -13,16 +12,11 @@ const PROVIDER_NAMES: Record<MailProviderName, string> = {
   microsoft: 'Microsoft',
 };
 
-/** De plug-ins die je kunt aanzetten, met hun logo en wat ze doen. */
-const PLUGINS: { provider: MailProviderName; icon: ComponentType<{ size?: number }>; description: string }[] = [
-  { provider: 'google', icon: GoogleIcon, description: 'Lees en beantwoord je Gmail in je Inbox' },
-  { provider: 'microsoft', icon: MicrosoftIcon, description: 'Lees en beantwoord je Outlook-mail in je Inbox' },
-];
-
 /**
  * Instellingen > Plug-ins: koppelingen met andere diensten.
  *
- * Een schakelaar aanzetten opent een venster met de inlogknop van die dienst.
+ * Een schakelaar aanzetten opent een venster over die dienst, met de inlogknop
+ * en uitleg over goedkeuring door een beheerder.
  * Het inloggen gebeurt in een popup bij de aanbieder zelf; is dat gelukt, dan
  * sluit alles vanzelf en staat de schakelaar op groen.
  *
@@ -37,6 +31,16 @@ export default function PluginsSettings() {
   const [dialogFor, setDialogFor] = useState<MailProviderName | null>(null);
   const [connecting, setConnecting] = useState<MailProviderName | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  // De laatste poging strandde op toestemming van een beheerder
+  const [adminRequired, setAdminRequired] = useState(false);
+  const [config, setConfig] = useState<{ googleClientId: string | null; microsoftAdminConsentUrl: string | null } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/mail/plugins')
+      .then(res => (res.ok ? res.json() : null))
+      .then(setConfig)
+      .catch(() => {});
+  }, []);
   const popup = useRef<Window | null>(null);
   // De popup meldt zich via twee wegen tegelijk (zie de terugkeer-route);
   // alleen de eerste melding telt, anders komt elke melding dubbel
@@ -50,13 +54,19 @@ export default function PluginsSettings() {
 
       setConnecting(null);
       if (!data.ok) {
-        toast.error('Koppelen mislukt', data.error || 'Probeer het opnieuw');
+        // Het venster blijft open, met de uitleg voor de beheerder uitgelicht
+        setAdminRequired(!!data.adminRequired);
+        toast.error(data.adminRequired ? 'Goedkeuring nodig' : 'Koppelen mislukt', data.error || 'Probeer het opnieuw');
         return;
       }
 
       const connected = await reloadMailAccount();
       setDialogFor(null);
-      toast.success('Inbox geactiveerd', connected ? `Je mail van ${connected.email} staat nu in je Inbox` : 'Je mailbox is gekoppeld');
+      setAdminRequired(false);
+      toast.success(
+        'Gekoppeld',
+        connected ? `Je mail en agenda van ${connected.email} staan nu in Resynked` : 'Je account is gekoppeld'
+      );
     };
 
     const onMessage = (event: MessageEvent) => {
@@ -115,8 +125,8 @@ export default function PluginsSettings() {
 
   const disconnect = async () => {
     const confirmed = await confirm({
-      title: 'Inbox uitzetten',
-      message: `Je mailbox ${account?.email || ''} wordt ontkoppeld. Je mail blijft gewoon in ${account ? PROVIDER_NAMES[account.provider] : 'je mailbox'} staan.`,
+      title: `${account ? PROVIDER_NAMES[account.provider] : 'Koppeling'} uitzetten`,
+      message: `${account?.email || 'Je account'} wordt ontkoppeld; Inbox en Agenda verdwijnen uit Resynked. Je mail en afspraken blijven gewoon in ${account ? PROVIDER_NAMES[account.provider] : 'je account'} staan.`,
       confirmText: 'Uitzetten',
       cancelText: 'Annuleren',
     });
@@ -128,7 +138,7 @@ export default function PluginsSettings() {
       const response = await fetch('/api/mail/account', { method: 'DELETE' });
       if (!response.ok) throw new Error();
       clearMailAccount();
-      toast.success('Inbox uitgezet', 'Je mailbox is ontkoppeld');
+      toast.success('Uitgezet', 'Je account is ontkoppeld');
     } catch {
       toast.error('Fout', 'Ontkoppelen mislukt');
     } finally {
@@ -143,7 +153,7 @@ export default function PluginsSettings() {
       <h2>Plug-ins</h2>
 
       <div className="plugin-list">
-        {PLUGINS.map(({ provider, icon: Icon, description }) => {
+        {PLUGINS.map(({ provider, icon: Icon, summary }) => {
           const connected = account?.provider === provider;
 
           // Een label om de hele rij: een klik waar dan ook op de rij zet de
@@ -155,42 +165,37 @@ export default function PluginsSettings() {
               </span>
               <span className="information">
                 <span className="title">{PROVIDER_NAMES[provider]}</span>
-                <span className="description">{connected ? `Gekoppeld met ${account.email}` : description}</span>
+                <span className="description">{connected ? `Gekoppeld met ${account.email}` : summary}</span>
               </span>
               <Toggle
                 label={PROVIDER_NAMES[provider]}
                 checked={connected}
                 disabled={account === undefined || disconnecting}
-                onChange={(on) => (on ? setDialogFor(provider) : disconnect())}
+                onChange={(on) => {
+                  if (!on) return disconnect();
+                  setAdminRequired(false);
+                  setDialogFor(provider);
+                }}
               />
             </label>
           );
         })}
       </div>
 
-      <Modal
-        isOpen={!!dialogPlugin}
-        onClose={() => setDialogFor(null)}
-        title={dialogPlugin ? `Koppelen met ${PROVIDER_NAMES[dialogPlugin.provider]}` : ''}
-      >
+      <Modal isOpen={!!dialogPlugin} onClose={() => setDialogFor(null)} title="">
         {dialogPlugin && (
-          <>
-            <p>
-              Log in en geef Resynked toestemming om je mail te lezen en te versturen. Antwoorden
-              die je in je Inbox schrijft staan daarna ook gewoon in je eigen mailbox.
-              {account && account.provider !== dialogPlugin.provider &&
-                ` Je koppeling met ${PROVIDER_NAMES[account.provider]} (${account.email}) wordt hiermee vervangen.`}
-            </p>
-            <button
-              type="button"
-              className="button tertiary with-icon"
-              disabled={connecting !== null}
-              onClick={() => connect(dialogPlugin.provider)}
-            >
-              <dialogPlugin.icon size={18} />
-              {connecting ? 'Bezig met inloggen...' : `Inloggen met ${PROVIDER_NAMES[dialogPlugin.provider]}`}
-            </button>
-          </>
+          <PluginDetail
+            plugin={dialogPlugin}
+            replaces={
+              account && account.provider !== dialogPlugin.provider
+                ? { name: PROVIDER_NAMES[account.provider], email: account.email }
+                : null
+            }
+            connecting={connecting !== null}
+            onConnect={() => connect(dialogPlugin.provider)}
+            adminRequired={adminRequired}
+            config={config}
+          />
         )}
       </Modal>
     </>

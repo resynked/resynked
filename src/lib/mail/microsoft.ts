@@ -1,4 +1,4 @@
-import { INBOX_FOLDER, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
+import { INBOX_FOLDER, type CalendarEvent, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
 import { apiFetch, requestTokens, textToHtml } from './utils';
 
 /**
@@ -13,7 +13,7 @@ import { apiFetch, requestTokens, textToHtml } from './utils';
 const API = 'https://graph.microsoft.com/v1.0/me';
 const AUTHORITY = 'https://login.microsoftonline.com/common/oauth2/v2.0';
 
-const SCOPES = ['openid', 'email', 'offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send'];
+const SCOPES = ['openid', 'email', 'offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send', 'Calendars.Read'];
 
 function credentials() {
   const clientId = process.env.MICROSOFT_CLIENT_ID;
@@ -304,6 +304,45 @@ export const microsoft: MailProvider = {
         toRecipients: to.map(address => ({ emailAddress: { address } })),
       }),
     });
+  },
+
+  async events(accessToken, from, to) {
+    const params = new URLSearchParams({
+      startDateTime: from.toISOString(),
+      endDateTime: to.toISOString(),
+      $select: 'id,subject,start,end,isAllDay,location,webLink,isCancelled',
+      $orderby: 'start/dateTime',
+      $top: '250',
+    });
+
+    const events: CalendarEvent[] = [];
+    let url: string | null = `${API}/calendarView?${params}`;
+
+    // Alle tijden in UTC, zodat het scherm ze zelf naar de eigen tijdzone omzet
+    for (let page = 0; url && page < 5; page++) {
+      const data: any = await apiFetch(url, accessToken, { headers: { Prefer: 'outlook.timezone="UTC"' } });
+
+      (data.value || [])
+        .filter((item: any) => !item.isCancelled)
+        .forEach((item: any) => {
+          const allDay = !!item.isAllDay;
+          // Een hele dag komt als middernacht; alleen de datum telt dan
+          const time = (value: string) => (allDay ? value.slice(0, 10) : `${value.replace(/\.\d+$/, '')}Z`);
+          events.push({
+            id: item.id,
+            title: item.subject || '(geen titel)',
+            start: time(item.start.dateTime),
+            end: time(item.end.dateTime),
+            allDay,
+            location: item.location?.displayName || '',
+            url: item.webLink || null,
+          });
+        });
+
+      url = data['@odata.nextLink'] || null;
+    }
+
+    return events;
   },
 
   async revoke() {

@@ -539,6 +539,29 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin .information .title {display: block; font-weight: 500;}
 .plugin .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
 
+/* Het venster bij een plug-in, zoals een pagina in een app-winkel */
+.modal:has(.plugin-detail) {max-width: 640px;}
+.plugin-detail {max-height: 75vh; overflow-y: auto; padding: 0 var(--space10) var(--space10); color: var(--font-color1);}
+.plugin-detail .plugin-icon.large {display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
+.plugin-detail .plugin-detail-title {display: flex; align-items: center; justify-content: space-between; gap: var(--space20); margin: var(--space15) 0;}
+.plugin-detail .plugin-detail-title h2 {margin: 0;}
+.plugin-detail .plugin-detail-title .description {color: var(--font-color2);}
+.plugin-detail p {line-height: 1.6; margin: 0 0 var(--space10) 0;}
+.plugin-detail h3 {padding: 0 0 var(--space10) 0; margin: var(--space20) 0 var(--space10) 0; border-bottom: 1px solid var(--border-color);}
+.plugin-detail h3 .description {color: var(--font-color2); font-weight: 400;}
+.plugin-detail .plugin-parts .plugin {grid-template-columns: 40px 1fr; padding: var(--space5) 0; cursor: default;}
+.plugin-detail .plugin-parts .plugin:hover {background: none;}
+.plugin-detail .plugin-parts .plugin-icon {width: 40px; height: 40px;}
+.plugin-detail .plugin-approval.highlight {padding: var(--space15); border: 1px solid var(--color6); border-radius: var(--border-radius2);}
+.plugin-detail .copy-field {display: flex; align-items: center; gap: var(--space10); margin: 0 0 var(--space10) 0; padding: var(--space5) var(--space5) var(--space5) var(--space10); background: var(--color4); border-radius: var(--border-radius1);}
+.plugin-detail .copy-field code {flex: 1; min-width: 0; font-size: var(--fontsize2); overflow-wrap: anywhere;}
+.plugin-detail .copy-field button {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--font-color2);}
+.plugin-detail .copy-field button:hover {background: var(--color2); color: var(--font-color1);}
+.plugin-detail .plugin-info {display: grid; grid-template-columns: 160px 1fr; gap: var(--space10) var(--space20); margin: 0 0 var(--space20) 0;}
+.plugin-detail .plugin-info dt {color: var(--font-color2);}
+.plugin-detail .plugin-info dd {margin: 0;}
+.plugin-detail .plugin-info a {color: var(--font-color1); line-height: 0;}
+
 /* Een knop met een logo ervoor, zoals "Inloggen met Google" */
 .button.with-icon {display: inline-flex; align-items: center; justify-content: center; gap: var(--space10); font-size: var(--fontsize1);}
 .modal .button.with-icon {display: flex; width: 100%; padding: 12px;}
@@ -630,3 +653,20 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .sidebar .navigation a .count, .inbox .inbox-folders .count {margin-left: auto; min-width: 20px; padding: 1px 6px; box-sizing: border-box; border-radius: 10px; background: var(--color1); color: var(--color2); font-size: 11px; font-weight: 600; line-height: 1.5; text-align: center;}
 
 .mail-body {display: block; width: 100%; height: 0; border: 0;}
+
+/* Agenda: een week, dag voor dag */
+.calendar > h2 {margin: 0 0 var(--space10) 0;}
+.calendar .calendar-day {display: grid; grid-template-columns: 60px 1fr; gap: var(--space20); padding: var(--space15) 0; border-top: 1px solid var(--border-color);}
+.calendar .calendar-date {display: flex; flex-direction: column; align-items: center; gap: 2px;}
+.calendar .calendar-date .weekday {font-size: var(--fontsize2); color: var(--font-color2); text-transform: capitalize;}
+.calendar .calendar-date .day {display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: var(--h3-size); font-weight: 500;}
+.calendar .calendar-day.today .day {background: var(--color1); color: var(--color2);}
+.calendar .calendar-events {display: flex; flex-direction: column; gap: var(--space5); min-width: 0;}
+.calendar .calendar-empty {color: var(--font-color2); padding: var(--space5) 0;}
+.calendar .calendar-event {display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); border-radius: var(--border-radius1); background: var(--color3); border: 1px solid var(--border-color);}
+.calendar .calendar-event .time {color: var(--font-color2); font-size: var(--fontsize2); white-space: nowrap;}
+.calendar .calendar-event .information {display: flex; flex-direction: column; min-width: 0;}
+.calendar .calendar-event .title {font-weight: 500;}
+.calendar .calendar-event .description {display: flex; align-items: center; gap: 3px; color: var(--font-color2); font-size: var(--fontsize2);}
+.calendar .calendar-event a {color: var(--font-color2); line-height: 0;}
+.calendar .calendar-event a:hover {color: var(--font-color1);}

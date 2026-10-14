@@ -70,6 +70,19 @@ export interface MailPage {
   nextPageToken: string | null;
 }
 
+/** Een afspraak uit Google Calendar of de Outlook-agenda. */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  /** ISO-tijd; bij een afspraak van de hele dag alleen de datum (2026-10-14) */
+  start: string;
+  end: string;
+  allDay: boolean;
+  location: string;
+  /** De afspraak openen in Google Calendar of Outlook */
+  url: string | null;
+}
+
 /** De sleutels die de aanbieder na het inloggen teruggeeft. */
 export interface MailTokens {
   accessToken: string;
@@ -107,6 +120,8 @@ export interface MailProvider {
   compose(accessToken: string, to: string[], subject: string, html: string, ownAddress: string): Promise<void>;
   /** Stuurt één bericht uit het gesprek door, met het origineel eronder */
   forward(accessToken: string, threadId: string, messageId: string, to: string[], html: string, ownAddress: string): Promise<void>;
+  /** De afspraken in de hoofdagenda tussen twee momenten, oudste eerst */
+  events(accessToken: string, from: Date, to: Date): Promise<CalendarEvent[]>;
   /** Trekt de toegang in bij de aanbieder, voor zover die dat kent */
   revoke(token: string): Promise<void>;
 }

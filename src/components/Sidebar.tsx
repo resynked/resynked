@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useMailAccount } from '@/hooks/useMailAccount';
 import { useMailUnread } from '@/hooks/useMailUnread';
-import { LayoutDashboard, Inbox, Users, FileText, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
+import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, Euro, Calculator } from 'lucide-react';
 
 export default function Sidebar() {
   const router = useRouter();
@@ -67,6 +67,12 @@ export default function Sidebar() {
             <Inbox size={16} />
             <span>Inbox</span>
             {!!unreadMail && <span className="count">{unreadMail > 999 ? '999+' : unreadMail}</span>}
+          </Link>
+        )}
+        {mailAccount && (
+          <Link href="/calendar" className={isActive('/calendar') ? 'active' : ''}>
+            <CalendarDays size={16} />
+            <span>Agenda</span>
           </Link>
         )}
         <Link href="/customers" className={isActive('/customers') || router.pathname.startsWith('/customers') ? 'active' : ''}>

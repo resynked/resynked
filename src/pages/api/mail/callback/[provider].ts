@@ -12,7 +12,7 @@ import { MAIL_CHANNEL, STATE_COOKIE, isMailProvider, mailProvider, redirectUri, 
  * dat de popup opende, en dan is opener leeg. Gaat het venster niet dicht
  * (of was het geen popup), dan gaat het zelf terug naar Instellingen.
  */
-function finish(res: NextApiResponse, result: { ok: boolean; error?: string }) {
+function finish(res: NextApiResponse, result: { ok: boolean; error?: string; adminRequired?: boolean }) {
   const message = JSON.stringify({ type: 'mail-connected', ...result }).replace(/</g, '\\u003c');
   const fallback = `/settings?tab=plugins${result.ok ? '' : `&mail_error=${encodeURIComponent(result.error || '')}`}`;
 
@@ -35,6 +35,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { provider, code, state, error } = req.query;
   if (!isMailProvider(provider)) return finish(res, { ok: false, error: 'Onbekende mailaanbieder' });
+
+  // De organisatie laat medewerkers zelf geen toestemming geven; dat moet
+  // eerst een beheerder doen (Microsoft geeft daar deze foutcodes voor)
+  const description = String(req.query.error_description || '');
+  if (error && (error === 'consent_required' || /AADSTS(65001|90094|90095)/.test(description))) {
+    return finish(res, {
+      ok: false,
+      adminRequired: true,
+      error: 'Je organisatie wil dat een beheerder Resynked eerst goedkeurt',
+    });
+  }
 
   // Iemand brak het inloggen af, of gaf geen toestemming
   if (error) return finish(res, { ok: false, error: 'Koppelen afgebroken' });

@@ -75,7 +75,17 @@ export async function apiFetch(url: string, accessToken: string, init: RequestIn
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.error?.message || `De mailaanbieder antwoordde met ${response.status}`);
+    const message: string = data.error?.message || '';
+
+    // Een koppeling van vóór de agenda heeft daar nog geen toestemming voor;
+    // opnieuw koppelen lost dat op
+    const missingScope =
+      response.status === 403 &&
+      (/insufficient/i.test(message) ||
+        ['ErrorAccessDenied', 'AccessDenied', 'Authorization_RequestDenied'].includes(data.error?.code));
+    if (missingScope) throw new MailAuthError('Geef Resynked opnieuw toegang om dit te kunnen zien');
+
+    throw new Error(message || `De mailaanbieder antwoordde met ${response.status}`);
   }
 
   return response.status === 202 || response.status === 204 ? null : response.json().catch(() => null);

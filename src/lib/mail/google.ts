@@ -1,4 +1,4 @@
-import { INBOX_FOLDER, type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
+import { INBOX_FOLDER, type CalendarEvent, type MailFolder, type MailFolderKind, type MailMessage, type MailProvider, type MailSummary } from './types';
 import {
   apiFetch,
   decodeEntities,
@@ -22,8 +22,15 @@ import {
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
-// Lezen, als gelezen markeren en versturen; meer niet
-const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/gmail.modify'];
+// Mail lezen, als gelezen markeren en versturen, en de agenda alleen lezen
+const SCOPES = [
+  'openid',
+  'email',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/calendar.readonly',
+];
+
+const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
 function credentials() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -341,6 +348,44 @@ export const google: MailProvider = {
         }) +
         original.html
     );
+  },
+
+  async events(accessToken, from, to) {
+    const events: CalendarEvent[] = [];
+    let pageToken: string | undefined;
+
+    // Herhalende afspraken los, zoals ze in de agenda staan; hooguit een paar pagina's
+    for (let page = 0; page < 5; page++) {
+      const params = new URLSearchParams({
+        timeMin: from.toISOString(),
+        timeMax: to.toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '250',
+      });
+      if (pageToken) params.set('pageToken', pageToken);
+
+      const data = await apiFetch(`${CALENDAR_API}?${params}`, accessToken);
+      (data.items || [])
+        .filter((item: any) => item.status !== 'cancelled')
+        .forEach((item: any) => {
+          const allDay = !item.start?.dateTime;
+          events.push({
+            id: item.id,
+            title: item.summary || '(geen titel)',
+            start: item.start?.dateTime || item.start?.date,
+            end: item.end?.dateTime || item.end?.date,
+            allDay,
+            location: item.location || '',
+            url: item.htmlLink || null,
+          });
+        });
+
+      pageToken = data.nextPageToken;
+      if (!pageToken) break;
+    }
+
+    return events;
   },
 
   async revoke(token) {

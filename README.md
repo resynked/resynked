@@ -83,9 +83,10 @@ iedereen zijn Inbox opnieuw koppelen.
 
 **Google** — in de [Google Cloud Console](https://console.cloud.google.com/):
 
-1. Zet de **Gmail API** aan.
-2. Stel het OAuth-toestemmingsscherm in met de scope
-   `https://www.googleapis.com/auth/gmail.modify`.
+1. Zet de **Gmail API** en de **Google Calendar API** aan.
+2. Stel het OAuth-toestemmingsscherm in met de scopes
+   `https://www.googleapis.com/auth/gmail.modify` en
+   `https://www.googleapis.com/auth/calendar.readonly`.
 3. Maak een OAuth-client van het type *Web application* met als redirect-URI
    `{APP_URL}/api/mail/callback/google`.
 
@@ -99,9 +100,11 @@ registrations*:
 
 1. Nieuwe registratie, accounttype *Accounts in any organizational directory and
    personal Microsoft accounts*.
-2. Redirect-URI (platform *Web*): `{APP_URL}/api/mail/callback/microsoft`.
+2. Redirect-URI's (platform *Web*): `{APP_URL}/api/mail/callback/microsoft` en
+   `{APP_URL}/api/mail/admin-consent/done` (voor de link die een IT-beheerder
+   gebruikt om Resynked voor zijn hele organisatie goed te keuren).
 3. Onder *API permissions* (Microsoft Graph, delegated): `Mail.ReadWrite`,
-   `Mail.Send`, `User.Read`, `offline_access`.
+   `Mail.Send`, `Calendars.Read`, `User.Read`, `offline_access`.
 4. Onder *Certificates & secrets* een client secret aanmaken.
 
 ## Database
