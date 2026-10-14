@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { claimMessage, isWhatsAppConfigured, sendText, verifySignature } from '@/lib/whatsapp';
+import { claimMessage, isVerifyToken, sendText, verifySignature } from '@/lib/whatsapp';
 import { handleMessage, type IncomingMessage } from '@/lib/whatsapp/bot';
 
 export const config = {
@@ -16,20 +16,19 @@ async function rawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 /**
- * De webhook die Meta aanroept voor de WhatsApp-bot.
+ * De webhook die Meta aanroept voor de WhatsApp-bot van Resynked.
  *
  * GET: Meta controleert bij het instellen of deze link van ons is, met het
- * verify token dat je daar invult.
- * POST: binnengekomen berichten, en statusmeldingen (verzonden, gelezen) die
- * we overslaan. Elk bericht wordt hooguit één keer verwerkt, ook als Meta het
- * opnieuw stuurt.
+ * verify token uit WHATSAPP_VERIFY_TOKEN. Daarvoor is de rest van de
+ * instellingen nog niet nodig.
+ * POST: binnengekomen berichten, getekend met het app-geheim. Statusmeldingen
+ * (verzonden, gelezen) slaan we over, en elk bericht wordt hooguit één keer
+ * verwerkt, ook als Meta het opnieuw stuurt.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!isWhatsAppConfigured()) return res.status(404).end();
-
   if (req.method === 'GET') {
     const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query;
-    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    if (mode === 'subscribe' && isVerifyToken(token)) {
       return res.status(200).send(String(challenge));
     }
     return res.status(403).end();
@@ -67,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await handleMessage(message);
     } catch (error) {
       console.error('WhatsApp-bericht verwerken:', error);
-      // Het bericht is al geclaimd en komt niet terug; laat de aannemer weten dat het mislukte
+      // Het bericht is al geclaimd en komt niet terug; laat de gebruiker weten dat het mislukte
       await sendText(message.from, 'Er ging iets mis bij het maken van je offerte. Probeer het zo nog eens.').catch(() => {});
     }
   }

@@ -13,7 +13,7 @@
 --   notes                         notities per klant
 --   mail_accounts                 gekoppelde mailbox per gebruiker (Inbox)
 --   ai_accounts                   eigen AI-sleutel per gebruiker (Anthropic of OpenAI)
---   whatsapp_accounts, ...        gekoppeld mobiel nummer voor de WhatsApp-bot
+--   whatsapp_accounts, ...        mobiel nummer per gebruiker voor de WhatsApp-bot
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -364,22 +364,22 @@ CREATE TRIGGER update_ai_accounts_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ------------------------------------------------------------
--- WhatsApp: het mobiele nummer waarmee een gebruiker de bot berichten stuurt
+-- WhatsApp: het mobiele nummer waarmee een gebruiker de bot van Resynked
+-- berichten stuurt
 --
--- Een aannemer stuurt wat hij bij de klant opmeet, en de bot zet er met zijn
--- AI-plug-in een conceptofferte van klaar.
+-- De bot zelf (nummer en toegangstoken bij Meta) staat in de
+-- omgevingsvariabelen en is voor iedereen hetzelfde. De gebruiker stuurt wat
+-- hij bij de klant ziet of opmeet, en de bot zet er met zijn AI-plug-in een
+-- conceptofferte van klaar.
 -- ------------------------------------------------------------
 CREATE TABLE whatsapp_accounts (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  -- Eén telefoonnummer per gebruiker; berichten daarvan worden zijn offertes
+  -- Eén mobiel nummer per gebruiker; berichten daarvan aan de bot worden zijn offertes
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   -- Alleen cijfers met landcode, zoals WhatsApp het doorgeeft (31612345678).
-  -- Leeg zolang de gebruiker zijn code nog niet vanaf zijn telefoon stuurde
-  phone TEXT UNIQUE,
-  -- De code waarmee hij bewijst dat het nummer van hem is, een kwartier geldig
-  link_code TEXT UNIQUE,
-  link_code_expires_at TIMESTAMPTZ,
+  -- Uniek: aan dit nummer herkent de bot van wie een bericht is
+  phone TEXT NOT NULL UNIQUE,
   -- Een bericht waar nog een klant bij ontbrak; het volgende bericht vult het aan
   pending_text TEXT,
   pending_at TIMESTAMPTZ,

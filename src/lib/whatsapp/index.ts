@@ -1,4 +1,4 @@
-import { createHmac, randomInt, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { WhatsAppAccountInfo, WhatsAppConfig } from './types';
 
@@ -7,41 +7,41 @@ export * from './types';
 /**
  * WhatsApp via de Cloud API van Meta.
  *
- * Resynked heeft één eigen WhatsApp-nummer, de bot. Een gebruiker koppelt zijn
- * eigen mobiele nummer daaraan door vanaf zijn telefoon een code te sturen;
- * daarmee is bewezen dat het nummer van hem is. Daarna herkennen we elk
- * bericht aan het nummer van de afzender.
+ * Resynked heeft één eigen WhatsApp-nummer, de bot, met één toegangstoken uit
+ * de app van Resynked bij Meta; die staan in de omgevingsvariabelen en gelden
+ * voor iedereen. Een gebruiker vult bij Plug-ins alleen zijn eigen mobiele
+ * nummer in; aan dat nummer herkennen we van wie een bericht is.
  *
- * Op een bericht van iemand mag de bot 24 uur lang vrij antwoorden; daarom
- * begint het gesprek altijd bij de gebruiker en zijn er geen goedgekeurde
- * sjablonen nodig.
+ * Op een bericht van iemand mag de bot 24 uur lang vrij antwoorden; omdat het
+ * gesprek altijd bij de gebruiker begint, zijn er geen goedgekeurde sjablonen
+ * nodig.
  */
 
 const API_VERSION = process.env.WHATSAPP_API_VERSION || 'v23.0';
 
-/** Hoe lang een koppelcode geldig is. */
-const LINK_CODE_MINUTES = 15;
-
-/** Zonder deze vijf staat WhatsApp uit; de plug-in toont dan dat hij nog niet beschikbaar is. */
+/** Zonder token, nummer-ID en app-geheim kan de bot geen berichten lezen of sturen. */
 export function isWhatsAppConfigured(): boolean {
-  return !!(
-    process.env.WHATSAPP_TOKEN &&
-    process.env.WHATSAPP_PHONE_NUMBER_ID &&
-    process.env.WHATSAPP_APP_SECRET &&
-    process.env.WHATSAPP_VERIFY_TOKEN &&
-    process.env.WHATSAPP_NUMBER
-  );
+  return !!(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_APP_SECRET);
 }
 
-/** Het nummer van de bot, alleen cijfers met landcode, zoals 31612345678. */
-export function botNumber(): string {
-  return (process.env.WHATSAPP_NUMBER || '').replace(/\D/g, '');
+/** Alleen cijfers met landcode; een 06-nummer wordt 316... */
+export function normalizePhone(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  if (digits.startsWith('00')) return digits.slice(2);
+  if (digits.startsWith('06')) return `31${digits.slice(1)}`;
+  return digits;
 }
 
 /** Een nummer zoals mensen het lezen: +31 6 12345678 voor Nederlandse mobiele nummers. */
 export function formatPhone(digits: string): string {
   const match = digits.match(/^31(6)(\d{8})$/);
   return match ? `+31 ${match[1]} ${match[2]}` : `+${digits}`;
+}
+
+/** Meta controleert bij het instellen van de webhook of hij van ons is, met dit token. */
+export function isVerifyToken(token: unknown): boolean {
+  const expected = process.env.WHATSAPP_VERIFY_TOKEN;
+  return !!expected && token === expected;
 }
 
 /**
@@ -58,28 +58,53 @@ export function verifySignature(rawBody: Buffer, header: string | undefined): bo
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
-async function graph(body: Record<string, unknown>) {
-  const response = await fetch(
-    `https://graph.facebook.com/${API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ messaging_product: 'whatsapp', ...body }),
-    }
-  );
+async function graph(path: string, body?: Record<string, unknown>) {
+  const response = await fetch(`https://graph.facebook.com/${API_VERSION}/${path}`, {
+    method: body ? 'POST' : 'GET',
+    headers: {
+      Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: body ? JSON.stringify({ messaging_product: 'whatsapp', ...body }) : undefined,
+  });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new Error(`WhatsApp gaf een fout (${response.status}): ${detail}`);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(`WhatsApp gaf een fout (${response.status}): ${data?.error?.message || 'onbekend'}`);
+  return data;
+}
+
+// Het nummer van de bot verandert niet; één keer opvragen bij Meta is genoeg
+let botNumberCache: Promise<string | null> | null = null;
+
+function botNumber(): Promise<string | null> {
+  if (!botNumberCache) {
+    botNumberCache = graph(`${process.env.WHATSAPP_PHONE_NUMBER_ID}?fields=display_phone_number`)
+      .then(data => normalizePhone(String(data.display_phone_number || '')) || null)
+      .catch(error => {
+        console.warn('WhatsApp-nummer opvragen:', error);
+        // Volgende keer opnieuw proberen
+        botNumberCache = null;
+        return null;
+      });
   }
+  return botNumberCache;
+}
+
+export async function whatsAppConfig(): Promise<WhatsAppConfig> {
+  if (!isWhatsAppConfigured()) return { configured: false, botNumber: null, tokenHint: null };
+
+  const token = process.env.WHATSAPP_TOKEN!;
+  const number = await botNumber();
+  return {
+    configured: true,
+    botNumber: number ? formatPhone(number) : null,
+    tokenHint: `${token.slice(0, 4)}••••••••${token.slice(-4)}`,
+  };
 }
 
 /** Een tekstbericht terug. WhatsApp kent *vet* en _schuin_, verder platte tekst. */
 export async function sendText(to: string, body: string) {
-  await graph({
+  await graph(`${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     recipient_type: 'individual',
     to,
     type: 'text',
@@ -89,12 +114,16 @@ export async function sendText(to: string, body: string) {
 }
 
 /**
- * Twee blauwe vinkjes en "aan het typen…", zodat de aannemer ziet dat er aan
+ * Twee blauwe vinkjes en "aan het typen…", zodat de gebruiker ziet dat er aan
  * zijn offerte gewerkt wordt. Lukt het niet, dan is dat geen ramp.
  */
 export async function markReadAndTyping(messageId: string) {
   try {
-    await graph({ status: 'read', message_id: messageId, typing_indicator: { type: 'text' } });
+    await graph(`${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+      status: 'read',
+      message_id: messageId,
+      typing_indicator: { type: 'text' },
+    });
   } catch (error) {
     console.warn('WhatsApp leesbevestiging:', error);
   }
@@ -120,107 +149,40 @@ export interface WhatsAppAccountRow {
   id: number;
   tenant_id: string;
   user_id: string;
-  phone: string | null;
-  link_code: string | null;
-  link_code_expires_at: string | null;
+  phone: string;
   pending_text: string | null;
   pending_at: string | null;
 }
 
-export function linkMessage(code: string) {
-  return `Koppel ${code}`;
-}
-
-export function whatsAppConfig(): WhatsAppConfig {
-  const configured = isWhatsAppConfigured();
-  return { configured, botNumber: configured ? formatPhone(botNumber()) : null };
-}
-
-function toAccountInfo(account: WhatsAppAccountRow): WhatsAppAccountInfo {
-  const open =
-    account.link_code && account.link_code_expires_at && new Date(account.link_code_expires_at) > new Date()
-      ? account.link_code
-      : null;
-
-  return {
-    phone: account.phone ? formatPhone(account.phone) : null,
-    linking: open
-      ? {
-          code: open,
-          message: linkMessage(open),
-          link: `https://wa.me/${botNumber()}?text=${encodeURIComponent(linkMessage(open))}`,
-          expiresAt: account.link_code_expires_at!,
-        }
-      : null,
-  };
-}
+/** Het nummer is al van een andere gebruiker. */
+export class WhatsAppPhoneTakenError extends Error {}
 
 export async function getWhatsAppAccount(userId: string): Promise<WhatsAppAccountInfo | null> {
-  const { data, error } = await supabaseAdmin.from('whatsapp_accounts').select('*').eq('user_id', userId).maybeSingle();
+  const { data, error } = await supabaseAdmin.from('whatsapp_accounts').select('phone').eq('user_id', userId).maybeSingle();
   if (error) throw error;
-  return data ? toAccountInfo(data as WhatsAppAccountRow) : null;
+  return data ? { phone: formatPhone(data.phone) } : null;
 }
 
-/** Zes tekens zonder letters die op elkaar lijken, zoals O en 0. */
-function newCode(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({ length: 6 }, () => alphabet[randomInt(alphabet.length)]).join('');
-}
-
-/** Begint een koppeling: een verse code, een kwartier geldig. Een eerder gekoppeld nummer blijft tot de code binnen is. */
-export async function startLinking(userId: string, tenantId: string): Promise<WhatsAppAccountInfo> {
-  const expires = new Date(Date.now() + LINK_CODE_MINUTES * 60_000).toISOString();
-
-  // Een code die toevallig al in gebruik is, geeft een conflict; dan een andere
-  for (let poging = 0; poging < 5; poging++) {
-    const { data, error } = await supabaseAdmin
-      .from('whatsapp_accounts')
-      .upsert(
-        { user_id: userId, tenant_id: tenantId, link_code: newCode(), link_code_expires_at: expires },
-        { onConflict: 'user_id' }
-      )
-      .select('*')
-      .single();
-
-    if (!error) return toAccountInfo(data as WhatsAppAccountRow);
-    if (error.code !== '23505') throw error;
-  }
-
-  throw new Error('Kon geen koppelcode maken. Probeer het opnieuw.');
-}
-
-/**
- * Een binnengekomen code: het nummer dat hem stuurt hoort voortaan bij die
- * gebruiker. Had iemand anders dit nummer, dan vervalt die koppeling; een
- * telefoon hoort bij één gebruiker.
- */
-export async function completeLinking(code: string, phone: string): Promise<WhatsAppAccountRow | null> {
-  const { data: account, error } = await supabaseAdmin
+/** Bewaart het mobiele nummer; een eerder nummer van deze gebruiker wordt vervangen. */
+export async function saveWhatsAppAccount(userId: string, tenantId: string, phone: string): Promise<WhatsAppAccountInfo> {
+  const digits = normalizePhone(phone);
+  const { error } = await supabaseAdmin
     .from('whatsapp_accounts')
-    .select('*')
-    .eq('link_code', code.toUpperCase())
-    .gt('link_code_expires_at', new Date().toISOString())
-    .maybeSingle();
+    .upsert(
+      { user_id: userId, tenant_id: tenantId, phone: digits, pending_text: null, pending_at: null },
+      { onConflict: 'user_id' }
+    );
 
+  // Berichten herkennen we aan het nummer, dus één nummer hoort bij één gebruiker
+  if (error?.code === '23505') throw new WhatsAppPhoneTakenError('Dit nummer is al door iemand anders in Resynked gekoppeld.');
   if (error) throw error;
-  if (!account) return null;
 
-  const { error: releaseError } = await supabaseAdmin
-    .from('whatsapp_accounts')
-    .update({ phone: null })
-    .eq('phone', phone)
-    .neq('id', account.id);
-  if (releaseError) throw releaseError;
+  return { phone: formatPhone(digits) };
+}
 
-  const { data, error: linkError } = await supabaseAdmin
-    .from('whatsapp_accounts')
-    .update({ phone, link_code: null, link_code_expires_at: null, pending_text: null, pending_at: null })
-    .eq('id', account.id)
-    .select('*')
-    .single();
-  if (linkError) throw linkError;
-
-  return data;
+export async function deleteWhatsAppAccount(userId: string) {
+  const { error } = await supabaseAdmin.from('whatsapp_accounts').delete().eq('user_id', userId);
+  if (error) throw error;
 }
 
 export async function findAccountByPhone(phone: string): Promise<WhatsAppAccountRow | null> {
@@ -235,10 +197,5 @@ export async function setPending(accountId: number, text: string | null) {
     .from('whatsapp_accounts')
     .update({ pending_text: text, pending_at: text ? new Date().toISOString() : null })
     .eq('id', accountId);
-  if (error) throw error;
-}
-
-export async function deleteWhatsAppAccount(userId: string) {
-  const { error } = await supabaseAdmin.from('whatsapp_accounts').delete().eq('user_id', userId);
   if (error) throw error;
 }

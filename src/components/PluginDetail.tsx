@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Copy, ExternalLink, FileText, Inbox, UserCheck } from 'lucide-react';
 import { GoogleIcon, MicrosoftIcon, WhatsAppIcon } from '@/components/BrandIcons';
@@ -70,22 +70,22 @@ export const PLUGINS: Plugin<MailProviderName>[] = [
 ];
 
 /**
- * WhatsApp staat los van de mailbox: een eigen nummer per gebruiker, dat
- * naast Google of Microsoft gekoppeld kan zijn.
+ * WhatsApp staat los van de mailbox: de bot van Resynked, met het eigen
+ * mobiele nummer van de gebruiker, naast Google of Microsoft.
  */
 export const WHATSAPP_PLUGIN: Plugin<'whatsapp'> = {
   provider: 'whatsapp',
   name: 'WhatsApp',
   icon: WhatsAppIcon,
-  summary: 'Offertes maken met een WhatsApp-bericht',
+  summary: 'Maak onderweg een offerte met één WhatsApp-bericht aan de Resynked-bot',
   about:
-    'Sta je bij een klant te meten? Stuur de Resynked-bot een WhatsApp-bericht met wat er moet gebeuren, zoals "keuken 25 m² muren schilderen, klant Jan de Vries, Dorpsstraat 1 Utrecht". Staat de klant al in Resynked, dan wordt die gebruikt; anders komt er een nieuwe klant bij. De offerte staat daarna als concept klaar, en je krijgt een berichtje terug met het nummer en een link.',
-  capabilities: 'Berichten lezen, klanten zoeken en aanmaken, conceptoffertes aanmaken',
+    'Maak een offerte op de plek waar je bent. Stuur vanaf je telefoon een WhatsApp-bericht aan de Resynked-bot met het werk, de aantallen en de klant, en Resynked zet de offerte als concept klaar. Een klant die al in Resynked staat wordt herkend; anders komt er een nieuwe klant bij. Je krijgt meteen een berichtje terug met het offertenummer en een link om hem na te lezen en te versturen.',
+  capabilities: 'Berichten lezen en beantwoorden, klanten zoeken en aanmaken, conceptoffertes aanmaken',
   parts: [
     {
       icon: FileText,
       name: 'Offerte via WhatsApp',
-      description: 'Stuur wat je bij de klant opmeet, en krijg een conceptofferte met link terug',
+      description: 'Een bericht met het werk en de aantallen wordt een conceptofferte, met prijzen uit je eerdere offertes',
     },
     {
       icon: UserCheck,
@@ -94,7 +94,7 @@ export const WHATSAPP_PLUGIN: Plugin<'whatsapp'> = {
     },
   ],
   links: {
-    website: 'https://www.whatsapp.com',
+    website: 'https://business.whatsapp.com/products/business-platform',
     privacy: 'https://www.whatsapp.com/legal/privacy-policy-eea',
   },
 };
@@ -106,12 +106,13 @@ interface PluginDetailProps {
   /** Deze dienst is nu gekoppeld; dan staat er Verwijderen in plaats van Installeren */
   connected: boolean;
   connecting: boolean;
-  onConnect: () => void;
+  /** Bij WhatsApp met het ingevulde mobiele nummer */
+  onConnect: (phone?: string) => void;
   onRemove: () => void;
   /** De vorige poging liep vast op toestemming van een beheerder */
   adminRequired: boolean;
   config: { googleClientId: string | null; microsoftAdminConsentUrl: string | null } | null;
-  /** Alleen bij WhatsApp: het gekoppelde nummer of de openstaande code, en of er een AI-plug-in aan staat */
+  /** Alleen bij WhatsApp: het gekoppelde nummer, de bot van Resynked, en of er een AI-plug-in aan staat */
   whatsapp?: { account: WhatsAppAccountInfo | null; config: WhatsAppConfig; hasAi: boolean };
 }
 
@@ -132,8 +133,9 @@ function ExternalRow({ label, href }: { label: string; href: string }) {
  * Het venster bij een plug-in: wat het is, wat het aanzet en wat er bij
  * goedkeuring komt kijken, met rechtsboven de knop om te koppelen.
  *
- * Bij WhatsApp staat er in plaats van de goedkeuring hoe je je nummer koppelt:
- * Installeren geeft een code die je vanaf je telefoon naar de bot stuurt.
+ * Bij WhatsApp staan daar de gegevens van de bot, zoals de API-sleutel bij een
+ * AI-plug-in, maar vast: Resynked stelt ze voor iedereen in. De gebruiker vult
+ * alleen zijn eigen mobiele nummer in.
  */
 export default function PluginDetail({
   plugin,
@@ -148,7 +150,7 @@ export default function PluginDetail({
 }: PluginDetailProps) {
   const toast = useToast();
   const Icon = plugin.icon;
-  const linking = whatsapp?.account && !whatsapp.account.phone ? whatsapp.account.linking : null;
+  const [phone, setPhone] = useState('');
 
   const copy = async (value: string, what: string) => {
     try {
@@ -178,10 +180,10 @@ export default function PluginDetail({
           <button
             type="button"
             className="button"
-            disabled={connecting || (whatsapp && !whatsapp.config.configured)}
-            onClick={onConnect}
+            disabled={connecting || (whatsapp && (!whatsapp.config.configured || !phone.trim()))}
+            onClick={() => onConnect(whatsapp ? phone : undefined)}
           >
-            {connecting ? 'Bezig...' : linking ? 'Nieuwe code' : 'Installeren'}
+            {connecting ? 'Bezig...' : 'Installeren'}
           </button>
         )}
       </div>
@@ -210,49 +212,60 @@ export default function PluginDetail({
 
       {whatsapp ? (
         <>
-          <h3>Koppelen</h3>
-          <div
-            className={`plugin-approval${
-              linking || !whatsapp.config.configured || (!whatsapp.hasAi && !whatsapp.account?.phone) ? ' highlight' : ''
-            }`}
-          >
-            {!whatsapp.config.configured ? (
-              <p>WhatsApp is nog niet ingesteld voor Resynked. Vraag de beheerder van Resynked om de bot aan te zetten.</p>
-            ) : whatsapp.account?.phone ? (
+          <h3>Gegevens van Meta</h3>
+          {whatsapp.config.configured ? (
+            <p>
+              De bot draait op het WhatsApp-nummer van Resynked; die gegevens stellen wij voor iedereen in, je hoeft
+              bij Meta niets aan te maken.{' '}
+              {whatsapp.account
+                ? 'Berichten vanaf je mobiele nummer hieronder worden offertes in jouw account.'
+                : 'Vul je eigen mobiele nummer in: alleen berichten vanaf dat nummer worden offertes in jouw account.'}
+            </p>
+          ) : (
+            <div className="plugin-approval highlight">
+              <p>WhatsApp is nog niet ingesteld voor Resynked. Zodra de bot aan staat, kun je hem hier installeren.</p>
+            </div>
+          )}
+          {!whatsapp.hasAi && (
+            <div className="plugin-approval highlight">
               <p>
-                Berichten van <strong>{whatsapp.account?.phone}</strong> worden offertes in jouw account. Sla de bot op
-                in je telefoon als <strong>Resynked</strong>, met nummer {whatsapp.config.botNumber}. Stuur hem{' '}
-                <strong>help</strong> voor een voorbeeld.
-              </p>
-            ) : linking ? (
-              <>
-                <p>
-                  Open WhatsApp op je telefoon en stuur dit bericht naar <strong>{whatsapp.config.botNumber}</strong>.
-                  Zit je op je telefoon, open het dan meteen in WhatsApp; het bericht staat dan al klaar.
-                </p>
-                <div className="copy-field">
-                  <code>{linking.message}</code>
-                  <ToolButton title="Bericht kopiëren" onClick={() => copy(linking.message, 'Het bericht')}>
-                    <Copy size={15} />
-                  </ToolButton>
-                  <ToolButton title="Openen in WhatsApp" onClick={() => window.open(linking.link, '_blank', 'noreferrer')}>
-                    <ExternalLink size={15} />
-                  </ToolButton>
-                </div>
-                <p className="field-note">
-                  Wachten op je bericht... De code is een kwartier geldig. Dit venster ziet vanzelf wanneer het gelukt is.
-                </p>
-              </>
-            ) : (
-              <p>
-                Na <strong>Installeren</strong> krijg je een code. Die stuur je vanaf je eigen telefoon naar de bot;
-                daarmee weet Resynked dat het nummer van jou is.
-              </p>
-            )}
-            {whatsapp.config.configured && !whatsapp.hasAi && (
-              <p className="field-note">
                 De bot gebruikt je AI-plug-in om je bericht te lezen. Zet daarom ook een AI-plug-in aan, bij{' '}
                 <strong>AI</strong> in de lijst met plug-ins.
+              </p>
+            </div>
+          )}
+          <div className="form-section">
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="whatsapp_bot_number">Nummer van de bot</label>
+                <input id="whatsapp_bot_number" type="text" value={whatsapp.config.botNumber || ''} disabled />
+              </div>
+              <div className="form-group">
+                <label htmlFor="whatsapp_token">Toegangstoken</label>
+                <input id="whatsapp_token" type="text" value={whatsapp.config.tokenHint || ''} disabled />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="whatsapp_phone">Je eigen mobiele nummer</label>
+                <input
+                  id="whatsapp_phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="06 12345678"
+                  value={whatsapp.account ? whatsapp.account.phone : phone}
+                  disabled={!!whatsapp.account || !whatsapp.config.configured}
+                  onChange={(event) => setPhone(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && phone.trim() && !connecting) onConnect(phone);
+                  }}
+                />
+              </div>
+            </div>
+            {whatsapp.account && (
+              <p className="field-note">
+                Sla de bot op in je telefoon als Resynked, met nummer {whatsapp.config.botNumber}, en stuur hem{' '}
+                <strong>help</strong> voor een voorbeeld. Ander nummer? Verwijder de koppeling en installeer opnieuw.
               </p>
             )}
           </div>
@@ -325,8 +338,8 @@ export default function PluginDetail({
         <p className="field-note">
           Wat je de bot stuurt, gaat samen met je eerdere offerteregels naar je AI-plug-in om de offerte te maken.
           Resynked bewaart je berichten niet; alleen een bericht waar nog een klant bij ontbreekt, blijft een uur staan
-          tot je het aanvult. De offerte zelf controleer en verstuur je altijd in Resynked;{' '}
-          <Link href="/quotes">bij Offertes</Link> staat hij als concept.
+          tot je het aanvult. Je kunt de koppeling op elk moment hier bij Plug-ins verwijderen. De offerte zelf
+          controleer en verstuur je altijd in Resynked; <Link href="/quotes">bij Offertes</Link> staat hij als concept.
         </p>
       ) : (
         <p className="field-note">

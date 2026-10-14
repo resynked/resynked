@@ -6,39 +6,32 @@ import { plainTextToRichText } from '@/lib/richtext';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { calculateDocumentTotal, formatCurrency, getCustomerDisplayName, getCustomerPersonName, lineTotal } from '@/lib/utils';
-import {
-  completeLinking,
-  findAccountByPhone,
-  markReadAndTyping,
-  sendText,
-  setPending,
-  type WhatsAppAccountRow,
-} from './index';
+import { findAccountByPhone, markReadAndTyping, sendText, setPending, type WhatsAppAccountRow } from './index';
 
 /**
  * Wat de bot met een binnengekomen bericht doet.
  *
- * De aannemer stuurt wat hij opmeet, zoals "keuken 25m2 muren schilderen,
- * klant Jan de Vries, Dorpsstraat 1 Utrecht". De AI leest daar de klant en de
- * regels uit; bestaat de klant al, dan gebruiken we die, anders komt er een
- * nieuwe klant. De offerte komt als concept klaar te staan, en de aannemer
- * krijgt een samenvatting met een link terug.
+ * De gebruiker stuurt vanaf zijn eigen telefoon wat hij bij de klant ziet of
+ * opmeet, zoals "keuken 25m2 muren schilderen, klant Jan de Vries, Dorpsstraat
+ * 1 Utrecht". De AI leest daar de klant en de regels uit; bestaat de klant al,
+ * dan gebruiken we die, anders komt er een nieuwe klant. De offerte komt als
+ * concept klaar te staan, en de gebruiker krijgt een samenvatting met een link
+ * terug.
  */
 
 /** Zo lang wacht een bericht zonder klant op het volgende bericht dat hem noemt. */
 const PENDING_MINUTES = 60;
 
-const LINK_PATTERN = /^\s*koppel\s+([a-z0-9]{6})\s*$/i;
 const CANCEL_PATTERN = /^\s*(stop|annuleer|annuleren|wis)\s*[.!]?\s*$/i;
 const HELP_PATTERN = /^\s*(help|hulp|\?)\s*$/i;
 
-const HELP_TEXT = `Stuur me wat je bij de klant opmeet, dan zet ik een conceptofferte voor je klaar in Resynked. Bijvoorbeeld:
+const HELP_TEXT = `Stuur me wat je bij de klant ziet of opmeet, dan zet ik een conceptofferte voor je klaar in Resynked. Bijvoorbeeld:
 
 _Keuken 25 m² muren schilderen, plafond 12 m² sauzen. Klant Jan de Vries, Dorpsstraat 1, 1234 AB Utrecht, 06 12345678_
 
 Noem je een klant die al in Resynked staat, dan gebruik ik die; anders maak ik een nieuwe klant aan. Stuur *stop* om een half afgemaakte offerte te wissen.`;
 
-/** Eén binnengekomen tekstbericht, zoals de webhook het doorgeeft. */
+/** Eén binnengekomen bericht, zoals de webhook het doorgeeft. */
 export interface IncomingMessage {
   id: string;
   /** Het nummer van de afzender, alleen cijfers met landcode */
@@ -48,43 +41,28 @@ export interface IncomingMessage {
 }
 
 export async function handleMessage(message: IncomingMessage) {
-  const code = message.text?.match(LINK_PATTERN)?.[1];
-  if (code) return link(message.from, code);
+  const reply = (body: string) => sendText(message.from, body);
 
   const account = await findAccountByPhone(message.from);
   if (!account) {
-    return sendText(
-      message.from,
-      'Dit nummer is nog niet gekoppeld aan Resynked. Ga in Resynked naar Instellingen › Plug-ins › WhatsApp en volg de stappen daar.'
+    return reply(
+      'Dit nummer is nog niet gekoppeld aan Resynked. Vul in Resynked bij Instellingen › Plug-ins › WhatsApp je mobiele nummer in, dan kun je meteen beginnen.'
     );
   }
 
   if (message.type !== 'text' || !message.text?.trim()) {
-    return sendText(
-      message.from,
-      'Ik kan voorlopig alleen tekstberichten lezen. Typ wat je hebt opgemeten, dan maak ik er een offerte van.'
-    );
+    return reply('Ik kan voorlopig alleen tekstberichten lezen. Typ wat je hebt opgemeten, dan maak ik er een offerte van.');
   }
 
-  if (HELP_PATTERN.test(message.text)) return sendText(message.from, HELP_TEXT);
+  if (HELP_PATTERN.test(message.text)) return reply(HELP_TEXT);
 
   if (CANCEL_PATTERN.test(message.text)) {
     await setPending(account.id, null);
-    return sendText(message.from, account.pending_text ? 'Gewist. Je kunt opnieuw beginnen.' : 'Er stond niets open.');
+    return reply(account.pending_text ? 'Gewist. Je kunt opnieuw beginnen.' : 'Er stond niets open.');
   }
 
   await markReadAndTyping(message.id);
   return createQuoteFromMessage(account, message);
-}
-
-async function link(phone: string, code: string) {
-  const account = await completeLinking(code, phone);
-  if (!account) {
-    return sendText(phone, 'Deze code ken ik niet, of hij is verlopen. Vraag bij Instellingen › Plug-ins › WhatsApp een nieuwe aan.');
-  }
-
-  const { data: user } = await supabaseAdmin.from('users').select('name').eq('id', account.user_id).maybeSingle();
-  return sendText(phone, `Gekoppeld${user?.name ? `, ${user.name}` : ''}! ${HELP_TEXT}`);
 }
 
 async function createQuoteFromMessage(account: WhatsAppAccountRow, message: IncomingMessage) {

@@ -49,12 +49,11 @@ RLS-policies op de tabellen vormen de tweede laag.
    MICROSOFT_CLIENT_ID=...
    MICROSOFT_CLIENT_SECRET=...
 
-   # WhatsApp-bot (Instellingen > Plug-ins > WhatsApp); zie hieronder
+   # WhatsApp-bot van Resynked, voor iedereen hetzelfde (zie hieronder)
+   WHATSAPP_VERIFY_TOKEN=...     # zelf verzonnen, zelfde als bij Meta bij de webhook
    WHATSAPP_TOKEN=...            # permanente token van een systeemgebruiker
-   WHATSAPP_PHONE_NUMBER_ID=...  # het id van het nummer, niet het nummer zelf
-   WHATSAPP_NUMBER=...           # het nummer van de bot met landcode, bijv. 31612345678
-   WHATSAPP_APP_SECRET=...       # app-geheim, om de webhook te controleren
-   WHATSAPP_VERIFY_TOKEN=...     # zelf verzonnen, zelfde als bij Meta ingevuld
+   WHATSAPP_PHONE_NUMBER_ID=...  # het id van het nummer bij Meta, niet het nummer zelf
+   WHATSAPP_APP_SECRET=...       # app-geheim, om binnenkomende berichten te controleren
 
    # Optioneel: welk model de AI-plug-ins gebruiken
    OPENAI_MODEL=...   # standaard gpt-5
@@ -148,10 +147,14 @@ verwijst met `quote_id` terug.
 
 ## WhatsApp: offerte maken met een bericht
 
-Bij **Instellingen > Plug-ins > WhatsApp** koppelt een gebruiker zijn eigen
-mobiele nummer aan de Resynked-bot. Hij krijgt een code (`Koppel ABC123`) en
-stuurt die vanaf zijn telefoon naar de bot; daarmee is bewezen dat het nummer
-van hem is. Daarna kan hij bij een klant gewoon appen wat hij opmeet:
+Resynked heeft één WhatsApp-nummer, de bot, met één app bij Meta. De gegevens
+daarvan staan in de omgevingsvariabelen en gelden voor iedereen. Bij
+**Instellingen > Plug-ins > WhatsApp** ziet een gebruiker het nummer van de bot
+en (ingekort) de token, maar kan hij ze niet wijzigen; hij vult alleen zijn
+**eigen mobiele nummer** in. Aan dat nummer herkent de bot van wie een bericht
+is, dus één nummer hoort bij één gebruiker.
+
+Daarna kan hij bij een klant gewoon appen wat hij ziet of opmeet:
 
 > Keuken 25 m² muren schilderen, plafond 12 m² sauzen. Klant Jan de Vries,
 > Dorpsstraat 1, 1234 AB Utrecht, 06 12345678
@@ -161,26 +164,40 @@ en de regels uitlezen, met prijzen uit eerdere offertes of uit het bericht zelf.
 De klant wordt herkend op e-mailadres, telefoonnummer, of naam met postcode;
 lege velden van een bestaande klant worden aangevuld. Is de klant onbekend, dan
 komt er een nieuwe klant. De offerte wordt als **concept** aangemaakt en de
-aannemer krijgt een samenvatting met een link terug. Noemt het bericht geen
+gebruiker krijgt een samenvatting met een link terug. Noemt het bericht geen
 klant, dan vraagt de bot erom en neemt hij het volgende bericht (binnen een uur)
 erbij. `stop` wist zo'n half afgemaakte offerte, `help` geeft een voorbeeld.
 Alleen tekstberichten; spraakberichten en foto's worden (nog) niet gelezen.
 
-Instellen bij [Meta for Developers](https://developers.facebook.com/):
+Instellen bij [Meta for Developers](https://developers.facebook.com/), eenmalig
+voor heel Resynked:
 
 1. Maak een app van het type *Business* en voeg het product **WhatsApp** toe.
-2. Koppel een eigen telefoonnummer voor de bot (een nummer dat nog niet in de
-   gewone WhatsApp-app gebruikt wordt). `WHATSAPP_PHONE_NUMBER_ID` staat bij
-   *WhatsApp > API Setup*; `WHATSAPP_NUMBER` is het nummer zelf.
+2. Koppel het telefoonnummer van de bot: één nummer voor alle gebruikers, dat
+   nog niet in de gewone WhatsApp-app gebruikt wordt. `WHATSAPP_PHONE_NUMBER_ID`
+   staat bij *WhatsApp > API Setup*.
+
+   Om te testen kan het **testnummer** van Meta uit API Setup. Dat kan alleen
+   antwoorden naar hooguit vijf nummers die je daar bij *To* toevoegt en
+   bevestigt; voeg dus de mobiele nummers toe waarmee je test, anders komt het
+   antwoord van de bot niet aan.
 3. Maak in Business Settings een *systeemgebruiker* met de rechten
    `whatsapp_business_messaging` en `whatsapp_business_management`, en genereer
    daarmee een permanente token voor `WHATSAPP_TOKEN`. (De tijdelijke token uit
    API Setup verloopt na een dag.)
 4. Het app-geheim (`WHATSAPP_APP_SECRET`) staat bij *App settings > Basic*.
-5. Bij *WhatsApp > Configuration* als webhook `{APP_URL}/api/whatsapp/webhook`
-   met je eigen `WHATSAPP_VERIFY_TOKEN`, en abonneer op het veld `messages`.
+5. Zet `WHATSAPP_VERIFY_TOKEN` op Vercel en **deploy opnieuw**; een nieuwe
+   omgevingsvariabele werkt pas na een nieuwe deploy. Vul daarna bij
+   *WhatsApp > Configuration* als callback-URL `{APP_URL}/api/whatsapp/webhook`
+   in, met hetzelfde verify token, en abonneer op het veld `messages`.
+
+   Controleren kan vooraf in de browser:
+   `{APP_URL}/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=<token>&hub.challenge=12345`
+   hoort `12345` terug te geven. Een 403 betekent dat het token niet klopt of
+   nog niet gedeployed is.
 
 De bot antwoordt alleen op berichten die de gebruiker zelf stuurt, binnen het
 venster van 24 uur dat WhatsApp daarvoor geeft; er zijn dus geen goedgekeurde
-berichtsjablonen nodig. Draai na het bijwerken onderdeel 8 van
-[`MIGRATION.sql`](MIGRATION.sql) (of het hele bestand).
+berichtsjablonen nodig. Met `WHATSAPP_API_VERSION` kies je eventueel een andere
+versie van de Graph API (standaard `v23.0`). Draai na het bijwerken onderdeel 8
+van [`MIGRATION.sql`](MIGRATION.sql) (of het hele bestand).

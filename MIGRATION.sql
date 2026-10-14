@@ -333,26 +333,38 @@ ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
 -- ------------------------------------------------------------
 -- 8. WhatsApp: offertes maken met een bericht aan de bot
 --
--- Per gebruiker het mobiele nummer dat hij gekoppeld heeft, en de ids van
--- berichten die al verwerkt zijn.
+-- Per gebruiker het mobiele nummer waarmee hij de bot van Resynked berichten
+-- stuurt, en de ids van berichten die al verwerkt zijn.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS whatsapp_accounts (
   id BIGSERIAL PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  -- Eén telefoonnummer per gebruiker; berichten daarvan worden zijn offertes
+  -- Eén mobiel nummer per gebruiker; berichten daarvan aan de bot worden zijn offertes
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   -- Alleen cijfers met landcode, zoals WhatsApp het doorgeeft (31612345678).
-  -- Leeg zolang de gebruiker zijn code nog niet vanaf zijn telefoon stuurde
-  phone TEXT UNIQUE,
-  -- De code waarmee hij bewijst dat het nummer van hem is, een kwartier geldig
-  link_code TEXT UNIQUE,
-  link_code_expires_at TIMESTAMPTZ,
+  -- Uniek: aan dit nummer herkent de bot van wie een bericht is
+  phone TEXT NOT NULL UNIQUE,
   -- Een bericht waar nog een klant bij ontbrak; het volgende bericht vult het aan
   pending_text TEXT,
   pending_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Wie dit onderdeel al eerder draaide, heeft een eerdere opzet: met een
+-- koppelcode, of met een eigen app bij Meta per gebruiker. Die kolommen gaan
+-- eruit; een rij zonder nummer kan niets en verdwijnt
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS link_code;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS link_code_expires_at;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS bot_number;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS phone_number_id;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS access_token;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS app_secret;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS verify_token;
+ALTER TABLE whatsapp_accounts DROP COLUMN IF EXISTS webhook_verified_at;
+DELETE FROM whatsapp_accounts WHERE phone IS NULL;
+ALTER TABLE whatsapp_accounts ALTER COLUMN phone SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_accounts_phone_key ON whatsapp_accounts(phone);
 
 CREATE INDEX IF NOT EXISTS whatsapp_accounts_tenant_id_idx ON whatsapp_accounts(tenant_id);
 

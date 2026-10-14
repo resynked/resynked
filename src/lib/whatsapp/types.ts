@@ -1,22 +1,18 @@
-/** Een koppeling die nog wacht op de code vanaf de telefoon. */
-export interface WhatsAppLinking {
-  code: string;
-  /** Het bericht dat de gebruiker naar de bot stuurt, zoals "Koppel ABC123" */
-  message: string;
-  /** Opent WhatsApp met dat bericht al klaar */
-  link: string;
-  expiresAt: string;
-}
-
 /** Wat de rest van de app van een koppeling mag weten. */
 export interface WhatsAppAccountInfo {
-  /** Het gekoppelde nummer, leesbaar opgemaakt; null zolang de code nog niet binnen is */
-  phone: string | null;
-  linking: WhatsAppLinking | null;
+  /** Het eigen mobiele nummer van de gebruiker, leesbaar opgemaakt */
+  phone: string;
 }
 
-/** Of de bot voor Resynked is ingesteld, en op welk nummer. */
+/**
+ * De bot van Resynked: één nummer voor iedereen, ingesteld in de
+ * omgevingsvariabelen. De gebruiker ziet hem bij Plug-ins, maar kan hem niet
+ * wijzigen.
+ */
 export interface WhatsAppConfig {
   configured: boolean;
+  /** Het nummer van de bot, om in je telefoon op te slaan */
   botNumber: string | null;
+  /** Begin en eind van de toegangstoken, zodat je ziet dat hij er staat */
+  tokenHint: string | null;
 }

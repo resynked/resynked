@@ -598,6 +598,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail .plugin-info dt {color: var(--font-color2);}
 .plugin-detail .plugin-info dd {margin: 0;}
 .plugin-detail .plugin-info a {color: var(--font-color1); line-height: 0;}
+.plugin-detail .form-section .form-group input:disabled {background-color: var(--color4); color: var(--font-color2); cursor: default;}
 
 /* Een mail omzetten naar een offerte: het voorstel van de AI om te controleren */
 .modal:has(.quote-from-mail) {max-width: 760px;}
