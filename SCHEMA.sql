@@ -12,6 +12,7 @@
 --   invoices, invoice_blocks, ... facturen, zelfde opzet
 --   notes                         notities per klant
 --   mail_accounts                 gekoppelde mailbox per gebruiker (Inbox)
+--   ai_accounts                   eigen AI-sleutel per gebruiker (Anthropic of OpenAI)
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -337,6 +338,30 @@ CREATE TRIGGER update_mail_accounts_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ------------------------------------------------------------
+-- AI: de eigen sleutel van een gebruiker voor Anthropic of OpenAI
+--
+-- Daarmee zet Resynked een mail om naar een offerte. De gebruiker betaalt
+-- zijn eigen gebruik; de sleutel staat versleuteld opgeslagen.
+-- ------------------------------------------------------------
+CREATE TABLE ai_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Eén AI-koppeling per gebruiker, met zijn eigen sleutel: hij betaalt zelf
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai')),
+  -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de mailtoegang
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ai_accounts_tenant_id_idx ON ai_accounts(tenant_id);
+
+CREATE TRIGGER update_ai_accounts_updated_at
+  BEFORE UPDATE ON ai_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
 -- Row Level Security
 --
 -- De app praat met de database via de service role key en filtert zelf
@@ -357,6 +382,7 @@ ALTER TABLE invoice_elements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
 -- Rechten voor de service role

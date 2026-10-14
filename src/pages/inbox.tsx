@@ -3,6 +3,7 @@ import Link from 'next/link';
 import {
   Archive,
   File,
+  FilePlus2,
   Flag,
   Forward,
   Inbox,
@@ -21,11 +22,13 @@ import {
 import Layout from '@/components/Layout';
 import MailBody from '@/components/MailBody';
 import MailComposer, { type ComposerMode } from '@/components/MailComposer';
+import QuoteFromMail from '@/components/QuoteFromMail';
 import Toggle from '@/components/Toggle';
 import ToolButton from '@/components/ToolButton';
 import { Skeleton } from '@/components/Skeleton';
 import { useToast } from '@/components/Toast';
 import { useMailAccount } from '@/hooks/useMailAccount';
+import { useAiAccount } from '@/hooks/useAiAccount';
 import { decreaseMailUnread, setMailUnread } from '@/hooks/useMailUnread';
 import { isRichTextEmpty } from '@/lib/richtext';
 import { displayName, initials, timeAgo } from '@/lib/mail/display';
@@ -60,6 +63,9 @@ const FOLDER_ICONS: Record<MailFolderKind, typeof Inbox> = {
 export default function InboxPage() {
   const toast = useToast();
   const account = useMailAccount();
+  // Met een AI-plug-in kan een mail worden omgezet naar een offerte
+  const aiAccount = useAiAccount();
+  const [convertingThread, setConvertingThread] = useState<string | null>(null);
 
   const [folders, setFolders] = useState<MailFolder[]>([]);
   const [folder, setFolder] = useState(INBOX_FOLDER);
@@ -501,6 +507,11 @@ export default function InboxPage() {
                 <div className="thread-header">
                   <h2>{thread.subject}</h2>
                   <span className="message-actions">
+                    {aiAccount && (
+                      <ToolButton title="Omzetten naar offerte" onClick={() => setConvertingThread(thread.id)}>
+                        <FilePlus2 size={15} />
+                      </ToolButton>
+                    )}
                     {currentFolder?.kind !== 'archive' && currentFolder?.kind !== 'trash' && (
                       <ToolButton title="Archiveren" onClick={() => removeThread('archive')}>
                         <Archive size={15} />
@@ -594,6 +605,20 @@ export default function InboxPage() {
             onDiscard={resetComposer}
             onSend={send}
             isSending={isSending}
+          />
+        )}
+
+        {convertingThread && (
+          <QuoteFromMail
+            threadId={convertingThread}
+            onClose={() => setConvertingThread(null)}
+            onReplyDraft={(html) => {
+              // Het antwoord dat om de ontbrekende gegevens vraagt, klaar om na te lezen
+              setComposerMode('reply');
+              setForwardMessageId(null);
+              setDraft(html);
+              setComposerMinimized(false);
+            }}
           />
         )}
 

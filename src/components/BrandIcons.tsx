@@ -1,3 +1,6 @@
+import { siAnthropic } from 'simple-icons';
+import { Sparkles } from 'lucide-react';
+
 /**
  * Logo's van de diensten waarmee je kunt koppelen. Lucide heeft geen merken,
  * en Simple Icons alleen in één kleur (en zonder Microsoft); deze staan er in
@@ -40,4 +43,21 @@ export function MicrosoftIcon({ size = 18 }: BrandIconProps) {
       <path fill="#FFBA08" d="M12 12h10v10H12z" />
     </svg>
   );
+}
+
+/** Het logo van Anthropic, uit Simple Icons. */
+export function AnthropicIcon({ size = 18 }: BrandIconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path fill={`#${siAnthropic.hex}`} d={siAnthropic.path} />
+    </svg>
+  );
+}
+
+/**
+ * OpenAI heeft zijn logo uit Simple Icons laten halen; tot er een officieel
+ * bestand bij komt, staat hier een neutraal icoon.
+ */
+export function OpenAiIcon({ size = 18 }: BrandIconProps) {
+  return <Sparkles size={size} aria-hidden="true" />;
 }

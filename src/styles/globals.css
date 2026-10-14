@@ -201,7 +201,12 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 /* Hetzelfde label als tooltip boven een icoonknop, zodat je ziet wat hij doet */
 button[data-label] {position: relative;}
-button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 50%; transform: translateX(-50%); color: var(--font-color1); font-weight: 400;}
+button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 50%; transform: translateX(-50%); color: var(--font-color1); font-weight: 400; display: none;}
+/* Pas bestaan als je erover gaat: een onzichtbaar label telt anders mee voor de
+   ruimte, en dan krijgt een vak dat tot de rand loopt ineens een scrollbalk */
+button[data-label]:hover::after {display: block;}
+/* Bij de knoppen aan de rechterrand loopt het label naar links in plaats van eroverheen */
+.message-actions button:last-child::after, .composer .actions button:last-child::after, .copy-field button::after {left: auto; right: 0; transform: none;}
 .editable-region:empty {min-height: 20px;}
 .editable-region > .drag-handle {position: absolute; top: 0; left: calc(-24px - var(--space10)); z-index: 3;}
 
@@ -533,7 +538,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Plug-ins: logo, naam met uitleg, en de schakelaar */
 .plugin-list {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space20) var(--space40); padding: var(--space10) 0; box-sizing: border-box;}
-.plugin {display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); box-sizing: border-box; border-radius: var(--border-radius1); transition: .3s all ease; cursor: pointer;}
+.plugin {display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: var(--space15); padding: var(--space10); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius1); transition: .3s all ease; cursor: pointer;}
 .plugin:hover {background: var(--color4);}
 .plugin .plugin-icon {display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
 .plugin .information .title {display: block; font-weight: 500;}
@@ -541,7 +546,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Het venster bij een plug-in, zoals een pagina in een app-winkel */
 .modal:has(.plugin-detail) {max-width: 640px;}
-.plugin-detail {max-height: 75vh; overflow-y: auto; padding: 0 var(--space10) var(--space10); color: var(--font-color1);}
+.plugin-detail {max-height: 75vh; overflow-y: auto; overflow-x: hidden; padding: 0 var(--space10) var(--space10); color: var(--font-color1);}
 .plugin-detail .plugin-icon.large {display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border: 1px solid var(--border-color); border-radius: var(--border-radius2); background: var(--color2);}
 .plugin-detail .plugin-detail-title {display: flex; align-items: center; justify-content: space-between; gap: var(--space20); margin: var(--space15) 0;}
 .plugin-detail .plugin-detail-title h2 {margin: 0;}
@@ -562,6 +567,21 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail .plugin-info dd {margin: 0;}
 .plugin-detail .plugin-info a {color: var(--font-color1); line-height: 0;}
 
+/* Een mail omzetten naar een offerte: het voorstel van de AI om te controleren */
+.modal:has(.quote-from-mail) {max-width: 760px;}
+.quote-from-mail {max-height: 72vh; overflow-y: auto; overflow-x: hidden; padding: 0 var(--space5) var(--space5) 0; color: var(--font-color1);}
+.quote-from-mail h3 {padding: 0 0 var(--space10) 0; margin: var(--space20) 0 var(--space10) 0; border-bottom: 1px solid var(--border-color);}
+.quote-from-mail .form-section .form-group textarea {min-height: 90px;}
+.quote-from-mail .proposal-items {display: flex; flex-direction: column; gap: var(--space5);}
+.quote-from-mail .proposal-item {display: grid; grid-template-columns: minmax(0, 1fr) 70px 90px 110px 28px; gap: var(--space5); align-items: center;}
+.quote-from-mail .proposal-item.heading {font-size: var(--fontsize2); color: var(--font-color2);}
+.quote-from-mail .proposal-item input {width: 100%; box-sizing: border-box;}
+.quote-from-mail .proposal-item .field-note {grid-column: 1 / -1; margin: -2px 0 var(--space5) 0;}
+.quote-from-mail .proposal-item button {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--color6);}
+.quote-from-mail .proposal-item button:hover {background: var(--color4);}
+.quote-from-mail .proposal-missing {margin: 0; padding-left: var(--space20);}
+.quote-from-mail .toggle-label {margin: var(--space5) 0;}
+
 /* Een knop met een logo ervoor, zoals "Inloggen met Google" */
 .button.with-icon {display: inline-flex; align-items: center; justify-content: center; gap: var(--space10); font-size: var(--fontsize1);}
 .button.tertiary:hover:not(:disabled) {background: var(--color4);}
@@ -576,7 +596,8 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Inbox: links de gesprekken, rechts het geopende gesprek */
 .inbox {position: relative; display: grid; grid-template-columns: 200px 380px 1fr; height: calc(100vh - 2 * var(--space20)); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); overflow: hidden;}
-.inbox .inbox-list {border-right: 1px solid var(--border-color); overflow-y: auto;}
+.inbox > * {min-width: 0;}
+.inbox .inbox-list {border-right: 1px solid var(--border-color); overflow-y: auto; overflow-x: hidden;}
 .inbox .list-header {position: sticky; top: 0; z-index: 1; display: flex; flex-direction: column; gap: var(--space10); padding: var(--space15) var(--space20); background: var(--color2); border-bottom: 1px solid var(--border-color);}
 .inbox .list-header .title-row {display: flex; align-items: center; justify-content: space-between; gap: var(--space10);}
 .inbox .search {position: relative; display: block;}
@@ -604,7 +625,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .avatar {display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color4); color: var(--font-color1); font-size: 11px; font-weight: 600;}
 .inbox .meta {font-size: var(--fontsize2); color: var(--font-color2);}
 
-.inbox .inbox-detail {overflow-y: auto; display: flex; flex-direction: column;}
+.inbox .inbox-detail {overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column;}
 .inbox .inbox-detail > .empty-state {margin: auto; padding: 0; display: flex; flex-direction: column; align-items: center;}
 .inbox .inbox-detail > .empty-state h2 {margin: var(--space10) 0 var(--space5) 0;}
 .inbox .thread {padding: var(--space20);}
@@ -618,6 +639,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-actions button, .composer .actions button, .composer-footer > button:not(.button) {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
 .inbox .message-actions button:hover, .composer .actions button:hover, .composer-footer > button:not(.button):hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-header .sender {display: flex; flex-direction: column; min-width: 0;}
+.inbox .thread-header h2, .inbox .message-header .meta {overflow-wrap: anywhere;}
 .inbox .message-header .from {font-weight: 600;}
 /* Antwoorden of doorsturen: vast onderin het gesprek, ook tijdens het lezen */
 .composer {position: sticky; bottom: 0; z-index: 2; margin: auto calc(var(--space20) * 2 + 52px) var(--space20) var(--space20); background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/Modal';
 import PluginDetail, { PLUGINS } from '@/components/PluginDetail';
+import AiPluginsSection from '@/components/AiPluginsSection';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -159,6 +160,7 @@ export default function PluginsSettings() {
     <>
       <h2>Plug-ins</h2>
 
+      <h3>E-mail en agenda</h3>
       <div className="plugin-list">
         {PLUGINS.map(({ provider, icon: Icon, summary }) => {
           const connected = account?.provider === provider;
@@ -216,6 +218,8 @@ export default function PluginsSettings() {
           />
         )}
       </Modal>
+
+      <AiPluginsSection />
     </>
   );
 }

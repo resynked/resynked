@@ -50,6 +50,9 @@ RLS-policies op de tabellen vormen de tweede laag.
    GOOGLE_CLIENT_SECRET=...
    MICROSOFT_CLIENT_ID=...
    MICROSOFT_CLIENT_SECRET=...
+
+   # Optioneel: welk OpenAI-model de AI-plug-in gebruikt (standaard gpt-5)
+   OPENAI_MODEL=...
    ```
 
    Deze drie zijn systeembreed. Het afzendadres per aannemer staat niet hier
@@ -106,6 +109,25 @@ registrations*:
 3. Onder *API permissions* (Microsoft Graph, delegated): `Mail.ReadWrite`,
    `Mail.Send`, `Calendars.ReadWrite`, `User.Read`, `offline_access`.
 4. Onder *Certificates & secrets* een client secret aanmaken.
+
+## AI: mail omzetten naar offerte
+
+Bij **Instellingen > Plug-ins > AI** zet een gebruiker Anthropic of OpenAI aan met
+zijn **eigen API-sleutel**; het gebruik betaalt hij zelf bij die dienst. De
+sleutel wordt bij het installeren geprobeerd en staat daarna versleuteld in
+`ai_accounts` (met dezelfde `MAIL_ENCRYPTION_KEY` als de mailtoegang).
+
+In de Inbox staat dan bij een gesprek de knop **Omzetten naar offerte**. De AI
+leest het gesprek en stelt voor: de klant (een bestaande klant wordt op
+e-mailadres herkend), de offerteregels met prijzen uit eerdere offertes van dit
+bedrijf, wat er nog ontbreekt, en een antwoord aan de klant dat daarom vraagt.
+Pas na controle maakt de gebruiker de klant en een conceptofferte aan; het
+antwoord komt klaar te staan onderin het gesprek. De AI verzint geen prijzen:
+zonder vergelijkbaar eerder werk blijft de prijs leeg.
+
+Anthropic draait op Claude Opus 5.5 (`src/lib/ai/anthropic.ts`), OpenAI op
+`OPENAI_MODEL` (`src/lib/ai/openai.ts`); de opdracht is voor beide gelijk
+(`src/lib/ai/prompt.ts`).
 
 ## Database
 

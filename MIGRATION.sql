@@ -298,7 +298,33 @@ CREATE TRIGGER update_mail_accounts_updated_at
 
 ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
 
--- De rechten opnieuw, zodat de nieuwe tabel ze ook heeft
+-- ------------------------------------------------------------
+-- 7. AI: een eigen sleutel per gebruiker voor Anthropic of OpenAI
+--
+-- Om een mail om te zetten naar een offerte. Versleuteld, net als de mail.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ai_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Eén AI-koppeling per gebruiker, met zijn eigen sleutel: hij betaalt zelf
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('anthropic', 'openai')),
+  -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de mailtoegang
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ai_accounts_tenant_id_idx ON ai_accounts(tenant_id);
+
+DROP TRIGGER IF EXISTS update_ai_accounts_updated_at ON ai_accounts;
+CREATE TRIGGER update_ai_accounts_updated_at
+  BEFORE UPDATE ON ai_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
+
+-- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
@@ -308,7 +334,7 @@ COMMIT;
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen zeven regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen acht regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -361,4 +387,10 @@ UNION ALL SELECT 'Inbox',
        CASE WHEN EXISTS (
          SELECT 1 FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name = 'mail_accounts'
-       ) THEN 'ja' ELSE 'NEE - onderdeel 6 niet gelukt' END;
+       ) THEN 'ja' ELSE 'NEE - onderdeel 6 niet gelukt' END
+
+UNION ALL SELECT 'AI',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = 'ai_accounts'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 7 niet gelukt' END;
