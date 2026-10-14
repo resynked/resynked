@@ -75,37 +75,65 @@ RLS-policies op de tabellen vormen de tweede laag.
 
 ## Inbox koppelen
 
-Gebruikers koppelen hun eigen Gmail- of Outlook-mailbox bij **Instellingen >
-Plug-ins**. De mail wordt elke keer live bij Google of Microsoft opgehaald en niet
-bij ons bewaard; alleen de toegangssleutels staan in `mail_accounts`, versleuteld
-met `MAIL_ENCRYPTION_KEY`. Raak je die sleutel kwijt of verander je hem, dan moet
-iedereen zijn Inbox opnieuw koppelen.
 
-**Google** — in de [Google Cloud Console](https://console.cloud.google.com/):
+- `APP_URL` zonder slash aan het eind.
+- `MAIL_ENCRYPTION_KEY` genereer je met `openssl rand -base64 32`. Verander of
+  verlies deze sleutel niet: dan moet iedereen zijn inbox opnieuw koppelen. Bewaar
+  hem in een wachtwoordmanager.
 
-1. Zet de **Gmail API** en de **Google Calendar API** aan.
-2. Stel het OAuth-toestemmingsscherm in met de scopes
-   `https://www.googleapis.com/auth/gmail.modify` en
-   `https://www.googleapis.com/auth/calendar.readonly`.
-3. Maak een OAuth-client van het type *Web application* met als redirect-URI
-   `{APP_URL}/api/mail/callback/google`.
+### Google
 
-Zolang de app in Google op *Testing* staat, kunnen alleen de testgebruikers die
-je daar invult koppelen. Voor iedereen moet de app door Google geverifieerd
-worden; `gmail.modify` is een *restricted scope*, dus daar hoort een
-beveiligingsbeoordeling bij.
+In de [Google Cloud Console](https://console.cloud.google.com/):
 
-**Microsoft** — in [Microsoft Entra](https://entra.microsoft.com/) bij *App
-registrations*:
+1. **APIs & Services → Library**: zet de **Gmail API** en de **Google Calendar
+   API** aan.
+2. **Google Auth Platform**: stel het toestemmingsscherm in met audience
+   *External*.
+3. **Data Access → Add or remove scopes**: voeg handmatig toe:
+   - `https://www.googleapis.com/auth/gmail.modify`
+   - `https://www.googleapis.com/auth/calendar.readonly`
+4. **Clients → Create client**, type *Web application*, met als redirect-URI
+   `{APP_URL}/api/mail/callback/google`. Voor lokaal testen ook
+   `http://localhost:3000/api/mail/callback/google`.
+5. Zet de Client ID en het Client secret in `GOOGLE_CLIENT_ID` en
+   `GOOGLE_CLIENT_SECRET`.
 
-1. Nieuwe registratie, accounttype *Accounts in any organizational directory and
-   personal Microsoft accounts*.
-2. Redirect-URI's (platform *Web*): `{APP_URL}/api/mail/callback/microsoft` en
-   `{APP_URL}/api/mail/admin-consent/done` (voor de link die een IT-beheerder
-   gebruikt om Resynked voor zijn hele organisatie goed te keuren).
-3. Onder *API permissions* (Microsoft Graph, delegated): `Mail.ReadWrite`,
+**Testing vs. productie**
+
+- Op *Testing* kunnen alleen de adressen onder **Audience → Test users** koppelen
+  (max. 100). Ze krijgen een "unverified app"-waarschuwing en de koppeling
+  verloopt na 7 dagen.
+- **Google Workspace-klanten**: zet de app op *In production* (Publish app,
+  zonder verificatie). De Workspace-beheerder van de klant zet Resynked op
+  *Trusted* in admin.google.com → Security → Access and data control → API
+  controls → Manage Third-Party App Access → Configure new app (zoeken op Client
+  ID). Daarna werkt het voor het hele domein zonder waarschuwing of verloopdatum.
+- **Losse @gmail.com-gebruikers**: daarvoor moet de app door Google geverifieerd
+  worden. `gmail.modify` is een *restricted scope*, dus dat vereist een eigen
+  domein, privacybeleid, een demovideo en een jaarlijkse CASA-
+  beveiligingsbeoordeling.
+
+### Microsoft
+
+In [Microsoft Entra](https://entra.microsoft.com/) bij **App registrations**:
+
+1. **New registration**, accounttype *Accounts in any organizational directory
+   and personal Microsoft accounts*. Staat er al *Alleen mijn organisatie*? Pas
+   het aan bij **Authentication → Supported accounts**. Geeft dat een fout, zet
+   dan eerst in **Manifest** `"requestedAccessTokenVersion": 2`.
+2. **Redirect-URI's** (platform *Web*):
+   - `{APP_URL}/api/mail/callback/microsoft`
+   - `{APP_URL}/api/mail/admin-consent/done` (voor de link waarmee een
+     IT-beheerder Resynked voor zijn hele organisatie goedkeurt)
+   - Optioneel lokaal: `http://localhost:3000/api/mail/callback/microsoft`
+3. **API permissions** (Microsoft Graph, delegated): `Mail.ReadWrite`,
    `Mail.Send`, `Calendars.Read`, `User.Read`, `offline_access`.
-4. Onder *Certificates & secrets* een client secret aanmaken.
+4. **Certificates & secrets**: maak een client secret aan en kopieer direct de
+   *Value*, want die is maar één keer zichtbaar.
+5. Zet de Application (client) ID en de secret-waarde in `MICROSOFT_CLIENT_ID` en
+   `MICROSOFT_CLIENT_SECRET`.
+
+Gebruik als tenant `common`, niet de tenant-ID van je eigen directory.
 
 ## Database
 
