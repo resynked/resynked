@@ -80,7 +80,7 @@ function ToolButton({
     <button
       type="button"
       className={className}
-      title={title}
+      data-label={title}
       aria-label={title}
       disabled={disabled}
       onMouseDown={(event) => event.preventDefault()}

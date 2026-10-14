@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
+import Pagination from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import type { Customer } from '@/lib/supabase';
@@ -11,6 +13,8 @@ import { SkeletonTable } from '@/components/Skeleton';
 export default function Customers() {
   const { confirm } = useConfirm();
   const [customers, setCustomers] = useState<Customer[]>([]);
+  // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
+  const pagination = usePagination(customers);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,6 +161,7 @@ export default function Customers() {
           <p>Je hebt nog geen klanten toegevoegd. Begin met het toevoegen van je eerste klant.</p>
         </div>
       ) : (
+        <>
         <Table
           headers={[
             <button
@@ -189,7 +194,7 @@ export default function Customers() {
             ''
           ]}
         >
-          {customers.map((customer) => (
+          {pagination.pageItems.map((customer) => (
             <tr
               key={customer.id}
               className={selectedIds.includes(customer.id) ? 'selected' : ''}
@@ -241,6 +246,15 @@ export default function Customers() {
             </tr>
           ))}
         </Table>
+
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
+        </>
       )}
     </Layout>
   );

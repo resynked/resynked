@@ -233,7 +233,7 @@ export default function FormattingToolbar({ getField, children }: FormattingTool
                   key={button.title}
                   type="button"
                   className={activeStates[button.title] ? 'active' : ''}
-                  title={button.title}
+                  data-label={button.title}
                   aria-label={button.title}
                   aria-pressed={button.state ? !!activeStates[button.title] : undefined}
                   // Zonder dit verliest de tekst zijn selectie bij het aanklikken
@@ -250,7 +250,7 @@ export default function FormattingToolbar({ getField, children }: FormattingTool
         <div className="group">
           <button
             type="button"
-            title="Link toevoegen"
+            data-label="Link toevoegen"
             aria-label="Link toevoegen"
             onMouseDown={(event) => event.preventDefault()}
             onClick={openLinkField}
@@ -259,7 +259,7 @@ export default function FormattingToolbar({ getField, children }: FormattingTool
           </button>
           <button
             type="button"
-            title="Link weghalen"
+            data-label="Link weghalen"
             aria-label="Link weghalen"
             onMouseDown={(event) => event.preventDefault()}
             onClick={removeLink}

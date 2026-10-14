@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
+import Pagination from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
 import { Ellipsis, Check, Search } from 'lucide-react';
 import type { Customer, Note } from '@/lib/supabase';
@@ -16,6 +18,8 @@ export default function Notes() {
   const { confirm } = useConfirm();
   const [notes, setNotes] = useState<NoteWithCustomer[]>([]);
   const [filteredNotes, setFilteredNotes] = useState<NoteWithCustomer[]>([]);
+  // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
+  const pagination = usePagination(filteredNotes);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -174,6 +178,7 @@ export default function Notes() {
           </p>
         </div>
       ) : (
+        <>
         <Table
           headers={[
             <button
@@ -207,7 +212,7 @@ export default function Notes() {
             ''
           ]}
         >
-          {filteredNotes.map((note) => (
+          {pagination.pageItems.map((note) => (
             <tr
               key={note.id}
               className={selectedIds.includes(note.id) ? 'selected' : ''}
@@ -263,6 +268,15 @@ export default function Notes() {
             </tr>
           ))}
         </Table>
+
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
+        </>
       )}
     </Layout>
   );

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
+import Pagination from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
@@ -29,6 +31,8 @@ export default function Quotes() {
   const { confirm } = useConfirm();
   const toast = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
+  const pagination = usePagination(quotes);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -227,6 +231,7 @@ export default function Quotes() {
           <p>Je hebt nog geen offertes aangemaakt. Begin met het maken van je eerste offerte.</p>
         </div>
       ) : (
+        <>
         <Table
           headers={[
             <button
@@ -261,7 +266,7 @@ export default function Quotes() {
             ''
           ]}
         >
-          {quotes.map((quote) => (
+          {pagination.pageItems.map((quote) => (
             <tr
               key={quote.id}
               className={selectedIds.includes(quote.id) ? 'selected' : ''}
@@ -351,6 +356,15 @@ export default function Quotes() {
             </tr>
           ))}
         </Table>
+
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
+        </>
       )}
     </Layout>
   );

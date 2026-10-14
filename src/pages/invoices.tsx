@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
+import Pagination from '@/components/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
 import { Ellipsis, Check } from 'lucide-react';
 import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
@@ -29,6 +31,8 @@ const statusLabels: Record<string, string> = {
 export default function Invoices() {
   const { confirm } = useConfirm();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
+  const pagination = usePagination(invoices);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -179,6 +183,7 @@ export default function Invoices() {
           <p>Je hebt nog geen facturen aangemaakt. Begin met het maken van je eerste factuur.</p>
         </div>
       ) : (
+        <>
         <Table
           headers={[
             <button
@@ -213,7 +218,7 @@ export default function Invoices() {
             ''
           ]}
         >
-          {invoices.map((invoice) => (
+          {pagination.pageItems.map((invoice) => (
             <tr
               key={invoice.id}
               className={selectedIds.includes(invoice.id) ? 'selected' : ''}
@@ -268,6 +273,15 @@ export default function Invoices() {
             </tr>
           ))}
         </Table>
+
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
+        </>
       )}
     </Layout>
   );

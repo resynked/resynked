@@ -196,13 +196,18 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .editable-region {position: relative; cursor: pointer; outline: 2px solid transparent; outline-offset: 6px; transition: .3s all ease;}
 .editable-region.active, .editable-region:hover {outline-color: var(--color4);}
 .editable-region.active {outline-color: var(--color4); background: var(--color3);}
-.editable-region::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
-.editable-region:hover::after, .editable-region.active::after {opacity: 1;}
+.editable-region::after, button[data-label]::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
+.editable-region:hover::after, .editable-region.active::after, button[data-label]:hover::after {opacity: 1;}
+
+/* Hetzelfde label als tooltip boven een icoonknop, zodat je ziet wat hij doet */
+button[data-label] {position: relative;}
+button[data-label]::after {top: auto; bottom: calc(100% + var(--space5)); left: 50%; transform: translateX(-50%); color: var(--font-color1); font-weight: 400;}
 .editable-region:empty {min-height: 20px;}
 .editable-region > .drag-handle {position: absolute; top: 0; left: calc(-24px - var(--space10)); z-index: 3;}
 
 /* Bewerkbalk onderin, zodra er iets op het papier gekozen is */
 .island-bar {position: fixed; bottom: var(--space20); left: 50%; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 2 * var(--space20));}
+.island-bar .toolbar {border-bottom: 0; border-radius: var(--border-radius2);}
 .island-bar .toolbar button.delete {color: var(--color6);}
 .island-bar .toolbar button:disabled {opacity: .4; pointer-events: none;}
 
@@ -278,6 +283,15 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .table-container .data-table tr td.actions .action-dropdown .action-menu a {text-align: left; outline: 0; padding: var(--space5) var(--space10); color: var(--font-color1); text-decoration: none; transition: .3s all ease; font-size: var(--fontsize1); box-sizing: border-box; border-radius: var(--border-radius1);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a:hover {background: var(--color4);}
 .table-container .data-table tr td.actions .action-dropdown .action-menu a.delete {color: var(--color6);}
+
+/* Bladeren onder een lange tabel */
+.pagination {display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space20); margin: var(--space20) 0 0 0; font-size: var(--fontsize1); font-weight: 500;}
+.pagination .page-size, .pagination .page-nav, .pagination .pages {display: flex; align-items: center; gap: var(--space10);}
+.pagination .page-size .select {width: 80px;}
+.pagination .page-nav {gap: var(--space30);}
+.pagination .pages .button {min-width: 34px; height: 34px; padding: 0 var(--space10); font-size: var(--fontsize1);}
+.pagination .pages .button:disabled {color: var(--font-color2); opacity: .5; cursor: default;}
+.pagination .pages .gap {color: var(--font-color2);}
 
 .grid {display: grid; grid-template-columns: 1fr; gap: var(--space20);}
 .grid.two {grid-template-columns: var(--left-fr) var(--right-fr);}
@@ -381,9 +395,9 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .signature-pad .footer .clear:hover:not(:disabled) {background: var(--color4); color: var(--font-color1);}
 .signature-pad .footer .clear:disabled {opacity: .5; cursor: not-allowed;}
 
-.rich-editor {background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); overflow: hidden;}
+.rich-editor {background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
 
-.rich-editor .toolbar {display: flex; flex-wrap: wrap; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); box-sizing: border-box; background: var(--color3); border-bottom: 1px solid var(--border-color);}
+.rich-editor .toolbar {display: flex; flex-wrap: wrap; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); box-sizing: border-box; background: var(--color3); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius2) var(--border-radius2) 0 0;}
 .rich-editor .toolbar .group {display: flex; align-items: center; gap: 2px;}
 .rich-editor .toolbar .group + .group {padding-left: var(--space10); border-left: 1px solid var(--border-color);}
 
