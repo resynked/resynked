@@ -536,9 +536,10 @@ export default function InboxPage() {
                     if (event.key === 'Enter') open(item);
                   }}
                 >
-                  <span className="dot" aria-label={item.unread ? 'Ongelezen' : undefined} />
-                  {/* De initialen, of het vinkje als je erover gaat of al iets aanvinkte */}
+                  {/* De initialen, of het vinkje als je erover gaat of al iets aanvinkte;
+                      een ongelezen bericht heeft een stip linksboven op de avatar */}
                   <span className="pick">
+                    {item.unread && <span className="dot" aria-label="Ongelezen" />}
                     <span className="avatar">{initials(item.from)}</span>
                     <button
                       type="button"

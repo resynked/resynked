@@ -24,8 +24,6 @@ export default function Sidebar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   // Ingeklapt blijven alleen de iconen over; een klik op het logo klapt hem weer uit
   const [collapsed, setCollapsed] = useState(rememberedCollapsed ?? false);
-  // Alleen schuiven als iemand zelf klikt; bij het laden staat hij meteen goed
-  const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     if (rememberedCollapsed !== null) return;
@@ -39,7 +37,6 @@ export default function Sidebar() {
 
   const toggleCollapsed = (next: boolean) => {
     rememberedCollapsed = next;
-    setAnimated(true);
     setCollapsed(next);
     setIsDropdownOpen(false);
     try {
@@ -80,29 +77,22 @@ export default function Sidebar() {
   const userEmail = (session?.user as any)?.email || '';
 
   return (
-    <div className={`sidebar${collapsed ? ' collapsed' : ''}${animated ? ' animated' : ''}`}>
-      {/* In beide standen dezelfde elementen op dezelfde plek, zodat er bij het
-          in- en uitklappen niets verspringt; alleen de breedte schuift */}
+    <div className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="logo">
-        <button
-          type="button"
-          className="expand"
-          aria-label="Zijbalk uitklappen"
-          tabIndex={collapsed ? 0 : -1}
-          onClick={() => collapsed && toggleCollapsed(false)}
-        >
-          <Image src="/logo.svg" alt="Resynked Logo" width={30} height={30} className="sidebar-logo" />
-          <PanelLeft size={18} className="expand-icon" />
-        </button>
-        <button
-          type="button"
-          className="collapse"
-          aria-label="Zijbalk inklappen"
-          tabIndex={collapsed ? -1 : 0}
-          onClick={() => toggleCollapsed(true)}
-        >
-          <PanelLeft size={18} />
-        </button>
+        {collapsed ? (
+          // Ingeklapt is het logo de knop om uit te klappen; bij hover zie je dat
+          <button type="button" className="expand" aria-label="Zijbalk uitklappen" onClick={() => toggleCollapsed(false)}>
+            <Image src="/logo.svg" alt="Resynked Logo" width={30} height={30} className="sidebar-logo" />
+            <PanelLeft size={18} className="expand-icon" />
+          </button>
+        ) : (
+          <>
+            <Image src="/logo.svg" alt="Resynked Logo" width={30} height={30} className="sidebar-logo" />
+            <button type="button" className="collapse" aria-label="Zijbalk inklappen" onClick={() => toggleCollapsed(true)}>
+              <PanelLeft size={18} />
+            </button>
+          </>
+        )}
       </div>
       <nav className="navigation">
         <Link href="/" className={isActive('/') ? 'active' : ''} data-label="Dashboard">
