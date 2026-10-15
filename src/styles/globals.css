@@ -148,7 +148,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 /* Ingeklapt: alleen de iconen, met de naam als label bij hover */
 .sidebar.collapsed {width: 56px;}
 .sidebar.collapsed .logo {justify-content: center;}
-.sidebar.collapsed .navigation a {position: relative; justify-content: center; padding: var(--space5); margin: 0 auto;}
+.sidebar.collapsed .navigation a {position: relative; justify-content: center; padding: 8px; margin: 0 auto;}
 .sidebar.collapsed .navigation a .label {display: none;}
 .sidebar.collapsed .navigation a .count {position: absolute; top: -4px; right: 0; min-width: 16px; padding: 0 4px; font-size: 9px;}
 .sidebar.collapsed .profile {justify-content: center; padding: var(--space5);}
