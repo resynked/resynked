@@ -168,8 +168,6 @@ export default function EditNote() {
             errors={showErrors ? validateNote(formData) : {}}
           />
         </form>
-
-        </div>
       </div>
     </Layout>
   );
