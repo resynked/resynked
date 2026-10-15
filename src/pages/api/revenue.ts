@@ -42,19 +42,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           startDate.setMonth(now.getMonth() - 1);
       }
 
-      // Fetch paid invoices within the date range
+      // Betaalde facturen zijn gerealiseerde omzet, verzonden facturen die nog
+      // niet betaald zijn ongerealiseerde omzet
       const { data: invoices, error } = await supabaseAdmin
         .from('invoices')
-        .select('created_at, total, invoice_date')
+        .select('created_at, total, status')
         .eq('tenant_id', tenantId)
-        .eq('status', 'paid')
+        .in('status', ['paid', 'sent'])
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
       // Group invoices by date and sum the totals
-      const revenueByDate = new Map<string, number>();
+      const revenueByDate = new Map<string, RevenuePoint>();
 
       invoices.forEach((invoice) => {
         const date = new Date(invoice.created_at);
@@ -71,17 +72,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           dateKey = date.toLocaleDateString('nl-NL', { month: 'short' });
         }
 
-        revenueByDate.set(dateKey, (revenueByDate.get(dateKey) || 0) + invoice.total);
+        const point = revenueByDate.get(dateKey) || { date: dateKey, revenue: 0, unrealized: 0 };
+        if (invoice.status === 'paid') point.revenue += invoice.total;
+        else point.unrealized += invoice.total;
+        revenueByDate.set(dateKey, point);
       });
 
-      // Convert to array format for Recharts
-      const chartData = Array.from(revenueByDate.entries()).map(([date, revenue]) => ({
-        date,
-        revenue: Math.round(revenue * 100) / 100, // Round to 2 decimals
-      }));
-
       // Fill in missing dates with 0 revenue
-      const filledData = fillMissingDates(chartData, period, startDate, now);
+      const filledData = fillMissingDates(revenueByDate, period, now);
 
       return res.status(200).json(filledData);
     }
@@ -93,58 +91,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
+/** Eén punt in de grafiek: betaald en nog openstaand, afgerond op centen */
+interface RevenuePoint {
+  date: string;
+  revenue: number;
+  unrealized: number;
+}
+
+const round = (amount: number) => Math.round(amount * 100) / 100;
+
 function fillMissingDates(
-  data: { date: string; revenue: number }[],
+  data: Map<string, RevenuePoint>,
   period: string,
-  startDate: Date,
   endDate: Date
-): { date: string; revenue: number }[] {
-  const result: { date: string; revenue: number }[] = [];
-  const dataMap = new Map(data.map(item => [item.date, item.revenue]));
+): RevenuePoint[] {
+  const keys: string[] = [];
 
   if (period === 'today') {
     // Fill hours from 0 to current hour
     for (let hour = 0; hour <= endDate.getHours(); hour++) {
-      const dateKey = `${hour}:00`;
-      result.push({
-        date: dateKey,
-        revenue: dataMap.get(dateKey) || 0,
-      });
+      keys.push(`${hour}:00`);
     }
-  } else if (period === 'week') {
-    // Fill last 7 days
-    for (let i = 6; i >= 0; i--) {
+  } else if (period === 'week' || period === 'month') {
+    // Fill last 7 or 30 days
+    for (let i = period === 'week' ? 6 : 29; i >= 0; i--) {
       const date = new Date(endDate);
       date.setDate(endDate.getDate() - i);
-      const dateKey = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
-      result.push({
-        date: dateKey,
-        revenue: dataMap.get(dateKey) || 0,
-      });
-    }
-  } else if (period === 'month') {
-    // Fill last 30 days
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(endDate);
-      date.setDate(endDate.getDate() - i);
-      const dateKey = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
-      result.push({
-        date: dateKey,
-        revenue: dataMap.get(dateKey) || 0,
-      });
+      keys.push(date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' }));
     }
   } else if (period === 'year') {
     // Fill last 12 months
     for (let i = 11; i >= 0; i--) {
       const date = new Date(endDate);
       date.setMonth(endDate.getMonth() - i);
-      const dateKey = date.toLocaleDateString('nl-NL', { month: 'short' });
-      result.push({
-        date: dateKey,
-        revenue: dataMap.get(dateKey) || 0,
-      });
+      keys.push(date.toLocaleDateString('nl-NL', { month: 'short' }));
     }
   }
 
-  return result;
+  return keys.map((date) => {
+    const point = data.get(date);
+    return { date, revenue: round(point?.revenue || 0), unrealized: round(point?.unrealized || 0) };
+  });
 }
