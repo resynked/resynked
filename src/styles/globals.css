@@ -351,6 +351,12 @@ button[data-label]:hover::after {display: block;}
 .table-container .data-table tr:last-of-type td {border-bottom: 0;}
 .table-container .data-table tr.selected, .table-container .data-table tr:hover {background: var(--color3);}
 
+/* Een cel met een titel en daaronder één regel uitleg, zoals bij Notities */
+.table-container .data-table td.note-cell {padding-top: var(--space10); padding-bottom: var(--space10); line-height: 1.5; max-width: 0; width: 60%;}
+.table-container .data-table td.note-cell .title {display: block; font-weight: 500; color: var(--font-color1); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.table-container .data-table td.note-cell .title:hover {text-decoration: underline;}
+.table-container .data-table td.note-cell .description {display: block; font-size: var(--fontsize2); color: var(--font-color2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
 .table-container .data-table tr td.actions {text-align: right;}
 .table-container .data-table tr td.actions .action-dropdown {position: relative;}
 .table-container .data-table tr td.actions .action-dropdown button {background: var(--color4); border-radius: var(--border-radius1); padding: var(--space5); color: var(--font-color2); line-height: 0;}
@@ -681,9 +687,10 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-list {border-right: 1px solid var(--border-color); overflow-y: auto; overflow-x: hidden;}
 .inbox .list-header {position: sticky; top: 0; z-index: 1; display: flex; flex-direction: column; gap: var(--space10); padding: var(--space15) var(--space20); background: var(--color2); border-bottom: 1px solid var(--border-color);}
 .inbox .list-header .title-row {display: flex; align-items: center; justify-content: space-between; gap: var(--space10);}
-.inbox .search {position: relative; display: block;}
-.inbox .search svg {position: absolute; top: 50%; left: var(--space10); transform: translateY(-50%); color: var(--font-color2); pointer-events: none;}
-.inbox .search input {width: 100%; padding-left: 32px; box-sizing: border-box;}
+.inbox .search, .content .header .search {position: relative; display: block;}
+.inbox .search svg, .content .header .search svg {position: absolute; top: 50%; left: var(--space10); transform: translateY(-50%); color: var(--font-color2); pointer-events: none;}
+.inbox .search input, .content .header .search input {width: 100%; padding-left: 32px; box-sizing: border-box;}
+.content .header .search {width: 260px;}
 
 /* De mappen of labels uit Gmail of Outlook */
 .inbox .inbox-folders {display: flex; flex-direction: column; gap: 3px; padding: var(--space15) var(--space10); border-right: 1px solid var(--border-color); background: var(--color3); overflow-y: auto;}

@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
-import Select from '@/components/Select';
+import NoteFields from '@/components/NoteFields';
 import type { Customer, Note } from '@/lib/supabase';
 import { getCustomerOptionLabel } from '@/lib/utils';
 import { SkeletonForm } from '@/components/Skeleton';
+
+/** "14 augustus 2026 om 14:32" */
+const formatDateTime = (date: string) =>
+  new Date(date).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 interface NoteWithCustomer extends Note {
   customer: {
@@ -153,63 +157,17 @@ export default function EditNote() {
 
       <div className="block">
         <form id="note-form" onSubmit={handleSubmit}>
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="customer_id">Klant</label>
-              <Select
-                value={customerOptions.find(o => o.value === formData.customer_id) || null}
-                onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
-                options={customerOptions}
-                placeholder="Selecteer klant..."
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="title">Titel</label>
-              <input
-                id="title"
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Notitie titel"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="content">Inhoud</label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Notitie inhoud..."
-                required
-              />
-            </div>
-          </div>
+          <NoteFields formData={formData} onChange={setFormData} customerOptions={customerOptions} />
         </form>
 
-        <div className="form-section" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Aangemaakt op: {new Date(note.created_at).toLocaleDateString('nl-NL', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </p>
-          {note.updated_at !== note.created_at && (
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Laatst bijgewerkt: {new Date(note.updated_at).toLocaleDateString('nl-NL', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
-          )}
+        <div className="row-section">
+          <div className="information">
+            <span className="title">Geschiedenis</span>
+          </div>
+          <div className="placeholder">
+            <p>Aangemaakt op {formatDateTime(note.created_at)}</p>
+            {note.updated_at !== note.created_at && <p>Laatst bijgewerkt op {formatDateTime(note.updated_at)}</p>}
+          </div>
         </div>
       </div>
     </Layout>

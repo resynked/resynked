@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Ellipsis, Check, Trash2, Search } from 'lucide-react';
 import type { Customer, Note } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
-import { getCustomerDisplayName } from '@/lib/utils';
+import { formatDate, getCustomerDisplayName } from '@/lib/utils';
 import { SkeletonTable } from '@/components/Skeleton';
 
 interface NoteWithCustomer extends Note {
@@ -124,16 +124,6 @@ export default function Notes() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('nl-NL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   if (isLoading) {
     return (
       <Layout title="Notities">
@@ -145,7 +135,7 @@ export default function Notes() {
             </Link>
           </div>
         </div>
-        <SkeletonTable rows={5} columns={6} />
+        <SkeletonTable rows={5} columns={5} />
       </Layout>
     );
   }
@@ -155,6 +145,16 @@ export default function Notes() {
       <div className="header">
         <h1>Notities</h1>
         <div className="actions">
+          <label className="search">
+            <Search size={15} />
+            <input
+              type="search"
+              value={searchTerm}
+              placeholder="Zoeken in notities"
+              aria-label="Zoeken in notities"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </label>
           <Link href="/notes/new" className="button">
             Notitie toevoegen
           </Link>
@@ -199,10 +199,9 @@ export default function Notes() {
             >
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
-            'Titel',
+            'Notitie',
             'Klant',
-            'Inhoud',
-            'Aangemaakt',
+            'Laatst bewerkt',
             ''
           ]}
         >
@@ -223,16 +222,20 @@ export default function Notes() {
                   {selectedIds.includes(note.id) && <Check size={14} />}
                 </button>
               </td>
-              <td>
+              <td className="note-cell">
+                <Link href={`/notes/${note.id}`} className="title">
                   {note.title}
+                </Link>
+                <span className="description">{note.content}</span>
               </td>
               <td>
-                  {note.customer ? getCustomerDisplayName(note.customer) : 'Onbekend'}
+                {note.customer ? (
+                  <Link href={`/customers/${note.customer.id}`}>{getCustomerDisplayName(note.customer)}</Link>
+                ) : (
+                  '-'
+                )}
               </td>
-              <td>
-                  {note.content}
-              </td>
-              <td>{formatDate(note.created_at)}</td>
+              <td>{formatDate(note.updated_at || note.created_at)}</td>
               <td className="actions">
                 <div
                   // Onderaan de tabel klapt het menu omhoog, anders valt het buiten beeld

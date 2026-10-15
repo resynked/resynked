@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
-import Select from '@/components/Select';
+import NoteFields from '@/components/NoteFields';
 import type { Customer } from '@/lib/supabase';
 import { getCustomerOptionLabel } from '@/lib/utils';
 
@@ -104,40 +104,7 @@ export default function NewNote() {
 
       <div className="block">
         <form id="note-form" onSubmit={handleSubmit}>
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="customer_id">Klant</label>
-              <Select
-                value={customerOptions.find(o => o.value === formData.customer_id) || null}
-                onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
-                options={customerOptions}
-                placeholder="Selecteer klant..."
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="title">Titel</label>
-              <input
-                id="title"
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Notitie titel"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="content">Inhoud</label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Notitie inhoud..."
-                required
-              />
-            </div>
-          </div>
+          <NoteFields formData={formData} onChange={setFormData} customerOptions={customerOptions} />
         </form>
       </div>
     </Layout>
