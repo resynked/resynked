@@ -56,6 +56,9 @@ textarea, input[type="text"], input[type="password"], input[type="email"], input
 
 input:focus, textarea:focus {border-color: var(--color1);}
 
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active {-webkit-box-shadow: 0 0 0 1000px var(--color2) inset, 0px 1px 2px rgba(0, 0, 0, 0.05); box-shadow: 0 0 0 1000px var(--color2) inset, 0px 1px 2px rgba(0, 0, 0, 0.05); -webkit-text-fill-color: var(--font-color1); caret-color: var(--font-color1); transition: background-color 9999s ease 0s, border-color .3s ease;}
+input:autofill {background-color: var(--color2); color: var(--font-color1);}
+
 ::placeholder {color: var(--font-color2); opacity: 1;}
 .placeholder {color: var(--font-color2);}
 
@@ -119,6 +122,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .datepicker .day.selected, .datepicker .day.selected:hover, .datepicker .day:hover:not(.empty) {font-weight: 500; color: var(--color5); background: #d2e1ff;}
 
 .login-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
+.login-wrapper .login-block {width: 100%; max-width: 400px;}
 .login-wrapper .login-block .logo {display: flex; justify-content: center; margin: 0 0 var(--space20) 0;}
 .login-wrapper .login-block h1 {text-align: center; margin: 0 0 var(--space20) 0;}
 .login-wrapper .login-block .password-field {position: relative;}

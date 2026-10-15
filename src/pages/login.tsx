@@ -61,7 +61,7 @@ export default function Login() {
       <div className="login-wrapper">
         <div className="login-block">
           <div className="logo">
-            <Image src="/logo.svg" alt="Khance Logo" width={40} height={40} priority />
+            <Image src="/logo.svg" alt="Khance Logo" width={60} height={60} priority />
           </div>
           <h1>Inloggen bij Khance</h1>
           <form onSubmit={handleSubmit} className="login-form">
