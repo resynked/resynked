@@ -7,7 +7,7 @@ import SelectionBar from '@/components/SelectionBar';
 import ToolButton from '@/components/ToolButton';
 import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
-import { Ellipsis, Check, Trash2 } from 'lucide-react';
+import { Ellipsis, Check, Trash2, ReceiptEuro } from 'lucide-react';
 import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { copyBlocks } from '@/lib/blocks';
@@ -180,6 +180,7 @@ export default function Invoices() {
         <SkeletonTable rows={10} columns={7} />
       ) : invoices.length === 0 ? (
         <div className="empty-state">
+          <ReceiptEuro size={22} />
           <h2>Geen facturen</h2>
           <p>Je hebt nog geen facturen aangemaakt. Begin met het maken van je eerste factuur.</p>
         </div>

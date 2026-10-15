@@ -6,7 +6,7 @@ import SelectionBar from '@/components/SelectionBar';
 import ToolButton from '@/components/ToolButton';
 import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
-import { Ellipsis, Check, Trash2, Search } from 'lucide-react';
+import { Ellipsis, Check, Trash2, Search, FilePen } from 'lucide-react';
 import type { Customer, Note } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
 import { formatDate, getCustomerDisplayName } from '@/lib/utils';
@@ -164,6 +164,7 @@ export default function Notes() {
 
       {filteredNotes.length === 0 ? (
         <div className="empty-state">
+          {searchTerm ? <Search size={22} /> : <FilePen size={22} />}
           <h2>{searchTerm ? 'Geen notities gevonden' : 'Geen notities'}</h2>
           <p>
             {searchTerm

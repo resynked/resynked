@@ -544,6 +544,8 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .empty-state {text-align: center; padding: var(--space100) 0; max-width: 600px; margin: 0 auto;}
 .empty-state p {color: var(--font-color2);}
 .empty-state .button {display: inline-block;}
+/* Het icoon boven de titel, zoals bij Inbox als er nog geen bericht open staat */
+.empty-state > svg {display: block; margin: 0 auto var(--space10);}
 
 .toast {position: fixed; bottom: var(--space20); right: var(--space20); background: var(--color2); border-radius: var(--border-radius2); color: inherit; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 10px rgba(0, 0, 0, 0.1); min-width: 300px; max-width: 400px; z-index: 20; animation: slideIn 0.3s ease-out; border: 1px solid var(--border-color); padding: var(--space15); box-sizing: border-box; display: grid; grid-template-columns: 16px 1fr; gap: var(--space10);}
 .toast .toast-content {line-height: 1.35em; font-size: var(--fontsize2); font-weight: 500;}
