@@ -2,14 +2,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
-import NoteFields from '@/components/NoteFields';
+import NoteFields, { validateNote } from '@/components/NoteFields';
 import type { Customer, Note } from '@/lib/supabase';
 import { getCustomerOptionLabel } from '@/lib/utils';
 import { SkeletonForm } from '@/components/Skeleton';
-
-/** "14 augustus 2026 om 14:32" */
-const formatDateTime = (date: string) =>
-  new Date(date).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 interface NoteWithCustomer extends Note {
   customer: {
@@ -31,6 +27,8 @@ export default function EditNote() {
     content: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  // Pas na de eerste keer opslaan tonen wat er ontbreekt, niet al bij het openen
+  const [showErrors, setShowErrors] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
@@ -72,6 +70,12 @@ export default function EditNote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Ontbreekt er iets, dan rode randen en een melding in plaats van niets
+    setShowErrors(true);
+    if (Object.keys(validateNote(formData)).length > 0) {
+      toast.error('Nog niet compleet', 'Vul de gemarkeerde velden in');
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -148,7 +152,7 @@ export default function EditNote() {
             type="submit"
             form="note-form"
             className="button"
-            disabled={isLoading || !formData.title || !formData.content || !formData.customer_id}
+            disabled={isLoading}
           >
             {isLoading ? 'Opslaan...' : 'Opslaan'}
           </button>
@@ -157,17 +161,14 @@ export default function EditNote() {
 
       <div className="block">
         <form id="note-form" onSubmit={handleSubmit}>
-          <NoteFields formData={formData} onChange={setFormData} customerOptions={customerOptions} />
+          <NoteFields
+            formData={formData}
+            onChange={setFormData}
+            customerOptions={customerOptions}
+            errors={showErrors ? validateNote(formData) : {}}
+          />
         </form>
 
-        <div className="row-section">
-          <div className="information">
-            <span className="title">Geschiedenis</span>
-          </div>
-          <div className="placeholder">
-            <p>Aangemaakt op {formatDateTime(note.created_at)}</p>
-            {note.updated_at !== note.created_at && <p>Laatst bijgewerkt op {formatDateTime(note.updated_at)}</p>}
-          </div>
         </div>
       </div>
     </Layout>

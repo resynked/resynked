@@ -9,6 +9,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import type { Customer, Note } from '@/lib/supabase';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { QUOTE_STATUS } from '@/lib/constants';
+import { toDisplayHtml } from '@/lib/richtext';
 import Table from '@/components/Table';
 import { SkeletonForm } from '@/components/Skeleton';
 
@@ -495,7 +496,8 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                         </h4>
                         <span>{formatDate(note.created_at)}</span>
                       </div>
-                      <p>{note.content}</p>
+                      {/* Opgemaakt uit de teksteditor; oude notities als platte tekst gaan ook goed */}
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: toDisplayHtml(note.content) }} />
                     </div>
                   ))
                 )}

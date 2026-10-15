@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
-import NoteFields from '@/components/NoteFields';
+import NoteFields, { validateNote } from '@/components/NoteFields';
 import type { Customer } from '@/lib/supabase';
 import { getCustomerOptionLabel } from '@/lib/utils';
 
@@ -16,6 +16,8 @@ export default function NewNote() {
     content: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  // Pas na de eerste keer opslaan tonen wat er ontbreekt, niet al bij het openen
+  const [showErrors, setShowErrors] = useState(false);
 
   // Check if customer_id was passed via query params
   useEffect(() => {
@@ -34,11 +36,6 @@ export default function NewNote() {
       const res = await fetch('/api/customers');
       const data = await res.json();
       setCustomers(data);
-
-      // If customer_id not set and we have customers, set first one
-      if (!formData.customer_id && data.length > 0) {
-        setFormData(prev => ({ ...prev, customer_id: String(data[0].id) }));
-      }
     } catch (error) {
       console.error('Error fetching customers:', error);
     }
@@ -46,6 +43,12 @@ export default function NewNote() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Ontbreekt er iets, dan rode randen en een melding in plaats van niets
+    setShowErrors(true);
+    if (Object.keys(validateNote(formData)).length > 0) {
+      toast.error('Nog niet compleet', 'Vul de gemarkeerde velden in');
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -95,7 +98,7 @@ export default function NewNote() {
             type="submit"
             form="note-form"
             className="button"
-            disabled={isLoading || !formData.title || !formData.content || !formData.customer_id}
+            disabled={isLoading}
           >
             {isLoading ? 'Opslaan...' : 'Opslaan'}
           </button>
@@ -104,7 +107,12 @@ export default function NewNote() {
 
       <div className="block">
         <form id="note-form" onSubmit={handleSubmit}>
-          <NoteFields formData={formData} onChange={setFormData} customerOptions={customerOptions} />
+          <NoteFields
+            formData={formData}
+            onChange={setFormData}
+            customerOptions={customerOptions}
+            errors={showErrors ? validateNote(formData) : {}}
+          />
         </form>
       </div>
     </Layout>

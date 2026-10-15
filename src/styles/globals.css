@@ -351,11 +351,10 @@ button[data-label]:hover::after {display: block;}
 .table-container .data-table tr:last-of-type td {border-bottom: 0;}
 .table-container .data-table tr.selected, .table-container .data-table tr:hover {background: var(--color3);}
 
-/* Een cel met een titel en daaronder één regel uitleg, zoals bij Notities */
-.table-container .data-table td.note-cell {padding-top: var(--space10); padding-bottom: var(--space10); line-height: 1.5; max-width: 0; width: 60%;}
+/* De titel van een notitie in de lijst, afgekapt als hij te lang is */
+.table-container .data-table td.note-cell {line-height: 1.5; max-width: 0; width: 60%;}
 .table-container .data-table td.note-cell .title {display: block; font-weight: 500; color: var(--font-color1); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .table-container .data-table td.note-cell .title:hover {text-decoration: underline;}
-.table-container .data-table td.note-cell .description {display: block; font-size: var(--fontsize2); color: var(--font-color2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
 .table-container .data-table tr td.actions {text-align: right;}
 .table-container .data-table tr td.actions .action-dropdown {position: relative;}
@@ -425,6 +424,10 @@ button[data-label]:hover::after {display: block;}
 .row-section .information .description {color: var(--font-color2); font-size: var(--fontsize2);}
 .row-section > div > *:first-child {margin-top: 0;}
 .row-section > div > *:last-child {margin-bottom: 0;}
+
+/* Een verplicht veld dat nog leeg is: rode rand en eronder wat er mist */
+input[aria-invalid="true"], .invalid .select .control, .invalid .rich-editor {border-color: var(--color6);}
+.field-error {margin: var(--space5) 0 0 0; font-size: var(--fontsize2); color: var(--color6);}
 .row-section + h3, h2 + h3 {margin: var(--space20) 0 var(--space5) 0;}
 
 h2 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}

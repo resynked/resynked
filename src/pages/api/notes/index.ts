@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getNotes, createNote } from '@/lib/db';
+import { isRichTextEmpty, sanitizeRichText } from '@/lib/richtext';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -22,9 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { customer_id, title, content } = req.body;
+      const { customer_id, title } = req.body;
+      // De notitie komt als HTML uit de teksteditor; alleen de toegestane opmaak blijft
+      const content = sanitizeRichText(String(req.body.content || ''));
 
-      if (!customer_id || !title || !content) {
+      if (!customer_id || !String(title || '').trim() || isRichTextEmpty(content)) {
         return res.status(400).json({ error: 'Customer ID, title, and content are required' });
       }
 

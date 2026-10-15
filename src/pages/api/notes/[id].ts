@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { getNote, updateNote, deleteNote } from '@/lib/db';
+import { sanitizeRichText } from '@/lib/richtext';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -28,7 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const updates: any = {};
       if (title !== undefined) updates.title = title;
-      if (content !== undefined) updates.content = content;
+      // De notitie komt als HTML uit de teksteditor; alleen de toegestane opmaak blijft
+      if (content !== undefined) updates.content = sanitizeRichText(String(content));
       if (customer_id !== undefined) updates.customer_id = parseInt(customer_id);
 
       const note = await updateNote(id, tenantId, updates);

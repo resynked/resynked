@@ -49,7 +49,8 @@ export default function Notes() {
       const term = searchTerm.toLowerCase();
       const filtered = notes.filter((note) =>
         note.title.toLowerCase().includes(term) ||
-        note.content.toLowerCase().includes(term) ||
+        // De inhoud is HTML; zoeken in de tekst, niet in de tags
+        note.content.replace(/<[^>]*>/g, ' ').toLowerCase().includes(term) ||
         (note.customer ? getCustomerDisplayName(note.customer).toLowerCase().includes(term) : false)
       );
       setFilteredNotes(filtered);
@@ -227,7 +228,6 @@ export default function Notes() {
                 <Link href={`/notes/${note.id}`} className="title">
                   {note.title}
                 </Link>
-                <span className="description">{note.content}</span>
               </td>
               <td>
                 {note.customer ? (
