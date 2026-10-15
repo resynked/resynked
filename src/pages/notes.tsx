@@ -4,6 +4,7 @@ import Table from '@/components/Table';
 import Pagination from '@/components/Pagination';
 import SelectionBar from '@/components/SelectionBar';
 import ToolButton from '@/components/ToolButton';
+import SearchInput from '@/components/SearchInput';
 import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
 import { Ellipsis, Check, Trash2, Search, FilePen } from 'lucide-react';
@@ -146,16 +147,7 @@ export default function Notes() {
       <div className="header">
         <h1>Notities</h1>
         <div className="actions">
-          <label className="search">
-            <Search size={15} />
-            <input
-              type="search"
-              value={searchTerm}
-              placeholder="Zoeken in notities"
-              aria-label="Zoeken in notities"
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </label>
+          <SearchInput value={searchTerm} label="Zoeken in notities" onChange={setSearchTerm} />
           <Link href="/notes/new" className="button">
             Notitie toevoegen
           </Link>

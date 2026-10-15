@@ -29,6 +29,7 @@ import MailBody from '@/components/MailBody';
 import MailAttachments from '@/components/MailAttachments';
 import MailComposer, { type ComposerMode } from '@/components/MailComposer';
 import QuoteFromMail from '@/components/QuoteFromMail';
+import SearchInput from '@/components/SearchInput';
 import Toggle from '@/components/Toggle';
 import ToolButton from '@/components/ToolButton';
 import SelectionBar from '@/components/SelectionBar';
@@ -625,19 +626,14 @@ export default function InboxPage() {
               </div>
             </div>
 
-            <label className="search">
-              <Search size={15} />
-              <input
-                type="search"
-                value={searchInput}
-                placeholder="Zoeken in je mail"
-                aria-label="Zoeken in je mail"
-                onChange={(event) => setSearchInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') setSearch(searchInput.trim());
-                }}
-              />
-            </label>
+            <SearchInput
+              value={searchInput}
+              label="Zoeken in je mail"
+              onChange={setSearchInput}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') setSearch(searchInput.trim());
+              }}
+            />
 
             {folder === INBOX_FOLDER && !search && categories.length > 0 && (
               <div className="tabs" role="tablist">
