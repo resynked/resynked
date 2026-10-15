@@ -123,7 +123,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .login-wrapper .login-block input {margin: 0 0 var(--space10) 0; padding: var(--space15);}
 .login-wrapper .login-block input:focus-visible {border-color: var(--color1);}
 .login-wrapper .login-block .button {width: 100%; display: block; box-sizing: border-box; padding: var(--space15);}
-.login-wrapper .login-block .register {margin: var(--space20) 0; text-align: center;}
+.login-wrapper .login-block .register {margin: var(--space20) 0; text-align: center; display: none;}
 
 .register-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
 .register-wrapper .register-block {background: var(--color2); padding: var(--space50); box-sizing: border-box; border-radius: var(--border-radius1); border: 1px solid var(--border-color); max-width: 550px; margin: 0 auto;}
