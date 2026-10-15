@@ -1,6 +1,5 @@
 import {
   INBOX_FOLDER,
-  MAIL_CATEGORIES,
   attachmentUrl,
   type MailAttachment,
   type CalendarEvent,
@@ -170,21 +169,18 @@ const SYSTEM_LABELS: { id: string; name: string; kind: MailFolderKind }[] = [
   { id: 'TRASH', name: 'Prullenbak', kind: 'trash' },
 ];
 
-/** De tabbladen van de Gmail-inbox, zoals Gmail ze in zijn zoekopdracht kent */
-const GMAIL_CATEGORIES = new Set(MAIL_CATEGORIES.google.map(category => category.id));
-
 /**
- * Primair is in Gmail alles wat niet in een ander tabblad staat. Vragen naar
- * category:primary geeft niets terug als de tabbladen uit staan, of als Gmail
- * een mail nog niet heeft ingedeeld; zo komt die mail gewoon bij Primair.
+ * De tabbladen van de Gmail-inbox. Gmail zet op elke mail een vast label voor
+ * het tabblad waar hij in hoort; op dat label filteren geeft precies dezelfde
+ * indeling als in Gmail zelf. (Zoeken met category:... werkt via de API niet
+ * betrouwbaar.)
  */
-const PRIMARY_QUERY = '-category:promotions -category:social -category:updates -category:forums';
-
-/** De zoekopdracht voor een tabblad van de inbox */
-function categoryQuery(category: string): string {
-  if (category === 'primary') return PRIMARY_QUERY;
-  return GMAIL_CATEGORIES.has(category) ? `category:${category}` : '';
-}
+const CATEGORY_LABELS: Record<string, string> = {
+  primary: 'CATEGORY_PERSONAL',
+  promotions: 'CATEGORY_PROMOTIONS',
+  social: 'CATEGORY_SOCIAL',
+  updates: 'CATEGORY_UPDATES',
+};
 
 /** De inbox heet bij ons overal "inbox"; Gmail noemt hem INBOX. */
 function labelId(folder: string): string {
@@ -264,13 +260,21 @@ export const google: MailProvider = {
     const params = new URLSearchParams({ maxResults: '25' });
     // Zoeken gaat door alle mail heen, zoals in Gmail zelf
     if (!search) params.set('labelIds', labelId(folder));
-    // De inbox per tabblad, zoals Gmail hem indeelt: reclame staat niet bij Primair
-    const tab = !search && folder === INBOX_FOLDER && category ? categoryQuery(category) : '';
-    const query = [search?.trim(), tab, unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
+    // De inbox per tabblad: Gmail geeft alleen wat beide labels heeft
+    const tab = !search && folder === INBOX_FOLDER && category ? CATEGORY_LABELS[category] : undefined;
+    if (tab) params.append('labelIds', tab);
+    const query = [search?.trim(), unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
     if (query) params.set('q', query);
     if (pageToken) params.set('pageToken', pageToken);
 
-    const page = await apiFetch(`${API}/threads?${params}`, accessToken);
+    let page = await apiFetch(`${API}/threads?${params}`, accessToken);
+    // Staan de tabbladen in Gmail uit, dan deelt Gmail niets in. Primair is
+    // dan gewoon de hele inbox, net als in Gmail zelf
+    if (category === 'primary' && tab && !pageToken && !page.threads?.length && !unreadOnly) {
+      params.delete('labelIds');
+      params.set('labelIds', 'INBOX');
+      page = await apiFetch(`${API}/threads?${params}`, accessToken);
+    }
     const threads: { id: string; snippet?: string }[] = page.threads || [];
 
     // Per gesprek alleen de koppen, niet de hele inhoud: dat scheelt veel
@@ -326,7 +330,8 @@ export const google: MailProvider = {
     let count = 0;
     let pageToken: string | undefined;
     do {
-      const params = new URLSearchParams({ q: `in:inbox is:unread ${PRIMARY_QUERY}`, maxResults: '500' });
+      const params = new URLSearchParams({ maxResults: '500' });
+      ['INBOX', CATEGORY_LABELS.primary, 'UNREAD'].forEach(label => params.append('labelIds', label));
       if (pageToken) params.set('pageToken', pageToken);
       const page = await apiFetch(`${API}/threads?${params}`, accessToken);
       count += (page.threads || []).length;
