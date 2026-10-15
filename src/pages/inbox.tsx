@@ -3,6 +3,8 @@ import Link from 'next/link';
 import {
   Archive,
   Check,
+  ChevronDown,
+  ChevronUp,
   File,
   FilePlus2,
   Flag,
@@ -34,7 +36,7 @@ import { useMailAccount } from '@/hooks/useMailAccount';
 import { useAiAccount } from '@/hooks/useAiAccount';
 import { decreaseMailUnread, setMailUnread } from '@/hooks/useMailUnread';
 import { isRichTextEmpty } from '@/lib/richtext';
-import { displayName, initials, timeAgo } from '@/lib/mail/display';
+import { displayName, initials, mailFullDate, mailListDate, mailMessageDate } from '@/lib/mail/display';
 import {
   INBOX_FOLDER,
   type MailAddress,
@@ -56,6 +58,10 @@ const FOLDER_ICONS: Record<MailFolderKind, typeof Inbox> = {
   custom: Tag,
 };
 
+/** Zoveel labels staan er in beeld; de rest komt tevoorschijn met "Meer tonen" */
+const LABELS_VISIBLE = 8;
+const LABELS_COLLAPSED_KEY = 'khance:mail-labels-collapsed';
+
 /**
  * De Inbox: de mail uit Gmail of Outlook. Links de mappen of labels zoals de
  * gebruiker ze daar heeft ingericht, dan de gesprekken, en rechts het gesprek
@@ -71,6 +77,8 @@ export default function InboxPage() {
   const [convertingThread, setConvertingThread] = useState<string | null>(null);
 
   const [folders, setFolders] = useState<MailFolder[]>([]);
+  const [labelsCollapsed, setLabelsCollapsed] = useState(false);
+  const [showAllLabels, setShowAllLabels] = useState(false);
   const [folder, setFolder] = useState(INBOX_FOLDER);
   const [searchInput, setSearchInput] = useState('');
   // Waarop echt gezocht wordt; dat loopt even achter op het typen
@@ -171,6 +179,26 @@ export default function InboxPage() {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 400);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Ingeklapte labels blijven ingeklapt, ook na het verversen
+  useEffect(() => {
+    try {
+      setLabelsCollapsed(localStorage.getItem(LABELS_COLLAPSED_KEY) === '1');
+    } catch {
+      // Zonder opslag (privévenster) staan ze gewoon open
+    }
+  }, []);
+
+  const toggleLabels = () => {
+    setLabelsCollapsed(collapsed => {
+      try {
+        localStorage.setItem(LABELS_COLLAPSED_KEY, collapsed ? '0' : '1');
+      } catch {
+        // Zonder opslag geldt de keuze alleen voor nu
+      }
+      return !collapsed;
+    });
+  };
 
   const resetComposer = () => {
     setComposerMode('reply');
@@ -438,29 +466,74 @@ export default function InboxPage() {
 
   const currentFolder = folders.find(f => f.id === folder);
 
+  // De vaste mappen bovenaan, de eigen labels eronder. Van een lange lijst
+  // labels staan de eerste in beeld, plus het label dat nu open staat
+  const systemFolders = folders.filter(f => f.kind !== 'custom');
+  const labels = folders.filter(f => f.kind === 'custom');
+  const visibleLabels = showAllLabels
+    ? labels
+    : labels.filter((f, index) => index < LABELS_VISIBLE || (!search && f.id === folder));
+
+  const renderFolder = (f: MailFolder) => {
+    const Icon = FOLDER_ICONS[f.kind];
+    // Een sublabel als "Auto/Atheco" springt in onder "Auto", zoals in Gmail
+    const parts = f.name.split('/');
+    const depth = f.kind === 'custom' ? Math.min(parts.length - 1, 3) : 0;
+    return (
+      <button
+        key={f.id}
+        type="button"
+        className={!search && f.id === folder ? 'active' : ''}
+        data-depth={depth || undefined}
+        title={f.name}
+        onClick={() => chooseFolder(f.id)}
+      >
+        <Icon size={15} />
+        <span className="name">{depth ? parts[parts.length - 1] : f.name}</span>
+        {!!f.unread && f.kind !== 'sent' && f.kind !== 'drafts' && <span className="count">{f.unread}</span>}
+      </button>
+    );
+  };
+
   return (
     <Layout title="Inbox">
       <div className="inbox">
         <nav className="inbox-folders">
-          {folders.length === 0
-            ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height="1.75rem" style={{ marginBottom: 'var(--space5)' }} />)
-            : folders.map(f => {
-                const Icon = FOLDER_ICONS[f.kind];
-                return (
+          {folders.length === 0 ? (
+            Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height="1.75rem" style={{ marginBottom: 'var(--space5)' }} />)
+          ) : (
+            <>
+              <span className="section-title">Mappen</span>
+              {systemFolders.map(f => renderFolder(f))}
+
+              {labels.length > 0 && (
+                <>
                   <button
-                    key={f.id}
                     type="button"
-                    className={!search && f.id === folder ? 'active' : ''}
-                    onClick={() => chooseFolder(f.id)}
+                    className={`section-title${labelsCollapsed ? ' collapsed' : ''}`}
+                    aria-expanded={!labelsCollapsed}
+                    onClick={toggleLabels}
                   >
-                    <Icon size={15} />
-                    <span className="name">{f.name}</span>
-                    {!!f.unread && f.kind !== 'sent' && f.kind !== 'drafts' && (
-                      <span className="count">{f.unread}</span>
-                    )}
+                    {account?.provider === 'microsoft' ? 'Eigen mappen' : 'Labels'}
+                    <ChevronDown size={14} />
                   </button>
-                );
-              })}
+                  {!labelsCollapsed && (
+                    <>
+                      {visibleLabels.map(f => renderFolder(f))}
+                      {labels.length > LABELS_VISIBLE && (
+                        <button type="button" className="more" onClick={() => setShowAllLabels(show => !show)}>
+                          {showAllLabels ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                          <span className="name">
+                            {showAllLabels ? 'Minder tonen' : `Meer tonen (${labels.length - visibleLabels.length})`}
+                          </span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
         </nav>
 
         <div className="inbox-list">
@@ -563,7 +636,7 @@ export default function InboxPage() {
                     {/* Afzender en tijd op één regel, zodat de lijst compact blijft */}
                     <span className="top">
                       <span className="from">{displayName(item.from)}</span>
-                      <span className="meta">{timeAgo(item.date)}</span>
+                      <span className="meta" title={mailFullDate(item.date)}>{mailListDate(item.date)}</span>
                     </span>
                     <span className="subject">{item.subject}</span>
                     <span className="snippet">{item.snippet}</span>
@@ -636,7 +709,7 @@ export default function InboxPage() {
                         </span>
                       </span>
                       <span className="message-actions">
-                        <span className="meta">{timeAgo(message.date)}</span>
+                        <span className="meta" title={mailFullDate(message.date)}>{mailMessageDate(message.date)}</span>
                         {/* Gmail kent een ster, Outlook een vlag; het werkt hetzelfde */}
                         <ToolButton
                           title={

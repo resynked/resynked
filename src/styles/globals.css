@@ -690,6 +690,19 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-folders button:not(.button) {display: flex; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); font-size: 13px; color: var(--font-color2); border-radius: var(--border-radius1);}
 .inbox .inbox-folders button:not(.button):hover, .inbox .inbox-folders button.active {background-color: #efefef; color: var(--font-color1);}
 .inbox .inbox-folders button .name {flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.inbox .inbox-folders button {flex: 0 0 auto;}
+
+/* Tussenkopjes: Mappen, en Labels om in en uit te klappen */
+.inbox .inbox-folders .section-title {display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space10); margin: 0 0 var(--space5) 0; font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
+.inbox .inbox-folders button.section-title {margin: var(--space20) 0 var(--space5) 0; padding: 2px var(--space10); font-size: var(--fontsize2);}
+.inbox .inbox-folders .section-title svg {transition: transform .2s ease;}
+.inbox .inbox-folders .section-title.collapsed svg {transform: rotate(-90deg);}
+.inbox .inbox-folders button.more {font-size: var(--fontsize2); font-weight: 500;}
+
+/* Een sublabel springt per niveau een stukje in */
+.inbox .inbox-folders button[data-depth="1"] {padding-left: calc(var(--space10) + var(--space15));}
+.inbox .inbox-folders button[data-depth="2"] {padding-left: calc(var(--space10) + 2 * var(--space15));}
+.inbox .inbox-folders button[data-depth="3"] {padding-left: calc(var(--space10) + 3 * var(--space15));}
 .inbox .list-header h1 {margin: 0;}
 .inbox .list-header .actions {display: flex; align-items: center; gap: var(--space10);}
 .inbox .list-loading, .inbox .list-empty, .inbox .list-more {padding: var(--space20); margin: 0; color: var(--font-color2); text-align: center;}
@@ -724,7 +737,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message {padding: 0 0 var(--space20) 0; margin: 0 0 var(--space20) 0; border-bottom: 1px solid var(--border-color);}
 .inbox .message-header {display: grid; grid-template-columns: 30px 1fr auto; gap: var(--space10); align-items: center; margin: 0 0 var(--space15) 0;}
 .inbox .message-actions {display: flex; align-items: center; gap: 2px;}
-.inbox .message-actions .meta {margin-right: var(--space5);}
+.inbox .message-actions .meta {margin-right: var(--space5); white-space: nowrap;}
 .inbox .message-actions button, .inbox .composer .composer-header .actions button, .inbox .composer .composer-footer > button:not(.button) {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
 .inbox .message-actions button:hover, .inbox .composer .composer-header .actions button:hover, .inbox .composer .composer-footer > button:not(.button):hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-header .sender {display: flex; flex-direction: column; min-width: 0;}
