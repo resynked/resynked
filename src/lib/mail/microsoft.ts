@@ -1,4 +1,4 @@
-import { INBOX_FOLDER, attachmentUrl, type MailAttachment, type CalendarEvent, type CalendarEventInput, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
+import { INBOX_FOLDER, MAIL_CATEGORIES, attachmentUrl, type MailAttachment, type CalendarEvent, type CalendarEventInput, type MailAddress, type MailFolder, type MailFolderKind, type MailProvider } from './types';
 import { apiFetch, replaceCidImages, requestTokens, textToHtml } from './utils';
 
 /**
@@ -158,7 +158,7 @@ export const microsoft: MailProvider = {
     return me.mail || me.userPrincipalName;
   },
 
-  async list(accessToken, { folder, unreadOnly, search, pageToken }) {
+  async list(accessToken, { folder, category, unreadOnly, search, pageToken }) {
     // De volgende pagina is een volledig adres van Graph; alleen dat accepteren
     let url: string;
     if (pageToken) {
@@ -179,8 +179,14 @@ export const microsoft: MailProvider = {
         $select: LIST_FIELDS,
         $orderby: 'receivedDateTime desc',
       });
+      // De inbox per tabblad, zoals Outlook hem indeelt in Prioriteit en Overige
+      const tab =
+        folder === INBOX_FOLDER && category && MAIL_CATEGORIES.microsoft.some(c => c.id === category)
+          ? `inferenceClassification eq '${category}'`
+          : '';
+      const filters = [tab, unreadOnly ? 'isRead eq false' : ''].filter(Boolean);
       // Graph wil het veld waarop gesorteerd wordt ook vooraan in het filter
-      if (unreadOnly) params.set('$filter', 'receivedDateTime ge 1900-01-01T00:00:00Z and isRead eq false');
+      if (filters.length) params.set('$filter', ['receivedDateTime ge 1900-01-01T00:00:00Z', ...filters].join(' and '));
       url = `${folderPath(folder)}/messages?${params}`;
     }
 
@@ -304,6 +310,21 @@ export const microsoft: MailProvider = {
           })
         )
     );
+  },
+
+  async markUnread(accessToken, id) {
+    // Zoals Outlook zelf: alleen dit bericht, niet het hele gesprek
+    await apiFetch(`${API}/messages/${encodeURIComponent(id)}`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify({ isRead: false }),
+    });
+  },
+
+  async setSpam(accessToken, id, spam) {
+    await apiFetch(`${API}/messages/${encodeURIComponent(id)}/move`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ destinationId: spam ? 'junkemail' : 'inbox' }),
+    });
   },
 
   async reply(accessToken, id, html, ownAddress) {

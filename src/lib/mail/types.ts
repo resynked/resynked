@@ -80,8 +80,28 @@ export interface MailFolder {
 /** De map waarmee de inbox opent. */
 export const INBOX_FOLDER = 'inbox';
 
+/**
+ * De tabbladen in de inbox, zoals de aanbieder ze zelf indeelt: Gmail sorteert
+ * op Primair, Reclame, Sociaal en Updates, Outlook op Prioriteit en Overige.
+ * De eerste is waar de inbox mee opent.
+ */
+export const MAIL_CATEGORIES: Record<MailProviderName, { id: string; name: string }[]> = {
+  google: [
+    { id: 'primary', name: 'Primair' },
+    { id: 'promotions', name: 'Reclame' },
+    { id: 'social', name: 'Sociaal' },
+    { id: 'updates', name: 'Updates' },
+  ],
+  microsoft: [
+    { id: 'focused', name: 'Prioriteit' },
+    { id: 'other', name: 'Overige' },
+  ],
+};
+
 export interface MailListOptions {
   folder: string;
+  /** Alleen in de inbox: welk tabblad, zie MAIL_CATEGORIES */
+  category?: string;
   unreadOnly: boolean;
   /** Zoeken in alle mail; dan geldt de map niet */
   search?: string;
@@ -148,6 +168,10 @@ export interface MailProvider {
   signature(accessToken: string, ownAddress: string): Promise<string>;
   thread(accessToken: string, id: string): Promise<MailThread>;
   markRead(accessToken: string, id: string): Promise<void>;
+  /** Weer als ongelezen, zodat het in Gmail of Outlook ook weer vet staat */
+  markUnread(accessToken: string, id: string): Promise<void>;
+  /** Naar Spam of Ongewenste e-mail, of daar weer uit terug naar de inbox */
+  setSpam(accessToken: string, id: string, spam: boolean): Promise<void>;
   /** Antwoordt op het laatste bericht in het gesprek; komt ook in Verzonden te staan */
   reply(accessToken: string, id: string, html: string, ownAddress: string): Promise<void>;
   /** Uit de inbox halen, maar bewaren: Archief in Outlook, "Alle e-mail" in Gmail */

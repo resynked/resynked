@@ -9,7 +9,8 @@ import { isRichTextEmpty, sanitizeRichText } from '@/lib/richtext';
  * De inbox, een pagina tegelijk. Wordt rechtstreeks bij Gmail of Outlook
  * opgehaald; er wordt niets van de mail bij ons bewaard.
  *
- * ?folder=... welke map (standaard de inbox), ?q=... zoeken in alle mail,
+ * ?folder=... welke map (standaard de inbox), ?category=... welk tabblad van
+ * de inbox (Primair, Reclame, Prioriteit...), ?q=... zoeken in alle mail,
  * ?unread=1 alleen ongelezen, ?page=... de volgende pagina.
  *
  * POST verstuurt een nieuw bericht: { to: ['iemand@voorbeeld.nl'], cc, bcc, subject, html }.
@@ -28,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const page = await provider.list(accessToken, {
       folder: text(req.query.folder) || INBOX_FOLDER,
+      category: text(req.query.category),
       search: text(req.query.q),
       unreadOnly: req.query.unread === '1',
       pageToken: typeof req.query.page === 'string' && req.query.page ? req.query.page : undefined,

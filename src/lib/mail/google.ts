@@ -1,5 +1,6 @@
 import {
   INBOX_FOLDER,
+  MAIL_CATEGORIES,
   attachmentUrl,
   type MailAttachment,
   type CalendarEvent,
@@ -169,6 +170,9 @@ const SYSTEM_LABELS: { id: string; name: string; kind: MailFolderKind }[] = [
   { id: 'TRASH', name: 'Prullenbak', kind: 'trash' },
 ];
 
+/** De tabbladen van de Gmail-inbox, zoals Gmail ze in zijn zoekopdracht kent */
+const GMAIL_CATEGORIES = new Set(MAIL_CATEGORIES.google.map(category => category.id));
+
 /** De inbox heet bij ons overal "inbox"; Gmail noemt hem INBOX. */
 function labelId(folder: string): string {
   return folder === INBOX_FOLDER ? 'INBOX' : folder;
@@ -243,11 +247,13 @@ export const google: MailProvider = {
     return profile.emailAddress;
   },
 
-  async list(accessToken, { folder, unreadOnly, search, pageToken }) {
+  async list(accessToken, { folder, category, unreadOnly, search, pageToken }) {
     const params = new URLSearchParams({ maxResults: '25' });
     // Zoeken gaat door alle mail heen, zoals in Gmail zelf
     if (!search) params.set('labelIds', labelId(folder));
-    const query = [search?.trim(), unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
+    // De inbox per tabblad, zoals Gmail hem indeelt: reclame staat niet bij Primair
+    const tab = !search && folder === INBOX_FOLDER && category && GMAIL_CATEGORIES.has(category) ? `category:${category}` : '';
+    const query = [search?.trim(), tab, unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
     if (query) params.set('q', query);
     if (pageToken) params.set('pageToken', pageToken);
 
@@ -302,8 +308,18 @@ export const google: MailProvider = {
   },
 
   async unreadCount(accessToken) {
-    const inbox = await apiFetch(`${API}/labels/INBOX`, accessToken);
-    return Number(inbox.threadsUnread) || 0;
+    // Gmail telt bij de inbox alleen het ongelezen in Primair, niet de reclame.
+    // Gmail geeft dat getal niet los; we tellen de gesprekken zelf, tot 1000
+    let count = 0;
+    let pageToken: string | undefined;
+    do {
+      const params = new URLSearchParams({ q: 'in:inbox category:primary is:unread', maxResults: '500' });
+      if (pageToken) params.set('pageToken', pageToken);
+      const page = await apiFetch(`${API}/threads?${params}`, accessToken);
+      count += (page.threads || []).length;
+      pageToken = page.nextPageToken;
+    } while (pageToken && count < 1000);
+    return count;
   },
 
   async signature(accessToken, ownAddress) {
@@ -330,6 +346,23 @@ export const google: MailProvider = {
     await apiFetch(`${API}/threads/${encodeURIComponent(id)}/modify`, accessToken, {
       method: 'POST',
       body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
+    });
+  },
+
+  async markUnread(accessToken, id) {
+    await apiFetch(`${API}/threads/${encodeURIComponent(id)}/modify`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify({ addLabelIds: ['UNREAD'] }),
+    });
+  },
+
+  async setSpam(accessToken, id, spam) {
+    // Spam is in Gmail een label; de inbox eraf, of er juist weer op
+    await apiFetch(`${API}/threads/${encodeURIComponent(id)}/modify`, accessToken, {
+      method: 'POST',
+      body: JSON.stringify(
+        spam ? { addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] } : { addLabelIds: ['INBOX'], removeLabelIds: ['SPAM'] }
+      ),
     });
   },
 

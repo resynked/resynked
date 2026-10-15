@@ -5,9 +5,11 @@ import { openMailbox, sendMailError } from '@/lib/mail';
 
 /**
  * Eén gesprek. GET haalt het op met alle berichten erin. POST met
- * { action: 'archive' | 'trash' } archiveert of verwijdert het. PATCH markeert het
- * als gelezen, of zet met { messageId, starred } een ster (Gmail) of vlag
- * (Outlook) op één bericht — ook in Gmail of Outlook zelf.
+ * { action: 'archive' | 'trash' | 'spam' | 'notspam' } archiveert of verwijdert
+ * het, of zet het in de spam of haalt het daar weer uit. PATCH markeert het als
+ * gelezen, met { unread: true } weer als ongelezen, of zet met { messageId,
+ * starred } een ster (Gmail) of vlag (Outlook) op één bericht — ook in Gmail
+ * of Outlook zelf.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -27,12 +29,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { action } = req.body || {};
       if (action === 'archive') await provider.archive(accessToken, id);
       else if (action === 'trash') await provider.trash(accessToken, id);
+      else if (action === 'spam' || action === 'notspam') await provider.setSpam(accessToken, id, action === 'spam');
       else return res.status(400).json({ error: 'Onbekende actie' });
       return res.status(200).json({ ok: true });
     }
 
     if (req.method === 'PATCH') {
-      const { messageId, starred } = req.body || {};
+      const { messageId, starred, unread } = req.body || {};
 
       if (typeof starred === 'boolean') {
         if (typeof messageId !== 'string' || !messageId) return res.status(400).json({ error: 'Invalid message' });
@@ -40,7 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ ok: true });
       }
 
-      await provider.markRead(accessToken, id);
+      if (unread === true) await provider.markUnread(accessToken, id);
+      else await provider.markRead(accessToken, id);
       return res.status(200).json({ ok: true });
     }
 

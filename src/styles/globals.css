@@ -388,8 +388,8 @@ button[data-label]:hover::after {display: block;}
 .grid + .grid {margin: var(--space20) 0 0 0;}
 
 .tabs {background: var(--color4); border-radius: var(--border-radius1); padding: var(--space5); box-sizing: border-box; display: inline-flex; margin: 0 0 var(--space30) 0;}
-.tabs a {text-align: center; text-decoration: none; color: inherit; font-size: 13px; border-radius: var(--border-radius1); padding: 2px var(--space30); box-sizing: border-box;}
-.tabs a.active {background: var(--color2);}
+.tabs a, .tabs button {text-align: center; text-decoration: none; color: inherit; font-size: 13px; border-radius: var(--border-radius1); padding: 2px var(--space30); box-sizing: border-box;}
+.tabs a.active, .tabs button.active {background: var(--color2);}
 
 .form-section {margin: 0 0 var(--space10) 0; display: flex ; flex-direction: column; gap: var(--space10);}
 .form-section .form-row {display: flex; gap: var(--space10);}
@@ -694,7 +694,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Tussenkopjes: Mappen, en Labels om in en uit te klappen */
 .inbox .inbox-folders .section-title {display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space10); margin: 0 0 var(--space5) 0; font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
-.inbox .inbox-folders button.section-title {margin: var(--space20) 0 var(--space5) 0; padding: 2px var(--space10); font-size: var(--fontsize2);}
+.inbox .inbox-folders button.section-title {margin: var(--space10) 0 var(--space5) 0; padding: var(--space5) var(--space10); font-size: var(--fontsize2);}
 .inbox .inbox-folders .section-title svg {transition: transform .2s ease;}
 .inbox .inbox-folders .section-title.collapsed svg {transform: rotate(-90deg);}
 .inbox .inbox-folders button.more {font-size: var(--fontsize2); font-weight: 500;}
@@ -704,6 +704,11 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-folders button[data-depth="2"] {padding-left: calc(var(--space10) + 2 * var(--space15));}
 .inbox .inbox-folders button[data-depth="3"] {padding-left: calc(var(--space10) + 3 * var(--space15));}
 .inbox .list-header h1 {margin: 0;}
+/* De tabbladen van de inbox (Primair, Reclame...) over de hele breedte van de lijst */
+.inbox .list-header .tabs {display: flex; margin: 0; padding: 3px;}
+.inbox .list-header .tabs button {flex: 1; min-width: 0; padding: 2px var(--space5); color: var(--font-color2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.inbox .list-header .tabs button:hover, .inbox .list-header .tabs button.active {color: var(--font-color1);}
+.inbox .list-header .tabs button.active {box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);}
 .inbox .list-header .actions {display: flex; align-items: center; gap: var(--space10);}
 .inbox .list-loading, .inbox .list-empty, .inbox .list-more {padding: var(--space20); margin: 0; color: var(--font-color2); text-align: center;}
 

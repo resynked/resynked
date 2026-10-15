@@ -10,6 +10,8 @@ import {
   Flag,
   Forward,
   Inbox,
+  Mail,
+  MailCheck,
   MailOpen,
   OctagonAlert,
   Plus,
@@ -39,6 +41,7 @@ import { isRichTextEmpty } from '@/lib/richtext';
 import { displayName, initials, mailFullDate, mailListDate, mailMessageDate } from '@/lib/mail/display';
 import {
   INBOX_FOLDER,
+  MAIL_CATEGORIES,
   type MailAddress,
   type MailFolder,
   type MailFolderKind,
@@ -62,6 +65,16 @@ const FOLDER_ICONS: Record<MailFolderKind, typeof Inbox> = {
 const LABELS_VISIBLE = 8;
 const LABELS_COLLAPSED_KEY = 'khance:mail-labels-collapsed';
 
+/** Wat je met een gesprek kunt doen waarna het uit de lijst verdwijnt */
+type RemoveAction = 'archive' | 'trash' | 'spam' | 'notspam';
+
+const REMOVED: Record<RemoveAction, { title: string; message: string; verb: string }> = {
+  archive: { title: 'Gearchiveerd', message: 'Het gesprek staat nu in je archief', verb: 'gearchiveerd' },
+  trash: { title: 'Verwijderd', message: 'Het gesprek staat nu in de prullenbak', verb: 'verwijderd' },
+  spam: { title: 'Gemarkeerd als spam', message: 'Het gesprek staat nu bij de spam', verb: 'als spam gemarkeerd' },
+  notspam: { title: 'Geen spam', message: 'Het gesprek staat weer in je inbox', verb: 'teruggezet naar de inbox' },
+};
+
 /**
  * De Inbox: de mail uit Gmail of Outlook. Links de mappen of labels zoals de
  * gebruiker ze daar heeft ingericht, dan de gesprekken, en rechts het gesprek
@@ -78,6 +91,10 @@ export default function InboxPage() {
 
   const [folders, setFolders] = useState<MailFolder[]>([]);
   const [labelsCollapsed, setLabelsCollapsed] = useState(false);
+  // Het tabblad van de inbox, zoals Gmail of Outlook hem indeelt
+  const categories = account ? MAIL_CATEGORIES[account.provider] : [];
+  const [category, setCategory] = useState('');
+  const activeCategory = category || categories[0]?.id || '';
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [folder, setFolder] = useState(INBOX_FOLDER);
   const [searchInput, setSearchInput] = useState('');
@@ -138,6 +155,7 @@ export default function InboxPage() {
   const loadList = useCallback(
     async (page?: string) => {
       const params = new URLSearchParams({ folder });
+      if (folder === INBOX_FOLDER && !search && activeCategory) params.set('category', activeCategory);
       if (search) params.set('q', search);
       if (unreadOnly) params.set('unread', '1');
       if (page) params.set('page', page);
@@ -156,7 +174,7 @@ export default function InboxPage() {
         setIsLoadingMore(false);
       }
     },
-    [folder, search, unreadOnly, request, toast]
+    [folder, activeCategory, search, unreadOnly, request, toast]
   );
 
   // Mappen en de handtekening één keer, zodra bekend is dat er een mailbox is
@@ -172,7 +190,7 @@ export default function InboxPage() {
   useEffect(() => {
     if (account) loadList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, folder, search, unreadOnly]);
+  }, [account, folder, activeCategory, search, unreadOnly]);
 
   // Zoeken zodra iemand even stopt met typen
   useEffect(() => {
@@ -258,7 +276,7 @@ export default function InboxPage() {
    * Archiveren of verwijderen. Het gesprek verdwijnt meteen uit de lijst;
    * lukt het bij de aanbieder niet, dan komt het terug.
    */
-  const removeThread = async (action: 'archive' | 'trash') => {
+  const removeThread = async (action: RemoveAction) => {
     if (!selectedId) return;
 
     const id = selectedId;
@@ -277,9 +295,33 @@ export default function InboxPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      toast.success(action === 'archive' ? 'Gearchiveerd' : 'Verwijderd', action === 'archive' ? 'Het gesprek staat nu in je archief' : 'Het gesprek staat nu in de prullenbak');
+      toast.success(REMOVED[action].title, REMOVED[action].message);
+      if (action === 'notspam') loadFolders();
     } catch (error: any) {
       setItems(previousItems);
+      toast.error('Inbox', error.message);
+    }
+  };
+
+  /** Weer als ongelezen, en terug naar de lijst: zo doet Gmail het ook */
+  const markUnread = async () => {
+    if (!selectedId) return;
+
+    const id = selectedId;
+    setItems(current => current.map(i => (i.id === id ? { ...i, unread: true } : i)));
+    setSelectedId(null);
+    setThread(null);
+    resetComposer();
+
+    try {
+      await request(`/api/mail/messages/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unread: true }),
+      });
+      loadFolders();
+    } catch (error: any) {
+      setItems(current => current.map(i => (i.id === id ? { ...i, unread: false } : i)));
       toast.error('Inbox', error.message);
     }
   };
@@ -293,13 +335,13 @@ export default function InboxPage() {
    * Iets doen met alle aangevinkte gesprekken. Ze verdwijnen (of worden
    * gelezen) meteen; wat bij de aanbieder mislukt, komt na het vernieuwen terug.
    */
-  const bulk = async (action: 'archive' | 'trash' | 'read') => {
+  const bulk = async (action: RemoveAction | 'read' | 'unread') => {
     const ids = checkedIds;
     const unreadCount = items.filter(i => ids.includes(i.id) && i.unread).length;
     setCheckedIds([]);
 
-    if (action === 'read') {
-      setItems(current => current.map(i => (ids.includes(i.id) ? { ...i, unread: false } : i)));
+    if (action === 'read' || action === 'unread') {
+      setItems(current => current.map(i => (ids.includes(i.id) ? { ...i, unread: action === 'unread' } : i)));
     } else {
       setItems(current => current.filter(i => !ids.includes(i.id)));
       if (selectedId && ids.includes(selectedId)) {
@@ -307,14 +349,14 @@ export default function InboxPage() {
         setThread(null);
       }
     }
-    if (folder === INBOX_FOLDER) for (let i = 0; i < unreadCount; i++) decreaseMailUnread();
+    if (folder === INBOX_FOLDER && action !== 'unread') for (let i = 0; i < unreadCount; i++) decreaseMailUnread();
 
     const results = await Promise.allSettled(
       ids.map(id =>
         request(
           `/api/mail/messages/${encodeURIComponent(id)}`,
-          action === 'read'
-            ? { method: 'PATCH' }
+          action === 'read' || action === 'unread'
+            ? { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ unread: action === 'unread' }) }
             : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) }
         )
       )
@@ -322,7 +364,8 @@ export default function InboxPage() {
 
     const failed = results.filter(r => r.status === 'rejected').length;
     const done = ids.length - failed;
-    const verb = action === 'archive' ? 'gearchiveerd' : action === 'trash' ? 'verwijderd' : 'als gelezen gemarkeerd';
+    const verb =
+      action === 'read' ? 'als gelezen gemarkeerd' : action === 'unread' ? 'als ongelezen gemarkeerd' : REMOVED[action].verb;
 
     if (failed) {
       toast.error('Niet alles gelukt', `${done} van de ${ids.length} gesprekken ${verb}`);
@@ -335,6 +378,7 @@ export default function InboxPage() {
 
   const chooseFolder = (id: string) => {
     setFolder(id);
+    setCategory('');
     setCheckedIds([]);
     setSearchInput('');
     setSearch('');
@@ -586,6 +630,28 @@ export default function InboxPage() {
                 }}
               />
             </label>
+
+            {folder === INBOX_FOLDER && !search && categories.length > 0 && (
+              <div className="tabs" role="tablist">
+                {categories.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={c.id === activeCategory}
+                    className={c.id === activeCategory ? 'active' : ''}
+                    onClick={() => {
+                      setCategory(c.id);
+                      setCheckedIds([]);
+                      setSelectedId(null);
+                      setThread(null);
+                    }}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {isLoadingList ? (
@@ -689,6 +755,20 @@ export default function InboxPage() {
                         <Archive size={15} />
                       </ToolButton>
                     )}
+                    {currentFolder?.kind === 'spam' ? (
+                      <ToolButton title="Geen spam" onClick={() => removeThread('notspam')}>
+                        <MailCheck size={15} />
+                      </ToolButton>
+                    ) : (
+                      currentFolder?.kind !== 'trash' && (
+                        <ToolButton title="Spam melden" onClick={() => removeThread('spam')}>
+                          <OctagonAlert size={15} />
+                        </ToolButton>
+                      )
+                    )}
+                    <ToolButton title="Markeren als ongelezen" onClick={markUnread}>
+                      <Mail size={15} />
+                    </ToolButton>
                     {currentFolder?.kind !== 'trash' && (
                       <ToolButton title="Verwijderen" className="delete" onClick={() => removeThread('trash')}>
                         <Trash2 size={15} />
@@ -790,6 +870,20 @@ export default function InboxPage() {
           <ToolButton title="Als gelezen markeren" onClick={() => bulk('read')}>
             <MailOpen size={15} />
           </ToolButton>
+          <ToolButton title="Als ongelezen markeren" onClick={() => bulk('unread')}>
+            <Mail size={15} />
+          </ToolButton>
+          {currentFolder?.kind === 'spam' ? (
+            <ToolButton title="Geen spam" onClick={() => bulk('notspam')}>
+              <MailCheck size={15} />
+            </ToolButton>
+          ) : (
+            currentFolder?.kind !== 'trash' && (
+              <ToolButton title="Spam melden" onClick={() => bulk('spam')}>
+                <OctagonAlert size={15} />
+              </ToolButton>
+            )
+          )}
           {currentFolder?.kind !== 'archive' && currentFolder?.kind !== 'trash' && (
             <ToolButton title="Archiveren" onClick={() => bulk('archive')}>
               <Archive size={15} />
