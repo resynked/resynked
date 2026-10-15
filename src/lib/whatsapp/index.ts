@@ -7,8 +7,8 @@ export * from './types';
 /**
  * WhatsApp via de Cloud API van Meta.
  *
- * Resynked heeft één eigen WhatsApp-nummer, de bot, met één toegangstoken uit
- * de app van Resynked bij Meta; die staan in de omgevingsvariabelen en gelden
+ * Khance heeft één eigen WhatsApp-nummer, de bot, met één toegangstoken uit
+ * de app van Khance bij Meta; die staan in de omgevingsvariabelen en gelden
  * voor iedereen. Een gebruiker vult bij Plug-ins alleen zijn eigen mobiele
  * nummer in; aan dat nummer herkennen we van wie een bericht is.
  *
@@ -175,7 +175,7 @@ export async function saveWhatsAppAccount(userId: string, tenantId: string, phon
     );
 
   // Berichten herkennen we aan het nummer, dus één nummer hoort bij één gebruiker
-  if (error?.code === '23505') throw new WhatsAppPhoneTakenError('Dit nummer is al door iemand anders in Resynked gekoppeld.');
+  if (error?.code === '23505') throw new WhatsAppPhoneTakenError('Dit nummer is al door iemand anders in Khance gekoppeld.');
   if (error) throw error;
 
   return { phone: formatPhone(digits) };

@@ -5,7 +5,7 @@ export interface WhatsAppAccountInfo {
 }
 
 /**
- * De bot van Resynked: één nummer voor iedereen, ingesteld in de
+ * De bot van Khance: één nummer voor iedereen, ingesteld in de
  * omgevingsvariabelen. De gebruiker ziet hem bij Plug-ins, maar kan hem niet
  * wijzigen.
  */

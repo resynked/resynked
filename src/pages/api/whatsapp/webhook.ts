@@ -16,7 +16,7 @@ async function rawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 /**
- * De webhook die Meta aanroept voor de WhatsApp-bot van Resynked.
+ * De webhook die Meta aanroept voor de WhatsApp-bot van Khance.
  *
  * GET: Meta controleert bij het instellen of deze link van ons is, met het
  * verify token uit WHATSAPP_VERIFY_TOKEN. Daarvoor is de rest van de

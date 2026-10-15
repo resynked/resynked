@@ -2,9 +2,9 @@
 // deze kan importeren zonder de Supabase-client mee te nemen.
 
 /** De naam van het systeem, zoals hij in het tabblad van de browser komt */
-export const APP_NAME = 'Resynked';
+export const APP_NAME = 'Khance';
 
-/** "Offertes - Resynked". Zonder titel blijft alleen de naam over. */
+/** "Offertes - Khance". Zonder titel blijft alleen de naam over. */
 export function pageTitle(title?: string): string {
   return title ? `${title} - ${APP_NAME}` : APP_NAME;
 }

@@ -83,7 +83,7 @@ export async function apiFetch(url: string, accessToken: string, init: RequestIn
       response.status === 403 &&
       (/insufficient/i.test(message) ||
         ['ErrorAccessDenied', 'AccessDenied', 'Authorization_RequestDenied'].includes(data.error?.code));
-    if (missingScope) throw new MailAuthError('Geef Resynked opnieuw toegang om dit te kunnen zien');
+    if (missingScope) throw new MailAuthError('Geef Khance opnieuw toegang om dit te kunnen zien');
 
     throw new Error(message || `De mailaanbieder antwoordde met ${response.status}`);
   }

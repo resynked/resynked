@@ -8,7 +8,7 @@ import { pageTitle } from '@/lib/constants';
 
 interface LayoutProps {
   children: ReactNode;
-  /** Komt in het tabblad te staan als "Offertes - Resynked" */
+  /** Komt in het tabblad te staan als "Offertes - Khance" */
   title?: string;
 }
 

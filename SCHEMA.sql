@@ -1,5 +1,5 @@
 -- ============================================================
--- Resynked - volledig databaseschema
+-- Khance - volledig databaseschema
 --
 -- Voer dit bestand in zijn geheel uit in de Supabase SQL editor
 -- (Dashboard -> SQL Editor -> New query -> plakken -> Run).
@@ -341,7 +341,7 @@ CREATE TRIGGER update_mail_accounts_updated_at
 -- ------------------------------------------------------------
 -- AI: de eigen sleutel van een gebruiker voor Anthropic of OpenAI
 --
--- Daarmee zet Resynked een mail om naar een offerte. De gebruiker betaalt
+-- Daarmee zet Khance een mail om naar een offerte. De gebruiker betaalt
 -- zijn eigen gebruik; de sleutel staat versleuteld opgeslagen.
 -- ------------------------------------------------------------
 CREATE TABLE ai_accounts (
@@ -364,7 +364,7 @@ CREATE TRIGGER update_ai_accounts_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ------------------------------------------------------------
--- WhatsApp: het mobiele nummer waarmee een gebruiker de bot van Resynked
+-- WhatsApp: het mobiele nummer waarmee een gebruiker de bot van Khance
 -- berichten stuurt
 --
 -- De bot zelf (nummer en toegangstoken bij Meta) staat in de

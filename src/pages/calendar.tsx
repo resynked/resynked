@@ -25,7 +25,7 @@ const VIEW_OPTIONS = [
 ];
 
 // Welke weergave iemand het laatst koos, voor de volgende keer
-const VIEW_KEY = 'resynked:calendar-view';
+const VIEW_KEY = 'khance:calendar-view';
 
 /** Maandag 00:00 van de week waarin deze datum valt. */
 function startOfWeek(date: Date): Date {
@@ -205,7 +205,7 @@ export default function CalendarPage() {
     return (
       <Layout title="Agenda">
         <div className="empty-state">
-          <h2>{needsReconnect ? 'Geef Resynked toegang tot je agenda' : 'Agenda staat nog uit'}</h2>
+          <h2>{needsReconnect ? 'Geef Khance toegang tot je agenda' : 'Agenda staat nog uit'}</h2>
           <p>
             {needsReconnect
               ? 'Je koppeling mist nog toegang tot je agenda, of de toegang is verlopen. Verwijder de koppeling bij Plug-ins en installeer hem opnieuw; geef daarbij toegang tot je agenda.'

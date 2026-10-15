@@ -1,4 +1,4 @@
-# Resynked
+# Khance
 
 Offerte- en factuursysteem voor aannemers. Elke aannemer heeft een eigen account
 (tenant) met zijn eigen klanten, offertes en facturen; gegevens van verschillende
@@ -49,7 +49,7 @@ RLS-policies op de tabellen vormen de tweede laag.
    MICROSOFT_CLIENT_ID=...
    MICROSOFT_CLIENT_SECRET=...
 
-   # WhatsApp-bot van Resynked, voor iedereen hetzelfde (zie hieronder)
+   # WhatsApp-bot van Khance, voor iedereen hetzelfde (zie hieronder)
    WHATSAPP_VERIFY_TOKEN=...     # zelf verzonnen, zelfde als bij Meta bij de webhook
    WHATSAPP_TOKEN=...            # permanente token van een systeemgebruiker
    WHATSAPP_PHONE_NUMBER_ID=...  # het id van het nummer bij Meta, niet het nummer zelf
@@ -105,7 +105,7 @@ registrations*:
    personal Microsoft accounts*.
 2. Redirect-URI's (platform *Web*): `{APP_URL}/api/mail/callback/microsoft` en
    `{APP_URL}/api/mail/admin-consent/done` (voor de link die een IT-beheerder
-   gebruikt om Resynked voor zijn hele organisatie goed te keuren).
+   gebruikt om Khance voor zijn hele organisatie goed te keuren).
 3. Onder *API permissions* (Microsoft Graph, delegated): `Mail.ReadWrite`,
    `Mail.Send`, `Calendars.ReadWrite`, `User.Read`, `offline_access`.
 4. Onder *Certificates & secrets* een client secret aanmaken.
@@ -147,7 +147,7 @@ verwijst met `quote_id` terug.
 
 ## WhatsApp: offerte maken met een bericht
 
-Resynked heeft één WhatsApp-nummer, de bot, met één app bij Meta. De gegevens
+Khance heeft één WhatsApp-nummer, de bot, met één app bij Meta. De gegevens
 daarvan staan in de omgevingsvariabelen en gelden voor iedereen. Bij
 **Instellingen > Plug-ins > WhatsApp** ziet een gebruiker het nummer van de bot
 en (ingekort) de token, maar kan hij ze niet wijzigen; hij vult alleen zijn
@@ -170,7 +170,7 @@ erbij. `stop` wist zo'n half afgemaakte offerte, `help` geeft een voorbeeld.
 Alleen tekstberichten; spraakberichten en foto's worden (nog) niet gelezen.
 
 Instellen bij [Meta for Developers](https://developers.facebook.com/), eenmalig
-voor heel Resynked:
+voor heel Khance:
 
 1. Maak een app van het type *Business* en voeg het product **WhatsApp** toe.
 2. Koppel het telefoonnummer van de bot: één nummer voor alle gebruikers, dat

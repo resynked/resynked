@@ -7,7 +7,7 @@ import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
  * OpenAI, met de sleutel van de gebruiker zelf.
  *
  * Het model is in te stellen met OPENAI_MODEL, zodat je zonder nieuwe versie
- * van Resynked kunt overstappen als OpenAI een nieuw model uitbrengt.
+ * van Khance kunt overstappen als OpenAI een nieuw model uitbrengt.
  */
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5';
 

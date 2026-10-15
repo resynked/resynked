@@ -3,12 +3,15 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Eye, EyeOff } from 'lucide-react';
 import { pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const toast = useToast();
@@ -57,7 +60,10 @@ export default function Login() {
 
       <div className="login-wrapper">
         <div className="login-block">
-          <h1>Inloggen bij Resynked</h1>
+          <div className="logo">
+            <Image src="/logo.svg" alt="Khance Logo" width={40} height={40} priority />
+          </div>
+          <h1>Inloggen bij Khance</h1>
           <form onSubmit={handleSubmit} className="login-form">
             <input
               id="email"
@@ -67,14 +73,23 @@ export default function Login() {
               required
               placeholder="E-mail"
             />
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              placeholder="Wachtwoord"
-            />
+            <div className="password-field">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="Wachtwoord"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
+                onClick={() => setShowPassword(show => !show)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             <button className="button" type="submit" disabled={isLoading}>
               {isLoading ? 'Bezig met inloggen...' : 'Login'}
             </button>

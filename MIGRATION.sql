@@ -1,5 +1,5 @@
 -- ============================================================
--- Resynked - migraties
+-- Khance - migraties
 --
 -- Dit is het enige migratiebestand. Draai het in zijn geheel in de Supabase
 -- SQL editor (Dashboard -> SQL Editor -> New query -> plakken -> Run) als je
@@ -333,7 +333,7 @@ ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
 -- ------------------------------------------------------------
 -- 8. WhatsApp: offertes maken met een bericht aan de bot
 --
--- Per gebruiker het mobiele nummer waarmee hij de bot van Resynked berichten
+-- Per gebruiker het mobiele nummer waarmee hij de bot van Khance berichten
 -- stuurt, en de ids van berichten die al verwerkt zijn.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS whatsapp_accounts (

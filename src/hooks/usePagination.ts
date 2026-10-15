@@ -4,7 +4,7 @@ import { useState } from 'react';
 export const PAGE_SIZES = [10, 25, 50, 100];
 
 /** De gekozen paginagrootte geldt voor alle lijsten en blijft bewaard. */
-const STORAGE_KEY = 'resynked:page-size';
+const STORAGE_KEY = 'khance:page-size';
 
 function storedPageSize(): number | null {
   if (typeof window === 'undefined') return null;

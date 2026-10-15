@@ -12,7 +12,7 @@ import {
 
 /**
  * De WhatsApp-koppeling van wie er ingelogd is. GET zegt welk mobiel nummer er
- * gekoppeld is, met de bot van Resynked erbij; POST { phone } koppelt een
+ * gekoppeld is, met de bot van Khance erbij; POST { phone } koppelt een
  * nummer, DELETE haalt het weg. De token van de bot komt hier nooit heel naar buiten.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      if (!isWhatsAppConfigured()) return res.status(409).json({ error: 'WhatsApp is nog niet ingesteld voor Resynked' });
+      if (!isWhatsAppConfigured()) return res.status(409).json({ error: 'WhatsApp is nog niet ingesteld voor Khance' });
 
       const phone = String(req.body?.phone || '').trim();
       if (phone.replace(/\D/g, '').length < 9) return res.status(400).json({ error: 'Vul je eigen mobiele nummer in' });
