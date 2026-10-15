@@ -96,36 +96,36 @@ export default function Sidebar() {
       </div>
       <nav className="navigation">
         <Link href="/" className={isActive('/') ? 'active' : ''} data-label="Dashboard">
-          <LayoutDashboard size={16} />
+          <LayoutDashboard size={18} />
           <span className="label">Dashboard</span>
         </Link>
         {mailAccount && (
           <Link href="/inbox" className={isActive('/inbox') ? 'active' : ''} data-label="Inbox">
-            <Inbox size={16} />
+            <Inbox size={18} />
             <span className="label">Inbox</span>
             {!!unreadMail && <span className="count">{unreadMail > 999 ? '999+' : unreadMail}</span>}
           </Link>
         )}
         {mailAccount && (
           <Link href="/calendar" className={isActive('/calendar') ? 'active' : ''} data-label="Agenda">
-            <CalendarDays size={16} />
+            <CalendarDays size={18} />
             <span className="label">Agenda</span>
           </Link>
         )}
         <Link href="/customers" className={isActive('/customers') || router.pathname.startsWith('/customers') ? 'active' : ''} data-label="Klanten">
-          <Users size={16} />
+          <Users size={18} />
           <span className="label">Klanten</span>
         </Link>
         <Link href="/quotes" className={isActive('/quotes') || router.pathname.startsWith('/quotes') ? 'active' : ''} data-label="Offertes">
-          <FileText size={16} />
+          <FileText size={18} />
           <span className="label">Offertes</span>
         </Link>
         <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''} data-label="Facturen">
-          <ReceiptEuro size={16} />
+          <ReceiptEuro size={18} />
           <span className="label">Facturen</span>
         </Link>
         <Link href="/notes" className={isActive('/notes') || router.pathname.startsWith('/notes') ? 'active' : ''} data-label="Notities">
-          <FilePen size={16} />
+          <FilePen size={18} />
           <span className="label">Notities</span>
         </Link>
       </nav>
