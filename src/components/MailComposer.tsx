@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronUp, Minus, Send, Trash2, X } from 'lucide-react';
 import MailBody from '@/components/MailBody';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -11,7 +12,7 @@ export type ComposerMode = 'reply' | 'forward' | 'new';
 const LABELS: Record<ComposerMode, string> = {
   reply: 'Antwoorden aan',
   forward: 'Doorsturen aan',
-  new: 'Nieuw bericht aan',
+  new: 'Nieuw bericht',
 };
 
 interface MailComposerProps {
@@ -21,6 +22,12 @@ interface MailComposerProps {
   /** Bij doorsturen en een nieuw bericht: de adressen die je zelf intypt */
   to: string;
   onToChange: (value: string) => void;
+  /** Alleen bij een nieuw bericht: je eigen adres, en wie er een kopie krijgt */
+  from?: string;
+  cc?: string;
+  onCcChange?: (value: string) => void;
+  bcc?: string;
+  onBccChange?: (value: string) => void;
   /** Alleen bij een nieuw bericht; anders volgt het onderwerp het gesprek */
   subject: string;
   onSubjectChange: (value: string) => void;
@@ -47,6 +54,11 @@ export default function MailComposer({
   recipient,
   to,
   onToChange,
+  from,
+  cc = '',
+  onCcChange,
+  bcc = '',
+  onBccChange,
   subject,
   onSubjectChange,
   html,
@@ -62,6 +74,10 @@ export default function MailComposer({
   // Doorsturen mag zonder eigen tekst; antwoorden en een nieuw bericht niet
   const canSend =
     (mode === 'reply' || to.trim() !== '') && (mode === 'forward' || !isRichTextEmpty(html));
+  // Cc en Bcc staan pas in beeld als je erom vraagt
+  const [showCc, setShowCc] = useState(cc !== '');
+  const [showBcc, setShowBcc] = useState(bcc !== '');
+  const isNew = mode === 'new';
 
   return (
     <div className={`composer${minimized ? ' minimized' : ''}${mode === 'new' ? ' floating' : ''}`}>
@@ -69,9 +85,13 @@ export default function MailComposer({
         className="composer-header"
         onClick={minimized ? () => onMinimizedChange(false) : undefined}
       >
-        <span className="label">{LABELS[mode]}</span>
+        {isNew ? (
+          <span className="title">{subject.trim() || LABELS.new}</span>
+        ) : (
+          <span className="label">{LABELS[mode]}</span>
+        )}
 
-        {mode === 'reply' ? (
+        {isNew ? null : mode === 'reply' ? (
           recipient && (
             <span className="recipient">
               <span className="avatar">{initials(recipient)}</span>
@@ -107,15 +127,67 @@ export default function MailComposer({
 
       {!minimized && (
         <>
-          {mode === 'new' && (
-            <div className="composer-subject">
-              <input
-                type="text"
-                value={subject}
-                placeholder="Onderwerp"
-                aria-label="Onderwerp"
-                onChange={(event) => onSubjectChange(event.target.value)}
-              />
+          {isNew && (
+            <div className="composer-fields">
+              {from && (
+                <div className="composer-field">
+                  <span className="label">Van</span>
+                  <span className="value">{from}</span>
+                </div>
+              )}
+              <label className="composer-field">
+                <span className="label">Aan</span>
+                <input
+                  type="text"
+                  value={to}
+                  autoFocus
+                  placeholder="naam@voorbeeld.nl, meerdere met een komma"
+                  onChange={(event) => onToChange(event.target.value)}
+                />
+                <span className="copy-toggles">
+                  {!showCc && (
+                    <button type="button" onClick={() => setShowCc(true)}>
+                      Cc
+                    </button>
+                  )}
+                  {!showBcc && (
+                    <button type="button" onClick={() => setShowBcc(true)}>
+                      Bcc
+                    </button>
+                  )}
+                </span>
+              </label>
+              {showCc && (
+                <label className="composer-field">
+                  <span className="label">Cc</span>
+                  <input
+                    type="text"
+                    value={cc}
+                    autoFocus={cc === ''}
+                    onChange={(event) => onCcChange?.(event.target.value)}
+                  />
+                </label>
+              )}
+              {showBcc && (
+                <label className="composer-field">
+                  <span className="label">Bcc</span>
+                  <input
+                    type="text"
+                    value={bcc}
+                    autoFocus={bcc === ''}
+                    onChange={(event) => onBccChange?.(event.target.value)}
+                  />
+                </label>
+              )}
+              <div className="composer-field">
+                <input
+                  type="text"
+                  value={subject}
+                  placeholder="Onderwerp"
+                  aria-label="Onderwerp"
+                  onChange={(event) => onSubjectChange(event.target.value)}
+                />
+              </div>
             </div>
           )}
 

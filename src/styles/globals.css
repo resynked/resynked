@@ -752,8 +752,18 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .compose-button {position: absolute; right: var(--space20); bottom: var(--space20); z-index: 6; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: var(--color1); color: var(--color2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
 .inbox .compose-button:hover {opacity: .85;}
 .inbox .composer.floating {position: absolute; right: var(--space20); bottom: calc(var(--space20) * 2 + 52px); z-index: 5; width: min(600px, calc(100% - 2 * var(--space20))); margin: 0;}
-.inbox .composer .composer-subject {padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color);}
-.inbox .composer .composer-subject input {width: 100%; box-sizing: border-box;}
+/* Een nieuw bericht: het onderwerp staat als titel in de kop, de velden eronder als losse regels */
+.inbox .composer.floating .composer-header {min-height: 48px; box-sizing: border-box; background: var(--color3); border-radius: var(--border-radius2) var(--border-radius2) 0 0;}
+.inbox .composer.floating.minimized .composer-header {border-radius: var(--border-radius2);}
+.inbox .composer .composer-header .title {flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.inbox .composer .composer-fields {padding: 0 var(--space15);}
+.inbox .composer .composer-field {display: flex; align-items: center; gap: var(--space10); min-height: 42px; border-bottom: 1px solid var(--border-color); cursor: text;}
+.inbox .composer .composer-field .label {flex: 0 0 32px; color: var(--font-color2);}
+.inbox .composer .composer-field .value {flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: default;}
+.inbox .composer .composer-field input {flex: 1; min-width: 0; padding: var(--space10) 0; border: 0; border-radius: 0; box-shadow: none; background: transparent;}
+.inbox .composer .composer-field .copy-toggles {display: flex; gap: 2px;}
+.inbox .composer .composer-field .copy-toggles button {padding: 2px var(--space5); border-radius: var(--border-radius1); color: var(--font-color2); font-weight: 500;}
+.inbox .composer .composer-field .copy-toggles button:hover {background: var(--color4); color: var(--font-color1);}
 
 /* Een bericht met ster (Gmail) of vlag (Outlook) */
 .inbox .message-actions button.starred {color: var(--font-color1);}

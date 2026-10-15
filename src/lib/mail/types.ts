@@ -158,8 +158,15 @@ export interface MailProvider {
   attachment(accessToken: string, messageId: string, attachmentId: string): Promise<MailAttachmentFile>;
   /** Een ster (Gmail) of vlag (Outlook) op één bericht zetten of weghalen */
   setStarred(accessToken: string, messageId: string, starred: boolean): Promise<void>;
-  /** Een nieuw bericht, los van een bestaand gesprek */
-  compose(accessToken: string, to: string[], subject: string, html: string, ownAddress: string): Promise<void>;
+  /** Een nieuw bericht, los van een bestaand gesprek, met eventueel een kopie (Cc) of blinde kopie (Bcc) */
+  compose(
+    accessToken: string,
+    to: string[],
+    subject: string,
+    html: string,
+    ownAddress: string,
+    copies?: { cc: string[]; bcc: string[] }
+  ): Promise<void>;
   /** Stuurt één bericht uit het gesprek door, met het origineel eronder */
   forward(accessToken: string, threadId: string, messageId: string, to: string[], html: string, ownAddress: string): Promise<void>;
   /** De afspraken in de hoofdagenda tussen twee momenten, oudste eerst */

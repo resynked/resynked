@@ -12,7 +12,7 @@ import { isRichTextEmpty, sanitizeRichText } from '@/lib/richtext';
  * ?folder=... welke map (standaard de inbox), ?q=... zoeken in alle mail,
  * ?unread=1 alleen ongelezen, ?page=... de volgende pagina.
  *
- * POST verstuurt een nieuw bericht: { to: ['iemand@voorbeeld.nl'], subject, html }.
+ * POST verstuurt een nieuw bericht: { to: ['iemand@voorbeeld.nl'], cc, bcc, subject, html }.
  * Het gaat via Gmail of Outlook zelf, met de handtekening eronder.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -39,13 +39,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
+/** Een lijst adressen uit het verzoek, zonder lege regels */
+const addressList = (value: unknown): string[] =>
+  (Array.isArray(value) ? value : []).map((address: unknown) => String(address).trim()).filter(Boolean);
+
 async function compose(req: NextApiRequest, res: NextApiResponse, userId: string) {
-  const recipients: string[] = (Array.isArray(req.body?.to) ? req.body.to : [])
-    .map((address: unknown) => String(address).trim())
-    .filter(Boolean);
+  const recipients = addressList(req.body?.to);
   if (recipients.length === 0) return res.status(400).json({ error: 'Vul in naar wie het bericht moet' });
 
-  const invalid = recipients.find(address => !isEmailAddress(address));
+  const cc = addressList(req.body?.cc);
+  const bcc = addressList(req.body?.bcc);
+  const invalid = [...recipients, ...cc, ...bcc].find(address => !isEmailAddress(address));
   if (invalid) return res.status(400).json({ error: `${invalid} is geen geldig e-mailadres` });
 
   const subject = String(req.body?.subject || '').trim();
@@ -55,7 +59,7 @@ async function compose(req: NextApiRequest, res: NextApiResponse, userId: string
   try {
     const { provider, accessToken, email } = await openMailbox(userId);
     const signature = await provider.signature(accessToken, email).catch(() => '');
-    await provider.compose(accessToken, recipients, subject || '(geen onderwerp)', withSignature(html, signature), email);
+    await provider.compose(accessToken, recipients, subject || '(geen onderwerp)', withSignature(html, signature), email, { cc, bcc });
     return res.status(200).json({ ok: true });
   } catch (error) {
     return sendMailError(res, error);

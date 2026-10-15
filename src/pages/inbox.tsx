@@ -95,6 +95,8 @@ export default function InboxPage() {
   const [composerMinimized, setComposerMinimized] = useState(true);
   const [draft, setDraft] = useState('');
   const [to, setTo] = useState('');
+  const [cc, setCc] = useState('');
+  const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState('');
   const [forwardMessageId, setForwardMessageId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -175,6 +177,8 @@ export default function InboxPage() {
     setComposerMinimized(true);
     setDraft('');
     setTo('');
+    setCc('');
+    setBcc('');
     setSubject('');
     setForwardMessageId(null);
   };
@@ -356,7 +360,7 @@ export default function InboxPage() {
     setComposerMinimized(false);
   };
 
-  const recipients = () => to.split(/[,;\s]+/).filter(Boolean);
+  const recipients = (value = to) => value.split(/[,;\s]+/).filter(Boolean);
 
   const send = async () => {
     if (composerMode === 'new') {
@@ -365,7 +369,7 @@ export default function InboxPage() {
         await request('/api/mail/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: recipients(), subject, html: draft }),
+          body: JSON.stringify({ to: recipients(), cc: recipients(cc), bcc: recipients(bcc), subject, html: draft }),
         });
         toast.success('Verstuurd', 'Je bericht is verstuurd');
         resetComposer();
@@ -690,6 +694,11 @@ export default function InboxPage() {
             recipient={null}
             to={to}
             onToChange={setTo}
+            from={account?.email}
+            cc={cc}
+            onCcChange={setCc}
+            bcc={bcc}
+            onBccChange={setBcc}
             subject={subject}
             onSubjectChange={setSubject}
             html={draft}

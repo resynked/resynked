@@ -362,7 +362,8 @@ export const microsoft: MailProvider = {
     });
   },
 
-  async compose(accessToken, to, subject, html) {
+  async compose(accessToken, to, subject, html, _ownAddress, copies) {
+    const recipients = (addresses: string[] = []) => addresses.map(address => ({ emailAddress: { address } }));
     // saveToSentItems: dan staat hij gewoon in Verzonden in Outlook
     await apiFetch(`${API}/sendMail`, accessToken, {
       method: 'POST',
@@ -370,7 +371,9 @@ export const microsoft: MailProvider = {
         message: {
           subject,
           body: { contentType: 'HTML', content: html },
-          toRecipients: to.map(address => ({ emailAddress: { address } })),
+          toRecipients: recipients(to),
+          ccRecipients: recipients(copies?.cc),
+          bccRecipients: recipients(copies?.bcc),
         },
         saveToSentItems: true,
       }),

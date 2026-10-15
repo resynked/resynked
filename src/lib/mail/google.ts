@@ -407,11 +407,18 @@ export const google: MailProvider = {
     });
   },
 
-  async compose(accessToken, to, subject, html, ownAddress) {
+  async compose(accessToken, to, subject, html, ownAddress, copies) {
+    // Gmail haalt de Bcc-regel er zelf uit voordat hij het bericht verstuurt
     await sendMime(
       accessToken,
       undefined,
-      [`From: ${ownAddress}`, `To: ${formatAddresses(to.join(', '))}`, `Subject: ${encodeHeader(subject)}`],
+      [
+        `From: ${ownAddress}`,
+        `To: ${formatAddresses(to.join(', '))}`,
+        ...(copies?.cc.length ? [`Cc: ${formatAddresses(copies.cc.join(', '))}`] : []),
+        ...(copies?.bcc.length ? [`Bcc: ${formatAddresses(copies.bcc.join(', '))}`] : []),
+        `Subject: ${encodeHeader(subject)}`,
+      ],
       html
     );
   },
