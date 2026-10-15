@@ -19,7 +19,7 @@ export default function Select({
   options,
   value,
   onChange,
-  placeholder = 'Selecteer...',
+  placeholder = 'Selecteer een optie',
   isClearable = false,
   isDisabled = false
 }: SelectProps) {

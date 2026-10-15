@@ -106,7 +106,7 @@ export default function EventEditor({ event, day, isSaving, onClose, onSave, onD
             value={form.title}
             autoFocus
             onChange={(e) => set({ title: e.target.value })}
-            placeholder="Bijvoorbeeld: Opname bij klant"
+            placeholder="Vul een titel in"
           />
         </div>
 
@@ -158,7 +158,7 @@ export default function EventEditor({ event, day, isSaving, onClose, onSave, onD
             type="text"
             value={form.location}
             onChange={(e) => set({ location: e.target.value })}
-            placeholder="Adres of plaats"
+            placeholder="Vul een locatie in"
           />
         </div>
 
@@ -166,6 +166,7 @@ export default function EventEditor({ event, day, isSaving, onClose, onSave, onD
           <label htmlFor="event_description">Omschrijving</label>
           <textarea
             id="event_description"
+            placeholder="Vul een omschrijving in"
             value={form.description}
             onChange={(e) => set({ description: e.target.value })}
           />

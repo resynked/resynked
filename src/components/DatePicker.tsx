@@ -20,7 +20,7 @@ const YEARS_PER_PAGE = 12;
 export default function DatePicker({
   value,
   onChange,
-  placeholder = 'Selecteer datum...',
+  placeholder = 'Selecteer een datum',
   isDisabled = false
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);

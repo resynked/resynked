@@ -215,7 +215,7 @@ export default function EditInvoice() {
                   value={customerOptions.find(o => o.value === formData.customer_id) || null}
                   onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
                   options={customerOptions}
-                  placeholder="Selecteer klant..."
+                  placeholder="Selecteer een klant"
                 />
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function EditInvoice() {
                   type="text"
                   value={formData.invoice_number}
                   onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
-                  placeholder="Factuurnummer"
+                  placeholder="Vul een factuurnummer in"
                 />
               </div>
             </div>
@@ -239,7 +239,7 @@ export default function EditInvoice() {
                 <DatePicker
                   value={formData.invoice_date}
                   onChange={(date) => setFormData({ ...formData, invoice_date: date })}
-                  placeholder="Kies een datum..."
+                  placeholder="Selecteer een datum"
                 />
               </div>
 
@@ -248,7 +248,7 @@ export default function EditInvoice() {
                 <DatePicker
                   value={formData.due_date}
                   onChange={(date) => setFormData({ ...formData, due_date: date })}
-                  placeholder="Kies een datum..."
+                  placeholder="Selecteer een datum"
                 />
               </div>
             </div>

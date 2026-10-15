@@ -95,7 +95,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         role="textbox"
         aria-multiline="true"
         aria-label="Tekst"
-        data-placeholder={placeholder || 'Begin met typen...'}
+        data-placeholder={placeholder || 'Vul een tekst in'}
         onInput={() => emit()}
         onBlur={() => {
           const opgeruimd = emit(true);

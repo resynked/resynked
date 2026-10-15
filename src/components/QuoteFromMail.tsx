@@ -22,21 +22,21 @@ interface QuoteFromMailProps {
 
 type Item = QuoteProposal['quote']['items'][number];
 
-const CUSTOMER_FIELDS: { key: keyof QuoteProposal['customer']; label: string }[][] = [
+const CUSTOMER_FIELDS: { key: keyof QuoteProposal['customer']; label: string; placeholder: string }[][] = [
   [
-    { key: 'first_name', label: 'Voornaam' },
-    { key: 'middle_name', label: 'Tussenvoegsel' },
-    { key: 'last_name', label: 'Achternaam' },
+    { key: 'first_name', label: 'Voornaam', placeholder: 'Vul een voornaam in' },
+    { key: 'middle_name', label: 'Tussenvoegsel', placeholder: 'Vul een tussenvoegsel in' },
+    { key: 'last_name', label: 'Achternaam', placeholder: 'Vul een achternaam in' },
   ],
-  [{ key: 'company_name', label: 'Bedrijf' }],
+  [{ key: 'company_name', label: 'Bedrijf', placeholder: 'Vul een bedrijfsnaam in' }],
   [
-    { key: 'email', label: 'E-mail' },
-    { key: 'phone', label: 'Telefoon' },
+    { key: 'email', label: 'E-mail', placeholder: 'Vul een e-mailadres in' },
+    { key: 'phone', label: 'Telefoon', placeholder: 'Vul een telefoonnummer in' },
   ],
-  [{ key: 'street_address', label: 'Straat en huisnummer' }],
+  [{ key: 'street_address', label: 'Straat en huisnummer', placeholder: 'Vul een straatnaam en huisnummer in' }],
   [
-    { key: 'postal_code', label: 'Postcode' },
-    { key: 'city', label: 'Plaats' },
+    { key: 'postal_code', label: 'Postcode', placeholder: 'Vul een postcode in' },
+    { key: 'city', label: 'Plaats', placeholder: 'Vul een plaats in' },
   ],
 ];
 
@@ -227,13 +227,14 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
               <div className="form-section">
                 {CUSTOMER_FIELDS.map((row, rowIndex) => (
                   <div key={rowIndex} className="form-row">
-                    {row.map(({ key, label }) => (
+                    {row.map(({ key, label, placeholder }) => (
                       <div key={key} className="form-group">
                         <label htmlFor={`proposal_${key}`}>{label}</label>
                         <input
                           id={`proposal_${key}`}
                           type="text"
                           value={customer[key]}
+                          placeholder={placeholder}
                           onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
                         />
                       </div>
@@ -247,11 +248,22 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
             <div className="form-section">
               <div className="form-group">
                 <label htmlFor="proposal_title">Titel</label>
-                <input id="proposal_title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+                <input
+                  id="proposal_title"
+                  type="text"
+                  value={title}
+                  placeholder="Vul een titel in"
+                  onChange={(e) => setTitle(e.target.value)}
+                />
               </div>
               <div className="form-group">
                 <label htmlFor="proposal_intro">Inleiding</label>
-                <textarea id="proposal_intro" value={intro} onChange={(e) => setIntro(e.target.value)} />
+                <textarea
+                  id="proposal_intro"
+                  value={intro}
+                  placeholder="Vul een inleiding in"
+                  onChange={(e) => setIntro(e.target.value)}
+                />
               </div>
             </div>
 
@@ -268,6 +280,7 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
                   <input
                     type="text"
                     value={item.description}
+                    placeholder="Vul een omschrijving in"
                     aria-label="Omschrijving"
                     onChange={(e) => changeItem(index, { description: e.target.value })}
                   />
@@ -276,13 +289,14 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
                     min="0"
                     step="0.01"
                     value={item.quantity}
+                    placeholder="Vul een aantal in"
                     aria-label="Aantal"
                     onChange={(e) => changeItem(index, { quantity: parseFloat(e.target.value) || 0 })}
                   />
                   <input
                     type="text"
                     value={item.unit}
-                    placeholder="m², uur"
+                    placeholder="Vul een eenheid in"
                     aria-label="Eenheid"
                     onChange={(e) => changeItem(index, { unit: e.target.value })}
                   />
@@ -291,7 +305,7 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
                     min="0"
                     step="0.01"
                     value={item.price ?? ''}
-                    placeholder="Invullen"
+                    placeholder="Vul een prijs in"
                     aria-label="Prijs per eenheid"
                     onChange={(e) =>
                       changeItem(index, { price: e.target.value === '' ? null : parseFloat(e.target.value), price_basis: '' })
@@ -327,7 +341,12 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
               <>
                 <h3>Antwoord aan de klant</h3>
                 <div className="form-section">
-                  <textarea value={reply} aria-label="Antwoord aan de klant" onChange={(e) => setReply(e.target.value)} />
+                  <textarea
+                    value={reply}
+                    placeholder="Vul een antwoord in"
+                    aria-label="Antwoord aan de klant"
+                    onChange={(e) => setReply(e.target.value)}
+                  />
                 </div>
                 <label className="toggle-label">
                   <Toggle label="Antwoord klaarzetten" checked={prepareReply} onChange={setPrepareReply} />

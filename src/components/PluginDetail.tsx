@@ -252,7 +252,7 @@ export default function PluginDetail({
                   id="whatsapp_phone"
                   type="tel"
                   autoComplete="tel"
-                  placeholder="06 12345678"
+                  placeholder="Vul je mobiele nummer in"
                   value={whatsapp.account ? whatsapp.account.phone : phone}
                   disabled={!!whatsapp.account || !whatsapp.config.configured}
                   onChange={(event) => setPhone(event.target.value)}

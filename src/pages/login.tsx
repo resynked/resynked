@@ -71,7 +71,7 @@ export default function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              placeholder="E-mail"
+              placeholder="Vul je e-mailadres in"
             />
             <div className="password-field">
               <input
@@ -80,7 +80,7 @@ export default function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                placeholder="Wachtwoord"
+                placeholder="Vul je wachtwoord in"
               />
               <button
                 type="button"

@@ -84,7 +84,7 @@ export default function Register() {
               value={formData.tenantName}
               onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
               required
-              placeholder="Bedrijfsnaam"
+              placeholder="Vul je bedrijfsnaam in"
             />
             <input
               id="name"
@@ -92,7 +92,7 @@ export default function Register() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              placeholder="Uw naam"
+              placeholder="Vul je naam in"
             />
             <input
               id="email"
@@ -100,7 +100,7 @@ export default function Register() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              placeholder="E-mail"
+              placeholder="Vul je e-mailadres in"
             />
             <input
               id="password"
@@ -108,7 +108,7 @@ export default function Register() {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
-              placeholder="Wachtwoord"
+              placeholder="Vul een wachtwoord in"
             />
             <input
               id="confirmPassword"
@@ -116,7 +116,7 @@ export default function Register() {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
-              placeholder="Bevestig wachtwoord"
+              placeholder="Vul het wachtwoord nogmaals in"
             />
             <button className="button" type="submit" disabled={isLoading}>
               {isLoading ? 'Bezig met registreren...' : 'Registreer'}

@@ -104,7 +104,7 @@ export default function MailComposer({
             type="text"
             value={to}
             autoFocus
-            placeholder="naam@voorbeeld.nl, meerdere met een komma"
+            placeholder="Vul een of meer e-mailadressen in"
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onToChange(event.target.value)}
           />
@@ -141,7 +141,7 @@ export default function MailComposer({
                   type="text"
                   value={to}
                   autoFocus
-                  placeholder="naam@voorbeeld.nl, meerdere met een komma"
+                  placeholder="Vul een of meer e-mailadressen in"
                   onChange={(event) => onToChange(event.target.value)}
                 />
                 <span className="copy-toggles">
@@ -163,6 +163,7 @@ export default function MailComposer({
                   <input
                     type="text"
                     value={cc}
+                    placeholder="Vul een of meer e-mailadressen in"
                     autoFocus={cc === ''}
                     onChange={(event) => onCcChange?.(event.target.value)}
                   />
@@ -174,6 +175,7 @@ export default function MailComposer({
                   <input
                     type="text"
                     value={bcc}
+                    placeholder="Vul een of meer e-mailadressen in"
                     autoFocus={bcc === ''}
                     onChange={(event) => onBccChange?.(event.target.value)}
                   />
@@ -183,7 +185,7 @@ export default function MailComposer({
                 <input
                   type="text"
                   value={subject}
-                  placeholder="Onderwerp"
+                  placeholder="Vul een onderwerp in"
                   aria-label="Onderwerp"
                   onChange={(event) => onSubjectChange(event.target.value)}
                 />
@@ -195,7 +197,7 @@ export default function MailComposer({
             value={html}
             onChange={onHtmlChange}
             placeholder={
-              mode === 'forward' ? 'Schrijf er iets bij (mag leeg blijven)...' : mode === 'new' ? 'Schrijf je bericht...' : 'Schrijf je antwoord...'
+              mode === 'forward' ? 'Vul eventueel een bericht in' : mode === 'new' ? 'Vul een bericht in' : 'Vul een antwoord in'
             }
           />
 

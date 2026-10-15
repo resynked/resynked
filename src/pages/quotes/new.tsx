@@ -185,7 +185,7 @@ export default function NewQuote() {
                   value={customerOptions.find(o => o.value === formData.customer_id) || null}
                   onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
                   options={customerOptions}
-                  placeholder="Selecteer klant..."
+                  placeholder="Selecteer een klant"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function NewQuote() {
                   type="text"
                   value={formData.quote_number}
                   onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
-                  placeholder="Offertenummer"
+                  placeholder="Vul een offertenummer in"
                 />
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function NewQuote() {
                 <DatePicker
                   value={formData.quote_date}
                   onChange={(date) => setFormData({ ...formData, quote_date: date })}
-                  placeholder="Kies een datum..."
+                  placeholder="Selecteer een datum"
                 />
               </div>
 
@@ -218,7 +218,7 @@ export default function NewQuote() {
                 <DatePicker
                   value={formData.valid_until}
                   onChange={(date) => setFormData({ ...formData, valid_until: date })}
-                  placeholder="Kies een datum..."
+                  placeholder="Selecteer een datum"
                 />
               </div>
             </div>

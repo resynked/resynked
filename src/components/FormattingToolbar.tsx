@@ -277,7 +277,7 @@ export default function FormattingToolbar({ getField, children }: FormattingTool
             type="url"
             value={linkValue}
             autoFocus
-            placeholder="https://"
+            placeholder="Vul een link in"
             onChange={(event) => setLinkValue(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {

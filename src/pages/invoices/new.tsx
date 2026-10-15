@@ -160,7 +160,7 @@ export default function NewInvoice() {
                   value={customerOptions.find(o => o.value === formData.customer_id) || null}
                   onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
                   options={customerOptions}
-                  placeholder="Selecteer klant..."
+                  placeholder="Selecteer een klant"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function NewInvoice() {
                 <DatePicker
                   value={formData.invoice_date}
                   onChange={(date) => setFormData({ ...formData, invoice_date: date })}
-                  placeholder="Kies een datum..."
+                  placeholder="Selecteer een datum"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export default function NewInvoice() {
                 <DatePicker
                   value={formData.due_date}
                   onChange={(date) => setFormData({ ...formData, due_date: date })}
-                  placeholder="Kies een datum..."
+                  placeholder="Selecteer een datum"
                 />
               </div>
             </div>

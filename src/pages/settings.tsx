@@ -278,7 +278,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setNumbering({ ...numbering, quote_number_next: e.target.value })
                                         }
-                                        placeholder="20260050"
+                                        placeholder="Vul het volgende offertenummer in"
                                     />
                                 </div>
                             </div>
@@ -298,7 +298,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setNumbering({ ...numbering, invoice_number_next: e.target.value })
                                         }
-                                        placeholder="20260001"
+                                        placeholder="Vul het volgende factuurnummer in"
                                     />
                                 </div>
                             </div>
@@ -334,7 +334,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setTemplates({ ...templates, quote_template_html: e.target.value })
                                         }
-                                        placeholder="Plak hier uw offertesjabloon"
+                                        placeholder="Vul de HTML van je offertesjabloon in"
                                         rows={20}
                                     />
                                 </div>
@@ -354,7 +354,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setTemplates({ ...templates, invoice_template_html: e.target.value })
                                         }
-                                        placeholder="Plak hier uw factuursjabloon"
+                                        placeholder="Vul de HTML van je factuursjabloon in"
                                         rows={20}
                                     />
                                 </div>
@@ -407,7 +407,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setEmailSettings({ ...emailSettings, quote_email_subject: e.target.value })
                                         }
-                                        placeholder="Offerte {{offertenummer}} van {{bedrijf}}"
+                                        placeholder="Vul een onderwerp in"
                                     />
                                 </div>
                             </div>
@@ -425,7 +425,7 @@ export default function Settings() {
                                         onChange={(quote_email_intro_text) =>
                                             setEmailSettings({ ...emailSettings, quote_email_intro_text })
                                         }
-                                        placeholder="Beste klant, hierbij ontvangt u onze offerte."
+                                        placeholder="Vul een tekst in"
                                     />
                                 </div>
                             </div>
@@ -449,7 +449,7 @@ export default function Settings() {
                                         onChange={(e) =>
                                             setEmailSettings({ ...emailSettings, invoice_email_subject: e.target.value })
                                         }
-                                        placeholder="Factuur {{factuurnummer}} van {{bedrijf}}"
+                                        placeholder="Vul een onderwerp in"
                                     />
                                 </div>
                             </div>
@@ -467,7 +467,7 @@ export default function Settings() {
                                         onChange={(invoice_email_intro_text) =>
                                             setEmailSettings({ ...emailSettings, invoice_email_intro_text })
                                         }
-                                        placeholder="Beste klant, hierbij ontvangt u onze factuur."
+                                        placeholder="Vul een tekst in"
                                     />
                                 </div>
                             </div>

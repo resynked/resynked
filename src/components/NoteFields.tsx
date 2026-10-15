@@ -48,7 +48,7 @@ export default function NoteFields({
             value={customerOptions.find(o => o.value === formData.customer_id) || null}
             onChange={(option) => onChange({ ...formData, customer_id: option?.value || '' })}
             options={customerOptions}
-            placeholder="Selecteer klant..."
+            placeholder="Selecteer een klant"
           />
           {errors.customer_id && <p className="field-error">{errors.customer_id}</p>}
         </div>
@@ -66,7 +66,7 @@ export default function NoteFields({
             value={formData.title}
             aria-invalid={!!errors.title}
             onChange={(e) => onChange({ ...formData, title: e.target.value })}
-            placeholder="Bijvoorbeeld: Opname badkamer"
+            placeholder="Vul een titel in"
           />
           {errors.title && <p className="field-error">{errors.title}</p>}
         </div>
@@ -81,7 +81,7 @@ export default function NoteFields({
           <RichTextEditor
             value={formData.content}
             onChange={(content) => onChange({ ...formData, content })}
-            placeholder="Schrijf je notitie..."
+            placeholder="Vul een notitie in"
           />
           {errors.content && <p className="field-error">{errors.content}</p>}
         </div>

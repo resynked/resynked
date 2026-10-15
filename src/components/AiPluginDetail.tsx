@@ -11,7 +11,6 @@ export interface AiPlugin {
   summary: string;
   /** Waar je een sleutel aanmaakt */
   keysUrl: string;
-  keyPlaceholder: string;
   links: { website: string; privacy: string };
 }
 
@@ -22,7 +21,6 @@ export const AI_PLUGINS: AiPlugin[] = [
     icon: AnthropicIcon,
     summary: 'Claude verwerkt aanvragen tot klant, offerte en antwoord',
     keysUrl: 'https://console.anthropic.com/settings/keys',
-    keyPlaceholder: 'sk-ant-...',
     links: { website: 'https://www.anthropic.com', privacy: 'https://www.anthropic.com/legal/privacy' },
   },
   {
@@ -31,7 +29,6 @@ export const AI_PLUGINS: AiPlugin[] = [
     icon: OpenAiIcon,
     summary: 'ChatGPT verwerkt aanvragen tot klant, offerte en antwoord',
     keysUrl: 'https://platform.openai.com/api-keys',
-    keyPlaceholder: 'sk-...',
     links: { website: 'https://openai.com', privacy: 'https://openai.com/policies/privacy-policy' },
   },
   {
@@ -40,7 +37,6 @@ export const AI_PLUGINS: AiPlugin[] = [
     icon: GeminiIcon,
     summary: 'Gemini verwerkt aanvragen tot klant, offerte en antwoord, ook gratis',
     keysUrl: 'https://aistudio.google.com/apikey',
-    keyPlaceholder: 'Plak hier je API-sleutel',
     links: { website: 'https://ai.google.dev', privacy: 'https://policies.google.com/privacy' },
   },
 ];
@@ -143,7 +139,7 @@ export default function AiPluginDetail({ plugin, connected, replaces, saving, on
               type="password"
               value={apiKey}
               autoComplete="off"
-              placeholder={plugin.keyPlaceholder}
+              placeholder="Vul je API-sleutel in"
               aria-label={`API-sleutel van ${plugin.name}`}
               onChange={(event) => setApiKey(event.target.value)}
               onKeyDown={(event) => {

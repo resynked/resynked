@@ -124,7 +124,7 @@ export default function PublicQuote() {
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Voor- en achternaam"
+            placeholder="Vul uw voor- en achternaam in"
           />
         </div>
       </div>

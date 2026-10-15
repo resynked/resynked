@@ -295,6 +295,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="first_name">Voornaam *</label>
                       <input
                         id="first_name"
+                        placeholder="Vul een voornaam in"
                         type="text"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
@@ -306,6 +307,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="middle_name">Tussenvoegsel</label>
                       <input
                         id="middle_name"
+                        placeholder="Vul een tussenvoegsel in"
                         type="text"
                         value={formData.middle_name}
                         onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
@@ -316,6 +318,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="last_name">Achternaam *</label>
                       <input
                         id="last_name"
+                        placeholder="Vul een achternaam in"
                         type="text"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
@@ -331,7 +334,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                         value={genderOptions.find(o => o.value === formData.gender) || null}
                         onChange={(option) => setFormData({ ...formData, gender: option?.value || '' })}
                         options={genderOptions}
-                        placeholder="Selecteer geslacht..."
+                        placeholder="Selecteer een geslacht"
                         isClearable
                       />
                     </div>
@@ -341,7 +344,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <DatePicker
                         value={formData.date_of_birth}
                         onChange={(date) => setFormData({ ...formData, date_of_birth: date })}
-                        placeholder="Selecteer geboortedatum..."
+                        placeholder="Selecteer een geboortedatum"
                       />
                     </div>
                   </div>
@@ -355,6 +358,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="company_name">Bedrijfsnaam</label>
                       <input
                         id="company_name"
+                        placeholder="Vul een bedrijfsnaam in"
                         type="text"
                         value={formData.company_name}
                         onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
@@ -364,6 +368,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="customer_number">Klantnummer</label>
                       <input
                         id="customer_number"
+                        placeholder="Vul een klantnummer in"
                         type="text"
                         value={formData.customer_number}
                         onChange={(e) => setFormData({ ...formData, customer_number: e.target.value })}
@@ -376,6 +381,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="kvk">KVK</label>
                       <input
                         id="kvk"
+                        placeholder="Vul een KVK-nummer in"
                         type="text"
                         value={formData.kvk}
                         onChange={(e) => setFormData({ ...formData, kvk: e.target.value })}
@@ -386,6 +392,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="btw_number">BTW-nummer</label>
                       <input
                         id="btw_number"
+                        placeholder="Vul een btw-nummer in"
                         type="text"
                         value={formData.btw_number}
                         onChange={(e) => setFormData({ ...formData, btw_number: e.target.value })}
@@ -396,6 +403,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="iban">IBAN</label>
                       <input
                         id="iban"
+                        placeholder="Vul een IBAN in"
                         type="text"
                         value={formData.iban}
                         onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
@@ -412,6 +420,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="email">E-mailadres</label>
                       <input
                         id="email"
+                        placeholder="Vul een e-mailadres in"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -422,6 +431,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="phone">Telefoonnummer</label>
                       <input
                         id="phone"
+                        placeholder="Vul een telefoonnummer in"
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -437,6 +447,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                     <label htmlFor="street_address">Straatnaam en huisnummer</label>
                     <input
                       id="street_address"
+                      placeholder="Vul een straatnaam en huisnummer in"
                       type="text"
                       value={formData.street_address}
                       onChange={(e) => setFormData({ ...formData, street_address: e.target.value })}
@@ -448,6 +459,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="postal_code">Postcode</label>
                       <input
                         id="postal_code"
+                        placeholder="Vul een postcode in"
                         type="text"
                         value={formData.postal_code}
                         onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
@@ -458,6 +470,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                       <label htmlFor="city">Plaats</label>
                       <input
                         id="city"
+                        placeholder="Vul een plaats in"
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
