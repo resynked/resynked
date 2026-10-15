@@ -173,6 +173,19 @@ const SYSTEM_LABELS: { id: string; name: string; kind: MailFolderKind }[] = [
 /** De tabbladen van de Gmail-inbox, zoals Gmail ze in zijn zoekopdracht kent */
 const GMAIL_CATEGORIES = new Set(MAIL_CATEGORIES.google.map(category => category.id));
 
+/**
+ * Primair is in Gmail alles wat niet in een ander tabblad staat. Vragen naar
+ * category:primary geeft niets terug als de tabbladen uit staan, of als Gmail
+ * een mail nog niet heeft ingedeeld; zo komt die mail gewoon bij Primair.
+ */
+const PRIMARY_QUERY = '-category:promotions -category:social -category:updates -category:forums';
+
+/** De zoekopdracht voor een tabblad van de inbox */
+function categoryQuery(category: string): string {
+  if (category === 'primary') return PRIMARY_QUERY;
+  return GMAIL_CATEGORIES.has(category) ? `category:${category}` : '';
+}
+
 /** De inbox heet bij ons overal "inbox"; Gmail noemt hem INBOX. */
 function labelId(folder: string): string {
   return folder === INBOX_FOLDER ? 'INBOX' : folder;
@@ -252,7 +265,7 @@ export const google: MailProvider = {
     // Zoeken gaat door alle mail heen, zoals in Gmail zelf
     if (!search) params.set('labelIds', labelId(folder));
     // De inbox per tabblad, zoals Gmail hem indeelt: reclame staat niet bij Primair
-    const tab = !search && folder === INBOX_FOLDER && category && GMAIL_CATEGORIES.has(category) ? `category:${category}` : '';
+    const tab = !search && folder === INBOX_FOLDER && category ? categoryQuery(category) : '';
     const query = [search?.trim(), tab, unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
     if (query) params.set('q', query);
     if (pageToken) params.set('pageToken', pageToken);
@@ -313,7 +326,7 @@ export const google: MailProvider = {
     let count = 0;
     let pageToken: string | undefined;
     do {
-      const params = new URLSearchParams({ q: 'in:inbox category:primary is:unread', maxResults: '500' });
+      const params = new URLSearchParams({ q: `in:inbox is:unread ${PRIMARY_QUERY}`, maxResults: '500' });
       if (pageToken) params.set('pageToken', pageToken);
       const page = await apiFetch(`${API}/threads?${params}`, accessToken);
       count += (page.threads || []).length;
