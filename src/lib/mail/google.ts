@@ -364,17 +364,20 @@ export const google: MailProvider = {
   },
 
   async categories(accessToken) {
-    // Staan de tabbladen in Gmail uit, dan deelt Gmail niets in en heeft geen
-    // enkele mail het label van Reclame, Sociaal of Updates. Dan geen tabbladen
+    // Staan de tabbladen in Gmail uit, dan deelt Gmail niets in en staat er
+    // in de inbox geen mail met het label van Reclame, Sociaal of Updates.
+    // Dan geen tabbladen. Oude, gearchiveerde mail telt niet mee
     const others = Object.entries(CATEGORY_LABELS).filter(([id]) => id !== 'primary');
-    const totals = await Promise.all(
-      others.map(([, label]) =>
-        apiFetch(`${API}/labels/${label}`, accessToken)
-          .then(found => Number(found.threadsTotal) || 0)
-          .catch(() => 0)
-      )
+    const inInbox = await Promise.all(
+      others.map(([, label]) => {
+        const params = new URLSearchParams({ maxResults: '1' });
+        ['INBOX', label].forEach(id => params.append('labelIds', id));
+        return apiFetch(`${API}/threads?${params}`, accessToken)
+          .then(page => (page.threads || []).length > 0)
+          .catch(() => false);
+      })
     );
-    const used = others.filter((_, i) => totals[i] > 0).map(([id]) => id);
+    const used = others.filter((_, i) => inInbox[i]).map(([id]) => id);
     return used.length ? ['primary', ...used] : [];
   },
 
