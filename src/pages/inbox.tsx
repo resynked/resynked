@@ -91,8 +91,12 @@ export default function InboxPage() {
 
   const [folders, setFolders] = useState<MailFolder[]>([]);
   const [labelsCollapsed, setLabelsCollapsed] = useState(false);
-  // Het tabblad van de inbox, zoals Gmail of Outlook hem indeelt
-  const categories = account ? MAIL_CATEGORIES[account.provider] : [];
+  // Het tabblad van de inbox, zoals Gmail of Outlook hem indeelt. Alleen de
+  // tabbladen die dit account echt gebruikt; null zolang dat nog niet bekend is
+  const [availableCategories, setAvailableCategories] = useState<string[] | null>(null);
+  const categories = account
+    ? MAIL_CATEGORIES[account.provider].filter(c => availableCategories?.includes(c.id))
+    : [];
   const [category, setCategory] = useState('');
   const activeCategory = category || categories[0]?.id || '';
   const [showAllLabels, setShowAllLabels] = useState(false);
@@ -182,15 +186,19 @@ export default function InboxPage() {
     if (!account) return;
 
     loadFolders();
+    request('/api/mail/categories')
+      .then(data => setAvailableCategories(Array.isArray(data) ? data : []))
+      .catch(() => setAvailableCategories([]));
     request('/api/mail/signature')
       .then(data => setSignature(data.html || ''))
       .catch(() => {});
   }, [account, loadFolders, request]);
 
   useEffect(() => {
-    if (account) loadList();
+    // Pas laden als bekend is welke tabbladen er zijn, anders laadt de inbox twee keer
+    if (account && availableCategories !== null) loadList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, folder, activeCategory, search, unreadOnly]);
+  }, [account, availableCategories, folder, activeCategory, search, unreadOnly]);
 
   // Zoeken zodra iemand even stopt met typen
   useEffect(() => {

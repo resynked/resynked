@@ -251,6 +251,11 @@ export const microsoft: MailProvider = {
     return [...system, ...own];
   },
 
+  async categories() {
+    // Outlook deelt elke inbox in; of Prioriteit aan staat geeft Graph niet door
+    return MAIL_CATEGORIES.microsoft.map(category => category.id);
+  },
+
   async unreadCount(accessToken) {
     const inbox = await apiFetch(`${API}/mailFolders/inbox?$select=unreadItemCount`, accessToken);
     return Number(inbox.unreadItemCount) || 0;

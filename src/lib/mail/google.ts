@@ -363,6 +363,21 @@ export const google: MailProvider = {
     return [...system, ...own];
   },
 
+  async categories(accessToken) {
+    // Staan de tabbladen in Gmail uit, dan deelt Gmail niets in en heeft geen
+    // enkele mail het label van Reclame, Sociaal of Updates. Dan geen tabbladen
+    const others = Object.entries(CATEGORY_LABELS).filter(([id]) => id !== 'primary');
+    const totals = await Promise.all(
+      others.map(([, label]) =>
+        apiFetch(`${API}/labels/${label}`, accessToken)
+          .then(found => Number(found.threadsTotal) || 0)
+          .catch(() => 0)
+      )
+    );
+    const used = others.filter((_, i) => totals[i] > 0).map(([id]) => id);
+    return used.length ? ['primary', ...used] : [];
+  },
+
   async unreadCount(accessToken) {
     // Gmail telt bij de inbox alleen het ongelezen in Primair: alles behalve
     // Reclame, Sociaal en Updates. Gmail geeft dat getal niet los; we tellen zelf

@@ -162,6 +162,11 @@ export interface MailProvider {
   address(accessToken: string): Promise<string>;
   list(accessToken: string, options: MailListOptions): Promise<MailPage>;
   folders(accessToken: string): Promise<MailFolder[]>;
+  /**
+   * De tabbladen van de inbox (zie MAIL_CATEGORIES) die dit account echt
+   * gebruikt; leeg als de aanbieder de inbox voor dit account niet indeelt
+   */
+  categories(accessToken: string): Promise<string[]>;
   /** Hoeveel gesprekken er ongelezen in de inbox staan */
   unreadCount(accessToken: string): Promise<number>;
   /** De handtekening die in Gmail of Outlook is ingesteld, als HTML; leeg als er geen is */
