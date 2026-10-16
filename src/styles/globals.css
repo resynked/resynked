@@ -504,7 +504,9 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .rich-editor .editable > *:last-child, .rich-text > *:last-child {margin-bottom: 0;}
 .rich-editor .editable h2, .rich-text h2 {font-size: var(--h2-size); margin: var(--space20) 0 var(--space10) 0;}
 .rich-editor .editable h3, .rich-text h3 {font-size: var(--h3-size); margin: var(--space15) 0 var(--space5) 0;}
-.rich-editor .editable p, .rich-text p {margin: 0 0 1em 0;}
+/* Enter is een nieuwe regel, geen witregel; zoals in Word zonder alinea-afstand.
+   Wie een witregel wil, drukt twee keer op Enter */
+.rich-editor .editable p, .rich-text p {margin: 0;}
 .rich-editor .editable ul, .rich-editor .editable ol, .rich-text ul, .rich-text ol {margin: 0 0 1em 0; padding-left: var(--space20);}
 .rich-editor .editable li, .rich-text li {margin: 0 0 3px 0;}
 .rich-editor .editable blockquote, .rich-text blockquote {margin: 0 0 1em 0; padding: 0 0 0 var(--space15); border-left: 3px solid var(--border-color); color: var(--font-color2);}

@@ -71,6 +71,19 @@ export default function Settings() {
         quote_number_next: '',
         invoice_number_next: '',
     });
+    // De gegevens van het bedrijf: in de kop en voet van offertes en facturen,
+    // onder de mails, en het IBAN in de betaal-QR-code
+    const [company, setCompany] = useState({
+        company_name: '',
+        street_address: '',
+        postal_code: '',
+        city: '',
+        email: '',
+        phone: '',
+        kvk: '',
+        btw_number: '',
+        iban: '',
+    });
     const [showTemplateHelp, setShowTemplateHelp] = useState(false);
 
     // Wie er ingelogd is. De naam is aan te passen; het e-mailadres is ook de
@@ -251,6 +264,17 @@ export default function Settings() {
                     quote_number_next: tenant.quote_number_next || '',
                     invoice_number_next: tenant.invoice_number_next || '',
                 });
+                setCompany({
+                    company_name: tenant.company_name || '',
+                    street_address: tenant.street_address || '',
+                    postal_code: tenant.postal_code || '',
+                    city: tenant.city || '',
+                    email: tenant.email || '',
+                    phone: tenant.phone || '',
+                    kvk: tenant.kvk || '',
+                    btw_number: tenant.btw_number || '',
+                    iban: tenant.iban || '',
+                });
             })
             .catch(() => toast.error('Fout', 'Instellingen konden niet geladen worden'));
     }, []);
@@ -343,7 +367,7 @@ export default function Settings() {
             await updateSession();
         }
 
-        await save(numbering, 'Account opgeslagen');
+        await save({ ...company, ...numbering }, 'Account opgeslagen');
     };
 
     /** Eén verzoek aan de wachtwoord-API; geeft true als het gelukt is */
@@ -522,6 +546,141 @@ export default function Settings() {
                             </div>
 
                             <h3>Bedrijf</h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="company_name">Bedrijfsnaam</label>
+                                    <span className="description">Zoals hij op je offertes, facturen en mails staat.</span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="company_name"
+                                        type="text" autoComplete="organization"
+                                        value={company.company_name}
+                                        onChange={(e) => setCompany({ ...company, company_name: e.target.value })}
+                                        placeholder="Vul je bedrijfsnaam in"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="street_address">Adres</label>
+                                    <span className="description">Straat en huisnummer, postcode en plaats.</span>
+                                </div>
+                                <div className="form-section">
+                                    <input
+                                        id="street_address"
+                                        type="text"
+                                        autoComplete="street-address"
+                                        value={company.street_address}
+                                        onChange={(e) => setCompany({ ...company, street_address: e.target.value })}
+                                        placeholder="Vul een straatnaam en huisnummer in"
+                                    />
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <input
+                                                type="text"
+                                                autoComplete="postal-code"
+                                                aria-label="Postcode"
+                                                value={company.postal_code}
+                                                onChange={(e) => setCompany({ ...company, postal_code: e.target.value })}
+                                                placeholder="Vul een postcode in"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <input
+                                                type="text"
+                                                autoComplete="address-level2"
+                                                aria-label="Plaats"
+                                                value={company.city}
+                                                onChange={(e) => setCompany({ ...company, city: e.target.value })}
+                                                placeholder="Vul een plaats in"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="company_email">E-mailadres</label>
+                                    <span className="description">Voor vragen van je klanten; staat onder je offertes en facturen.</span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="company_email"
+                                        type="email" autoComplete="email"
+                                        value={company.email}
+                                        onChange={(e) => setCompany({ ...company, email: e.target.value })}
+                                        placeholder="Vul een e-mailadres in"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="company_phone">Telefoonnummer</label>
+                                    <span className="description">Staat onder je offertes, facturen en mails.</span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="company_phone"
+                                        type="tel" autoComplete="tel"
+                                        value={company.phone}
+                                        onChange={(e) => setCompany({ ...company, phone: e.target.value })}
+                                        placeholder="Vul een telefoonnummer in"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="company_kvk">KvK-nummer</label>
+                                    <span className="description">Verplicht op een factuur.</span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="company_kvk"
+                                        type="text"
+                                        value={company.kvk}
+                                        onChange={(e) => setCompany({ ...company, kvk: e.target.value })}
+                                        placeholder="Vul een KvK-nummer in"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="company_btw">Btw-nummer</label>
+                                    <span className="description">Verplicht op een factuur.</span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="company_btw"
+                                        type="text"
+                                        value={company.btw_number}
+                                        onChange={(e) => setCompany({ ...company, btw_number: e.target.value })}
+                                        placeholder="Vul een btw-nummer in"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="company_iban">IBAN</label>
+                                    <span className="description">Hierop betalen je klanten, ook met de QR-code op de factuur.</span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="company_iban"
+                                        type="text"
+                                        value={company.iban}
+                                        onChange={(e) => setCompany({ ...company, iban: e.target.value })}
+                                        placeholder="Vul een IBAN in"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="row-section">
                                 <div className="information">
                                     <span className="title">Logo</span>
@@ -1098,7 +1257,8 @@ export default function Settings() {
                             <h3>Losse waarden</h3>
                             <p>
                                 Deze kun je midden in je tekst zetten, bijvoorbeeld{' '}
-                                <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>
+                                <code>&#123;&#123;bedrijf_naam&#125;&#125;</code>. De bedrijfsgegevens vul je in bij
+                                Account.
                             </p>
                             <ul>
                                 <li><code>&#123;&#123;documenttitel&#125;&#125;</code>, <code>&#123;&#123;totaal&#125;&#125;</code>, <code>&#123;&#123;logo&#125;&#125;</code></li>
