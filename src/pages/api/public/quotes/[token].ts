@@ -60,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         quote_conditions: tenant.quote_conditions,
         terms_and_conditions: tenant.terms_and_conditions,
         quote_template_html: tenant.quote_template_html,
+        paper_orientation: tenant.paper_orientation,
       },
     });
   } catch (error: any) {

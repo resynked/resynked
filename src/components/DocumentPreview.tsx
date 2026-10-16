@@ -1288,7 +1288,8 @@ export default function DocumentPreview({
       <InlineEditContext.Provider value={inlineEditing}>
         <div className="document-window" ref={vensterRef}>
           <div
-            className="document-paper"
+            // Liggend A4 voor het standaardsjabloon; een eigen sjabloon kiest zelf
+            className={`document-paper${tenant?.paper_orientation === 'landscape' ? ' landscape' : ''}`}
             ref={papierRef}
             onDragOver={
               onMoveBlock

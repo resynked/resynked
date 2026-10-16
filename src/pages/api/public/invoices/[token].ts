@@ -42,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         logo_url: tenant.logo_url,
         terms_and_conditions: tenant.terms_and_conditions,
         invoice_template_html: tenant.invoice_template_html,
+        paper_orientation: tenant.paper_orientation,
       },
     });
   } catch (error) {

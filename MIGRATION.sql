@@ -509,6 +509,17 @@ CREATE TRIGGER update_products_updated_at
 
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 14. Papierformaat per bedrijf
+--
+-- Staand of liggend A4 voor het standaardsjabloon. Een eigen sjabloon bepaalt
+-- zelf zijn formaat en trekt zich hier niets van aan.
+-- ------------------------------------------------------------
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS paper_orientation TEXT NOT NULL DEFAULT 'portrait';
+ALTER TABLE tenants DROP CONSTRAINT IF EXISTS tenants_paper_orientation_check;
+ALTER TABLE tenants ADD CONSTRAINT tenants_paper_orientation_check
+  CHECK (paper_orientation IN ('portrait', 'landscape'));
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -523,7 +534,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen veertien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen vijftien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -625,4 +636,10 @@ UNION ALL SELECT 'Producten',
        CASE WHEN EXISTS (
          SELECT 1 FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name = 'products'
-       ) THEN 'ja' ELSE 'NEE - onderdeel 13 niet gelukt' END;
+       ) THEN 'ja' ELSE 'NEE - onderdeel 13 niet gelukt' END
+
+UNION ALL SELECT 'Papierformaat',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'tenants' AND column_name = 'paper_orientation'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 14 niet gelukt' END;

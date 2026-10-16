@@ -26,6 +26,7 @@ const EDITABLE_FIELDS = [
   'quote_number_next',
   'invoice_number_next',
   'quote_reminder_days',
+  'paper_orientation',
 ] as const;
 
 // Het logo komt als data-URL binnen en is daarmee groter dan een gewoon
@@ -58,6 +59,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field] || null;
         }
+      }
+
+      // Staand of liggend; iets anders is geen formaat
+      if (updates.paper_orientation !== undefined) {
+        updates.paper_orientation = updates.paper_orientation === 'landscape' ? 'landscape' : 'portrait';
       }
 
       // Een herinnering na 1 tot 60 dagen, of geen (leeg)

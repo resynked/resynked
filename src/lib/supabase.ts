@@ -65,6 +65,8 @@ export interface Tenant {
   invoice_number_next: string | null;
   /** Na zoveel dagen zonder handtekening gaat er één herinnering; null is nooit */
   quote_reminder_days: number | null;
+  /** Staand of liggend A4 voor het standaardsjabloon */
+  paper_orientation: 'portrait' | 'landscape';
   /** Afzendadres van deze aannemer; leeg betekent het systeemadres uit EMAIL_FROM */
   email_from: string | null;
   created_at: string;

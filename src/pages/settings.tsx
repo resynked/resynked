@@ -10,10 +10,16 @@ import RichTextEditor from '@/components/RichTextEditor';
 import SidePanel from '@/components/SidePanel';
 import PluginsSettings from '@/components/PluginsSettings';
 import Toggle from '@/components/Toggle';
+import Select from '@/components/Select';
 import PasswordInput from '@/components/PasswordInput';
 import type { Tenant } from '@/lib/supabase';
 import { MIN_PASSWORD_LENGTH } from '@/lib/constants';
 import { DEFAULT_INVOICE_TEMPLATE, DEFAULT_QUOTE_TEMPLATE } from '@/lib/document-templates';
+
+const PAPER_OPTIONS = [
+    { value: 'portrait', label: 'A4 staand' },
+    { value: 'landscape', label: 'A4 liggend' },
+];
 
 /** Het standaardsjabloon per veld, om te tonen als er nog niets eigens is */
 const DEFAULT_TEMPLATES = {
@@ -50,6 +56,8 @@ export default function Settings() {
         quote_template_html: '',
         invoice_template_html: '',
     });
+    // Staand of liggend A4 voor het standaardsjabloon
+    const [paperOrientation, setPaperOrientation] = useState<'portrait' | 'landscape'>('portrait');
     const [emailSettings, setEmailSettings] = useState({
         quote_email_subject: '',
         quote_email_intro_text: '',
@@ -230,6 +238,7 @@ export default function Settings() {
                     quote_template_html: tenant.quote_template_html || DEFAULT_QUOTE_TEMPLATE,
                     invoice_template_html: tenant.invoice_template_html || DEFAULT_INVOICE_TEMPLATE,
                 });
+                setPaperOrientation(tenant.paper_orientation === 'landscape' ? 'landscape' : 'portrait');
                 setEmailSettings({
                     quote_email_subject: tenant.quote_email_subject || '',
                     quote_email_intro_text: tenant.quote_email_intro_text || '',
@@ -299,6 +308,7 @@ export default function Settings() {
                     templates.quote_template_html === DEFAULT_QUOTE_TEMPLATE ? '' : templates.quote_template_html,
                 invoice_template_html:
                     templates.invoice_template_html === DEFAULT_INVOICE_TEMPLATE ? '' : templates.invoice_template_html,
+                paper_orientation: paperOrientation,
             },
             'Sjabloon opgeslagen'
         );
@@ -589,6 +599,24 @@ export default function Settings() {
                                     <CircleQuestionMark size={16} />
                                 </button>
                             </h2>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Papierformaat</span>
+                                    <span className="description">
+                                        Voor het standaardsjabloon. Een eigen sjabloon bepaalt zelf zijn formaat.
+                                    </span>
+                                </div>
+                                <div>
+                                    <Select
+                                        value={PAPER_OPTIONS.find(o => o.value === paperOrientation) || null}
+                                        onChange={(option) =>
+                                            setPaperOrientation(option?.value === 'landscape' ? 'landscape' : 'portrait')
+                                        }
+                                        options={PAPER_OPTIONS}
+                                    />
+                                </div>
+                            </div>
 
                             <div className="row-section">
                                 <div className="information">

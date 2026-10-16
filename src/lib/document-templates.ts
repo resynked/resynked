@@ -1,6 +1,8 @@
 /**
  * Het standaardsjabloon voor offertes en facturen, in de huisstijl van Khance:
- * zwart-wit, Inter, dunne grijze lijnen, staand A4. Wie bij Instellingen >
+ * zwart-wit, Inter, dunne grijze lijnen, A4. Staand of liggend kiest het bedrijf
+ * bij Instellingen > Sjabloon; het papier krijgt dan de class "landscape" en
+ * dit sjabloon past zich daaraan aan, op het scherm, op papier en in de PDF. Wie bij Instellingen >
  * Sjabloon niets eigens invult, krijgt dit.
  *
  * Het werkt zoals elk eigen sjabloon (zie de uitleg bij Instellingen): één
@@ -16,9 +18,15 @@
 
 const styles = (invoice: boolean) => `
 <style>
+/* Elk vel is één pagina, op het formaat dat het bedrijf heeft gekozen */
+@page khance-portrait {size: A4 portrait; margin: 0;}
+@page khance-landscape {size: A4 landscape; margin: 0;}
+
 .khance-page {
   --sheet-width: 210mm;
   --sheet-height: 297mm;
+  page: khance-portrait;
+  break-after: page;
   position: relative;
   padding: 16mm 18mm ${invoice ? '70mm' : '30mm'};
   background: #fff;
@@ -27,6 +35,13 @@ const styles = (invoice: boolean) => `
   font-size: 9.5pt;
   line-height: 1.6;
 }
+.landscape .khance-page {
+  --sheet-width: 297mm;
+  --sheet-height: 210mm;
+  page: khance-landscape;
+  padding: 12mm 18mm ${invoice ? '60mm' : '26mm'};
+}
+.khance-page:last-of-type {break-after: auto;}
 
 /* Kop: logo links, bedrijf rechts */
 .khance-page .khance-header {display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; padding: 0 0 7mm 0; margin: 0 0 8mm 0; border-bottom: 1px solid #efefef;}
@@ -64,14 +79,14 @@ const styles = (invoice: boolean) => `
 .khance-page .signature-fields {margin: 8mm 0 0 0; font-size: 8.5pt; color: #7f7f7f;}
 
 /* Voettekst in de ondermarge, met alleen wat is ingevuld */
-.khance-page .khance-footer {position: absolute; left: 18mm; right: 18mm; bottom: 12mm; display: flex; flex-wrap: wrap; gap: 1mm 6mm; padding: 4mm 0 0 0; border-top: 1px solid #efefef; font-size: 7.5pt; color: #7f7f7f;}
+.khance-page .khance-footer {position: absolute; left: 18mm; right: 18mm; bottom: 10mm; display: flex; flex-wrap: wrap; gap: 1mm 6mm; padding: 4mm 0 0 0; border-top: 1px solid #efefef; font-size: 7.5pt; color: #7f7f7f;}
 .khance-page .khance-footer span:empty {display: none;}
 .khance-page .khance-footer [data-label]::before {content: attr(data-label) " "; color: #000;}
 ${
   invoice
     ? `
 /* Het betaalblok met de QR-code, boven de voettekst, alleen op het laatste vel */
-.khance-page .khance-payment {position: absolute; left: 18mm; right: 18mm; bottom: 26mm;}
+.khance-page .khance-payment {position: absolute; left: 18mm; right: 18mm; bottom: 24mm;}
 .khance-page:not(:last-of-type) .khance-payment {display: none;}
 .khance-page .payment-details {margin: 0; padding: 4mm; grid-template-columns: 26mm minmax(0, 1fr); gap: 6mm; font-size: 8.5pt;}
 .khance-page .payment-details .qr {width: 26mm; height: 26mm;}

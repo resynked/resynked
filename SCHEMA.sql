@@ -54,6 +54,9 @@ CREATE TABLE tenants (
   invoice_email_intro_text TEXT,-- de tekst onder het logo in de factuurmail
   -- Na zoveel dagen zonder handtekening gaat er één herinnering; leeg = nooit
   quote_reminder_days INTEGER,
+  -- Staand of liggend A4 voor het standaardsjabloon; een eigen sjabloon bepaalt dat zelf
+  paper_orientation TEXT NOT NULL DEFAULT 'portrait'
+    CHECK (paper_orientation IN ('portrait', 'landscape')),
   -- Het eerstvolgende nummer, bijvoorbeeld 20260050. De cijfers achteraan
   -- tellen bij elk document op; voorloopnullen blijven staan.
   quote_number_next TEXT,
