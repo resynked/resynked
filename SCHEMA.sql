@@ -202,6 +202,8 @@ CREATE TABLE quote_elements (
   body TEXT,
   tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
   discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  -- Alleen bij een prijstabel: de kolommen Aantal, Eenheid en Prijs per stuk tonen
+  show_quantity BOOLEAN NOT NULL DEFAULT false,
   position INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -289,6 +291,8 @@ CREATE TABLE invoice_elements (
   body TEXT,
   tax_percentage NUMERIC(5,2) NOT NULL DEFAULT 21,
   discount_percentage NUMERIC(5,2) NOT NULL DEFAULT 0,
+  -- Alleen bij een prijstabel: de kolommen Aantal, Eenheid en Prijs per stuk tonen
+  show_quantity BOOLEAN NOT NULL DEFAULT false,
   position INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

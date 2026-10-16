@@ -520,6 +520,27 @@ ALTER TABLE tenants DROP CONSTRAINT IF EXISTS tenants_paper_orientation_check;
 ALTER TABLE tenants ADD CONSTRAINT tenants_paper_orientation_check
   CHECK (paper_orientation IN ('portrait', 'landscape'));
 
+-- ------------------------------------------------------------
+-- 15. Aantal en eenheid per prijstabel aan of uit
+--
+-- Per prijstabel de keuze of de kolommen Aantal, Eenheid en Prijs per stuk
+-- erbij staan. Bestaande tabellen die al aantallen of eenheden gebruiken,
+-- zetten we meteen aan; de rest blijft "Omschrijving · Bedrag" zoals nu.
+-- ------------------------------------------------------------
+ALTER TABLE quote_elements ADD COLUMN IF NOT EXISTS show_quantity BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE invoice_elements ADD COLUMN IF NOT EXISTS show_quantity BOOLEAN NOT NULL DEFAULT false;
+
+UPDATE quote_elements e SET show_quantity = true
+WHERE e.kind = 'prijstabel' AND NOT e.show_quantity AND EXISTS (
+  SELECT 1 FROM quote_items i
+  WHERE i.element_id = e.id AND NOT i.is_heading AND (i.unit IS NOT NULL OR i.quantity <> 1)
+);
+UPDATE invoice_elements e SET show_quantity = true
+WHERE e.kind = 'prijstabel' AND NOT e.show_quantity AND EXISTS (
+  SELECT 1 FROM invoice_items i
+  WHERE i.element_id = e.id AND NOT i.is_heading AND (i.unit IS NOT NULL OR i.quantity <> 1)
+);
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -534,7 +555,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen vijftien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen zestien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -642,4 +663,11 @@ UNION ALL SELECT 'Papierformaat',
        CASE WHEN EXISTS (
          SELECT 1 FROM information_schema.columns
          WHERE table_schema = 'public' AND table_name = 'tenants' AND column_name = 'paper_orientation'
-       ) THEN 'ja' ELSE 'NEE - onderdeel 14 niet gelukt' END;
+       ) THEN 'ja' ELSE 'NEE - onderdeel 14 niet gelukt' END
+
+UNION ALL SELECT 'Aantal en eenheid per prijstabel',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name IN ('quote_elements', 'invoice_elements')
+           AND column_name = 'show_quantity'
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 15 niet gelukt' END;

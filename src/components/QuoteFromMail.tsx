@@ -7,7 +7,7 @@ import Toggle from '@/components/Toggle';
 import ToolButton from '@/components/ToolButton';
 import { Skeleton } from '@/components/Skeleton';
 import { useToast } from '@/components/Toast';
-import { emptyElement } from '@/lib/blocks';
+import { emptyElement, priceTable } from '@/lib/blocks';
 import { plainTextToRichText } from '@/lib/richtext';
 import { overDagen, vandaag } from '@/lib/utils';
 import type { QuoteProposal } from '@/lib/ai/types';
@@ -142,16 +142,15 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
           elements: [
             emptyElement('gegevens'),
             ...(intro.trim() ? [{ ...emptyElement('tekst'), body: plainTextToRichText(intro) }] : []),
-            {
-              ...emptyElement('prijstabel'),
-              items: (lines.length ? lines : [{ ...emptyItem(), description: title.trim() || 'Werkzaamheden' }]).map(item => ({
+            priceTable(
+              (lines.length ? lines : [{ ...emptyItem(), description: title.trim() || 'Werkzaamheden' }]).map(item => ({
                 description: item.description.trim(),
                 is_heading: false,
                 quantity: Number(item.quantity) || 1,
                 unit: item.unit.trim() || null,
                 price: Number(item.price) || 0,
-              })),
-            },
+              }))
+            ),
             emptyElement('handtekening'),
           ],
         },

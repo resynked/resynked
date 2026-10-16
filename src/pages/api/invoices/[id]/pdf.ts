@@ -2,8 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { getInvoice } from '@/lib/db';
-import { appUrl } from '@/lib/email';
-import { renderPdf } from '@/lib/pdf';
+import { renderPdf, requestOrigin } from '@/lib/pdf';
 
 // Een browser starten en een document opmaken duurt langer dan de standaardgrens
 export const config = {
@@ -28,7 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const pdf = await renderPdf({
       // ?pdf=1 zorgt dat die pagina niet zelf het printvenster opent
-      url: `${appUrl()}/invoices/${id}/afdrukken?pdf=1`,
+      // Op het adres van de gebruiker zelf, waar zijn sessie bij hoort
+      url: `${requestOrigin(req)}/invoices/${id}/afdrukken?pdf=1`,
       cookie: req.headers.cookie,
     });
 

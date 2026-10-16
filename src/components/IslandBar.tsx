@@ -9,7 +9,7 @@ import {
   IdCard,
   ListPlus,
   ListX,
-  Percent,
+  Settings2,
   Pilcrow,
   Plus,
   Signature,
@@ -20,6 +20,7 @@ import {
 import Modal from '@/components/Modal';
 import ToolButton from '@/components/ToolButton';
 import Select from '@/components/Select';
+import Toggle from '@/components/Toggle';
 import FormattingToolbar from '@/components/FormattingToolbar';
 import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
@@ -188,8 +189,8 @@ export default function IslandBar({
           <ToolButton title="Tussenkop toevoegen" onClick={() => addItem(emptyHeading())}>
             <Heading size={15} />
           </ToolButton>
-          <ToolButton title="BTW en korting" onClick={() => setDialog('prijstabel')}>
-            <Percent size={15} />
+          <ToolButton title="Instellingen prijstabel" onClick={() => setDialog('prijstabel')}>
+            <Settings2 size={15} />
           </ToolButton>
         </div>
       )}
@@ -265,9 +266,18 @@ export default function IslandBar({
         {dataFields}
       </Modal>
 
-      <Modal isOpen={dialog === 'prijstabel'} onClose={() => setDialog(null)} title="BTW en korting">
+      <Modal isOpen={dialog === 'prijstabel'} onClose={() => setDialog(null)} title="Prijstabel">
         {element?.kind === 'prijstabel' && elementIndex !== undefined && (
           <div className="form-section">
+            <label className="toggle-label">
+              <Toggle
+                label="Aantal, eenheid en prijs per stuk tonen"
+                checked={!!element.show_quantity}
+                onChange={(show_quantity) => updateElement(elementIndex, { show_quantity })}
+              />
+              <span>Aantal, eenheid en prijs per stuk tonen</span>
+            </label>
+
             <div className="form-group">
               <label>BTW percentage</label>
               <Select

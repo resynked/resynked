@@ -322,10 +322,9 @@ function PriceTable({
   const regels = element.items.slice(vanaf, Math.min(totEn, totalenIndex));
   const toonTotalen = totEn > totalenIndex;
 
-  // Aantal en eenheid alleen tonen als ze in deze tabel gebruikt worden. Bij
-  // het bewerken staan ze er altijd, anders valt er niets in te vullen
-  const showQuantity =
-    !!edit || element.items.some(item => !item.is_heading && (item.unit || Number(item.quantity) !== 1));
+  // Aantal, eenheid en prijs per stuk: per prijstabel aan of uit te zetten
+  // (het venster "Prijstabel" in de werkbalk), op het scherm en op papier gelijk
+  const showQuantity = !!element.show_quantity;
   const columns = showQuantity ? 5 : 2;
 
   return (
@@ -378,25 +377,37 @@ function PriceTable({
                         onKeyDown={descriptionKeys(index)}
                         onBlur={() => setSuggest(null)}
                       />
-                      <PriceCell
-                        field={fieldKeys.quantity(edit.block, edit.element, index)}
-                        price={Number(item.quantity)}
-                        display={formatQuantity(item.quantity)}
-                        onChange={(quantity) => changeItem(index, { quantity })}
-                      />
-                      <EditableText
-                        as="td"
-                        field={fieldKeys.unit(edit.block, edit.element, index)}
-                        value={item.unit || ''}
-                        onChange={(unit) => changeItem(index, { unit: unit.trim() || null })}
-                      />
-                      <PriceCell
-                        field={fieldKeys.price(edit.block, edit.element, index)}
-                        price={item.price}
-                        display={formatCurrency(item.price, currency)}
-                        onChange={(price) => changeItem(index, { price })}
-                      />
-                      <td>{formatCurrency(lineTotal(item), currency)}</td>
+                      {showQuantity ? (
+                        <>
+                          <PriceCell
+                            field={fieldKeys.quantity(edit.block, edit.element, index)}
+                            price={Number(item.quantity)}
+                            display={formatQuantity(item.quantity)}
+                            onChange={(quantity) => changeItem(index, { quantity })}
+                          />
+                          <EditableText
+                            as="td"
+                            field={fieldKeys.unit(edit.block, edit.element, index)}
+                            value={item.unit || ''}
+                            onChange={(unit) => changeItem(index, { unit: unit.trim() || null })}
+                          />
+                          <PriceCell
+                            field={fieldKeys.price(edit.block, edit.element, index)}
+                            price={item.price}
+                            display={formatCurrency(item.price, currency)}
+                            onChange={(price) => changeItem(index, { price })}
+                          />
+                          <td>{formatCurrency(lineTotal(item), currency)}</td>
+                        </>
+                      ) : (
+                        // Zonder aantallen is het bedrag gewoon de prijs van de regel
+                        <PriceCell
+                          field={fieldKeys.price(edit.block, edit.element, index)}
+                          price={item.price}
+                          display={formatCurrency(lineTotal(item), currency)}
+                          onChange={(price) => changeItem(index, { price })}
+                        />
+                      )}
                     </tr>
                   );
                 }

@@ -27,7 +27,19 @@ export const emptyElement = (kind: ElementKind): DocumentElement => ({
   body: kind === 'tekst' || kind === 'kop' ? '' : null,
   tax_percentage: 21,
   discount_percentage: 0,
+  show_quantity: false,
   items: kind === 'prijstabel' ? [emptyItem()] : [],
+});
+
+/** Of er in deze regels met aantallen of eenheden gewerkt wordt */
+export const usesQuantities = (items: Pick<LineItem, 'is_heading' | 'unit' | 'quantity'>[]): boolean =>
+  items.some(item => !item.is_heading && (!!item.unit || Number(item.quantity) !== 1));
+
+/** Een prijstabel met deze regels; aantal en eenheid staan aan als de regels ze gebruiken */
+export const priceTable = (items: LineItem[]): DocumentElement => ({
+  ...emptyElement('prijstabel'),
+  items,
+  show_quantity: usesQuantities(items),
 });
 
 /** Een vers blok: één pagina met een titel en nog geen elementen. */
@@ -46,6 +58,7 @@ export function duplicateElement(element: DocumentElement): DocumentElement {
     body: element.body,
     tax_percentage: element.tax_percentage,
     discount_percentage: element.discount_percentage,
+    show_quantity: element.show_quantity,
     items: element.items.map(item => ({ ...item, id: undefined })),
   };
 }
@@ -70,6 +83,7 @@ export function copyBlocks(blocks: any[] | null | undefined): DocumentBlock[] {
       body: element.body ?? null,
       tax_percentage: Number(element.tax_percentage) || 0,
       discount_percentage: Number(element.discount_percentage) || 0,
+      show_quantity: !!element.show_quantity,
       items: (element.items || []).map((item: any) => ({
         description: item.description || '',
         is_heading: !!item.is_heading,

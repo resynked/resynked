@@ -90,6 +90,7 @@ async function saveBlocks(
         body: element.kind === 'tekst' || element.kind === 'kop' ? element.body || null : null,
         tax_percentage: Number(element.tax_percentage) || 0,
         discount_percentage: Number(element.discount_percentage) || 0,
+        show_quantity: !!element.show_quantity,
         position: elementIndex,
       });
     });
@@ -157,7 +158,7 @@ function sortBlocks(blocks: any[] | null | undefined) {
   }));
 }
 
-const ELEMENT_COLUMNS = 'id, kind, body, tax_percentage, discount_percentage, position';
+const ELEMENT_COLUMNS = 'id, kind, body, tax_percentage, discount_percentage, show_quantity, position';
 const ITEM_COLUMNS = 'id, description, is_heading, quantity, unit, price, total, position';
 
 /** De klantvelden die bij een offerte, factuur of notitie meekomen. */
@@ -250,6 +251,7 @@ async function fetchLegacyBlocks(soort: Soort, parentId: number | string, tenant
         body: block.body ?? null,
         tax_percentage: Number(block.tax_percentage) || 0,
         discount_percentage: Number(block.discount_percentage) || 0,
+        show_quantity: false,
         position: 0,
         items: [...(block.items || [])].sort(byPosition),
       },

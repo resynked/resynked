@@ -137,6 +137,8 @@ export interface DocumentElement {
   body: string | null;
   tax_percentage: number;
   discount_percentage: number;
+  /** Alleen bij een prijstabel: de kolommen Aantal, Eenheid en Prijs tonen */
+  show_quantity: boolean;
   position?: number;
   items: LineItem[];
 }

@@ -1,5 +1,5 @@
 import { AiKeyError, openAi, pastQuoteLines, type QuoteProposal } from '@/lib/ai';
-import { emptyElement } from '@/lib/blocks';
+import { emptyElement, priceTable } from '@/lib/blocks';
 import { createCustomer, createQuote, dagenErbij, getTenant, takeDocumentNumber, updateCustomer, vandaagHier } from '@/lib/db';
 import { appUrl } from '@/lib/email';
 import { plainTextToRichText } from '@/lib/richtext';
@@ -262,9 +262,8 @@ function toBlocks(proposal: QuoteProposal): DocumentBlock[] {
       elements: [
         emptyElement('gegevens'),
         ...(proposal.quote.intro.trim() ? [{ ...emptyElement('tekst'), body: plainTextToRichText(proposal.quote.intro) }] : []),
-        {
-          ...emptyElement('prijstabel'),
-          items: (lines.length ? lines : [{ description: title, quantity: 1, unit: '', price: null, price_basis: '' }]).map(
+        priceTable(
+          (lines.length ? lines : [{ description: title, quantity: 1, unit: '', price: null, price_basis: '' }]).map(
             item => ({
               description: item.description.trim(),
               is_heading: false,
@@ -272,8 +271,8 @@ function toBlocks(proposal: QuoteProposal): DocumentBlock[] {
               unit: item.unit.trim() || null,
               price: Number(item.price) || 0,
             })
-          ),
-        },
+          )
+        ),
         emptyElement('handtekening'),
       ],
     },

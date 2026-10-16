@@ -50,6 +50,27 @@ async function startBrowser(): Promise<Browser> {
   }) as unknown as Browser;
 }
 
+/**
+ * Het adres waarop de gebruiker de download startte, zoals https://khance.com.
+ * De PDF-browser moet precies daar de pagina ophalen: de sessiecookie hoort
+ * bij dat adres. Met APP_URL ging het mis zodra die ook maar iets anders was
+ * (met of zonder www), en dan kwam de PDF-browser uit op het inloggen.
+ */
+export function requestOrigin(req: { headers: Record<string, string | string[] | undefined> }): string {
+  const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value)?.split(',')[0].trim();
+  const host = first(req.headers['x-forwarded-host']) || first(req.headers.host);
+  if (!host) throw new Error('Onbekend adres voor de PDF');
+  const proto = first(req.headers['x-forwarded-proto']) || (host.startsWith('localhost') ? 'http' : 'https');
+
+  // Alleen het eigen domein, met of zonder www: de server mag niet zomaar
+  // een ander adres gaan openen dat iemand in de aanvraag zet
+  const own = new URL(process.env.APP_URL || process.env.NEXTAUTH_URL || `${proto}://${host}`).hostname.replace(/^www\./, '');
+  const asked = host.split(':')[0].replace(/^www\./, '');
+  if (asked !== own && asked !== 'localhost') throw new Error('Onbekend adres voor de PDF');
+
+  return `${proto}://${host}`;
+}
+
 interface PdfOptions {
   /** De pagina in de app die afgedrukt wordt */
   url: string;
