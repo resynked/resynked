@@ -509,7 +509,7 @@ function BlockView({ onderdelen, currency, customer, meta, signature, signatureF
     return !!edit && selected?.block === edit.block && selected?.element === index;
   };
 
-  // Het gekozen element licht op, met zijn soort erboven. Bij het slepen
+  // Het gekozen element krijgt een subtiele rand. Bij het slepen
   // vervaagt wat je vasthoudt en licht op waar het heen gaat
   const region = (index: number) => {
     const isDragged = drag?.from?.block === edit?.block && drag?.from?.element === index;

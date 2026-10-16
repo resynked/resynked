@@ -250,6 +250,10 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 /* Aanklikbare onderdelen in het document */
 .editable-region {position: relative; cursor: pointer;}
+/* Alleen het gekozen element (een kop, tekst of prijstabel) krijgt een rand,
+   niet het blok of de hele pagina; de knoppen in de balk werken daarop */
+.editable-region[data-element].active {outline: 1px solid var(--border-color); outline-offset: 6px; border-radius: var(--border-radius1);}
+.document-paper [contenteditable="true"]:focus {outline: 0;}
 button[data-label]::after, .sidebar.collapsed .navigation a::after {content: attr(data-label); position: absolute; top: -28px; left: 0; z-index: 2; font-size: 11px; line-height: 1.6; white-space: nowrap; background: var(--color4); padding: 0 var(--space5); border-radius: var(--border-radius1); opacity: 0; pointer-events: none; transition: .2s all ease;}
 button[data-label]:hover::after {opacity: 1;}
 
