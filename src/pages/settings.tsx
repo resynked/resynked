@@ -622,7 +622,7 @@ export default function Settings() {
                                     <span className="title">Wachtwoord wijzigen</span>
                                     <span className="description">Eerst je huidige wachtwoord, daarna je nieuwe.</span>
                                 </div>
-                                <div className="form-section privacy-option">
+                                <div className="form-section setting-option">
                                     {!passwordUnlocked ? (
                                         <div className="form-row">
                                             <div className="form-group">
@@ -706,7 +706,7 @@ export default function Settings() {
                                     <span className="title">Authenticator-app</span>
                                     <span className="description">Inloggen met een extra code uit een app.</span>
                                 </div>
-                                <div className="form-section privacy-option">
+                                <div className="form-section setting-option">
                                     <Toggle
                                         label="Tweestapsverificatie"
                                         checked={!!twoFactor.enabledAt || twoFactorMode === 'setup'}
@@ -913,7 +913,7 @@ export default function Settings() {
                                         herinnering, vanuit je eigen mailbox.
                                     </span>
                                 </div>
-                                <div className="form-section">
+                                <div className="form-section setting-option">
                                     <Toggle
                                         label="Herinnering versturen"
                                         checked={reminderEnabled}
@@ -925,7 +925,10 @@ export default function Settings() {
                                         }}
                                     />
                                     {reminderEnabled && (
-                                        <>
+                                        <div className="edit-holder form-section">
+                                            <p className="field-note">
+                                                Na hoeveel dagen zonder handtekening gaat de herinnering?
+                                            </p>
                                             <div className="form-row">
                                                 <div className="form-group">
                                                     <input
@@ -941,8 +944,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                             </div>
-                                            <p className="field-note">Dagen na het versturen, als de klant nog niet heeft getekend.</p>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
                             </div>

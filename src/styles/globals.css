@@ -824,16 +824,18 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .calendar .view-select {width: 160px;}
 
 /* Knoppen die aan elkaar vastzitten, zoals vorige / vandaag / volgende */
-/* Instellingen › Privacy. De opbouw komt van .form-section, .form-row en
-   .edit-holder; hier alleen wat daar niet in zit: de QR-code naast de stappen */
-.privacy-option .form-section, .privacy-option .edit-holder {margin: 0;}
-.privacy-option .edit-holder {padding: var(--space15);}
-.privacy-option p {margin: 0;}
-.privacy-option .field-note button {font-size: inherit; color: var(--font-color1); font-weight: 500;}
-.privacy-option .field-note button:hover {text-decoration: underline;}
-.privacy-option .edit-holder.setup {display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--space20); align-items: start;}
-.privacy-option .qr {display: block; width: 160px; height: 160px; padding: var(--space5); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius1);}
-.privacy-option code {word-break: break-all; color: var(--font-color1);}
+/* Een instelling met een schakelaar, waarvan de details eronder in een grijs
+   vak openen: wachtwoord en 2FA bij Privacy, de herinnering bij E-mail. De
+   opbouw komt van .form-section, .form-row en .edit-holder; hier alleen de
+   marges en de QR-code naast de stappen */
+.setting-option .form-section, .setting-option .edit-holder {margin: 0;}
+.setting-option .edit-holder {padding: var(--space15);}
+.setting-option p {margin: 0;}
+.setting-option .field-note button {font-size: inherit; color: var(--font-color1); font-weight: 500;}
+.setting-option .field-note button:hover {text-decoration: underline;}
+.setting-option .edit-holder.setup {display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--space20); align-items: start;}
+.setting-option .qr {display: block; width: 160px; height: 160px; padding: var(--space5); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius1);}
+.setting-option code {word-break: break-all; color: var(--font-color1);}
 .backup-codes {display: grid; grid-template-columns: repeat(2, max-content); gap: var(--space5) var(--space30); margin: 0; padding: var(--space15); list-style: none; background: var(--color3); border: 1px solid var(--border-color); border-radius: var(--border-radius1); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: .05em;}
 
 .button-group {display: inline-flex;}
