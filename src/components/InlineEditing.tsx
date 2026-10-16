@@ -67,6 +67,8 @@ export const fieldKeys = {
   text: (block: number, element: number) => `tekst:${block}:${element}`,
   description: (block: number, element: number, item: number) => `omschrijving:${block}:${element}:${item}`,
   price: (block: number, element: number, item: number) => `prijs:${block}:${element}:${item}`,
+  quantity: (block: number, element: number, item: number) => `aantal:${block}:${element}:${item}`,
+  unit: (block: number, element: number, item: number) => `eenheid:${block}:${element}:${item}`,
 };
 
 function charactersUntil(root: Node, node: Node, offset: number): number {

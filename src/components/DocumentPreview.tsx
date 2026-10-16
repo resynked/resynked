@@ -5,6 +5,7 @@ import PaymentDetails from '@/components/PaymentDetails';
 import ProductSuggestions, { matchProducts } from '@/components/ProductSuggestions';
 import { useProducts } from '@/hooks/useProducts';
 import { documentTemplate } from '@/lib/document-templates';
+import { emptyItem } from '@/lib/blocks';
 import { Skeleton } from '@/components/Skeleton';
 import {
   EditableRichText,
@@ -163,6 +164,11 @@ function focusInnerField(event: React.MouseEvent<HTMLElement>) {
 }
 
 /** "1.250,50" of "1250.5" wordt 1250.5; wat geen getal is telt als nul. */
+/** 2,5 in plaats van 2.5, en geen nullen achter de komma */
+function formatQuantity(quantity: number | string): string {
+  return Number(quantity).toLocaleString('nl-NL', { maximumFractionDigits: 3 });
+}
+
 function parseAmount(text: string): number {
   const clean = text.replace(/[^\d,.-]/g, '');
   const normalized = clean.includes(',') ? clean.replace(/\./g, '').replace(',', '.') : clean;
@@ -174,6 +180,11 @@ function parseAmount(text: string): number {
  * Het bedrag van een regel. Zolang je erin typt staat er het kale getal, met
  * een komma zoals je hem intikt; daarbuiten het bedrag zoals de klant het ziet.
  */
+/**
+ * Een getal in de prijstabel om op het papier te bewerken: de prijs of het
+ * aantal. Je ziet het opgemaakt ("€ 12,50"), en bij het aanklikken het kale
+ * getal ("12,5"), klaar om over te typen.
+ */
 function PriceCell({
   field,
   price,
@@ -181,7 +192,9 @@ function PriceCell({
   onChange,
 }: {
   field: string;
+  /** Het getal zelf */
   price: number;
+  /** Hoe het er buiten het bewerken uitziet */
   display: string;
   onChange: (price: number) => void;
 }) {
@@ -267,8 +280,23 @@ function PriceTable({
     setSuggest(null);
   };
 
-  const suggestionKeys = (index: number) => (event: React.KeyboardEvent<HTMLElement>) => {
-    if (!suggest || suggest.index !== index || suggestions.length === 0) return;
+  // Enter in een omschrijving: een nieuwe regel eronder, met de cursor erin
+  const addRowBelow = (index: number) => {
+    if (!edit) return;
+    const at = index + 1;
+    edit.onChange([...element.items.slice(0, at), emptyItem(), ...element.items.slice(at)]);
+    editing?.select({ block: edit.block, element: edit.element, item: at });
+    const field = fieldKeys.description(edit.block, edit.element, at);
+    // Pas na het tekenen bestaat het nieuwe veld
+    setTimeout(() => document.querySelector<HTMLElement>(`[data-bewerk="${CSS.escape(field)}"]`)?.focus(), 50);
+  };
+
+  const descriptionKeys = (index: number) => (event: React.KeyboardEvent<HTMLElement>) => {
+    const open = !!suggest && suggest.index === index && suggestions.length > 0;
+    if (!open) {
+      if (event.key === 'Enter') addRowBelow(index);
+      return;
+    }
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : -1;
@@ -294,10 +322,11 @@ function PriceTable({
   const regels = element.items.slice(vanaf, Math.min(totEn, totalenIndex));
   const toonTotalen = totEn > totalenIndex;
 
-  // Aantal en eenheid alleen tonen als ze in deze tabel gebruikt worden
-  const showQuantity = element.items.some(
-    item => !item.is_heading && (item.unit || Number(item.quantity) !== 1)
-  );
+  // Aantal en eenheid alleen tonen als ze in deze tabel gebruikt worden. Bij
+  // het bewerken staan ze er altijd, anders valt er niets in te vullen
+  const showQuantity =
+    !!edit || element.items.some(item => !item.is_heading && (item.unit || Number(item.quantity) !== 1));
+  const columns = showQuantity ? 5 : 2;
 
   return (
     <>
@@ -317,6 +346,7 @@ function PriceTable({
                 <th>Omschrijving</th>
                 {showQuantity && <th>Aantal</th>}
                 {showQuantity && <th>Eenheid</th>}
+                {showQuantity && <th>Prijs</th>}
                 <th>Bedrag excl. btw</th>
               </tr>
             </thead>
@@ -327,7 +357,7 @@ function PriceTable({
                 if (edit) {
                   return item.is_heading ? (
                     <tr key={index} data-kop="1" onFocus={selectItem(index)}>
-                      <td colSpan={showQuantity ? 4 : 2} onMouseDown={focusInnerField}>
+                      <td colSpan={columns} onMouseDown={focusInnerField}>
                         <EditableText
                           as="strong"
                           field={fieldKeys.description(edit.block, edit.element, index)}
@@ -345,32 +375,44 @@ function PriceTable({
                         onChange={(description) =>
                           typeDescription(index, fieldKeys.description(edit.block, edit.element, index), description)
                         }
-                        onKeyDown={suggestionKeys(index)}
+                        onKeyDown={descriptionKeys(index)}
                         onBlur={() => setSuggest(null)}
                       />
-                      {showQuantity && <td>{item.quantity}</td>}
-                      {showQuantity && <td>{item.unit || ''}</td>}
+                      <PriceCell
+                        field={fieldKeys.quantity(edit.block, edit.element, index)}
+                        price={Number(item.quantity)}
+                        display={formatQuantity(item.quantity)}
+                        onChange={(quantity) => changeItem(index, { quantity })}
+                      />
+                      <EditableText
+                        as="td"
+                        field={fieldKeys.unit(edit.block, edit.element, index)}
+                        value={item.unit || ''}
+                        onChange={(unit) => changeItem(index, { unit: unit.trim() || null })}
+                      />
                       <PriceCell
                         field={fieldKeys.price(edit.block, edit.element, index)}
                         price={item.price}
-                        display={formatCurrency(lineTotal(item), currency)}
+                        display={formatCurrency(item.price, currency)}
                         onChange={(price) => changeItem(index, { price })}
                       />
+                      <td>{formatCurrency(lineTotal(item), currency)}</td>
                     </tr>
                   );
                 }
 
                 return item.is_heading ? (
                   <tr key={index} data-kop="1">
-                    <td colSpan={showQuantity ? 4 : 2}>
+                    <td colSpan={columns}>
                       <strong>{item.description}</strong>
                     </td>
                   </tr>
                 ) : (
                   <tr key={index}>
                     <td>{item.description}</td>
-                    {showQuantity && <td>{item.quantity}</td>}
+                    {showQuantity && <td>{formatQuantity(item.quantity)}</td>}
                     {showQuantity && <td>{item.unit || ''}</td>}
+                    {showQuantity && <td>{formatCurrency(item.price, currency)}</td>}
                     <td>{formatCurrency(lineTotal(item), currency)}</td>
                   </tr>
                 );

@@ -8,6 +8,7 @@ import {
   Heading,
   IdCard,
   ListPlus,
+  ListX,
   Percent,
   Pilcrow,
   Plus,
@@ -206,7 +207,7 @@ export default function IslandBar({
             <ArrowDown size={15} />
           </ToolButton>
           <ToolButton title="Regel verwijderen" onClick={() => removeItem(itemIndex)}>
-            <Trash2 size={15} />
+            <ListX size={15} />
           </ToolButton>
         </div>
       )}

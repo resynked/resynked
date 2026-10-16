@@ -5,6 +5,7 @@ import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
 import { splitsBlok, type Stuk } from '@/lib/pagination';
 import { verplaats } from '@/lib/sorteren';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 
@@ -142,7 +143,19 @@ export default function DocumentEditor({
     setSelected({ block: to.block, element: to.element });
   };
 
-  const deleteBlock = (index: number) => {
+  const { confirm } = useConfirm();
+
+  // Een heel blok met alles erin: eerst vragen, zodat het niet per ongeluk gebeurt
+  const deleteBlock = async (index: number) => {
+    const block = blocks[index];
+    const confirmed = await confirm({
+      title: 'Blok verwijderen',
+      message: `${block?.title ? `"${block.title}"` : 'Dit blok'} verwijderen, met alles erin? Met Cmd+Z zet je het terug.`,
+      confirmText: 'Verwijderen',
+      cancelText: 'Annuleren',
+    });
+    if (!confirmed) return;
+
     onBlocksChange?.(blocks.filter((_, i) => i !== index));
     close();
   };
