@@ -84,13 +84,3 @@ export function SkeletonCard() {
     </div>
   );
 }
-
-export function SkeletonGrid({ count = 3 }: { count?: number }) {
-  return (
-    <div className="grid">
-      {Array.from({ length: count }).map((_, i) => (
-        <SkeletonCard key={i} />
-      ))}
-    </div>
-  );
-}

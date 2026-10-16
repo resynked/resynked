@@ -15,12 +15,12 @@ export function appUrl(): string {
 
 /** De pagina waar de klant zijn offerte bekijkt en ondertekent. */
 export function quoteLink(token: string): string {
-  return `${appUrl()}/offerte/${token}`;
+  return `${appUrl()}/public/quotes/${token}`;
 }
 
 /** De pagina waar de klant zijn factuur bekijkt en betaalt. */
 export function invoiceLink(token: string): string {
-  return `${appUrl()}/factuur/${token}`;
+  return `${appUrl()}/public/invoices/${token}`;
 }
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -41,12 +41,6 @@ interface QuoteEmailInput {
   quote: Pick<Quote, 'quote_number' | 'valid_until'>;
   token: string;
 }
-
-/** De tags die in een mailonderwerp gebruikt mogen worden. */
-export const SUBJECT_TAGS = {
-  quote: ['offertenummer', 'klant', 'bedrijf'],
-  invoice: ['factuurnummer', 'klant', 'bedrijf'],
-} as const;
 
 /**
  * Vult de tags in een onderwerp, bijvoorbeeld "Offerte {{offertenummer}}".

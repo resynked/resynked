@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const pdf = await renderPdf({
       // ?pdf=1 zorgt dat die pagina niet zelf het printvenster opent
       // Op het adres van de gebruiker zelf, waar zijn sessie bij hoort
-      url: `${requestOrigin(req)}/invoices/${id}/afdrukken?pdf=1`,
+      url: `${requestOrigin(req)}/invoices/${id}/print?pdf=1`,
       cookie: req.headers.cookie,
     });
 

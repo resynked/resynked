@@ -27,7 +27,7 @@ interface PublicInvoice {
  * inlog, geen menu: de factuur met het betaalblok en de QR-code, en onderin
  * een balk met de betaalknop als de aannemer Mollie heeft gekoppeld.
  */
-export default function PublicInvoicePage() {
+export default function PublicInvoice() {
   const router = useRouter();
   const { token } = router.query;
 
@@ -73,7 +73,7 @@ export default function PublicInvoicePage() {
 
   const isPaid = invoice?.status === 'paid';
   // Terug van Mollie: de bevestiging komt los, dus even geduld
-  const justPaid = !isPaid && router.query.betaald === '1';
+  const justPaid = !isPaid && router.query.paid === '1';
 
   return (
     <>

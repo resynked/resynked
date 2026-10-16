@@ -4,7 +4,7 @@ import IslandBar from '@/components/IslandBar';
 import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateBlock, emptyBlock } from '@/lib/blocks';
 import { splitsBlok, type Stuk } from '@/lib/pagination';
-import { verplaats } from '@/lib/sorteren';
+import { moveInList } from '@/lib/sorting';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
@@ -108,9 +108,9 @@ export default function DocumentEditor({
   const moveBlock = (van: number, naar: number) => {
     if (!onBlocksChange) return;
 
-    onBlocksChange(verplaats(blocks, van, naar));
+    onBlocksChange(moveInList(blocks, van, naar));
 
-    const volgorde = verplaats(blocks.map((_, i) => i), van, naar);
+    const volgorde = moveInList(blocks.map((_, i) => i), van, naar);
     setSelected(huidig => (huidig === null ? null : { block: volgorde.indexOf(huidig.block) }));
   };
 
@@ -128,7 +128,7 @@ export default function DocumentEditor({
 
     if (from.block === to.block) {
       onBlocksChange(
-        blocks.map((b, i) => (i === from.block ? { ...b, elements: verplaats(b.elements, from.element!, to.element!) } : b))
+        blocks.map((b, i) => (i === from.block ? { ...b, elements: moveInList(b.elements, from.element!, to.element!) } : b))
       );
     } else {
       onBlocksChange(

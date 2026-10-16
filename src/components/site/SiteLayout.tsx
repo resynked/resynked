@@ -92,7 +92,7 @@ export default function SiteLayout({
             <div>
               <span className="title">Juridisch</span>
               <Link href="/privacy">Privacyverklaring</Link>
-              <Link href="/voorwaarden">Algemene voorwaarden</Link>
+              <Link href="/terms">Algemene voorwaarden</Link>
             </div>
           </div>
         </div>

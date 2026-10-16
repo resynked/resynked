@@ -24,7 +24,7 @@ import Toggle from '@/components/Toggle';
 import FormattingToolbar from '@/components/FormattingToolbar';
 import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
-import { verplaats } from '@/lib/sorteren';
+import { moveInList } from '@/lib/sorting';
 import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from '@/lib/supabase';
 
 interface IslandBarProps {
@@ -150,7 +150,7 @@ export default function IslandBar({
 
   const moveItem = (from: number, to: number) => {
     if (!element || elementIndex === undefined || to < 0 || to >= element.items.length) return;
-    setItems(verplaats(element.items, from, to));
+    setItems(moveInList(element.items, from, to));
     onSelect({ block: blockIndex, element: elementIndex, item: to });
   };
 

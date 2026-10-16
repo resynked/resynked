@@ -33,4 +33,3 @@ export const QUOTE_STATUS: Record<string, { label: string; className: string }> 
 
 /** Eenheden waarin een aannemer regels uitschrijft */
 export const UNITS = ['stuks', 'uur', 'dag', 'm', 'm²', 'm³', 'kg', 'ton', 'post'] as const;
-export type Unit = (typeof UNITS)[number];

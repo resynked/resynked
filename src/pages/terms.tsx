@@ -6,7 +6,7 @@ import SiteLayout from '@/components/site/SiteLayout';
  *
  * Concept: laat dit nakijken door een jurist voordat Khance live gaat.
  */
-export default function Voorwaarden() {
+export default function Terms() {
   return (
     <SiteLayout title="Algemene voorwaarden" description="De algemene voorwaarden van Khance.">
       <section className="site-section">

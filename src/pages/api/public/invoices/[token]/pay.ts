@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const payment = await createMolliePayment(invoice.tenant_id, {
       amount: Number(invoice.total) || 0,
       description: invoiceReference(invoice),
-      redirectUrl: `${invoiceLink(token)}?betaald=1`,
+      redirectUrl: `${invoiceLink(token)}?paid=1`,
       webhookUrl: `${appUrl()}/api/webhooks/mollie`,
       invoiceId: invoice.id,
     });

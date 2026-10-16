@@ -33,7 +33,7 @@ export default function Privacy() {
             verwerkingsverantwoordelijke. De gegevens die jij in Khance zet over je klanten, zoals namen, adressen,
             offertes en facturen, verwerken we in opdracht van jou: dan ben jij verantwoordelijk en zijn wij
             verwerker. De afspraken daarover staan in de verwerkersovereenkomst, die onderdeel is van de{' '}
-            <Link href="/voorwaarden">algemene voorwaarden</Link>.
+            <Link href="/terms">algemene voorwaarden</Link>.
           </p>
 
           <h2>Welke gegevens en waarom</h2>

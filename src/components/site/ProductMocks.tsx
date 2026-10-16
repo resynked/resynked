@@ -5,7 +5,7 @@ import DashboardContent, { type DashboardInvoice, type DashboardQuote } from '@/
 import DocumentPreview from '@/components/DocumentPreview';
 import PaymentDetails from '@/components/PaymentDetails';
 import MailBody from '@/components/MailBody';
-import type { RevenueData } from '@/components/OmzetChart';
+import type { RevenueData } from '@/components/RevenueChart';
 import type { DocumentBlock, Tenant } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 
@@ -278,7 +278,7 @@ const SIGNATURE =
 export function QuoteMock() {
   return (
     // Het document schaalt zichzelf al naar de breedte, dus niet nog eens verkleinen
-    <AppWindow url="khance.com/offerte/…" className="actual-size">
+    <AppWindow url="khance.com/public/quotes/…" className="actual-size">
       <ClientOnly height={560}>
         <div className="public-document">
           <div className="block">
@@ -314,7 +314,7 @@ export function QuoteMock() {
 /** Het betaalblok van een factuur, met een echte QR-code voor de bank-app */
 export function PaymentMock() {
   return (
-    <AppWindow url="khance.com/factuur/…" className="actual-size">
+    <AppWindow url="khance.com/public/invoices/…" className="actual-size">
       <ClientOnly height={220}>
         <div className="public-document">
           <div className="block">

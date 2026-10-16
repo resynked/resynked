@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Table from '@/components/Table';
-import OmzetChart, { type RevenueData } from '@/components/OmzetChart';
+import RevenueChart, { type RevenueData } from '@/components/RevenueChart';
 import { Skeleton } from '@/components/Skeleton';
 import { QUOTE_STATUS } from '@/lib/constants';
 import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
@@ -126,7 +126,7 @@ export default function DashboardContent({
 
       <div className="grid">
         <div className="block">
-          <OmzetChart preview={revenue} />
+          <RevenueChart preview={revenue} />
         </div>
       </div>
 
