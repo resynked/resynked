@@ -12,7 +12,6 @@ import PluginsSettings from '@/components/PluginsSettings';
 import Toggle from '@/components/Toggle';
 import type { Tenant } from '@/lib/supabase';
 import { MIN_PASSWORD_LENGTH } from '@/lib/constants';
-import { formatDate } from '@/lib/utils';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
 const MAX_LOGO_BYTES = 300 * 1024;
@@ -60,6 +59,9 @@ export default function Settings() {
     const { update: updateSession } = useSession();
     const [profile, setProfile] = useState({ name: '', email: '' });
     const [savedName, setSavedName] = useState('');
+    // Wachtwoord wijzigen in twee stappen: eerst het huidige, dan pas de velden voor het nieuwe
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [passwordUnlocked, setPasswordUnlocked] = useState(false);
     const [passwords, setPasswords] = useState({ next: '', repeat: '' });
     // Wat er mist pas tonen na de eerste poging, niet al bij het openen
     const [showPasswordErrors, setShowPasswordErrors] = useState(false);
@@ -305,32 +307,55 @@ export default function Settings() {
         await save(numbering, 'Account opgeslagen');
     };
 
+    /** Eén verzoek aan de wachtwoord-API; geeft true als het gelukt is */
+    const passwordRequest = async (body: Record<string, unknown>) => {
+        setIsChangingPassword(true);
+        try {
+            const response = await fetch('/api/account/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                toast.error('Wachtwoord', data.error || 'Probeer het opnieuw');
+                return false;
+            }
+            return true;
+        } catch {
+            toast.error('Wachtwoord', 'Probeer het opnieuw');
+            return false;
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
+    const resetPasswordChange = () => {
+        setCurrentPassword('');
+        setPasswordUnlocked(false);
+        setPasswords({ next: '', repeat: '' });
+        setShowPasswordErrors(false);
+    };
+
+    /** Stap 1: klopt het huidige wachtwoord, dan verschijnen de velden voor het nieuwe */
+    const verifyCurrentPassword = async () => {
+        if (!currentPassword) {
+            toast.error('Nog niet compleet', 'Vul je huidige wachtwoord in');
+            return;
+        }
+        if (await passwordRequest({ current_password: currentPassword, check: true })) setPasswordUnlocked(true);
+    };
+
+    /** Stap 2: het nieuwe wachtwoord opslaan; de server controleert het huidige opnieuw */
     const handleChangePassword = async () => {
         setShowPasswordErrors(true);
         if (Object.keys(passwordErrors).length > 0) {
             toast.error('Nog niet compleet', 'Vul de gemarkeerde velden in');
             return;
         }
-
-        setIsChangingPassword(true);
-        try {
-            const response = await fetch('/api/account/password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_password: passwords.next }),
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                toast.error('Wachtwoord niet gewijzigd', data.error || 'Probeer het opnieuw');
-                return;
-            }
+        if (await passwordRequest({ current_password: currentPassword, new_password: passwords.next })) {
             toast.success('Gelukt', 'Je wachtwoord is gewijzigd');
-            setPasswords({ next: '', repeat: '' });
-            setShowPasswordErrors(false);
-        } catch {
-            toast.error('Wachtwoord niet gewijzigd', 'Probeer het opnieuw');
-        } finally {
-            setIsChangingPassword(false);
+            resetPasswordChange();
         }
     };
 
@@ -342,13 +367,6 @@ export default function Settings() {
                     <div className="actions">
                         <button className="button" onClick={handleSaveAccount} disabled={isSaving}>
                             {isSaving ? 'Opslaan...' : 'Opslaan'}
-                        </button>
-                    </div>
-                )}
-                {activeTab === 'privacy' && (
-                    <div className="actions">
-                        <button className="button" onClick={handleChangePassword} disabled={isChangingPassword}>
-                            {isChangingPassword ? 'Opslaan...' : 'Opslaan'}
                         </button>
                     </div>
                 )}
@@ -592,38 +610,82 @@ export default function Settings() {
                             <h3>Wachtwoord</h3>
                             <div className="row-section">
                                 <div className="information">
-                                    <span className="title">Nieuw wachtwoord</span>
-                                    <span className="description">
-                                        Minimaal {MIN_PASSWORD_LENGTH} tekens. Sla op met de knop rechtsboven.
-                                    </span>
+                                    <span className="title">Wachtwoord wijzigen</span>
+                                    <span className="description">Eerst je huidige wachtwoord, daarna je nieuwe.</span>
                                 </div>
-                                <div className="form-section">
-                                    <div className="form-row">
-                                        <div className="form-group">
+                                <div className="privacy-option">
+                                    {!passwordUnlocked ? (
+                                        <div className="inline-field">
                                             <input
                                                 type="password"
-                                                value={passwords.next}
-                                                autoComplete="new-password"
-                                                aria-label="Nieuw wachtwoord"
-                                                aria-invalid={!!shownPasswordErrors.next}
-                                                onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
-                                                placeholder="Vul een nieuw wachtwoord in"
+                                                value={currentPassword}
+                                                autoComplete="current-password"
+                                                aria-label="Huidig wachtwoord"
+                                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') verifyCurrentPassword();
+                                                }}
+                                                placeholder="Vul je huidige wachtwoord in"
                                             />
-                                            {shownPasswordErrors.next && <p className="field-error">{shownPasswordErrors.next}</p>}
+                                            <button
+                                                type="button"
+                                                className="button"
+                                                onClick={verifyCurrentPassword}
+                                                disabled={isChangingPassword}
+                                            >
+                                                Doorgaan
+                                            </button>
                                         </div>
-                                        <div className="form-group">
-                                            <input
-                                                type="password"
-                                                value={passwords.repeat}
-                                                autoComplete="new-password"
-                                                aria-label="Nieuw wachtwoord herhalen"
-                                                aria-invalid={!!shownPasswordErrors.repeat}
-                                                onChange={(e) => setPasswords({ ...passwords, repeat: e.target.value })}
-                                                placeholder="Vul het wachtwoord nogmaals in"
-                                            />
-                                            {shownPasswordErrors.repeat && <p className="field-error">{shownPasswordErrors.repeat}</p>}
+                                    ) : (
+                                        <div className="edit-holder confirm">
+                                            <p>Kies een nieuw wachtwoord van minimaal {MIN_PASSWORD_LENGTH} tekens.</p>
+                                            <div className="field-pair">
+                                                <div>
+                                                    <input
+                                                        type="password"
+                                                        value={passwords.next}
+                                                        autoComplete="new-password"
+                                                        autoFocus
+                                                        aria-label="Nieuw wachtwoord"
+                                                        aria-invalid={!!shownPasswordErrors.next}
+                                                        onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
+                                                        placeholder="Vul een nieuw wachtwoord in"
+                                                    />
+                                                    {shownPasswordErrors.next && <p className="field-error">{shownPasswordErrors.next}</p>}
+                                                </div>
+                                                <div>
+                                                    <input
+                                                        type="password"
+                                                        value={passwords.repeat}
+                                                        autoComplete="new-password"
+                                                        aria-label="Nieuw wachtwoord herhalen"
+                                                        aria-invalid={!!shownPasswordErrors.repeat}
+                                                        onChange={(e) => setPasswords({ ...passwords, repeat: e.target.value })}
+                                                        placeholder="Vul het wachtwoord nogmaals in"
+                                                    />
+                                                    {shownPasswordErrors.repeat && <p className="field-error">{shownPasswordErrors.repeat}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="button-row">
+                                                <button
+                                                    type="button"
+                                                    className="button cancel"
+                                                    onClick={resetPasswordChange}
+                                                    disabled={isChangingPassword}
+                                                >
+                                                    Annuleren
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="button"
+                                                    onClick={handleChangePassword}
+                                                    disabled={isChangingPassword}
+                                                >
+                                                    {isChangingPassword ? 'Opslaan...' : 'Opslaan'}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -631,12 +693,9 @@ export default function Settings() {
                             <div className="row-section">
                                 <div className="information">
                                     <span className="title">Authenticator-app</span>
-                                    <span className="description">
-                                        Naast je wachtwoord vraagt Khance bij het inloggen om een code uit een app
-                                        zoals Google Authenticator, Microsoft Authenticator of 1Password.
-                                    </span>
+                                    <span className="description">Inloggen met een extra code uit een app.</span>
                                 </div>
-                                <div className="two-factor">
+                                <div className="privacy-option">
                                     <label className="toggle-label">
                                         <Toggle
                                             label="Tweestapsverificatie"
@@ -644,13 +703,6 @@ export default function Settings() {
                                             onChange={handleTwoFactorToggle}
                                             disabled={isTwoFactorBusy}
                                         />
-                                        <span>
-                                            {twoFactor.enabledAt
-                                                ? `Aan sinds ${formatDate(twoFactor.enabledAt)}`
-                                                : twoFactorMode === 'setup'
-                                                  ? 'Bezig met aanzetten'
-                                                  : 'Uit'}
-                                        </span>
                                     </label>
 
                                     {twoFactor.enabledAt && !twoFactorMode && (
