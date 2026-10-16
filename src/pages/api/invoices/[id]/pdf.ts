@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { getInvoice } from '@/lib/db';
 import { renderPdf, requestOrigin } from '@/lib/pdf';
+import { invoiceTitle } from '@/lib/invoices';
 
 // Een browser starten en een document opmaken duurt langer dan de standaardgrens
 export const config = {
@@ -32,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cookie: req.headers.cookie,
     });
 
-    const naam = `Factuur ${invoice.invoice_number || id}.pdf`;
+    const naam = `${invoiceTitle(invoice)} ${invoice.invoice_number || id}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${naam.replace(/"/g, '')}"`);

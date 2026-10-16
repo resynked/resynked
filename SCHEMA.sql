@@ -254,10 +254,13 @@ CREATE TABLE invoices (
   sent_by UUID REFERENCES users(id) ON DELETE SET NULL,
   -- De laatste betaling bij Mollie, als die plug-in aan staat
   mollie_payment_id TEXT,
+  -- Bij een creditfactuur: de factuur die hij (deels) terugdraait
+  credit_for_invoice_id BIGINT REFERENCES invoices(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX invoices_credit_for_invoice_id_idx ON invoices(credit_for_invoice_id);
 CREATE UNIQUE INDEX invoices_public_token_idx ON invoices(public_token);
 CREATE INDEX invoices_mollie_payment_id_idx ON invoices(mollie_payment_id);
 CREATE INDEX invoices_tenant_id_idx ON invoices(tenant_id);

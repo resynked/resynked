@@ -28,7 +28,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       invoice: publicInvoice,
       // Een concept of geannuleerde factuur valt niet te betalen
       canPayOnline:
-        !!(await getMollieAccount(tenant_id).catch(() => null)) && ['sent'].includes(invoice.status),
+        // Niet bij een creditfactuur: die heeft een min-bedrag
+        !!(await getMollieAccount(tenant_id).catch(() => null)) && invoice.status === 'sent' && Number(invoice.total) > 0,
       tenant: {
         company_name: tenant.company_name,
         street_address: tenant.street_address,

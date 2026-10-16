@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
 import { getInvoice, getTenant, updateInvoice } from '@/lib/db';
-import { buildInvoiceEmailHtml, buildInvoiceEmailSubject } from '@/lib/email';
+import { buildCreditNoteEmailHtml, buildInvoiceEmailHtml, buildInvoiceEmailSubject } from '@/lib/email';
+import { isCreditNote } from '@/lib/invoices';
 import { MailAuthError, getMailAccount, openMailbox } from '@/lib/mail';
 
 /**
@@ -40,8 +41,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const subject = buildInvoiceEmailSubject(tenant, invoice, customer);
-    const html = buildInvoiceEmailHtml({ tenant, customer, invoice });
+    // Een creditfactuur heeft een eigen mail, zonder betaalgegevens
+    const subject = isCreditNote(invoice)
+      ? `Creditfactuur ${invoice.invoice_number || ''}`.trim()
+      : buildInvoiceEmailSubject(tenant, invoice, customer);
+    const html = isCreditNote(invoice)
+      ? buildCreditNoteEmailHtml({ tenant, customer, invoice, originalNumber: invoice.credit_for?.invoice_number })
+      : buildInvoiceEmailHtml({ tenant, customer, invoice });
 
     try {
       const mailbox = await openMailbox(userId);

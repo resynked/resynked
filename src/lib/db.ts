@@ -2,6 +2,7 @@ import { supabaseAdmin } from './supabase';
 import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note, Product } from './supabase';
 import { calculateDocumentTotal, lineTotal } from './utils';
 import { copyBlocks } from './blocks';
+import { isCreditNote, isFinalInvoice } from './invoices';
 import { isCountable, nextNumber } from './numbering';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
@@ -563,7 +564,7 @@ export async function getInvoiceByToken(token: string) {
   const { data, error } = await supabase
     .from('invoices')
     .select(
-      'id, tenant_id, invoice_number, invoice_date, due_date, total, status, currency, paid_at, ' +
+      'id, tenant_id, invoice_number, invoice_date, due_date, total, status, currency, paid_at, credit_for_invoice_id, ' +
         'customer:customers(name, first_name, middle_name, last_name, company_name, street_address, postal_code, city)'
     )
     .eq('public_token', token)
@@ -575,8 +576,22 @@ export async function getInvoiceByToken(token: string) {
   const invoice = data as any;
   const tenant = await getTenant(invoice.tenant_id);
 
+  // Bij een creditfactuur het nummer van de factuur die hij corrigeert
+  const { data: creditFor } = invoice.credit_for_invoice_id
+    ? await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('id', invoice.credit_for_invoice_id)
+        .eq('tenant_id', invoice.tenant_id)
+        .maybeSingle()
+    : { data: null };
+
   return {
-    invoice: { ...invoice, blocks: await fetchBlocks('invoice', invoice.id, invoice.tenant_id) },
+    invoice: {
+      ...invoice,
+      blocks: await fetchBlocks('invoice', invoice.id, invoice.tenant_id),
+      credit_for: creditFor || null,
+    },
     tenant,
   };
 }
@@ -653,7 +668,32 @@ export async function getInvoice(id: string | number, tenantId: string) {
   if (error) throw error;
   if (!data) throw new Error('Factuur niet gevonden');
 
-  return { ...(data as any), blocks: await fetchBlocks('invoice', id, tenantId) };
+  const invoice = data as any;
+
+  // De koppeling tussen een factuur en zijn creditfacturen, in beide richtingen
+  const [{ data: creditNotes }, { data: original }] = await Promise.all([
+    supabase
+      .from('invoices')
+      .select('id, invoice_number, status')
+      .eq('credit_for_invoice_id', invoice.id)
+      .eq('tenant_id', tenantId)
+      .order('created_at'),
+    invoice.credit_for_invoice_id
+      ? supabase
+          .from('invoices')
+          .select('id, invoice_number')
+          .eq('id', invoice.credit_for_invoice_id)
+          .eq('tenant_id', tenantId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return {
+    ...invoice,
+    blocks: await fetchBlocks('invoice', id, tenantId),
+    credit_notes: creditNotes || [],
+    credit_for: original || null,
+  };
 }
 
 export async function createInvoice(
@@ -673,7 +713,10 @@ export async function createInvoice(
 
   if (invoiceError) throw invoiceError;
 
-  if (eigenNummer) return invoiceData as Invoice;
+  if (eigenNummer) {
+    await saveBlocks('invoice', invoiceData.id, invoice.tenant_id, blocks);
+    return invoiceData as Invoice;
+  }
 
   const { data: updatedInvoice, error: updateError } = await supabase
     .from('invoices')
@@ -730,6 +773,17 @@ export async function updateInvoice(
 }
 
 export async function deleteInvoice(id: string | number, tenantId: string) {
+  // Een verstuurde factuur hoort in de boekhouding en blijft dus bestaan
+  const { data: current } = await supabase
+    .from('invoices')
+    .select('status')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+  if (current && isFinalInvoice(current)) {
+    throw new Error('Een verstuurde factuur kan niet verwijderd worden. Maak een creditfactuur om hem terug te draaien.');
+  }
+
   const { error } = await supabase
     .from('invoices')
     .delete()
@@ -779,6 +833,50 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
   await updateQuote(quoteId, tenantId, { converted_to_invoice_id: invoice.id });
 
   return invoice;
+}
+
+/**
+ * Een creditfactuur bij een verstuurde factuur: dezelfde klant en regels, met
+ * min-bedragen, als concept. Gaat het om een deel, dan haal je in het concept
+ * de regels weg die niet teruggedraaid worden. Hij krijgt een eigen nummer uit
+ * dezelfde reeks en verwijst naar de oorspronkelijke factuur.
+ */
+export async function createCreditNote(invoiceId: string | number, tenantId: string) {
+  const invoice = await getInvoice(invoiceId, tenantId);
+
+  if (!isFinalInvoice(invoice)) {
+    throw new Error('Een concept kun je nog gewoon aanpassen; een creditfactuur is niet nodig');
+  }
+  if (isCreditNote(invoice)) {
+    throw new Error('Van een creditfactuur kun je geen creditfactuur maken');
+  }
+
+  const blocks: DocumentBlock[] = copyBlocks(invoice.blocks).map(block => ({
+    ...block,
+    elements: block.elements.map(element => ({
+      ...element,
+      items: element.items.map(item => (item.is_heading ? item : { ...item, price: -Number(item.price) || 0 })),
+    })),
+  }));
+
+  const today = vandaagHier();
+
+  return createInvoice(
+    {
+      tenant_id: tenantId,
+      customer_id: invoice.customer_id,
+      invoice_date: today,
+      // Er valt niets te betalen, dus ook niets te laat; anders staat hij op het dashboard bij Verlopen
+      due_date: null,
+      total: calculateDocumentTotal(blocks),
+      status: 'draft',
+      currency: invoice.currency,
+      intro_text: invoice.intro_text,
+      notes: invoice.notes,
+      credit_for_invoice_id: invoice.id,
+    } as Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
+    blocks
+  );
 }
 
 // Notes

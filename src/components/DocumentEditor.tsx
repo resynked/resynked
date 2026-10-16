@@ -10,7 +10,7 @@ import type { SignatureState } from '@/components/DocumentPreview';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 
 interface DocumentEditorProps {
-  title: 'Offerte' | 'Factuur';
+  title: 'Offerte' | 'Factuur' | 'Creditfactuur';
   meta: { label: string; value: string }[];
   customer?: Customer | null;
   blocks: DocumentBlock[];

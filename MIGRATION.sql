@@ -541,6 +541,15 @@ WHERE e.kind = 'prijstabel' AND NOT e.show_quantity AND EXISTS (
   WHERE i.element_id = e.id AND NOT i.is_heading AND (i.unit IS NOT NULL OR i.quantity <> 1)
 );
 
+-- ------------------------------------------------------------
+-- 16. Creditfacturen
+--
+-- Een verstuurde factuur mag niet meer veranderen; een fout herstel je met
+-- een creditfactuur. Die verwijst naar de factuur die hij (deels) terugdraait.
+-- ------------------------------------------------------------
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS credit_for_invoice_id BIGINT REFERENCES invoices(id) ON DELETE RESTRICT;
+CREATE INDEX IF NOT EXISTS invoices_credit_for_invoice_id_idx ON invoices(credit_for_invoice_id);
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -555,7 +564,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen zestien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen zeventien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -670,4 +679,10 @@ UNION ALL SELECT 'Aantal en eenheid per prijstabel',
          SELECT count(*) FROM information_schema.columns
          WHERE table_schema = 'public' AND table_name IN ('quote_elements', 'invoice_elements')
            AND column_name = 'show_quantity'
-       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 15 niet gelukt' END;
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 15 niet gelukt' END
+
+UNION ALL SELECT 'Creditfacturen',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'invoices' AND column_name = 'credit_for_invoice_id'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 16 niet gelukt' END;

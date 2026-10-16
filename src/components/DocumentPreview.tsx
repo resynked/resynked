@@ -42,7 +42,7 @@ import {
 } from '@/lib/utils';
 
 interface DocumentPreviewProps {
-  title: 'Offerte' | 'Factuur';
+  title: 'Offerte' | 'Factuur' | 'Creditfactuur';
   /** Regels bij het gegevens-element, bijvoorbeeld nummer en datums */
   meta: { label: string; value: string }[];
   customer?: Partial<Customer> | null;

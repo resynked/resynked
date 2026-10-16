@@ -109,7 +109,7 @@ export const DEFAULT_QUOTE_TEMPLATE = (styles(false) + page(false)).trim();
 export const DEFAULT_INVOICE_TEMPLATE = (styles(true) + page(true)).trim();
 
 /** Het sjabloon voor een document: het eigen sjabloon van de aannemer, of anders dat van Khance */
-export function documentTemplate(title: 'Offerte' | 'Factuur', own?: string | null): string {
+export function documentTemplate(title: 'Offerte' | 'Factuur' | 'Creditfactuur', own?: string | null): string {
   if (own?.trim()) return own;
   return title === 'Offerte' ? DEFAULT_QUOTE_TEMPLATE : DEFAULT_INVOICE_TEMPLATE;
 }

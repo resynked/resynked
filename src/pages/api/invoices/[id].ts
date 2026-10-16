@@ -4,6 +4,7 @@ import { authOptions } from '../auth/[...nextauth]';
 import { getInvoice, updateInvoice, deleteInvoice } from '@/lib/db';
 import { calculateDocumentTotal } from '@/lib/utils';
 import { validateBlocks } from '@/lib/blocks';
+import { FINAL_INVOICE_ERROR, isFinalInvoice } from '@/lib/invoices';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -26,6 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
+      // Verstuurd is vast: alleen de status verandert nog, via versturen en betaald
+      const current = await getInvoice(id, tenantId);
+      if (isFinalInvoice(current)) {
+        return res.status(409).json({ error: FINAL_INVOICE_ERROR });
+      }
+
       const {
         customer_id,
         status,
@@ -40,7 +47,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const updates: any = {};
       if (customer_id !== undefined) updates.customer_id = customer_id;
-      if (status !== undefined) updates.status = status;
+      // Een concept kan hier op verstuurd (bijvoorbeeld zelf gemaild als PDF);
+      // betaald gaat via /paid, zodat de betaaldatum meekomt
+      if (status !== undefined) {
+        if (status !== 'draft' && status !== 'sent') {
+          return res.status(400).json({ error: 'Ongeldige status' });
+        }
+        updates.status = status;
+      }
       if (invoice_number !== undefined) updates.invoice_number = invoice_number;
       if (invoice_date !== undefined) updates.invoice_date = invoice_date;
       if (due_date !== undefined) updates.due_date = due_date;
@@ -62,6 +76,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
+      const current = await getInvoice(id, tenantId);
+      if (isFinalInvoice(current)) {
+        return res.status(409).json({
+          error: 'Een verstuurde factuur kan niet verwijderd worden. Maak een creditfactuur om hem terug te draaien.',
+        });
+      }
       await deleteInvoice(id, tenantId);
       return res.status(200).json({ success: true });
     }

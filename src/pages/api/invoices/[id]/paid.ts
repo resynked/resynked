@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
-import { getInvoice, updateInvoice } from '@/lib/db';
+import { updateInvoice } from '@/lib/db';
 
 /**
  * Een factuur als betaald markeren, of dat terugdraaien: POST { paid }.
@@ -19,9 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (typeof id !== 'string') return res.status(400).json({ error: 'Invalid ID' });
 
   try {
-    const invoice = await getInvoice(id, tenantId);
-    // Terug van betaald: weer verzonden als hij verstuurd was, anders concept
-    const status = req.body?.paid === false ? (invoice.sent_at ? 'sent' : 'draft') : 'paid';
+    // Terug van betaald is weer openstaand, nooit concept: een factuur die
+    // ooit als betaald stond, ligt vast (zie lib/invoices)
+    const status = req.body?.paid === false ? 'sent' : 'paid';
     const updated = await updateInvoice(id, tenantId, { status });
     return res.status(200).json(updated);
   } catch (error: any) {

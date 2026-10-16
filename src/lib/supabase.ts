@@ -172,6 +172,8 @@ export interface Invoice {
   sent_by?: string | null;
   /** De laatste betaling bij Mollie, als die plug-in aan staat */
   mollie_payment_id?: string | null;
+  /** Bij een creditfactuur: de factuur die hij (deels) terugdraait */
+  credit_for_invoice_id?: number | null;
   created_at: string;
   updated_at: string;
 }

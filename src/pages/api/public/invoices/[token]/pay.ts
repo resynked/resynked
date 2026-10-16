@@ -21,7 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!result) return res.status(404).json({ error: 'Deze factuur bestaat niet' });
 
     const { invoice } = result;
-    if (invoice.status !== 'sent') {
+    // Een creditfactuur heeft een min-bedrag: daar valt niets te betalen
+    if (invoice.status !== 'sent' || Number(invoice.total) <= 0) {
       return res.status(400).json({ error: invoice.status === 'paid' ? 'Deze factuur is al betaald' : 'Deze factuur kan niet betaald worden' });
     }
 

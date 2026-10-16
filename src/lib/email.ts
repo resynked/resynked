@@ -245,6 +245,36 @@ export function buildInvoiceEmailHtml({
 }
 
 /**
+ * De mail bij een creditfactuur: dezelfde opzet als de factuurmail, maar
+ * zonder betaalgegevens, en met het nummer van de factuur die hij corrigeert.
+ */
+export function buildCreditNoteEmailHtml({
+  tenant,
+  customer,
+  invoice,
+  originalNumber,
+}: {
+  tenant: Tenant;
+  customer: Customer;
+  invoice: Pick<Invoice, 'total' | 'public_token'>;
+  originalNumber?: string | null;
+}): string {
+  const amountText = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(
+    Math.abs(Number(invoice.total) || 0)
+  );
+
+  return emailLayout({
+    top: tenantLogoRow(tenant),
+    content: `<p>Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
+       <p>Hierbij ontvangt u een creditfactuur van ${escapeHtml(amountText)}${
+         originalNumber ? ` voor factuur ${escapeHtml(originalNumber)}` : ''
+       }. U kunt hem hieronder bekijken.</p>`,
+    button: { label: 'Creditfactuur bekijken', url: invoiceLink(invoice.public_token || '') },
+    footer: tenantFooter(tenant),
+  });
+}
+
+/**
  * De mail met de link om een nieuw wachtwoord te kiezen. Van Khance zelf, dus
  * met het logo van Khance bovenaan in plaats van dat van een aannemer.
  */

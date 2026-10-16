@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import DocumentPreview from '@/components/DocumentPreview';
 import { SkeletonCard } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
-import { formatDate } from '@/lib/utils';
+import { invoiceMeta, invoiceTitle, isCreditNote } from '@/lib/invoices';
 import { invoiceReference } from '@/lib/payment';
 import { usePrintWhenReady } from '@/hooks/usePrintWhenReady';
 
@@ -16,6 +16,9 @@ interface PrintInvoice {
   currency: string;
   blocks: DocumentBlock[];
   customer: Partial<Customer> | null;
+  credit_for_invoice_id: number | null;
+  /** Bij een creditfactuur: de factuur die hij corrigeert */
+  credit_for: { invoice_number: string | null } | null;
 }
 
 /**
@@ -55,7 +58,7 @@ export default function PrintInvoice() {
     <>
       <Head>
         {/* De browser stelt deze naam voor als bestandsnaam van de PDF */}
-        <title>{invoice ? `Factuur ${invoice.invoice_number || invoice.id}` : 'Factuur'}</title>
+        <title>{invoice ? `${invoiceTitle(invoice)} ${invoice.invoice_number || invoice.id}` : 'Factuur'}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
@@ -78,17 +81,13 @@ export default function PrintInvoice() {
             </div>
 
             <DocumentPreview
-              title="Factuur"
-              meta={[
-                { label: 'Factuurnummer', value: invoice.invoice_number || '' },
-                { label: 'Factuurdatum', value: formatDate(invoice.invoice_date) },
-                { label: 'Vervaldatum', value: formatDate(invoice.due_date) },
-              ]}
+              title={invoiceTitle(invoice)}
+              meta={invoiceMeta(invoice, invoice.credit_for)}
               customer={invoice.customer}
               blocks={invoice.blocks}
               currency={invoice.currency}
               tenant={tenant}
-              payment={{ reference: invoiceReference(invoice), dueDate: invoice.due_date }}
+              payment={isCreditNote(invoice) ? null : { reference: invoiceReference(invoice), dueDate: invoice.due_date }}
               papier="vol"
             />
           </>

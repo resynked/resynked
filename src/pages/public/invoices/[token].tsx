@@ -7,6 +7,7 @@ import { SkeletonCard } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { invoiceReference } from '@/lib/payment';
+import { invoiceMeta, invoiceTitle, isCreditNote } from '@/lib/invoices';
 import { pageTitle } from '@/lib/constants';
 
 interface PublicInvoice {
@@ -20,6 +21,9 @@ interface PublicInvoice {
   paid_at: string | null;
   blocks: DocumentBlock[];
   customer: Partial<Customer> | null;
+  credit_for_invoice_id: number | null;
+  /** Bij een creditfactuur: de factuur die hij corrigeert */
+  credit_for: { invoice_number: string | null } | null;
 }
 
 /**
@@ -72,13 +76,16 @@ export default function PublicInvoice() {
   };
 
   const isPaid = invoice?.status === 'paid';
+  // Een creditfactuur is er alleen om te bekijken; betalen hoort er niet bij
+  const isCredit = !!invoice && isCreditNote(invoice);
+  const title = invoice ? invoiceTitle(invoice) : 'Factuur';
   // Terug van Mollie: de bevestiging komt los, dus even geduld
   const justPaid = !isPaid && router.query.paid === '1';
 
   return (
     <>
       <Head>
-        <title>{pageTitle(invoice ? `Factuur ${invoice.invoice_number || ''}`.trim() : 'Factuur')}</title>
+        <title>{pageTitle(`${title} ${invoice?.invoice_number || ''}`.trim())}</title>
         {/* Deze pagina hoort nergens in een zoekmachine te staan */}
         <meta name="robots" content="noindex, nofollow" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -102,25 +109,28 @@ export default function PublicInvoice() {
           <>
             <div className="block">
               <DocumentPreview
-                title="Factuur"
-                meta={[
-                  { label: 'Factuurnummer', value: invoice.invoice_number || '' },
-                  { label: 'Factuurdatum', value: formatDate(invoice.invoice_date) },
-                  { label: 'Vervaldatum', value: formatDate(invoice.due_date) },
-                ]}
+                title={title}
+                meta={invoiceMeta(invoice, invoice.credit_for)}
                 customer={invoice.customer}
                 blocks={invoice.blocks}
                 currency={invoice.currency}
                 tenant={tenant}
                 // Betaald: dan geen QR-code meer, anders betaalt iemand twee keer
-                payment={isPaid ? null : { reference: invoiceReference(invoice), dueDate: invoice.due_date }}
+                payment={isPaid || isCredit ? null : { reference: invoiceReference(invoice), dueDate: invoice.due_date }}
               />
             </div>
 
             {/* Onderin, altijd in beeld: betalen, of de bevestiging daarvan */}
             <div className="island-bar rich-editor">
               <div className="toolbar">
-                {isPaid ? (
+                {isCredit ? (
+                  <div className="group selection-count">
+                    <span>
+                      Creditfactuur van {formatCurrency(Math.abs(invoice.total), invoice.currency)}
+                      {invoice.credit_for?.invoice_number ? ` bij factuur ${invoice.credit_for.invoice_number}` : ''}
+                    </span>
+                  </div>
+                ) : isPaid ? (
                   <div className="group selection-count">
                     <CircleCheck size={15} />
                     <span>Betaald{invoice.paid_at ? ` op ${formatDate(invoice.paid_at)}` : ''}. Bedankt!</span>

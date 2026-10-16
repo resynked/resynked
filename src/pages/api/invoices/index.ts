@@ -23,7 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'POST') {
       const {
         customer_id,
-        status,
         invoice_date,
         due_date,
         currency,
@@ -51,7 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           intro_text: intro_text || null,
           notes: notes || null,
           total: calculateDocumentTotal(blocks),
-          status: status || 'draft',
+          // Altijd eerst een concept; vast komt hij pas bij versturen of betaald
+          status: 'draft',
         } as any,
         blocks
       );

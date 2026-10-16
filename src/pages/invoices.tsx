@@ -11,6 +11,7 @@ import { Ellipsis, Check, Trash2, ReceiptEuro } from 'lucide-react';
 import { formatCurrency, formatDate, getCustomerDisplayName, vandaag } from '@/lib/utils';
 import { useConfirm } from '@/hooks/useConfirm';
 import { copyBlocks } from '@/lib/blocks';
+import { isCreditNote, isFinalInvoice } from '@/lib/invoices';
 import type { Customer } from '@/lib/supabase';
 
 interface Invoice {
@@ -21,6 +22,7 @@ interface Invoice {
   invoice_date: string | null;
   total: number;
   status: string;
+  credit_for_invoice_id: number | null;
   created_at: string;
 }
 
@@ -102,10 +104,17 @@ export default function Invoices() {
     }
   };
 
+  // Alleen concepten kunnen weg; een verstuurde factuur hoort in de boekhouding
+  const deletable = invoices.filter(i => selectedIds.includes(i.id) && !isFinalInvoice(i));
+
   const handleBulkDelete = async () => {
+    const kept = selectedIds.length - deletable.length;
+
     const confirmed = await confirm({
       title: 'Facturen verwijderen',
-      message: `Weet je zeker dat je ${selectedIds.length} factu(u)r(en) wilt verwijderen?`,
+      message: `Weet je zeker dat je ${deletable.length} concept(en) wilt verwijderen?${
+        kept ? ` ${kept} verstuurde factu(u)r(en) blijven bewaard.` : ''
+      }`,
       confirmText: 'Verwijderen',
       cancelText: 'Annuleren'
     });
@@ -114,7 +123,7 @@ export default function Invoices() {
 
     try {
       await Promise.all(
-        selectedIds.map(id => fetch(`/api/invoices/${id}`, { method: 'DELETE' }))
+        deletable.map(invoice => fetch(`/api/invoices/${invoice.id}`, { method: 'DELETE' }))
       );
       setSelectedIds([]);
       fetchInvoices();
@@ -237,7 +246,10 @@ export default function Invoices() {
                   {selectedIds.includes(invoice.id) && <Check size={14} />}
                 </button>
               </td>
-              <td>{invoice.invoice_number || `#${invoice.id}`}</td>
+              <td>
+                {invoice.invoice_number || `#${invoice.id}`}
+                {isCreditNote(invoice) && <span className="placeholder"> · Credit</span>}
+              </td>
               <td>{invoice.customer ? getCustomerDisplayName(invoice.customer) : '-'}</td>
               <td>{formatCurrency(invoice.total)}</td>
               <td>{getStatusBadge(invoice.status)}</td>
@@ -257,21 +269,25 @@ export default function Invoices() {
                   {openDropdownId === invoice.id && (
                     <div className="action-menu">
                       <Link href={`/invoices/${invoice.id}`} className="edit">
-                        Bewerken
+                        {isFinalInvoice(invoice) ? 'Bekijken' : 'Bewerken'}
                       </Link>
-                      <Link href="" className="copy" onClick={() => handleDuplicate(invoice)}>
-                        Kopiëren
-                      </Link>
-                      <Link
-                        href=""
-                        className="delete"
-                        onClick={() => {
-                          setOpenDropdownId(null);
-                          handleDelete(invoice.id);
-                        }}
-                      >
-                        Verwijderen
-                      </Link>
+                      {!isCreditNote(invoice) && (
+                        <Link href="" className="copy" onClick={() => handleDuplicate(invoice)}>
+                          Kopiëren
+                        </Link>
+                      )}
+                      {!isFinalInvoice(invoice) && (
+                        <Link
+                          href=""
+                          className="delete"
+                          onClick={() => {
+                            setOpenDropdownId(null);
+                            handleDelete(invoice.id);
+                          }}
+                        >
+                          Verwijderen
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>
@@ -290,7 +306,7 @@ export default function Invoices() {
         </>
       )}
       <SelectionBar count={selectedIds.length} noun={['factuur', 'facturen']} onClear={() => setSelectedIds([])}>
-        <ToolButton title="Verwijderen" className="delete" onClick={handleBulkDelete}>
+        <ToolButton title="Verwijderen" className="delete" disabled={deletable.length === 0} onClick={handleBulkDelete}>
           <Trash2 size={15} />
         </ToolButton>
       </SelectionBar>
