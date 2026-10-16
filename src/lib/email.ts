@@ -125,34 +125,64 @@ export function emailLayout({ top, content, button, note, footer }: EmailLayout)
  * offerte.
  */
 export function buildQuoteEmailHtml({ tenant, customer, quote, token }: QuoteEmailInput): string {
-  // Het logo staat als data-URL in de database, en die blokkeren de meeste
-  // mailprogramma's. Daarom wijst de mail naar het adres dat hem uitserveert.
-  const logo = tenant.logo_url
-    ? `<tr>
-        <td style="padding:0 0 24px 0;">
-          <img src="${escapeHtml(appUrl())}/api/public/logo/${escapeHtml(tenant.id)}"
-               alt="${escapeHtml(tenant.company_name || tenant.name || '')}"
-               style="max-width:200px;height:auto;border:0;display:block;">
-        </td>
-      </tr>`
-    : '';
-
   const intro = tenant.quote_email_intro_text
     ? toDisplayHtml(tenant.quote_email_intro_text)
     : `<p>Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
        <p>Hierbij ontvangt u onze offerte. U kunt hem hieronder bekijken en direct ondertekenen.</p>`;
 
   return emailLayout({
-    top: logo,
+    top: tenantLogoRow(tenant),
     content: intro,
     button: { label: 'Offerte bekijken en ondertekenen', url: quoteLink(token) },
-    note: quote.valid_until
-      ? `Deze offerte is geldig tot ${escapeHtml(new Date(quote.valid_until).toLocaleDateString('nl-NL'))}.`
-      : undefined,
-    footer: [tenant.company_name || tenant.name || '', tenant.phone || '', tenant.email || '']
-      .filter(Boolean)
-      .map(escapeHtml)
-      .join(' &middot; '),
+    note: validUntilNote(quote),
+    footer: tenantFooter(tenant),
+  });
+}
+
+/**
+ * Het logo van de aannemer bovenaan de mail. Het logo staat als data-URL in
+ * de database, en die blokkeren de meeste mailprogramma's; daarom wijst de
+ * mail naar het adres dat hem uitserveert.
+ */
+function tenantLogoRow(tenant: Tenant): string {
+  if (!tenant.logo_url) return '';
+  return `<tr>
+        <td style="padding:0 0 24px 0;">
+          <img src="${escapeHtml(appUrl())}/api/public/logo/${escapeHtml(tenant.id)}"
+               alt="${escapeHtml(tenant.company_name || tenant.name || '')}"
+               style="max-width:200px;height:auto;border:0;display:block;">
+        </td>
+      </tr>`;
+}
+
+/** Naam, telefoon en e-mail van de aannemer onder de mail */
+function tenantFooter(tenant: Tenant): string {
+  return [tenant.company_name || tenant.name || '', tenant.phone || '', tenant.email || '']
+    .filter(Boolean)
+    .map(escapeHtml)
+    .join(' &middot; ');
+}
+
+function validUntilNote(quote: Pick<Quote, 'valid_until'>): string | undefined {
+  return quote.valid_until
+    ? `Deze offerte is geldig tot ${escapeHtml(new Date(quote.valid_until).toLocaleDateString('nl-NL'))}.`
+    : undefined;
+}
+
+/**
+ * De herinnering als een verstuurde offerte na een aantal dagen nog niet is
+ * ondertekend. Zelfde opmaak, logo en knop als de offertemail zelf, met een
+ * korte, vriendelijke tekst.
+ */
+export function buildQuoteReminderEmailHtml({ tenant, customer, quote, token }: QuoteEmailInput): string {
+  return emailLayout({
+    top: tenantLogoRow(tenant),
+    content: `<p style="margin:0 0 16px 0;">Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
+       <p style="margin:0 0 16px 0;">Een paar dagen geleden stuurden wij u offerte ${escapeHtml(quote.quote_number || '')}. Heeft u al tijd gehad om ernaar te kijken?</p>
+       <p style="margin:0;">Met de knop hieronder bekijkt en ondertekent u hem direct. Heeft u nog vragen, beantwoord dan gerust deze mail.</p>`,
+    button: { label: 'Offerte bekijken en ondertekenen', url: quoteLink(token) },
+    note: validUntilNote(quote),
+    footer: tenantFooter(tenant),
   });
 }
 

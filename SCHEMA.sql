@@ -52,6 +52,8 @@ CREATE TABLE tenants (
   quote_email_intro_text TEXT,  -- de tekst onder het logo in de offertemail
   invoice_email_subject TEXT,   -- onderwerp van de factuurmail
   invoice_email_intro_text TEXT,-- de tekst onder het logo in de factuurmail
+  -- Na zoveel dagen zonder handtekening gaat er één herinnering; leeg = nooit
+  quote_reminder_days INTEGER,
   -- Het eerstvolgende nummer, bijvoorbeeld 20260050. De cijfers achteraan
   -- tellen bij elk document op; voorloopnullen blijven staan.
   quote_number_next TEXT,
@@ -152,6 +154,13 @@ CREATE TABLE quotes (
   signed_at TIMESTAMPTZ,
   signed_name TEXT,
   signature_image TEXT,         -- de handtekening als PNG data-URL
+  -- Opvolgen: wanneer de klant hem opende en hoe vaak, wie hem verstuurde
+  -- (de herinnering gaat vanuit diens mailbox) en of de herinnering al weg is
+  viewed_at TIMESTAMPTZ,
+  last_viewed_at TIMESTAMPTZ,
+  view_count INTEGER NOT NULL DEFAULT 0,
+  sent_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  reminder_sent_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

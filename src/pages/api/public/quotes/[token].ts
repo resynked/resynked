@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getQuoteByToken } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../auth/[...nextauth]';
+import { getQuoteByToken, recordQuoteView } from '@/lib/db';
 
 /**
  * De offerte zoals de klant hem te zien krijgt. Hier is geen sessie: de sleutel
@@ -24,7 +26,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Deze offerte bestaat niet of de link is verlopen' });
     }
 
-    const { quote, tenant } = result;
+    const { quote: found, tenant } = result;
+    // Wanneer en hoe vaak hij geopend is, is voor de aannemer; niet voor de klant
+    const { viewed_at, view_count, ...quote } = found;
+
+    // De klant opent zijn offerte. Kijkt de aannemer zelf via de link mee, dan
+    // telt dat niet: dan zou "geopend" niets meer zeggen
+    const session = await getServerSession(req, res, authOptions);
+    if ((session?.user as any)?.tenantId !== found.tenant_id) {
+      await recordQuoteView(found.id, view_count || 0, viewed_at).catch(error =>
+        console.error('Could not record quote view:', error)
+      );
+    }
 
     // Zoekmachines en tussenliggende servers mogen dit niet bewaren
     res.setHeader('Cache-Control', 'no-store');

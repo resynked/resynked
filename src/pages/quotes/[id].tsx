@@ -57,6 +57,8 @@ export default function EditQuote() {
   const [isConverting, setIsConverting] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [signature, setSignature] = useState<SignatureState | null>(null);
+  // Wanneer de klant de verstuurde offerte voor het eerst opende
+  const [viewedAt, setViewedAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -75,6 +77,7 @@ export default function EditQuote() {
       const quote: any = await response.json();
 
       setConvertedInvoiceId(quote.converted_to_invoice_id || null);
+      setViewedAt(quote.viewed_at || null);
       setSignature({
         image: quote.signature_image || null,
         name: quote.signed_name || null,
@@ -290,10 +293,12 @@ export default function EditQuote() {
           <span className={`autosave-status ${autosaveStatus}`}>
             {autosaveLabel(autosaveStatus, savedAt)}
           </span>
-          {signature?.signedAt && (
+          {signature?.signedAt ? (
             <span className="autosave-status saved">
               Getekend door {signature.name} op {formatDate(signature.signedAt)}
             </span>
+          ) : (
+            viewedAt && <span className="autosave-status">Geopend door de klant op {formatDate(viewedAt)}</span>
           )}
           {/* Versturen gaat via de eigen Gmail of Outlook; zonder koppeling is er geen knop */}
           {mailAccount && (

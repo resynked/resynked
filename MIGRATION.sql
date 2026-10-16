@@ -429,6 +429,21 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 11. Offertes opvolgen: geopend door de klant, en een herinnering
+--
+-- Wanneer de klant de offerte voor het eerst en het laatst opende en hoe
+-- vaak, wie hem verstuurde (de herinnering gaat vanuit diens mailbox), en
+-- of de herinnering al weg is. Per aannemer na hoeveel dagen zonder
+-- handtekening de herinnering gaat; leeg is geen herinnering.
+-- ------------------------------------------------------------
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMPTZ;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMPTZ;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS view_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS sent_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS quote_reminder_days INTEGER;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -443,7 +458,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen elf regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen twaalf regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -521,4 +536,12 @@ UNION ALL SELECT 'Wachtwoord vergeten en inlogslot',
        CASE WHEN (
          SELECT count(*) FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name IN ('password_resets', 'login_attempts')
-       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 10 niet gelukt' END;
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 10 niet gelukt' END
+
+UNION ALL SELECT 'Offertes opvolgen',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND ((table_name = 'quotes' AND column_name IN ('viewed_at', 'last_viewed_at', 'view_count', 'sent_by', 'reminder_sent_at'))
+             OR (table_name = 'tenants' AND column_name = 'quote_reminder_days'))
+       ) = 6 THEN 'ja - 6 van 6 kolommen' ELSE 'NEE - onderdeel 11 niet gelukt' END;

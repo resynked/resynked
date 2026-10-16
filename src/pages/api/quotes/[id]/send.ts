@@ -75,7 +75,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Een offerte die al goedgekeurd of afgewezen is blijft staan waar hij staat
     const status = quote.status === 'draft' ? 'sent' : quote.status;
 
-    await updateQuote(id, tenantId, { status, sent_at: new Date().toISOString() } as any);
+    // Wie hem verstuurde: een herinnering gaat later vanuit dezelfde mailbox.
+    // Opnieuw versturen begint ook de herinnering opnieuw
+    await updateQuote(id, tenantId, {
+      status,
+      sent_at: new Date().toISOString(),
+      sent_by: userId,
+      reminder_sent_at: null,
+    } as any);
 
     return res.status(200).json({
       success: true,

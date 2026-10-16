@@ -535,7 +535,7 @@ export async function getQuoteByToken(token: string) {
     .from('quotes')
     .select(
       'id, tenant_id, quote_number, quote_date, valid_until, total, status, currency, ' +
-        'signed_at, signed_name, signature_image, ' +
+        'signed_at, signed_name, signature_image, viewed_at, view_count, ' +
         'customer:customers(name, first_name, middle_name, last_name, company_name, street_address, postal_code, city)'
     )
     .eq('public_token', token)
@@ -551,6 +551,18 @@ export async function getQuoteByToken(token: string) {
     quote: { ...quote, blocks: await fetchBlocks('quote', quote.id, quote.tenant_id) },
     tenant,
   };
+}
+
+/**
+ * De klant heeft zijn offerte geopend: de eerste keer onthouden we, de laatste
+ * keer en het aantal tellen door. Zo ziet de aannemer wanneer hij kan bellen.
+ */
+export async function recordQuoteView(id: number, viewCount: number, viewedAt: string | null) {
+  const now = new Date().toISOString();
+  await supabase
+    .from('quotes')
+    .update({ viewed_at: viewedAt || now, last_viewed_at: now, view_count: viewCount + 1 })
+    .eq('id', id);
 }
 
 /**

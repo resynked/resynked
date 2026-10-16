@@ -27,6 +27,9 @@ interface Quote {
   total: number;
   status: string;
   converted_to_invoice_id: number | null;
+  viewed_at: string | null;
+  view_count: number;
+  reminder_sent_at: string | null;
   created_at: string;
 }
 
@@ -300,11 +303,27 @@ export default function Quotes() {
     }
   };
 
-  const getStatusBadge = (status: string) => (
-    <span className={`status-badge ${QUOTE_STATUS[status]?.className || ''}`}>
-      {QUOTE_STATUS[status]?.label || status}
-    </span>
-  );
+  // Een verstuurde offerte die de klant al opende, heet "Geopend"; wanneer en
+  // hoe vaak staat erbij als je er met de muis op staat
+  const getStatusBadge = (quote: Quote) => {
+    if (quote.status === 'sent' && quote.viewed_at) {
+      const details = [
+        `Eerst geopend op ${formatDate(quote.viewed_at)}`,
+        `${quote.view_count} keer bekeken`,
+        quote.reminder_sent_at ? `herinnering verstuurd op ${formatDate(quote.reminder_sent_at)}` : '',
+      ].filter(Boolean);
+      return (
+        <span className="status-badge status-sent" title={details.join(', ')}>
+          Geopend
+        </span>
+      );
+    }
+    return (
+      <span className={`status-badge ${QUOTE_STATUS[quote.status]?.className || ''}`}>
+        {QUOTE_STATUS[quote.status]?.label || quote.status}
+      </span>
+    );
+  };
 
   return (
     <Layout title="Offertes">
@@ -380,7 +399,7 @@ export default function Quotes() {
               <td>{quote.quote_number}</td>
               <td>{quote.customer ? getCustomerDisplayName(quote.customer) : '-'}</td>
               <td>{formatCurrency(quote.total)}</td>
-              <td>{getStatusBadge(quote.status)}</td>
+              <td>{getStatusBadge(quote)}</td>
               <td>{formatDate(quote.valid_until)}</td>
               <td className="actions">
                 <div

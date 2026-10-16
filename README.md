@@ -47,6 +47,10 @@ RLS-policies op de tabellen vormen de tweede laag.
    RESEND_API_KEY=...
    EMAIL_FROM="Khance <noreply@khance.com>"
 
+   # Dagelijkse taken (vercel.json), zoals herinneringen voor offertes.
+   # Vercel stuurt dit mee; zonder deze waarde weigert de taak elke aanroep
+   CRON_SECRET=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
+
    # Inbox (Instellingen > Plug-ins)
    MAIL_ENCRYPTION_KEY=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
    GOOGLE_CLIENT_ID=...

@@ -47,7 +47,10 @@ export default function Settings() {
         quote_email_intro_text: '',
         invoice_email_subject: '',
         invoice_email_intro_text: '',
+        quote_reminder_days: '',
     });
+    // De herinnering staat aan of uit; het aantal dagen blijft bewaard als je hem even uitzet
+    const [reminderEnabled, setReminderEnabled] = useState(false);
     const [numbering, setNumbering] = useState({
         quote_number_next: '',
         invoice_number_next: '',
@@ -223,7 +226,9 @@ export default function Settings() {
                     quote_email_intro_text: tenant.quote_email_intro_text || '',
                     invoice_email_subject: tenant.invoice_email_subject || '',
                     invoice_email_intro_text: tenant.invoice_email_intro_text || '',
+                    quote_reminder_days: tenant.quote_reminder_days ? String(tenant.quote_reminder_days) : '',
                 });
+                setReminderEnabled(!!tenant.quote_reminder_days);
                 setNumbering({
                     quote_number_next: tenant.quote_number_next || '',
                     invoice_number_next: tenant.invoice_number_next || '',
@@ -278,7 +283,11 @@ export default function Settings() {
 
     const handleSaveTemplates = () => save(templates, 'Sjabloon opgeslagen');
 
-    const handleSaveEmail = () => save(emailSettings, 'E-mailinstellingen opgeslagen');
+    const handleSaveEmail = () =>
+        save(
+            { ...emailSettings, quote_reminder_days: reminderEnabled ? emailSettings.quote_reminder_days : '' },
+            'E-mailinstellingen opgeslagen'
+        );
 
     /** De knop Opslaan bij Account: je naam, als die veranderd is, en de nummering */
     const handleSaveAccount = async () => {
@@ -893,6 +902,48 @@ export default function Settings() {
                                         }
                                         placeholder="Vul een tekst in"
                                     />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Herinnering</span>
+                                    <span className="description">
+                                        Nog niet ondertekend? Dan gaat er na een aantal dagen één vriendelijke
+                                        herinnering, vanuit je eigen mailbox.
+                                    </span>
+                                </div>
+                                <div className="form-section">
+                                    <Toggle
+                                        label="Herinnering versturen"
+                                        checked={reminderEnabled}
+                                        onChange={(on) => {
+                                            setReminderEnabled(on);
+                                            if (on && !emailSettings.quote_reminder_days) {
+                                                setEmailSettings({ ...emailSettings, quote_reminder_days: '7' });
+                                            }
+                                        }}
+                                    />
+                                    {reminderEnabled && (
+                                        <>
+                                            <div className="form-row">
+                                                <div className="form-group">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={60}
+                                                        value={emailSettings.quote_reminder_days}
+                                                        aria-label="Aantal dagen"
+                                                        onChange={(e) =>
+                                                            setEmailSettings({ ...emailSettings, quote_reminder_days: e.target.value })
+                                                        }
+                                                        placeholder="Vul een aantal dagen in"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <p className="field-note">Dagen na het versturen, als de klant nog niet heeft getekend.</p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 

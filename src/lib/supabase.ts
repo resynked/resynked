@@ -63,6 +63,8 @@ export interface Tenant {
   quote_number_next: string | null;
   /** Het eerstvolgende factuurnummer */
   invoice_number_next: string | null;
+  /** Na zoveel dagen zonder handtekening gaat er één herinnering; null is nooit */
+  quote_reminder_days: number | null;
   /** Afzendadres van deze aannemer; leeg betekent het systeemadres uit EMAIL_FROM */
   email_from: string | null;
   created_at: string;
@@ -182,6 +184,13 @@ export interface Quote {
   signed_name?: string | null;
   /** De handtekening van de klant als PNG data-URL */
   signature_image?: string | null;
+  /** Wanneer de klant de offerte voor het eerst en het laatst opende, en hoe vaak */
+  viewed_at?: string | null;
+  last_viewed_at?: string | null;
+  view_count?: number;
+  /** Wie hem verstuurde; de herinnering gaat vanuit diens mailbox */
+  sent_by?: string | null;
+  reminder_sent_at?: string | null;
   created_at: string;
   updated_at: string;
 }

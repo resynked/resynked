@@ -25,6 +25,7 @@ const EDITABLE_FIELDS = [
   'invoice_email_intro_text',
   'quote_number_next',
   'invoice_number_next',
+  'quote_reminder_days',
 ] as const;
 
 // Het logo komt als data-URL binnen en is daarmee groter dan een gewoon
@@ -57,6 +58,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field] || null;
         }
+      }
+
+      // Een herinnering na 1 tot 60 dagen, of geen (leeg)
+      const days = updates.quote_reminder_days;
+      if (days !== undefined && days !== null) {
+        const value = Number(days);
+        if (!Number.isInteger(value) || value < 1 || value > 60) {
+          return res.status(400).json({ error: 'Kies voor de herinnering een aantal dagen tussen 1 en 60' });
+        }
+        updates.quote_reminder_days = value;
       }
 
       const tenant = await updateTenant(tenantId, updates);
