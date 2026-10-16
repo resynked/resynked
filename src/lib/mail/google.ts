@@ -216,24 +216,8 @@ async function sendMime(accessToken: string, threadId: string | undefined, heade
   });
 }
 
-/**
- * In welk tabblad van de inbox een gesprek hoort. Gmail zet het label op elk
- * bericht; het laatste bericht in de inbox bepaalt waar het gesprek staat.
- * Zonder label van Reclame, Sociaal of Updates is het Primair, net als in
- * Gmail: ook Forums (dat tabblad staat standaard uit) en mail zonder label.
- */
-function threadCategory(messages: GmailMessage[]): string {
-  const inInbox = messages.filter(message => message.labelIds?.includes('INBOX'));
-  const candidates = inInbox.length ? inInbox : messages;
-  const last = candidates[candidates.length - 1];
-  const found = Object.entries(CATEGORY_LABELS).find(
-    ([id, label]) => id !== 'primary' && last?.labelIds?.includes(label)
-  );
-  return found ? found[0] : 'primary';
-}
-
 /** Eén regel in de lijst: alleen de koppen van het gesprek, niet de hele inhoud */
-async function summarize(accessToken: string, id: string, snippet?: string) {
+async function summarize(accessToken: string, id: string, snippet?: string): Promise<MailSummary> {
   const metadata = new URLSearchParams({ format: 'metadata' });
   ['From', 'Subject', 'Date'].forEach(name => metadata.append('metadataHeaders', name));
 
@@ -242,7 +226,7 @@ async function summarize(accessToken: string, id: string, snippet?: string) {
   const first = messages[0];
   const last = messages[messages.length - 1];
 
-  const summary: MailSummary = {
+  return {
     id,
     subject: header(first, 'Subject') || '(geen onderwerp)',
     from: parseAddress(header(last, 'From')),
@@ -250,22 +234,92 @@ async function summarize(accessToken: string, id: string, snippet?: string) {
     date: new Date(Number(last?.internalDate) || Date.now()).toISOString(),
     unread: messages.some(message => message.labelIds?.includes('UNREAD')),
   };
-  return { summary, category: threadCategory(messages) };
 }
 
-/** Hoeveel gesprekken alle labels tegelijk hebben, tot 1000 */
-async function countThreads(accessToken: string, labels: string[]): Promise<number> {
-  let count = 0;
+/**
+ * Van elk gesprek de koppen, maar hooguit een paar tegelijk. Gmail heeft een
+ * grens per seconde; 25 aanvragen in één keer gaan daar al snel overheen.
+ */
+async function summarizeAll(accessToken: string, threads: { id: string; snippet?: string }[]): Promise<MailSummary[]> {
+  const results: MailSummary[] = new Array(threads.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < threads.length) {
+      const index = next++;
+      results[index] = await summarize(accessToken, threads[index].id, threads[index].snippet);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(5, threads.length) }, worker));
+  return results;
+}
+
+/**
+ * De ids van de gesprekken die al deze labels hebben, tot 1000. Alleen de ids:
+ * dat is één goedkope aanvraag per 500, in plaats van één per gesprek.
+ */
+async function threadIds(accessToken: string, labels: string[], query?: string): Promise<string[]> {
+  const ids: string[] = [];
   let pageToken: string | undefined;
   do {
     const params = new URLSearchParams({ maxResults: '500' });
     labels.forEach(label => params.append('labelIds', label));
+    if (query) params.set('q', query);
     if (pageToken) params.set('pageToken', pageToken);
     const page = await apiFetch(`${API}/threads?${params}`, accessToken);
-    count += (page.threads || []).length;
+    ids.push(...(page.threads || []).map((thread: { id: string }) => thread.id));
     pageToken = page.nextPageToken;
-  } while (pageToken && count < 1000);
-  return count;
+  } while (pageToken && ids.length < 1000);
+  return ids;
+}
+
+/** De tabbladen naast Primair; wat daar staat, staat niet in Primair */
+const OTHER_TAB_LABELS = Object.entries(CATEGORY_LABELS)
+  .filter(([id]) => id !== 'primary')
+  .map(([, label]) => label);
+
+/**
+ * Primair: de inbox zonder Reclame, Sociaal en Updates. Gmail kan dat niet in
+ * één keer filteren. Eerst de ids die eruit moeten (goedkoop), dan de inbox in
+ * ids doorlopen tot er 25 over zijn, en alleen van die 25 de koppen ophalen.
+ *
+ * De volgende pagina is "gmailtoken~positie": waar in welke pagina van Gmail
+ * we gebleven zijn, zodat er niets wordt overgeslagen of dubbel getoond.
+ */
+async function listPrimary(accessToken: string, query: string, pageToken?: string) {
+  const excluded = new Set((await Promise.all(OTHER_TAB_LABELS.map(label => threadIds(accessToken, ['INBOX', label])))).flat());
+
+  const [startToken, startOffset] = (pageToken || '').split('~');
+  let gmailToken = startToken || undefined;
+  let offset = Number(startOffset) || 0;
+  const kept: { id: string; snippet?: string }[] = [];
+  let nextPageToken: string | null = null;
+
+  for (let pages = 0; pages < 5; pages++) {
+    const params = new URLSearchParams({ maxResults: '100', labelIds: 'INBOX' });
+    if (query) params.set('q', query);
+    if (gmailToken) params.set('pageToken', gmailToken);
+    const page = await apiFetch(`${API}/threads?${params}`, accessToken);
+
+    const candidates: { id: string; snippet?: string }[] = (page.threads || []).filter(
+      (thread: { id: string }) => !excluded.has(thread.id)
+    );
+    const taken = candidates.slice(offset, offset + 25 - kept.length);
+    kept.push(...taken);
+
+    // Vol, en er staat op deze pagina nog meer: daar gaan we de volgende keer verder
+    if (kept.length >= 25 && offset + taken.length < candidates.length) {
+      nextPageToken = `${gmailToken || ''}~${offset + taken.length}`;
+      break;
+    }
+    offset = 0;
+    gmailToken = page.nextPageToken || undefined;
+    // Laatste pagina van de inbox: er komt niets meer
+    nextPageToken = gmailToken ? `${gmailToken}~0` : null;
+    if (!gmailToken) break;
+    if (kept.length >= 25) break;
+  }
+
+  return { items: await summarizeAll(accessToken, kept), nextPageToken };
 }
 
 export const google: MailProvider = {
@@ -313,32 +367,20 @@ export const google: MailProvider = {
     // Een tabblad van de inbox; zoeken gaat door alle mail heen, zoals in Gmail zelf
     const tab =
       !search && folder === INBOX_FOLDER && category && Object.hasOwn(CATEGORY_LABELS, category) ? category : undefined;
+    const query = [search?.trim(), unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
+
+    if (tab === 'primary') return listPrimary(accessToken, query, pageToken);
 
     const params = new URLSearchParams({ maxResults: '25' });
     if (!search) params.set('labelIds', labelId(folder));
-    // Reclame, Sociaal en Updates kan Gmail zelf al uitzoeken op hun label
-    if (tab && tab !== 'primary') params.append('labelIds', CATEGORY_LABELS[tab]);
-    const query = [search?.trim(), unreadOnly ? 'is:unread' : ''].filter(Boolean).join(' ');
+    // Reclame, Sociaal en Updates zoekt Gmail zelf uit op hun label
+    if (tab) params.append('labelIds', CATEGORY_LABELS[tab]);
     if (query) params.set('q', query);
+    if (pageToken) params.set('pageToken', pageToken);
 
-    // Primair is "de rest van de inbox"; dat kan Gmail niet filteren, dus dat
-    // doen we zelf. Valt er veel af, dan halen we er nog een pagina bij
-    const items: MailSummary[] = [];
-    let next = pageToken;
-    let requests = 0;
-    do {
-      if (next) params.set('pageToken', next);
-      const page = await apiFetch(`${API}/threads?${params}`, accessToken);
-      const threads: { id: string; snippet?: string }[] = page.threads || [];
-
-      const summaries = await Promise.all(threads.map(({ id, snippet }) => summarize(accessToken, id, snippet)));
-      items.push(...summaries.filter(found => !tab || found.category === tab).map(found => found.summary));
-
-      next = page.nextPageToken || undefined;
-      requests++;
-    } while (tab === 'primary' && next && items.length < 25 && requests < 4);
-
-    return { items, nextPageToken: next || null };
+    const page = await apiFetch(`${API}/threads?${params}`, accessToken);
+    const items = await summarizeAll(accessToken, page.threads || []);
+    return { items, nextPageToken: page.nextPageToken || null };
   },
 
   async folders(accessToken) {
@@ -384,12 +426,12 @@ export const google: MailProvider = {
   async unreadCount(accessToken) {
     // Gmail telt bij de inbox alleen het ongelezen in Primair: alles behalve
     // Reclame, Sociaal en Updates. Gmail geeft dat getal niet los; we tellen zelf
-    const others = Object.entries(CATEGORY_LABELS).filter(([id]) => id !== 'primary');
     const [all, ...inTabs] = await Promise.all([
-      countThreads(accessToken, ['INBOX', 'UNREAD']),
-      ...others.map(([, label]) => countThreads(accessToken, ['INBOX', 'UNREAD', label])),
+      threadIds(accessToken, ['INBOX', 'UNREAD']),
+      ...OTHER_TAB_LABELS.map(label => threadIds(accessToken, ['INBOX', 'UNREAD', label])),
     ]);
-    return Math.max(0, all - inTabs.reduce((sum, count) => sum + count, 0));
+    const elsewhere = new Set(inTabs.flat());
+    return all.filter(id => !elsewhere.has(id)).length;
   },
 
   async signature(accessToken, ownAddress) {
