@@ -512,8 +512,8 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 -- ------------------------------------------------------------
 -- 14. Papierformaat per bedrijf
 --
--- Staand of liggend A4 voor het standaardsjabloon. Een eigen sjabloon bepaalt
--- zelf zijn formaat en trekt zich hier niets van aan.
+-- Staand of liggend A4, voor offertes en facturen. Geldt voor elk sjabloon:
+-- het vel zelf regelt de app, een sjabloon alleen de opmaak erbinnen.
 -- ------------------------------------------------------------
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS paper_orientation TEXT NOT NULL DEFAULT 'portrait';
 ALTER TABLE tenants DROP CONSTRAINT IF EXISTS tenants_paper_orientation_check;
