@@ -398,6 +398,37 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_last_counter BIGINT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_backup_codes TEXT[];
 
+-- ------------------------------------------------------------
+-- 10. Wachtwoord vergeten en een slot op te veel inlogpogingen
+--
+-- Een herstellink is eenmalig en een uur geldig; alleen een hash van de
+-- sleutel staat hier. En per e-mailadres een teller van mislukte pogingen, zodat
+-- niemand eindeloos wachtwoorden of codes kan proberen.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_resets (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  -- Alleen een hash: wie de database inziet, kan er geen wachtwoord mee herstellen
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS password_resets_user_id_idx ON password_resets(user_id);
+
+-- Mislukte pogingen per sleutel, zoals "login:naam@voorbeeld.nl". Na te veel
+-- pogingen binnen korte tijd staat de sleutel even op slot
+CREATE TABLE IF NOT EXISTS login_attempts (
+  key TEXT PRIMARY KEY,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  first_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  locked_until TIMESTAMPTZ
+);
+
+ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -412,7 +443,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen tien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen elf regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -484,4 +515,10 @@ UNION ALL SELECT 'Tweestapsverificatie',
          SELECT count(*) FROM information_schema.columns
          WHERE table_schema = 'public' AND table_name = 'users'
            AND column_name IN ('totp_secret', 'totp_enabled_at', 'totp_last_counter', 'totp_backup_codes')
-       ) = 4 THEN 'ja - 4 van 4 kolommen' ELSE 'NEE - onderdeel 9 niet gelukt' END;
+       ) = 4 THEN 'ja - 4 van 4 kolommen' ELSE 'NEE - onderdeel 9 niet gelukt' END
+
+UNION ALL SELECT 'Wachtwoord vergeten en inlogslot',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name IN ('password_resets', 'login_attempts')
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 10 niet gelukt' END;

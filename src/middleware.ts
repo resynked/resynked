@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 /** Pagina's die je zonder account moet kunnen openen. */
-const ZONDER_ACCOUNT = ['/login', '/register'];
+const ZONDER_ACCOUNT = ['/login', '/register', '/forgot-password'];
+
+/** De link uit de herstelmail werkt altijd, ook als je nog ergens ingelogd bent */
+const ALTIJD_OPEN = ['/reset-password'];
 
 /**
  * Wie niet ingelogd is gaat al op de server naar de inlogpagina. Anders laadt
@@ -12,6 +15,8 @@ const ZONDER_ACCOUNT = ['/login', '/register'];
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname, search } = req.nextUrl;
+
+  if (ALTIJD_OPEN.includes(pathname)) return NextResponse.next();
 
   if (ZONDER_ACCOUNT.includes(pathname)) {
     // Al ingelogd: dan heeft de inlogpagina geen zin meer

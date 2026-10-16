@@ -16,6 +16,8 @@ export function pageTitle(title?: string): string {
  */
 export const TWO_FACTOR_REQUIRED = '2FA_REQUIRED';
 export const TWO_FACTOR_INVALID = '2FA_INVALID';
+/** Te vaak mis: dit account staat even op slot (zie lib/rate-limit) */
+export const TOO_MANY_ATTEMPTS = 'TOO_MANY_ATTEMPTS';
 
 /** Zo kort mag een nieuw wachtwoord minimaal zijn */
 export const MIN_PASSWORD_LENGTH = 8;

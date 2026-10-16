@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
-import { TWO_FACTOR_INVALID, TWO_FACTOR_REQUIRED, pageTitle } from '@/lib/constants';
+import { TOO_MANY_ATTEMPTS, TWO_FACTOR_INVALID, TWO_FACTOR_REQUIRED, pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
 
 export default function Login() {
@@ -46,6 +46,9 @@ export default function Login() {
       if (result?.error === TWO_FACTOR_REQUIRED) {
         // Wachtwoord klopt; nu nog de code
         setNeedsCode(true);
+        setIsLoading(false);
+      } else if (result?.error === TOO_MANY_ATTEMPTS) {
+        toast.error('Even wachten', 'Te vaak een verkeerd wachtwoord of code. Probeer het over 15 minuten opnieuw.');
         setIsLoading(false);
       } else if (result?.error === TWO_FACTOR_INVALID) {
         toast.error('Fout', 'Deze code klopt niet. Probeer de code die nu in de app staat.');
@@ -138,6 +141,9 @@ export default function Login() {
             <button className="button" type="submit" disabled={isLoading}>
               {isLoading ? 'Bezig met inloggen...' : 'Login'}
             </button>
+            <Link href="/forgot-password" className="back">
+              Wachtwoord vergeten?
+            </Link>
           </form>
           )}
           <div className="register">

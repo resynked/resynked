@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { decrypt } from "@/lib/crypto";
 import { consumeBackupCode, verifyCode } from "@/lib/totp";
-import { TWO_FACTOR_INVALID, TWO_FACTOR_REQUIRED } from "@/lib/constants";
+import { TOO_MANY_ATTEMPTS, TWO_FACTOR_INVALID, TWO_FACTOR_REQUIRED } from "@/lib/constants";
+import { LOGIN_LIMIT, clearAttempts, isLocked, registerAttempt } from "@/lib/rate-limit";
 
 /**
  * De tweede stap: een code uit de authenticator-app, of een back-upcode.
@@ -41,6 +42,19 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Te vaak mis met dit adres: even niets proberen, ook niet met het goede
+        // wachtwoord. Zo valt er niets te raden. Fouten buiten de try, zodat de
+        // inlogpagina ze ziet
+        const attemptKey = `login:${credentials.email.trim().toLowerCase()}`;
+        if (await isLocked(attemptKey)) throw new Error(TOO_MANY_ATTEMPTS);
+
+        /** Een mislukte poging: telt mee, en gaat het slot erop, dan zeggen we dat */
+        const fail = async (error: string | null) => {
+          if (await registerAttempt(attemptKey, LOGIN_LIMIT)) throw new Error(TOO_MANY_ATTEMPTS);
+          if (error) throw new Error(error);
+          return null;
+        };
+
         let user: any;
         try {
           // Query user from Supabase
@@ -50,32 +64,29 @@ export const authOptions: NextAuthOptions = {
             .eq('email', credentials.email)
             .single();
 
-          if (error || !data) {
-            return null;
-          }
-          user = data;
+          user = error ? null : data;
 
           // Verify password
-          const isValidPassword = await bcrypt.compare(
-            credentials.password,
-            user.password_hash
-          );
-
-          if (!isValidPassword) {
-            return null;
+          if (user && !(await bcrypt.compare(credentials.password, user.password_hash))) {
+            user = null;
           }
         } catch (error) {
           console.error('Auth error:', error);
           return null;
         }
 
+        // Onbekend adres of fout wachtwoord: allebei een mislukte poging
+        if (!user) return fail(null);
+
         // Tweestapsverificatie staat aan: zonder geldige code geen sessie.
         // Deze fouten gaan bewust buiten de try, zodat de inlogpagina ze ziet
         if (user.totp_enabled_at) {
           const code = credentials.code?.trim();
           if (!code) throw new Error(TWO_FACTOR_REQUIRED);
-          if (!(await checkSecondFactor(user, code))) throw new Error(TWO_FACTOR_INVALID);
+          if (!(await checkSecondFactor(user, code))) return fail(TWO_FACTOR_INVALID);
         }
+
+        await clearAttempts(attemptKey);
 
         return {
           id: user.id,

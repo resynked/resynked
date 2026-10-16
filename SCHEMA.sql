@@ -409,6 +409,31 @@ CREATE TABLE whatsapp_messages (
 );
 
 -- ------------------------------------------------------------
+-- Wachtwoord vergeten: eenmalige herstellinks, een uur geldig, als hash.
+-- En een slot op te veel mislukte inlogpogingen per e-mailadres.
+-- ------------------------------------------------------------
+CREATE TABLE password_resets (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  -- Alleen een hash: wie de database inziet, kan er geen wachtwoord mee herstellen
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX password_resets_user_id_idx ON password_resets(user_id);
+
+-- Mislukte pogingen per sleutel, zoals "login:naam@voorbeeld.nl". Na te veel
+-- pogingen binnen korte tijd staat de sleutel even op slot
+CREATE TABLE login_attempts (
+  key TEXT PRIMARY KEY,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  first_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  locked_until TIMESTAMPTZ
+);
+
+-- ------------------------------------------------------------
 -- Row Level Security
 --
 -- De app praat met de database via de service role key en filtert zelf
@@ -432,6 +457,8 @@ ALTER TABLE mail_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE whatsapp_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
 -- Rechten voor de service role

@@ -42,6 +42,11 @@ RLS-policies op de tabellen vormen de tweede laag.
    # Het adres van de app, voor de link in de offertemail
    APP_URL=http://localhost:3000
 
+   # Mail van Khance zelf, zoals "Wachtwoord vergeten" (resend.com).
+   # Het domein van EMAIL_FROM moet bij Resend geverifieerd zijn
+   RESEND_API_KEY=...
+   EMAIL_FROM="Khance <noreply@khance.com>"
+
    # Inbox (Instellingen > Plug-ins)
    MAIL_ENCRYPTION_KEY=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
    GOOGLE_CLIENT_ID=...
