@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import { Inter } from 'next/font/google';
 import { ToastProvider } from '@/components/Toast';
 import { ConfirmProvider } from '@/hooks/useConfirm';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -17,6 +18,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
           </div>
         </ConfirmProvider>
       </ToastProvider>
+      <SpeedInsights />
     </SessionProvider>
   );
 }
