@@ -129,8 +129,11 @@ export default function Quotes() {
     }
   };
 
-  // Offertes die nog geen factuur zijn geworden
-  const convertible = quotes.filter(q => selectedIds.includes(q.id) && !q.converted_to_invoice_id);
+  // Goedgekeurde offertes die nog geen factuur zijn geworden
+  const convertible = quotes.filter(
+    q => selectedIds.includes(q.id) && q.status === 'approved' && !q.converted_to_invoice_id
+  );
+  const notApproved = quotes.filter(q => selectedIds.includes(q.id) && q.status !== 'approved').length;
 
   /** Verstuurt de geselecteerde offertes één voor één naar hun klant. */
   const handleBulkSend = async () => {
@@ -184,9 +187,7 @@ export default function Quotes() {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
       message: `${convertible.length} offerte(s) omzetten naar een factuur? Alle regels worden overgenomen.${
-        convertible.some(quote => quote.status !== 'approved')
-          ? ' Let op: niet alle offertes zijn ondertekend door de klant.'
-          : ''
+        notApproved ? ` ${notApproved} offerte(s) zijn nog niet goedgekeurd en worden overgeslagen.` : ''
       }`,
       confirmText: 'Omzetten',
       cancelText: 'Annuleren',
@@ -282,11 +283,7 @@ export default function Quotes() {
   const handleConvertToInvoice = async (quoteId: string) => {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
-      // Normaal pas na de handtekening; een akkoord per mail of telefoon kan ook
-      message:
-        quotes.find(quote => quote.id === quoteId)?.status === 'approved'
-          ? 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.'
-          : 'Let op: deze offerte is nog niet ondertekend door de klant. Heb je zijn akkoord op een andere manier, bijvoorbeeld per mail of telefoon? Dan kun je hem toch omzetten.',
+      message: 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.',
       confirmText: 'Omzetten',
       cancelText: 'Annuleren'
     });
@@ -454,17 +451,19 @@ export default function Quotes() {
                           Bekijk factuur
                         </Link>
                       ) : (
-                        <Link
-                          href=""
-                          className="edit"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setOpenDropdownId(null);
-                            handleConvertToInvoice(quote.id);
-                          }}
-                        >
-                          Omzetten naar factuur
-                        </Link>
+                        quote.status === 'approved' && (
+                          <Link
+                            href=""
+                            className="edit"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setOpenDropdownId(null);
+                              handleConvertToInvoice(quote.id);
+                            }}
+                          >
+                            Omzetten naar factuur
+                          </Link>
+                        )
                       )}
                       <Link
                         href=""

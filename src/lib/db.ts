@@ -748,6 +748,12 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
     throw new Error('Deze offerte is al omgezet naar een factuur');
   }
 
+  // Pas een factuur als de klant akkoord is: ondertekend, of door de aannemer
+  // zelf op Goedgekeurd gezet na een akkoord per mail of telefoon
+  if (quote.status !== 'approved') {
+    throw new Error('Deze offerte is nog niet goedgekeurd door de klant');
+  }
+
   // Alle blokken gaan mee, inclusief hun eigen BTW-tarief, zodat de
   // splitsing tussen bijvoorbeeld 9% en 21% op de factuur intact blijft
   const blocks: DocumentBlock[] = copyBlocks(quote.blocks);
@@ -770,10 +776,7 @@ export async function convertQuoteToInvoice(quoteId: string | number, tenantId: 
     blocks
   );
 
-  await updateQuote(quoteId, tenantId, {
-    status: 'approved',
-    converted_to_invoice_id: invoice.id,
-  });
+  await updateQuote(quoteId, tenantId, { converted_to_invoice_id: invoice.id });
 
   return invoice;
 }

@@ -229,11 +229,7 @@ export default function EditQuote() {
   const handleConvertToInvoice = async () => {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
-      // Normaal pas na de handtekening; een akkoord per mail of telefoon kan ook
-      message:
-        signature?.signedAt || formData.status === 'approved'
-          ? 'Deze offerte omzetten naar een factuur? Alle blokken en regels worden overgenomen.'
-          : 'Let op: deze offerte is nog niet ondertekend door de klant. Heb je zijn akkoord op een andere manier, bijvoorbeeld per mail of telefoon? Dan kun je hem toch omzetten.',
+      message: 'Deze offerte omzetten naar een factuur? Alle blokken en regels worden overgenomen.',
       confirmText: 'Omzetten',
       cancelText: 'Annuleren'
     });
@@ -318,9 +314,13 @@ export default function EditQuote() {
               Bekijk factuur
             </Link>
           ) : (
-            <button type="button" className="button" onClick={handleConvertToInvoice} disabled={isConverting}>
-              {isConverting ? 'Omzetten...' : 'Omzetten naar factuur'}
-            </button>
+            // Pas als de klant akkoord is: ondertekend, of met de hand op
+            // Goedgekeurd gezet na een akkoord per mail of telefoon
+            formData.status === 'approved' && (
+              <button type="button" className="button" onClick={handleConvertToInvoice} disabled={isConverting}>
+                {isConverting ? 'Omzetten...' : 'Omzetten naar factuur'}
+              </button>
+            )
           )}
           <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
             Annuleren
