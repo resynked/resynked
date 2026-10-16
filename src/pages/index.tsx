@@ -166,7 +166,9 @@ export default function Home() {
                 meteen hoe hij op papier komt, in je eigen huisstijl.
               </p>
             </div>
-            <InboxMock />
+            <div className="site-feature-visual">
+              <InboxMock />
+            </div>
           </div>
 
           <div className="site-feature reverse">
@@ -193,7 +195,9 @@ export default function Home() {
                 met iDEAL, en het geld staat op je eigen rekening.
               </p>
             </div>
-            <PaymentMock />
+            <div className="site-feature-visual">
+              <PaymentMock />
+            </div>
           </div>
         </div>
       </section>

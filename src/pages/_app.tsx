@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import '../styles/globals.css';
+import '../styles/site.css';
 import { Inter } from 'next/font/google';
 import { ToastProvider } from '@/components/Toast';
 import { ConfirmProvider } from '@/hooks/useConfirm';

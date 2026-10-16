@@ -4,7 +4,7 @@ import Select, { SelectOption } from './Select';
 import { Skeleton } from './Skeleton';
 import { formatCurrency } from '@/lib/utils';
 
-interface RevenueData {
+export interface RevenueData {
   date: string;
   /** Betaalde facturen */
   revenue: number;
@@ -50,14 +50,16 @@ function ChartTooltip({ active, label, payload }: TooltipProps) {
   );
 }
 
-export default function OmzetChart() {
-  const [data, setData] = useState<RevenueData[]>([]);
-  const [loading, setLoading] = useState(true);
+/** Met preview toont de grafiek die cijfers en haalt hij niets op, zoals op de website */
+export default function OmzetChart({ preview }: { preview?: RevenueData[] }) {
+  const [data, setData] = useState<RevenueData[]>(preview ?? []);
+  const [loading, setLoading] = useState(!preview);
   const [selectedPeriod, setSelectedPeriod] = useState<SelectOption>(periodOptions[2]); // Default to "Deze maand"
 
   useEffect(() => {
+    if (preview) return;
     fetchRevenueData(selectedPeriod.value);
-  }, [selectedPeriod]);
+  }, [selectedPeriod, preview]);
 
   const fetchRevenueData = async (period: string) => {
     setLoading(true);

@@ -52,17 +52,21 @@ export function clearMailAccount() {
   publish(null);
 }
 
-/** undefined zolang het nog geladen wordt, null als er niets gekoppeld is. */
-export function useMailAccount(): MailAccount | null | undefined {
+/**
+ * undefined zolang het nog geladen wordt, null als er niets gekoppeld is.
+ * Met enabled false wordt er niets opgehaald, zoals in het voorbeeld op de website.
+ */
+export function useMailAccount(enabled = true): MailAccount | null | undefined {
   const [account, setAccount] = useState<MailAccount | null | undefined>(current);
 
   useEffect(() => {
+    if (!enabled) return;
     listeners.add(setAccount);
     load();
     return () => {
       listeners.delete(setAccount);
     };
-  }, []);
+  }, [enabled]);
 
   return account;
 }
