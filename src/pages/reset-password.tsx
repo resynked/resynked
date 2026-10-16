@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MIN_PASSWORD_LENGTH, pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
+import PasswordInput from '@/components/PasswordInput';
 
 /**
  * De pagina achter de link in de herstelmail: twee keer het nieuwe wachtwoord,
@@ -79,21 +80,19 @@ export default function ResetPassword() {
           ) : (
             <form onSubmit={handleSubmit} className="login-form">
               <p className="placeholder">Kies een nieuw wachtwoord van minimaal {MIN_PASSWORD_LENGTH} tekens.</p>
-              <input
-                type="password"
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
                 autoComplete="new-password"
                 autoFocus
-                aria-label="Nieuw wachtwoord"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                label="Nieuw wachtwoord"
                 placeholder="Vul een nieuw wachtwoord in"
               />
-              <input
-                type="password"
-                autoComplete="new-password"
-                aria-label="Nieuw wachtwoord herhalen"
+              <PasswordInput
                 value={repeat}
-                onChange={e => setRepeat(e.target.value)}
+                onChange={setRepeat}
+                autoComplete="new-password"
+                label="Nieuw wachtwoord herhalen"
                 placeholder="Vul het wachtwoord nogmaals in"
               />
               <button className="button" type="submit" disabled={isLoading}>

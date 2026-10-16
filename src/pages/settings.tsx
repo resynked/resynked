@@ -10,6 +10,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import SidePanel from '@/components/SidePanel';
 import PluginsSettings from '@/components/PluginsSettings';
 import Toggle from '@/components/Toggle';
+import PasswordInput from '@/components/PasswordInput';
 import type { Tenant } from '@/lib/supabase';
 import { MIN_PASSWORD_LENGTH } from '@/lib/constants';
 import { DEFAULT_INVOICE_TEMPLATE, DEFAULT_QUOTE_TEMPLATE } from '@/lib/document-templates';
@@ -675,12 +676,10 @@ export default function Settings() {
                                     {!passwordUnlocked ? (
                                         <div className="form-row">
                                             <div className="form-group">
-                                                <input
-                                                    type="password"
+                                                <PasswordInput
                                                     value={currentPassword}
-                                                    autoComplete="current-password"
-                                                    aria-label="Huidig wachtwoord"
-                                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                                    label="Huidig wachtwoord"
+                                                    onChange={setCurrentPassword}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') verifyCurrentPassword();
                                                     }}
@@ -701,26 +700,24 @@ export default function Settings() {
                                             <p className="field-note">Kies een nieuw wachtwoord van minimaal {MIN_PASSWORD_LENGTH} tekens.</p>
                                             <div className="form-row">
                                                 <div className="form-group">
-                                                    <input
-                                                        type="password"
+                                                    <PasswordInput
                                                         value={passwords.next}
                                                         autoComplete="new-password"
                                                         autoFocus
-                                                        aria-label="Nieuw wachtwoord"
-                                                        aria-invalid={!!shownPasswordErrors.next}
-                                                        onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
+                                                        label="Nieuw wachtwoord"
+                                                        invalid={!!shownPasswordErrors.next}
+                                                        onChange={(next) => setPasswords({ ...passwords, next })}
                                                         placeholder="Vul een nieuw wachtwoord in"
                                                     />
                                                     {shownPasswordErrors.next && <p className="field-error">{shownPasswordErrors.next}</p>}
                                                 </div>
                                                 <div className="form-group">
-                                                    <input
-                                                        type="password"
+                                                    <PasswordInput
                                                         value={passwords.repeat}
                                                         autoComplete="new-password"
-                                                        aria-label="Nieuw wachtwoord herhalen"
-                                                        aria-invalid={!!shownPasswordErrors.repeat}
-                                                        onChange={(e) => setPasswords({ ...passwords, repeat: e.target.value })}
+                                                        label="Nieuw wachtwoord herhalen"
+                                                        invalid={!!shownPasswordErrors.repeat}
+                                                        onChange={(repeat) => setPasswords({ ...passwords, repeat })}
                                                         placeholder="Vul het wachtwoord nogmaals in"
                                                     />
                                                     {shownPasswordErrors.repeat && <p className="field-error">{shownPasswordErrors.repeat}</p>}
@@ -826,13 +823,11 @@ export default function Settings() {
                                                     ? 'Vul je wachtwoord in om tweestapsverificatie uit te zetten.'
                                                     : 'Vul je wachtwoord in voor nieuwe back-upcodes. De oude werken daarna niet meer.'}
                                             </p>
-                                            <input
-                                                type="password"
+                                            <PasswordInput
                                                 value={twoFactorPassword}
-                                                autoComplete="current-password"
                                                 autoFocus
-                                                aria-label="Wachtwoord"
-                                                onChange={(e) => setTwoFactorPassword(e.target.value)}
+                                                label="Wachtwoord"
+                                                onChange={setTwoFactorPassword}
                                                 placeholder="Vul je wachtwoord in"
                                             />
                                             <div className="form-row">

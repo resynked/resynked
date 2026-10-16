@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
+import PasswordInput from '@/components/PasswordInput';
 
 
 export default function Register() {
@@ -102,20 +103,20 @@ export default function Register() {
               required
               placeholder="Vul je e-mailadres in"
             />
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
+              autoComplete="new-password"
+              label="Wachtwoord"
+              onChange={(password) => setFormData({ ...formData, password })}
               placeholder="Vul een wachtwoord in"
             />
-            <input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              required
+              autoComplete="new-password"
+              label="Wachtwoord herhalen"
+              onChange={(confirmPassword) => setFormData({ ...formData, confirmPassword })}
               placeholder="Vul het wachtwoord nogmaals in"
             />
             <button className="button" type="submit" disabled={isLoading}>

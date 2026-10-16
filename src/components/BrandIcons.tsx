@@ -88,3 +88,14 @@ export function WhatsAppIcon({ size = 18 }: BrandIconProps) {
     </svg>
   );
 }
+
+/**
+ * Mollie, als hun eigen app-icoon: het witte woordmerk op zwart. Een plaatje in
+ * plaats van paden, want dat logo staat niet als losse vorm open beschikbaar.
+ */
+export function MollieIcon({ size = 18 }: BrandIconProps) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/brands/mollie.png" alt="" aria-hidden="true" width={size} height={size} style={{ borderRadius: size / 6 }} />
+  );
+}

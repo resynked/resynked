@@ -252,12 +252,22 @@ export function buildInvoiceEmailHtml({
 
 /**
  * De mail met de link om een nieuw wachtwoord te kiezen. Van Khance zelf, dus
- * met de naam als woordmerk bovenaan in plaats van het logo van een aannemer.
+ * met het logo en de naam van Khance bovenaan in plaats van die van een aannemer.
  */
 export function buildPasswordResetEmailHtml({ name, link }: { name: string | null; link: string }): string {
   return emailLayout({
+    // Het logo als PNG: mailprogramma's tonen geen SVG
     top: `<tr>
-        <td style="padding:0 0 24px 0;font-size:20px;font-weight:600;letter-spacing:-0.01em;">Khance</td>
+        <td style="padding:0 0 24px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:0 10px 0 0;vertical-align:middle;">
+                <img src="${escapeHtml(appUrl())}/logo-email.png" alt="Khance" width="40" height="40" style="display:block;border:0;">
+              </td>
+              <td style="vertical-align:middle;font-size:20px;font-weight:600;letter-spacing:-0.01em;">Khance</td>
+            </tr>
+          </table>
+        </td>
       </tr>`,
     content: `<p style="margin:0 0 16px 0;">${name ? `Hoi ${escapeHtml(name)},` : 'Hoi,'}</p>
        <p style="margin:0;">Je hebt gevraagd om een nieuw wachtwoord voor je Khance-account. Met de knop hieronder kies je er een.</p>`,

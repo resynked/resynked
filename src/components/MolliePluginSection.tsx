@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BadgeEuro, ExternalLink, Zap } from 'lucide-react';
 import Modal from '@/components/Modal';
 import Toggle from '@/components/Toggle';
+import { MollieIcon } from '@/components/BrandIcons';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
 
@@ -106,7 +107,7 @@ export default function MolliePluginSection() {
         }}
       >
         <span className="plugin-icon">
-          <BadgeEuro size={24} />
+          <MollieIcon size={24} />
         </span>
         <span className="information">
           <span className="title">Mollie</span>
@@ -131,7 +132,7 @@ export default function MolliePluginSection() {
       <Modal isOpen={open} onClose={() => setOpen(false)} title="">
         <div className="plugin-detail">
           <span className="plugin-icon large">
-            <BadgeEuro size={40} />
+            <MollieIcon size={40} />
           </span>
 
           <div className="plugin-detail-title">

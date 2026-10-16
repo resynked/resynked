@@ -125,10 +125,8 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .login-wrapper .login-block {width: 100%; max-width: 400px;}
 .login-wrapper .login-block .logo {display: flex; justify-content: center; margin: 0 0 var(--space20) 0;}
 .login-wrapper .login-block h1 {text-align: center; margin: 0 0 var(--space20) 0;}
-.login-wrapper .login-block .password-field {position: relative;}
-.login-wrapper .login-block .password-field input {padding-right: var(--space40);}
-.login-wrapper .login-block .password-field button {position: absolute; top: 0; right: var(--space15); height: calc(100% - var(--space10)); display: flex; align-items: center; color: var(--font-color2); line-height: 0;}
-.login-wrapper .login-block .password-field button:hover {color: var(--font-color1);}
+.login-wrapper .login-block .password-field, .register-wrapper .register-block .password-field {margin: 0 0 var(--space10) 0;}
+.login-wrapper .login-block .password-field input, .register-wrapper .register-block .password-field input {margin: 0;}
 .login-wrapper .login-block input {margin: 0 0 var(--space10) 0; padding: var(--space15);}
 .login-wrapper .login-block input:focus-visible {border-color: var(--color1);}
 .login-wrapper .login-block .button {width: 100%; display: block; box-sizing: border-box; padding: var(--space15);}
@@ -694,6 +692,12 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .list-header {position: sticky; top: 0; z-index: 1; display: flex; flex-direction: column; gap: var(--space10); padding: var(--space15) var(--space20); background: var(--color2); border-bottom: 1px solid var(--border-color);}
 .inbox .list-header .title-row {display: flex; align-items: center; justify-content: space-between; gap: var(--space10);}
 /* Zoekveld met vergrootglas links en de sneltoets (F) rechts */
+/* Wachtwoordveld met een oogje om te zien wat je typt (PasswordInput) */
+.password-field {position: relative;}
+.password-field input {padding-right: var(--space40);}
+.password-field button {position: absolute; top: 0; bottom: 0; right: var(--space15); display: flex; align-items: center; color: var(--font-color2); line-height: 0;}
+.password-field button:hover {color: var(--font-color1);}
+
 .search {position: relative; display: block;}
 .search svg {position: absolute; top: 50%; left: var(--space10); transform: translateY(-50%); color: var(--font-color2); pointer-events: none;}
 .search input {width: 100%; padding-left: 32px; padding-right: 36px; box-sizing: border-box;}

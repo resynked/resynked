@@ -4,14 +4,13 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff } from 'lucide-react';
 import { TOO_MANY_ATTEMPTS, TWO_FACTOR_INVALID, TWO_FACTOR_REQUIRED, pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   // Tweede stap: na een juist wachtwoord de code uit de authenticator-app
   const [needsCode, setNeedsCode] = useState(false);
   const [code, setCode] = useState('');
@@ -121,23 +120,13 @@ export default function Login() {
               required
               placeholder="Vul je e-mailadres in"
             />
-            <div className="password-field">
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="Vul je wachtwoord in"
-              />
-              <button
-                type="button"
-                aria-label={showPassword ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
-                onClick={() => setShowPassword(show => !show)}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <PasswordInput
+              id="password"
+              value={password}
+              onChange={setPassword}
+              label="Wachtwoord"
+              placeholder="Vul je wachtwoord in"
+            />
             <button className="button" type="submit" disabled={isLoading}>
               {isLoading ? 'Bezig met inloggen...' : 'Login'}
             </button>
