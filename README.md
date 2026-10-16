@@ -49,8 +49,9 @@ RLS-policies op de tabellen vormen de tweede laag.
    APP_URL=http://localhost:3000
 
    # Mail van Khance zelf, zoals "Wachtwoord vergeten" (resend.com).
-   # Het domein van EMAIL_FROM moet bij Resend geverifieerd zijn
+   # Het domein van de afzender moet bij Resend geverifieerd zijn
    RESEND_API_KEY=...
+   # Optioneel; zonder dit wordt het noreply@ op het domein van APP_URL
    EMAIL_FROM="Khance <noreply@khance.com>"
 
    # Dagelijkse taken (vercel.json), zoals herinneringen voor offertes.

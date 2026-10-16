@@ -4,13 +4,14 @@
  * is, is niet ingelogd, en heeft misschien nooit een mailbox gekoppeld.
  *
  * Verstuurd via Resend (resend.com), rechtstreeks met hun API.
- * RESEND_API_KEY is de sleutel uit hun dashboard, EMAIL_FROM het afzendadres
- * op een domein dat daar is geverifieerd, zoals "Khance <noreply@khance.com>".
+ * RESEND_API_KEY is de sleutel uit hun dashboard. Het afzendadres is
+ * EMAIL_FROM, of anders noreply@ op het domein van de app (APP_URL), zoals
+ * "Khance <noreply@khance.com>". Dat domein moet bij Resend geverifieerd zijn.
  */
 export async function sendSystemEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) throw new Error('Zet RESEND_API_KEY en EMAIL_FROM in de omgevingsvariabelen');
+  if (!apiKey) throw new Error('Zet RESEND_API_KEY in de omgevingsvariabelen');
+  const from = process.env.EMAIL_FROM || defaultFrom();
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -20,6 +21,14 @@ export async function sendSystemEmail({ to, subject, html }: { to: string; subje
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.message || `Resend antwoordde met ${response.status}`);
+    throw new Error(`Resend: ${data.message || `antwoordde met ${response.status}`} (afzender ${from})`);
   }
+}
+
+/** noreply@ op het domein van de app, zonder www */
+function defaultFrom(): string {
+  const url = process.env.APP_URL || process.env.NEXTAUTH_URL;
+  if (!url) throw new Error('Zet EMAIL_FROM of APP_URL in de omgevingsvariabelen');
+  const host = new URL(url).hostname.replace(/^www\./, '');
+  return `Khance <noreply@${host}>`;
 }
