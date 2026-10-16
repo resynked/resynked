@@ -2,6 +2,7 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GripVertical } from 'lucide-react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import PaymentDetails from '@/components/PaymentDetails';
+import { documentTemplate } from '@/lib/document-templates';
 import { Skeleton } from '@/components/Skeleton';
 import {
   EditableRichText,
@@ -28,6 +29,7 @@ import {
   type Vel,
 } from '@/lib/pagination';
 import {
+  allPriceTables,
   calculateDocumentTotal,
   calculateElementTotals,
   formatCurrency,
@@ -1040,7 +1042,11 @@ export default function DocumentPreview({
         dueDate={payment.dueDate}
       />
     ) : null;
-  const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
+  // Het eigen sjabloon van de aannemer, of anders het standaardsjabloon van Khance
+  const template = documentTemplate(
+    title,
+    title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html
+  );
 
   /** Welk vel er onder de muis ligt, op hoogte alleen: ze staan onder elkaar. */
   const velOnderMuis = (y: number): number | null => {
@@ -1356,12 +1362,16 @@ export default function DocumentPreview({
 
       {onAddBlock && <AddBlockDivider onAdd={() => onAddBlock(blocks.length)} />}
 
-      <div className="invoice-total">
-        <div className="invoice-total-row total-final">
-          <span>Totale prijs</span>
-          <span>{formatCurrency(documentTotal, currency)}</span>
+      {/* Elke prijstabel toont zijn eigen totaal; een eindtotaal heeft pas zin
+          als er meer dan één is */}
+      {allPriceTables(blocks).length > 1 && (
+        <div className="invoice-total">
+          <div className="invoice-total-row total-final">
+            <span>Totale prijs</span>
+            <span>{formatCurrency(documentTotal, currency)}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {paymentBlock}
       </div>

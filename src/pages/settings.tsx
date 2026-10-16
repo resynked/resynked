@@ -12,6 +12,13 @@ import PluginsSettings from '@/components/PluginsSettings';
 import Toggle from '@/components/Toggle';
 import type { Tenant } from '@/lib/supabase';
 import { MIN_PASSWORD_LENGTH } from '@/lib/constants';
+import { DEFAULT_INVOICE_TEMPLATE, DEFAULT_QUOTE_TEMPLATE } from '@/lib/document-templates';
+
+/** Het standaardsjabloon per veld, om te tonen als er nog niets eigens is */
+const DEFAULT_TEMPLATES = {
+    quote_template_html: DEFAULT_QUOTE_TEMPLATE,
+    invoice_template_html: DEFAULT_INVOICE_TEMPLATE,
+} as const;
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
 const MAX_LOGO_BYTES = 300 * 1024;
@@ -217,9 +224,10 @@ export default function Settings() {
             .then((tenant: Tenant | null) => {
                 if (!tenant) return;
                 setLogo(tenant.logo_url || '');
+                // Nog geen eigen sjabloon: dan staat het standaardsjabloon klaar om aan te passen
                 setTemplates({
-                    quote_template_html: tenant.quote_template_html || '',
-                    invoice_template_html: tenant.invoice_template_html || '',
+                    quote_template_html: tenant.quote_template_html || DEFAULT_QUOTE_TEMPLATE,
+                    invoice_template_html: tenant.invoice_template_html || DEFAULT_INVOICE_TEMPLATE,
                 });
                 setEmailSettings({
                     quote_email_subject: tenant.quote_email_subject || '',
@@ -281,7 +289,18 @@ export default function Settings() {
         save({ logo_url: null }, 'Logo verwijderd');
     };
 
-    const handleSaveTemplates = () => save(templates, 'Sjabloon opgeslagen');
+    // Ongewijzigd het standaardsjabloon? Dan bewaren we niets, zodat verbeteringen
+    // aan het standaardsjabloon later vanzelf meekomen
+    const handleSaveTemplates = () =>
+        save(
+            {
+                quote_template_html:
+                    templates.quote_template_html === DEFAULT_QUOTE_TEMPLATE ? '' : templates.quote_template_html,
+                invoice_template_html:
+                    templates.invoice_template_html === DEFAULT_INVOICE_TEMPLATE ? '' : templates.invoice_template_html,
+            },
+            'Sjabloon opgeslagen'
+        );
 
     const handleSaveEmail = () =>
         save(
@@ -574,10 +593,12 @@ export default function Settings() {
                                 <div className="information">
                                     <label className="title" htmlFor="quote_template_html">Offertesjabloon</label>
                                     <span className="description">
-                                        De HTML van je eigen offerteontwerp.
+                                        {templates.quote_template_html === DEFAULT_TEMPLATES.quote_template_html
+                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
+                                            : 'De HTML van je eigen offerteontwerp.'}
                                     </span>
                                 </div>
-                                <div>
+                                <div className="form-section">
                                     <textarea
                                         id="quote_template_html"
                                         value={templates.quote_template_html}
@@ -587,6 +608,19 @@ export default function Settings() {
                                         placeholder="Vul de HTML van je offertesjabloon in"
                                         rows={20}
                                     />
+                                    {templates.quote_template_html !== DEFAULT_TEMPLATES.quote_template_html && (
+                                        <div className="form-row">
+                                            <button
+                                                type="button"
+                                                className="button cancel"
+                                                onClick={() =>
+                                                    setTemplates({ ...templates, quote_template_html: DEFAULT_TEMPLATES.quote_template_html })
+                                                }
+                                            >
+                                                Standaard herstellen
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -594,10 +628,12 @@ export default function Settings() {
                                 <div className="information">
                                     <label className="title" htmlFor="invoice_template_html">Factuursjabloon</label>
                                     <span className="description">
-                                        De HTML van je eigen factuurontwerp.
+                                        {templates.invoice_template_html === DEFAULT_TEMPLATES.invoice_template_html
+                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
+                                            : 'De HTML van je eigen factuurontwerp.'}
                                     </span>
                                 </div>
-                                <div>
+                                <div className="form-section">
                                     <textarea
                                         id="invoice_template_html"
                                         value={templates.invoice_template_html}
@@ -607,6 +643,19 @@ export default function Settings() {
                                         placeholder="Vul de HTML van je factuursjabloon in"
                                         rows={20}
                                     />
+                                    {templates.invoice_template_html !== DEFAULT_TEMPLATES.invoice_template_html && (
+                                        <div className="form-row">
+                                            <button
+                                                type="button"
+                                                className="button cancel"
+                                                onClick={() =>
+                                                    setTemplates({ ...templates, invoice_template_html: DEFAULT_TEMPLATES.invoice_template_html })
+                                                }
+                                            >
+                                                Standaard herstellen
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -1036,8 +1085,8 @@ export default function Settings() {
                             </ul>
 
                             <p>
-                                Laat je een sjabloon leeg, dan valt het document terug op de
-                                standaardweergave.
+                                Zonder eigen sjabloon krijgt je document het standaardsjabloon van Khance.
+                                Met &quot;Standaard herstellen&quot; ga je daar terug naartoe.
                             </p>
                         </SidePanel>
                     )}
