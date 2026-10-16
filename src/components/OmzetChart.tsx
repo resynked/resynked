@@ -83,20 +83,20 @@ export default function OmzetChart() {
 
   return (
     <div className="revenue-chart">
-      <div className="block-header">
+      <div className="header">
         <h2>Omzet</h2>
         <Select options={periodOptions} value={selectedPeriod} onChange={handlePeriodChange} />
       </div>
 
       {/* De totalen zijn meteen de legenda van de grafiek */}
       <div className="chart-legend">
-        <div className="item">
-          <span className="name"><span className="swatch realized" />Gerealiseerd</span>
+        <div className="stat">
+          <span className="label"><span className="swatch realized" />Gerealiseerd</span>
           <div className="value">{loading ? <Skeleton height="28px" width="120px" /> : formatCurrency(totalRevenue)}</div>
           <span className="note">Betaalde facturen</span>
         </div>
-        <div className="item">
-          <span className="name"><span className="swatch unrealized" />Ongerealiseerd</span>
+        <div className="stat">
+          <span className="label"><span className="swatch unrealized" />Ongerealiseerd</span>
           <div className="value">{loading ? <Skeleton height="28px" width="120px" /> : formatCurrency(totalUnrealized)}</div>
           <span className="note">Verzonden, nog niet betaald</span>
         </div>
@@ -105,9 +105,9 @@ export default function OmzetChart() {
       {loading ? (
         <Skeleton height="300px" />
       ) : totalRevenue === 0 && totalUnrealized === 0 ? (
-        <div className="chart-empty">
-          <p>Geen omzet in deze periode</p>
-          <p className="placeholder">Zodra je een factuur verstuurt of als betaald markeert, verschijnt hij hier.</p>
+        <div className="empty-state">
+          <h3>Geen omzet in deze periode</h3>
+          <p>Zodra je een factuur verstuurt of als betaald markeert, verschijnt hij hier.</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300}>

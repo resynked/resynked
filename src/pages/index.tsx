@@ -150,7 +150,7 @@ export default function Dashboard() {
 
       <div className="grid two">
         <div className="block">
-          <div className="block-header">
+          <div className="header">
             <h2>
               Openstaande offertes <span className="count">{openQuotes.length}</span>
             </h2>
@@ -182,7 +182,7 @@ export default function Dashboard() {
         </div>
 
         <div className="block">
-          <div className="block-header">
+          <div className="header">
             <h2>
               Openstaande facturen <span className="count">{openInvoices.length}</span>
             </h2>

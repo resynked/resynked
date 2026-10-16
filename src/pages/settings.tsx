@@ -613,20 +613,22 @@ export default function Settings() {
                                     <span className="title">Wachtwoord wijzigen</span>
                                     <span className="description">Eerst je huidige wachtwoord, daarna je nieuwe.</span>
                                 </div>
-                                <div className="privacy-option">
+                                <div className="form-section privacy-option">
                                     {!passwordUnlocked ? (
-                                        <div className="inline-field">
-                                            <input
-                                                type="password"
-                                                value={currentPassword}
-                                                autoComplete="current-password"
-                                                aria-label="Huidig wachtwoord"
-                                                onChange={(e) => setCurrentPassword(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') verifyCurrentPassword();
-                                                }}
-                                                placeholder="Vul je huidige wachtwoord in"
-                                            />
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <input
+                                                    type="password"
+                                                    value={currentPassword}
+                                                    autoComplete="current-password"
+                                                    aria-label="Huidig wachtwoord"
+                                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') verifyCurrentPassword();
+                                                    }}
+                                                    placeholder="Vul je huidige wachtwoord in"
+                                                />
+                                            </div>
                                             <button
                                                 type="button"
                                                 className="button"
@@ -637,10 +639,10 @@ export default function Settings() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="edit-holder confirm">
-                                            <p>Kies een nieuw wachtwoord van minimaal {MIN_PASSWORD_LENGTH} tekens.</p>
-                                            <div className="field-pair">
-                                                <div>
+                                        <div className="edit-holder form-section">
+                                            <p className="field-note">Kies een nieuw wachtwoord van minimaal {MIN_PASSWORD_LENGTH} tekens.</p>
+                                            <div className="form-row">
+                                                <div className="form-group">
                                                     <input
                                                         type="password"
                                                         value={passwords.next}
@@ -653,7 +655,7 @@ export default function Settings() {
                                                     />
                                                     {shownPasswordErrors.next && <p className="field-error">{shownPasswordErrors.next}</p>}
                                                 </div>
-                                                <div>
+                                                <div className="form-group">
                                                     <input
                                                         type="password"
                                                         value={passwords.repeat}
@@ -666,7 +668,7 @@ export default function Settings() {
                                                     {shownPasswordErrors.repeat && <p className="field-error">{shownPasswordErrors.repeat}</p>}
                                                 </div>
                                             </div>
-                                            <div className="button-row">
+                                            <div className="form-row">
                                                 <button
                                                     type="button"
                                                     className="button cancel"
@@ -695,18 +697,16 @@ export default function Settings() {
                                     <span className="title">Authenticator-app</span>
                                     <span className="description">Inloggen met een extra code uit een app.</span>
                                 </div>
-                                <div className="privacy-option">
-                                    <label className="toggle-label">
-                                        <Toggle
-                                            label="Tweestapsverificatie"
-                                            checked={!!twoFactor.enabledAt || twoFactorMode === 'setup'}
-                                            onChange={handleTwoFactorToggle}
-                                            disabled={isTwoFactorBusy}
-                                        />
-                                    </label>
+                                <div className="form-section privacy-option">
+                                    <Toggle
+                                        label="Tweestapsverificatie"
+                                        checked={!!twoFactor.enabledAt || twoFactorMode === 'setup'}
+                                        onChange={handleTwoFactorToggle}
+                                        disabled={isTwoFactorBusy}
+                                    />
 
                                     {twoFactor.enabledAt && !twoFactorMode && (
-                                        <p className="status">
+                                        <p className="field-note">
                                             Nog {twoFactor.backupLeft}{' '}
                                             {twoFactor.backupLeft === 1 ? 'back-upcode' : 'back-upcodes'} over.{' '}
                                             <button type="button" onClick={() => setTwoFactorMode('renew')}>
@@ -719,7 +719,7 @@ export default function Settings() {
                                         <div className="edit-holder setup">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={twoFactorSetup.qr} alt="QR-code voor je authenticator-app" className="qr" />
-                                            <div className="steps">
+                                            <div className="form-section">
                                                 <p>
                                                     <strong>1.</strong> Scan de QR-code met je authenticator-app.
                                                 </p>
@@ -739,7 +739,7 @@ export default function Settings() {
                                                     onChange={(e) => setTwoFactorCode(e.target.value)}
                                                     placeholder="Vul de code in"
                                                 />
-                                                <div className="button-row">
+                                                <div className="form-row">
                                                     <button
                                                         type="button"
                                                         className="button cancel"
@@ -762,8 +762,8 @@ export default function Settings() {
                                     )}
 
                                     {(twoFactorMode === 'disable' || twoFactorMode === 'renew') && (
-                                        <div className="edit-holder confirm">
-                                            <p>
+                                        <div className="edit-holder form-section">
+                                            <p className="field-note">
                                                 {twoFactorMode === 'disable'
                                                     ? 'Vul je wachtwoord in om tweestapsverificatie uit te zetten.'
                                                     : 'Vul je wachtwoord in voor nieuwe back-upcodes. De oude werken daarna niet meer.'}
@@ -777,7 +777,7 @@ export default function Settings() {
                                                 onChange={(e) => setTwoFactorPassword(e.target.value)}
                                                 placeholder="Vul je wachtwoord in"
                                             />
-                                            <div className="button-row">
+                                            <div className="form-row">
                                                 <button
                                                     type="button"
                                                     className="button cancel"
@@ -829,7 +829,7 @@ export default function Settings() {
                                                 <li key={code}>{code}</li>
                                             ))}
                                         </ul>
-                                        <div className="button-row">
+                                        <div className="form-row">
                                             <button type="button" className="button cancel" onClick={copyBackupCodes}>
                                                 Kopiëren
                                             </button>

@@ -191,7 +191,11 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .content {flex: 1; padding: var(--space20); box-sizing: border-box; overflow: hidden; width: 100%; max-width: var(--max-width); margin: 0 auto;}
 
 .content .header {display: flex; justify-content: space-between; align-items: center; margin: 0 0 var(--space20) 0;}
-.content .header h1 {margin: 0;}
+.content .header h1, .content .header h2 {margin: 0;}
+/* In een blok: rechts een link (Alles bekijken) of een keuzelijst (periode) */
+.content .block .header > a {font-size: var(--fontsize2); font-weight: 500; text-decoration: none;}
+.content .block .header > a:hover {color: var(--font-color1);}
+.content .block .header .select {width: 180px;}
 .content .header .actions {display: flex; gap: var(--space10); align-items: center;}
 .content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
@@ -202,32 +206,19 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 .content .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 
-/* Kop van een blok: titel links, een link of keuzelijst rechts */
-.content .block .block-header {display: flex; justify-content: space-between; align-items: center; gap: var(--space20); margin: 0 0 var(--space20) 0;}
-.content .block .block-header h2 {display: flex; align-items: center; gap: var(--space10); margin: 0;}
-.content .block .block-header a {font-size: var(--fontsize2); font-weight: 500; text-decoration: none;}
-.content .block .block-header a:hover {color: var(--font-color1);}
-.content .block .block-header .select {width: 180px;}
-.content .block .block-header .count {display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: var(--border-radius1); background: var(--color4); color: var(--font-color2); font-size: var(--fontsize2); font-weight: 500;}
 .content .block .table-container .data-table td.amount {text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;}
 .content .block .table-container .data-table:has(td.amount) th:last-child {text-align: right;}
 
-/* Kerncijfers bovenaan het dashboard */
 .grid.four {grid-template-columns: repeat(4, minmax(0, 1fr));}
-.content .block.stat {display: flex; flex-direction: column; gap: var(--space5);}
-.content .block.stat .label {font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
-.content .block.stat .value {font-size: var(--h4-size); font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.content .block.stat .note {font-size: var(--fontsize2); color: var(--font-color2);}
-.content .block.stat.negative .value {color: var(--color6);}
 
-/* Omzetgrafiek: de totalen erboven zijn meteen de legenda */
+/* Een kerncijfer: label, groot getal en een regel uitleg. Op het dashboard als
+   eigen blok, boven de omzetgrafiek als legenda */
+.stat {display: flex; flex-direction: column; gap: var(--space5);}
+.stat .label {display: inline-flex; align-items: center; gap: var(--space5); font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
+.stat .value {font-size: var(--h4-size); font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.stat .note {font-size: var(--fontsize2); color: var(--font-color2);}
+.stat.negative .value {color: var(--color6);}
 .revenue-chart .chart-legend {display: flex; flex-wrap: wrap; gap: var(--space40); margin: 0 0 var(--space20) 0;}
-.revenue-chart .chart-legend .item {display: flex; flex-direction: column; gap: 2px;}
-.revenue-chart .chart-legend .name {display: inline-flex; align-items: center; gap: var(--space5); font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
-.revenue-chart .chart-legend .value {font-size: var(--h4-size); font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums;}
-.revenue-chart .chart-legend .note {font-size: var(--fontsize2); color: var(--font-color2);}
-.revenue-chart .chart-empty {display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;}
-.revenue-chart .chart-empty p {margin: 0;}
 .revenue-chart .swatch, .chart-tooltip .swatch {display: inline-block; width: 12px; height: 0; border-top: 2px solid var(--color5); border-radius: 1px;}
 .revenue-chart .swatch.unrealized, .chart-tooltip .swatch.unrealized {border-top: 2px dashed var(--font-color2);}
 .chart-tooltip {display: flex; flex-direction: column; gap: 2px; min-width: 200px; padding: var(--space10); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2); font-size: var(--fontsize2); box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);}
@@ -237,7 +228,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 @media (max-width: 1100px) {
   .grid.four {grid-template-columns: repeat(2, minmax(0, 1fr));}
-  .grid.two:has(.block-header) {grid-template-columns: 1fr;}
+  .grid.two {grid-template-columns: 1fr;}
 }
 
 .content .grid:has(.block.page-navigation) {grid-template-columns: 300px 1fr;}
@@ -246,7 +237,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .content .block.page-navigation nav {display: flex; flex-direction: column; gap: 3px; padding: var(--space20); box-sizing: border-box; border-bottom: 1px solid var(--border-color);}
 .content .block.page-navigation nav a {display: flex; outline: 0; align-items: center; gap: var(--space10); padding: var(--space5) var(--space10); color: var(--font-color2); text-decoration: none; transition: .3s all ease; border-radius: var(--border-radius1);}
 .content .block.page-navigation nav a:hover, .content .block.page-navigation nav a.active {background-color: #efefef; color: var(--font-color1);}
-.content .block.page-navigation .section-title {font-size: var(--fontsize2); color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
+.content .block.page-navigation .section-title, .inbox .inbox-folders .section-title {font-size: var(--fontsize2); color: var(--font-color2); font-weight: 500; margin: 0 0 var(--space5) 0; display: block;}
 .content .block.page-navigation nav:last-child {border: 0;}
 
 /* Paneel dat vanaf de rechterkant inschuift; de achtergrond is .modal-overlay */
@@ -711,7 +702,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .inbox-folders button {flex: 0 0 auto;}
 
 /* Tussenkopjes: Mappen, en Labels om in en uit te klappen */
-.inbox .inbox-folders .section-title {display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space10); margin: 0 0 var(--space5) 0; font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
+.inbox .inbox-folders .section-title {display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space10);}
 .inbox .inbox-folders button.section-title {margin: var(--space10) 0 var(--space5) 0; padding: var(--space5) var(--space10); font-size: var(--fontsize2);}
 .inbox .inbox-folders .section-title svg {transition: transform .2s ease;}
 .inbox .inbox-folders .section-title.collapsed svg {transform: rotate(-90deg);}
@@ -806,7 +797,7 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .inbox .message-actions button.starred svg {fill: currentColor;}
 
 /* Hoeveel ongelezen, achter een menu-item of map */
-.sidebar .navigation a .count, .inbox .inbox-folders .count {margin-left: auto; min-width: 20px; padding: 1px 6px; box-sizing: border-box; border-radius: 10px; background: var(--color1); color: var(--color2); font-size: 11px; font-weight: 600; line-height: 1.5; text-align: center;}
+.sidebar .navigation a .count, .inbox .inbox-folders .count, .content .header .count {margin-left: auto; min-width: 20px; padding: 1px 6px; box-sizing: border-box; border-radius: 10px; background: var(--color1); color: var(--color2); font-size: 11px; font-weight: 600; line-height: 1.5; text-align: center;}
 
 .inbox .mail-body {display: block; width: 100%; height: 0; border: 0;}
 
@@ -835,24 +826,14 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .calendar .view-select {width: 160px;}
 
 /* Knoppen die aan elkaar vastzitten, zoals vorige / vandaag / volgende */
-/* Losse knoppen naast elkaar, zoals Annuleren en Bevestigen onder een veld */
-.button-row {display: flex; flex-wrap: wrap; gap: var(--space10);}
-
-/* Instellingen › Privacy: wachtwoord en tweestapsverificatie. Wat je wijzigt
-   opent eronder in een grijs vak, zoals de QR-code of de nieuwe wachtwoorden */
-.privacy-option .status {margin: var(--space5) 0 0 0; font-size: var(--fontsize2); color: var(--font-color2);}
-.privacy-option .status button {font-size: inherit; color: var(--font-color1); font-weight: 500;}
-.privacy-option .status button:hover {text-decoration: underline;}
-.privacy-option .inline-field {display: flex; gap: var(--space10);}
-.privacy-option .inline-field input {flex: 1; min-width: 0;}
-.privacy-option .inline-field .button {flex: 0 0 auto;}
-.privacy-option .field-pair {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space10);}
-.privacy-option .edit-holder {margin: 0; padding: var(--space15);}
-.privacy-option .toggle-label + .edit-holder {margin-top: var(--space15);}
-.privacy-option .edit-holder p {margin: 0;}
-.privacy-option .edit-holder .field-error {margin-top: var(--space5);}
+/* Instellingen › Privacy. De opbouw komt van .form-section, .form-row en
+   .edit-holder; hier alleen wat daar niet in zit: de QR-code naast de stappen */
+.privacy-option .form-section, .privacy-option .edit-holder {margin: 0;}
+.privacy-option .edit-holder {padding: var(--space15);}
+.privacy-option p {margin: 0;}
+.privacy-option .field-note button {font-size: inherit; color: var(--font-color1); font-weight: 500;}
+.privacy-option .field-note button:hover {text-decoration: underline;}
 .privacy-option .edit-holder.setup {display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--space20); align-items: start;}
-.privacy-option .edit-holder.confirm, .privacy-option .edit-holder .steps {display: flex; flex-direction: column; gap: var(--space10);}
 .privacy-option .qr {display: block; width: 160px; height: 160px; padding: var(--space5); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius1);}
 .privacy-option code {word-break: break-all; color: var(--font-color1);}
 .backup-codes {display: grid; grid-template-columns: repeat(2, max-content); gap: var(--space5) var(--space30); margin: 0; padding: var(--space15); list-style: none; background: var(--color3); border: 1px solid var(--border-color); border-radius: var(--border-radius1); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: .05em;}
