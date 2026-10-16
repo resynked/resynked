@@ -309,7 +309,7 @@ button[data-label]:hover::after {display: block;}
   margin: 0 auto;
   background: #fff;
   border-radius: var(--border-radius1);
-  border: 1px soldi var(--border-color);
+  border: 1px solid var(--border-color);
   break-after: page;
 }
 .document-paper [data-blok-titel] ~ [data-blok-titel] {margin-top: var(--space30);}
