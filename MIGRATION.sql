@@ -444,6 +444,71 @@ ALTER TABLE quotes ADD COLUMN IF NOT EXISTS sent_by UUID REFERENCES users(id) ON
 ALTER TABLE quotes ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS quote_reminder_days INTEGER;
 
+-- ------------------------------------------------------------
+-- 12. Betalen: QR-code, factuur versturen en Mollie
+--
+-- Een factuur krijgt een betaaldatum (de omzet telt vanaf die dag), een eigen
+-- sleutel voor de pagina waar de klant hem bekijkt en betaalt, wie en wanneer
+-- hem verstuurde, en de laatste Mollie-betaling. Facturen die al betaald
+-- waren, krijgen hun laatste wijziging als betaaldatum.
+-- ------------------------------------------------------------
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS public_token UUID;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sent_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS mollie_payment_id TEXT;
+
+UPDATE invoices SET paid_at = updated_at WHERE status = 'paid' AND paid_at IS NULL;
+UPDATE invoices SET public_token = gen_random_uuid() WHERE public_token IS NULL;
+ALTER TABLE invoices ALTER COLUMN public_token SET DEFAULT gen_random_uuid();
+ALTER TABLE invoices ALTER COLUMN public_token SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS invoices_public_token_idx ON invoices(public_token);
+CREATE INDEX IF NOT EXISTS invoices_mollie_payment_id_idx ON invoices(mollie_payment_id);
+
+CREATE TABLE IF NOT EXISTS mollie_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  -- Eén Mollie-account per bedrijf: het geld gaat naar de rekening van de aannemer
+  tenant_id UUID NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de mail- en AI-sleutels
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS update_mollie_accounts_updated_at ON mollie_accounts;
+CREATE TRIGGER update_mollie_accounts_updated_at
+  BEFORE UPDATE ON mollie_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE mollie_accounts ENABLE ROW LEVEL SECURITY;
+
+-- ------------------------------------------------------------
+-- 13. Producten: vaste posten met prijs en eenheid
+--
+-- Werk en materiaal dat een aannemer vaak gebruikt, zoals "Uurloon" of "m²
+-- tegelwerk". In de prijstabel kies je er een uit; de regel krijgt dan een
+-- kopie, dus een latere prijswijziging verandert oude offertes niet.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS products (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  unit TEXT,
+  -- Prijs per eenheid, exclusief btw, zoals in de prijstabel
+  price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS products_tenant_id_idx ON products(tenant_id);
+
+DROP TRIGGER IF EXISTS update_products_updated_at ON products;
+CREATE TRIGGER update_products_updated_at
+  BEFORE UPDATE ON products
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -458,7 +523,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen twaalf regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen veertien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -544,4 +609,20 @@ UNION ALL SELECT 'Offertes opvolgen',
          WHERE table_schema = 'public'
            AND ((table_name = 'quotes' AND column_name IN ('viewed_at', 'last_viewed_at', 'view_count', 'sent_by', 'reminder_sent_at'))
              OR (table_name = 'tenants' AND column_name = 'quote_reminder_days'))
-       ) = 6 THEN 'ja - 6 van 6 kolommen' ELSE 'NEE - onderdeel 11 niet gelukt' END;
+       ) = 6 THEN 'ja - 6 van 6 kolommen' ELSE 'NEE - onderdeel 11 niet gelukt' END
+
+UNION ALL SELECT 'Betalen',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'invoices'
+           AND column_name IN ('paid_at', 'public_token', 'sent_at', 'sent_by', 'mollie_payment_id')
+       ) = 5 AND EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = 'mollie_accounts'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 12 niet gelukt' END
+
+UNION ALL SELECT 'Producten',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = 'products'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 13 niet gelukt' END;

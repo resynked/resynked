@@ -16,6 +16,8 @@ interface DocumentEditorProps {
   currency?: string;
   /** De handtekening van de klant, zodra die er is */
   signature?: SignatureState | null;
+  /** Alleen bij een factuur: omschrijving en vervaldatum voor het betaalblok */
+  payment?: { reference: string; dueDate?: string | null } | null;
   /** De velden bij een gegevens-element: klant, nummer, datums en valuta */
   dataFields?: ReactNode;
   onBlocksChange?: (blocks: DocumentBlock[]) => void;
@@ -37,6 +39,7 @@ export default function DocumentEditor({
   blocks,
   currency,
   signature,
+  payment,
   dataFields,
   onBlocksChange,
 }: DocumentEditorProps) {
@@ -157,6 +160,7 @@ export default function DocumentEditor({
             blocks={blocks}
             currency={currency}
             signature={signature}
+            payment={payment}
             selected={selected}
             onSelect={onBlocksChange ? setSelected : undefined}
             onChangeBlock={onBlocksChange ? changeBlock : undefined}

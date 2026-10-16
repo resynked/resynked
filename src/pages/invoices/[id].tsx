@@ -8,6 +8,9 @@ import { useToast } from '@/components/Toast';
 import Select from '@/components/Select';
 import DatePicker from '@/components/DatePicker';
 import DocumentEditor from '@/components/DocumentEditor';
+import { useMailAccount } from '@/hooks/useMailAccount';
+import { useConfirm } from '@/hooks/useConfirm';
+import { invoiceReference } from '@/lib/payment';
 import type { Customer, DocumentBlock } from '@/lib/supabase';
 import { copyBlocks, validateBlocks } from '@/lib/blocks';
 import { formatDate, getCustomerOptionLabel, vandaag, overDagen } from '@/lib/utils';
@@ -33,6 +36,12 @@ export default function EditInvoice() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [sourceQuoteId, setSourceQuoteId] = useState<number | null>(null);
+  const { confirm } = useConfirm();
+  // Versturen gaat via de eigen Gmail of Outlook; zonder koppeling is er geen knop
+  const mailAccount = useMailAccount();
+  const [isSending, setIsSending] = useState(false);
+  const [isMarking, setIsMarking] = useState(false);
+  const [paidAt, setPaidAt] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     invoice_number: '',
@@ -65,6 +74,7 @@ export default function EditInvoice() {
       const invoice: any = await response.json();
 
       setSourceQuoteId(invoice.quote_id || null);
+      setPaidAt(invoice.paid_at || null);
       setFormData({
         invoice_number: invoice.invoice_number || '',
         invoice_date: invoice.invoice_date || vandaag(),
@@ -104,15 +114,13 @@ export default function EditInvoice() {
   // Cmd+Z en Cmd+Shift+Z draaien de laatste stappen terug
   const geschiedenis = useHistory(formData, setFormData, { enabled: !isLoadingData });
 
-  const handleSubmit = async () => {
-
+  /** Legt vast wat er op het scherm staat. Geeft false als dat niet lukte */
+  const save = async (): Promise<boolean> => {
     const problem = validateBlocks(formData.blocks);
     if (problem) {
       toast.error('Fout', problem);
-      return;
+      return false;
     }
-
-    setIsLoading(true);
 
     try {
       const response = await fetch(`/api/invoices/${id}`, {
@@ -134,14 +142,81 @@ export default function EditInvoice() {
       if (!response.ok) {
         const data = await response.json();
         toast.error('Fout', data.error || 'Er is iets misgegaan');
-        setIsLoading(false);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
+      return false;
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    if (await save()) router.push('/invoices');
+    else setIsLoading(false);
+  };
+
+  /** De PDF, van wat er nu op het scherm staat */
+  const handleDownload = async () => {
+    if (await save()) window.location.href = `/api/invoices/${id}/pdf`;
+  };
+
+  const handleSend = async () => {
+    const confirmed = await confirm({
+      title: 'Factuur versturen',
+      message:
+        'De klant krijgt een mail met de betaalgegevens en QR-code, en een knop naar deze factuur om hem te bekijken en te betalen.',
+      confirmText: 'Versturen',
+      cancelText: 'Annuleren',
+    });
+    if (!confirmed) return;
+
+    setIsSending(true);
+    try {
+      // Eerst vastleggen, anders krijgt de klant een oudere versie te zien
+      if (!(await save())) return;
+
+      const response = await fetch(`/api/invoices/${id}/send`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error('Versturen mislukt', data.error || 'Er is iets misgegaan');
         return;
       }
 
-      router.push('/invoices');
-    } catch (err) {
+      toast.success('Verstuurd', `De factuur is naar ${data.to} gestuurd`);
+      setFormData((current) => ({ ...current, status: current.status === 'draft' ? 'sent' : current.status }));
+    } catch {
+      toast.error('Versturen mislukt', 'Er is iets misgegaan. Probeer het opnieuw.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  /** Betaald buiten Khance om, zoals met de QR-code: legt meteen de betaaldatum vast */
+  const handleMarkPaid = async (paid: boolean) => {
+    setIsMarking(true);
+    try {
+      if (!(await save())) return;
+
+      const response = await fetch(`/api/invoices/${id}/paid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paid }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error('Fout', data.error || 'Er is iets misgegaan');
+        return;
+      }
+
+      setFormData((current) => ({ ...current, status: data.status }));
+      setPaidAt(data.paid_at || null);
+      toast.success('Gelukt', paid ? 'De factuur staat op betaald' : 'De factuur staat weer open');
+    } catch {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
-      setIsLoading(false);
+    } finally {
+      setIsMarking(false);
     }
   };
 
@@ -181,10 +256,32 @@ export default function EditInvoice() {
           >
             <Redo2 size={16} />
           </button>
+          {formData.status === 'paid' && paidAt && (
+            <span className="autosave-status saved">Betaald op {formatDate(paidAt)}</span>
+          )}
           {sourceQuoteId && (
             <Link href={`/quotes/${sourceQuoteId}`} className="button cancel">
               Bekijk offerte
             </Link>
+          )}
+          {mailAccount && (
+            <button type="button" className="button cancel" onClick={handleSend} disabled={isSending}>
+              {isSending ? 'Versturen...' : 'Versturen'}
+            </button>
+          )}
+          <button type="button" className="button cancel" onClick={handleDownload}>
+            Downloaden
+          </button>
+          {formData.status === 'paid' ? (
+            <button type="button" className="button cancel" onClick={() => handleMarkPaid(false)} disabled={isMarking}>
+              Toch niet betaald
+            </button>
+          ) : (
+            formData.status !== 'cancelled' && (
+              <button type="button" className="button cancel" onClick={() => handleMarkPaid(true)} disabled={isMarking}>
+                {isMarking ? 'Bezig...' : 'Markeer als betaald'}
+              </button>
+            )
           )}
           <button type="button" className="button cancel" onClick={() => router.push('/invoices')}>
             Annuleren
@@ -205,6 +302,12 @@ export default function EditInvoice() {
         customer={selectedCustomer}
         blocks={formData.blocks}
         currency={formData.currency}
+        // Het betaalblok met de QR-code, zoals de klant hem ook ziet; niet meer na betaling
+        payment={
+          formData.status === 'paid'
+            ? null
+            : { reference: invoiceReference({ id: String(id), invoice_number: formData.invoice_number }), dueDate: formData.due_date }
+        }
         onBlocksChange={(blocks) => setFormData({ ...formData, blocks })}
         dataFields={
           <>

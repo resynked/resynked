@@ -160,6 +160,14 @@ export interface Invoice {
   intro_text?: string | null;
   notes?: string | null;
   quote_id?: number | null;
+  /** Wanneer hij betaald is; de omzet telt vanaf die dag */
+  paid_at?: string | null;
+  /** Waarmee de klant zonder in te loggen zijn factuur bekijkt en betaalt */
+  public_token?: string;
+  sent_at?: string | null;
+  sent_by?: string | null;
+  /** De laatste betaling bij Mollie, als die plug-in aan staat */
+  mollie_payment_id?: string | null;
   created_at: string;
   updated_at: string;
 }

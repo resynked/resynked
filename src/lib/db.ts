@@ -554,6 +554,32 @@ export async function getQuoteByToken(token: string) {
 }
 
 /**
+ * Een factuur via de sleutel uit de mail, voor de pagina waar de klant hem
+ * bekijkt en betaalt. Zonder sessie, dus alleen wat die pagina nodig heeft.
+ */
+export async function getInvoiceByToken(token: string) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select(
+      'id, tenant_id, invoice_number, invoice_date, due_date, total, status, currency, paid_at, ' +
+        'customer:customers(name, first_name, middle_name, last_name, company_name, street_address, postal_code, city)'
+    )
+    .eq('public_token', token)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const invoice = data as any;
+  const tenant = await getTenant(invoice.tenant_id);
+
+  return {
+    invoice: { ...invoice, blocks: await fetchBlocks('invoice', invoice.id, invoice.tenant_id) },
+    tenant,
+  };
+}
+
+/**
  * De klant heeft zijn offerte geopend: de eerste keer onthouden we, de laatste
  * keer en het aantal tellen door. Zo ziet de aannemer wanneer hij kan bellen.
  */
@@ -667,6 +693,23 @@ export async function updateInvoice(
   updates: Partial<Invoice>,
   blocks?: DocumentBlock[]
 ) {
+  // De betaaldatum volgt de status: op Betaald wordt het vandaag (of blijft
+  // de datum van eerder), terug naar iets anders wist hem weer. Zo klopt de
+  // omzet, hoe de factuur ook op Betaald komt
+  if (updates.status !== undefined && updates.paid_at === undefined) {
+    if (updates.status === 'paid') {
+      const { data: current } = await supabase
+        .from('invoices')
+        .select('paid_at')
+        .eq('id', id)
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      updates = { ...updates, paid_at: current?.paid_at || now() };
+    } else {
+      updates = { ...updates, paid_at: null };
+    }
+  }
+
   const { data, error } = await supabase
     .from('invoices')
     .update({ ...updates, updated_at: now() })

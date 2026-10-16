@@ -241,10 +241,20 @@ CREATE TABLE invoices (
   intro_text TEXT,
   notes TEXT,
   quote_id BIGINT REFERENCES quotes(id) ON DELETE SET NULL,
+  -- Wanneer hij betaald is; de omzet telt vanaf die dag
+  paid_at TIMESTAMPTZ,
+  -- Waarmee de klant zonder in te loggen zijn factuur bekijkt en betaalt
+  public_token UUID NOT NULL DEFAULT gen_random_uuid(),
+  sent_at TIMESTAMPTZ,
+  sent_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  -- De laatste betaling bij Mollie, als die plug-in aan staat
+  mollie_payment_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX invoices_public_token_idx ON invoices(public_token);
+CREATE INDEX invoices_mollie_payment_id_idx ON invoices(mollie_payment_id);
 CREATE INDEX invoices_tenant_id_idx ON invoices(tenant_id);
 CREATE INDEX invoices_customer_id_idx ON invoices(customer_id);
 CREATE INDEX invoices_created_at_idx ON invoices(created_at DESC);
@@ -418,6 +428,45 @@ CREATE TABLE whatsapp_messages (
 );
 
 -- ------------------------------------------------------------
+-- Mollie: betalen met iDEAL vanuit de factuur. Eén account per bedrijf,
+-- met de sleutel versleuteld.
+-- ------------------------------------------------------------
+CREATE TABLE mollie_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  -- Eén Mollie-account per bedrijf: het geld gaat naar de rekening van de aannemer
+  tenant_id UUID NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de mail- en AI-sleutels
+  api_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER update_mollie_accounts_updated_at
+  BEFORE UPDATE ON mollie_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
+-- Producten: vaste posten met prijs en eenheid, om in de prijstabel te
+-- kiezen. De regel krijgt een kopie, dus oude offertes blijven gelijk.
+-- ------------------------------------------------------------
+CREATE TABLE products (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  unit TEXT,
+  -- Prijs per eenheid, exclusief btw, zoals in de prijstabel
+  price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX products_tenant_id_idx ON products(tenant_id);
+
+CREATE TRIGGER update_products_updated_at
+  BEFORE UPDATE ON products
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ------------------------------------------------------------
 -- Wachtwoord vergeten: eenmalige herstellinks, een uur geldig, als hash.
 -- En een slot op te veel mislukte inlogpogingen per e-mailadres.
 -- ------------------------------------------------------------
@@ -468,6 +517,8 @@ ALTER TABLE whatsapp_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mollie_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
 -- Rechten voor de service role

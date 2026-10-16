@@ -1,6 +1,7 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { GripVertical } from 'lucide-react';
 import TemplatedDocument from '@/components/TemplatedDocument';
+import PaymentDetails from '@/components/PaymentDetails';
 import { Skeleton } from '@/components/Skeleton';
 import {
   EditableRichText,
@@ -49,6 +50,11 @@ interface DocumentPreviewProps {
   tenant?: Tenant | null;
   /** De handtekening van de klant, zodra die er is */
   signature?: SignatureState | null;
+  /**
+   * Alleen bij een factuur: de omschrijving en vervaldatum voor het betaalblok
+   * met de QR-code. Het bedrag is het totaal, de rekening het IBAN van het bedrijf
+   */
+  payment?: { reference: string; dueDate?: string | null } | null;
   /**
    * Wat er op de plek van het handtekening-element komt zolang er niet getekend
    * is. De offertepagina van de klant zet hier het tekenvak neer; in de app
@@ -811,6 +817,7 @@ export default function DocumentPreview({
   currency = 'EUR',
   tenant: givenTenant,
   signature,
+  payment,
   signatureField,
   selected,
   onSelect,
@@ -1019,6 +1026,20 @@ export default function DocumentPreview({
   }
 
   const documentTotal = calculateDocumentTotal(blocks);
+
+  // Het betaalblok van een factuur: zonder IBAN of bedrag toont het niets
+  const paymentBlock =
+    title === 'Factuur' && payment ? (
+      <PaymentDetails
+        payment={{
+          name: tenant?.company_name || '',
+          iban: tenant?.iban || '',
+          amount: documentTotal,
+          reference: payment.reference,
+        }}
+        dueDate={payment.dueDate}
+      />
+    ) : null;
   const template = title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html;
 
   /** Welk vel er onder de muis ligt, op hoogte alleen: ze staan onder elkaar. */
@@ -1128,6 +1149,8 @@ export default function DocumentPreview({
     // knop daarvoor hoort onder het papier, niet erin.
     const slots: Record<string, React.ReactNode> = {
       totaal: <span>{formatCurrency(documentTotal, currency)}</span>,
+      // Een sjabloon kiest zelf waar het betaalblok komt, met data-slot="betaling"
+      betaling: paymentBlock,
     };
 
     const labels: Record<string, string> = {};
@@ -1339,6 +1362,8 @@ export default function DocumentPreview({
           <span>{formatCurrency(documentTotal, currency)}</span>
         </div>
       </div>
+
+      {paymentBlock}
       </div>
     </InlineEditContext.Provider>
   );

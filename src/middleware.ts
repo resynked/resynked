@@ -33,6 +33,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Niet voor de API (die controleert zelf), de bestanden van Next.js, losse
-  // bestanden zoals het logo, en de offertepagina die de klant via zijn link opent
-  matcher: ['/((?!api|_next|offerte/|.*\\..*).*)'],
+  // bestanden zoals het logo, en de offerte- en factuurpagina die de klant via
+  // zijn link opent
+  matcher: ['/((?!api|_next|offerte/|factuur/|.*\\..*).*)'],
 };

@@ -646,9 +646,16 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .plugin-detail .copy-field code {flex: 1; min-width: 0; font-size: var(--fontsize2); overflow-wrap: anywhere;}
 .plugin-detail .copy-field button {display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--border-radius1); color: var(--font-color2);}
 .plugin-detail .copy-field button:hover {background: var(--color2); color: var(--font-color1);}
-.plugin-detail .plugin-info {display: grid; grid-template-columns: 160px 1fr; gap: var(--space10) var(--space20); margin: 0 0 var(--space20) 0;}
-.plugin-detail .plugin-info dt {color: var(--font-color2);}
-.plugin-detail .plugin-info dd {margin: 0;}
+.plugin-detail .plugin-info, .payment-details dl {display: grid; grid-template-columns: 160px 1fr; gap: var(--space10) var(--space20); margin: 0 0 var(--space20) 0;}
+.plugin-detail .plugin-info dt, .payment-details dt {color: var(--font-color2);}
+.plugin-detail .plugin-info dd, .payment-details dd {margin: 0;}
+
+/* Het betaalblok onder een factuur: de QR-code voor de bank-app, en dezelfde
+   gegevens om zelf over te maken. Wordt ook zo afgedrukt */
+.payment-details {display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: var(--space20); align-items: start; margin: var(--space30) 0 0 0; padding: var(--space20); border: 1px solid var(--border-color); border-radius: var(--border-radius2); break-inside: avoid;}
+.payment-details .qr {display: block; width: 120px; height: 120px;}
+.payment-details p {margin: var(--space5) 0 var(--space10) 0; color: var(--font-color2);}
+.payment-details dl {grid-template-columns: max-content 1fr; gap: 2px var(--space15); margin: 0;}
 .plugin-detail .plugin-info a {color: var(--font-color1); line-height: 0;}
 .plugin-detail .form-section .form-group input:disabled {background-color: var(--color4); color: var(--font-color2); cursor: default;}
 

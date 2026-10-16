@@ -5,6 +5,7 @@ import DocumentPreview, { SignatureState } from '@/components/DocumentPreview';
 import { SkeletonCard } from '@/components/Skeleton';
 import type { Customer, DocumentBlock, Tenant } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
+import { usePrintWhenReady } from '@/hooks/usePrintWhenReady';
 
 interface PrintQuote {
   quote_number: string;
@@ -52,60 +53,8 @@ export default function PrintQuote() {
       .catch((err) => setFout(err.message));
   }, [id]);
 
-  /**
-   * Pas afdrukken als het document er echt staat.
-   *
-   * Het sjabloon wordt in stappen opgebouwd: eerst opschonen, dan in de DOM
-   * zetten, en daarna pas gaat de inhoud in de plekken met data-slot. Een vaste
-   * wachttijd is daarvoor te wankel — dan krijg je een lege of halve pagina op
-   * papier. Daarom wordt er gekeken of de inhoud er werkelijk is, en of de
-   * afbeeldingen en lettertypen binnen zijn.
-   */
-  useEffect(() => {
-    if (!quote) return;
-
-    // Haalt de server deze pagina op om er een PDF van te maken, dan hoeft
-    // het printvenster niet open: die doet het werk zelf
-    if (router.query.pdf) return;
-
-    let gestopt = false;
-
-    const isKlaar = () => {
-      const vel = document.querySelector('.print-page');
-      if (!vel) return false;
-
-      // De blokken van de offerte staan er pas als hun elementen er staan
-      if (!vel.querySelector('[data-element]')) return false;
-
-      // Een logo dat nog laadt zou als leeg vlak op papier komen
-      const afbeeldingen = Array.from(vel.querySelectorAll('img'));
-      return afbeeldingen.every((img) => img.complete);
-    };
-
-    const afdrukken = async () => {
-      try {
-        await document.fonts?.ready;
-      } catch {
-        // Kent de browser dit niet, dan drukken we zonder die zekerheid af
-      }
-      if (!gestopt) window.print();
-    };
-
-    // Elke tiende seconde kijken, en na acht seconden hoe dan ook afdrukken
-    const begin = Date.now();
-    const klok = setInterval(() => {
-      if (gestopt) return;
-      if (isKlaar() || Date.now() - begin > 8000) {
-        clearInterval(klok);
-        afdrukken();
-      }
-    }, 100);
-
-    return () => {
-      gestopt = true;
-      clearInterval(klok);
-    };
-  }, [quote, router.query.pdf]);
+  // Afdrukken zodra het document er echt staat; niet als de server hem ophaalt voor de PDF
+  usePrintWhenReady(!!quote && !router.query.pdf);
 
   const signature: SignatureState | null = quote
     ? { image: quote.signature_image, name: quote.signed_name, signedAt: quote.signed_at }

@@ -1,4 +1,5 @@
-import type { Customer, Quote, Tenant } from './supabase';
+import type { Customer, Invoice, Quote, Tenant } from './supabase';
+import { canRequestPayment, formatIban, invoiceReference } from './payment';
 import { getCustomerDisplayName } from './utils';
 import { toDisplayHtml } from './richtext';
 
@@ -15,6 +16,11 @@ export function appUrl(): string {
 /** De pagina waar de klant zijn offerte bekijkt en ondertekent. */
 export function quoteLink(token: string): string {
   return `${appUrl()}/offerte/${token}`;
+}
+
+/** De pagina waar de klant zijn factuur bekijkt en betaalt. */
+export function invoiceLink(token: string): string {
+  return `${appUrl()}/factuur/${token}`;
 }
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -182,6 +188,64 @@ export function buildQuoteReminderEmailHtml({ tenant, customer, quote, token }: 
        <p style="margin:0;">Met de knop hieronder bekijkt en ondertekent u hem direct. Heeft u nog vragen, beantwoord dan gerust deze mail.</p>`,
     button: { label: 'Offerte bekijken en ondertekenen', url: quoteLink(token) },
     note: validUntilNote(quote),
+    footer: tenantFooter(tenant),
+  });
+}
+
+/**
+ * De mail waarmee een factuur de deur uit gaat: logo, de eigen tekst uit
+ * Instellingen, daaronder de betaalgegevens met de QR-code voor de bank-app,
+ * en een knop naar de pagina waar de klant de factuur bekijkt en (met Mollie)
+ * direct betaalt.
+ *
+ * De QR-code is een gewone afbeelding van onze eigen server: een data-URL of
+ * SVG laten de meeste mailprogramma's niet zien.
+ */
+export function buildInvoiceEmailHtml({
+  tenant,
+  customer,
+  invoice,
+}: {
+  tenant: Tenant;
+  customer: Customer;
+  invoice: Pick<Invoice, 'id' | 'invoice_number' | 'total' | 'due_date' | 'public_token'>;
+}): string {
+  const token = invoice.public_token || '';
+  const reference = invoiceReference(invoice);
+  const amount = Number(invoice.total) || 0;
+  const amountText = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
+
+  const intro = tenant.invoice_email_intro_text
+    ? toDisplayHtml(tenant.invoice_email_intro_text)
+    : `<p>Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
+       <p>Hierbij ontvangt u onze factuur van ${escapeHtml(amountText)}. U kunt hem hieronder bekijken en betalen.</p>`;
+
+  const payment = { name: tenant.company_name || tenant.name || '', iban: tenant.iban || '', amount, reference };
+  const paymentBlock = canRequestPayment(payment)
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0 0 0;border:1px solid #efefef;border-radius:8px;">
+        <tr>
+          <td width="120" style="padding:16px;vertical-align:top;">
+            <img src="${escapeHtml(appUrl())}/api/public/invoices/${escapeHtml(token)}/qr"
+                 alt="QR-code om te betalen" width="120" height="120" style="display:block;border:0;">
+          </td>
+          <td style="padding:16px 16px 16px 0;vertical-align:top;font-size:13px;line-height:1.6;">
+            <strong>Betalen</strong><br>
+            <span style="color:#7f7f7f;">Scan de QR-code met uw bank-app, of maak het bedrag over${
+              invoice.due_date ? ` vóór ${escapeHtml(new Date(invoice.due_date).toLocaleDateString('nl-NL'))}` : ''
+            }.</span><br><br>
+            <span style="color:#7f7f7f;">Bedrag</span> ${escapeHtml(amountText)}<br>
+            <span style="color:#7f7f7f;">IBAN</span> ${escapeHtml(formatIban(payment.iban))}<br>
+            <span style="color:#7f7f7f;">T.n.v.</span> ${escapeHtml(payment.name)}<br>
+            <span style="color:#7f7f7f;">Omschrijving</span> ${escapeHtml(reference)}
+          </td>
+        </tr>
+      </table>`
+    : '';
+
+  return emailLayout({
+    top: tenantLogoRow(tenant),
+    content: intro + paymentBlock,
+    button: { label: 'Factuur bekijken en betalen', url: invoiceLink(token) },
     footer: tenantFooter(tenant),
   });
 }

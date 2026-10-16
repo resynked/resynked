@@ -42,23 +42,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           startDate.setMonth(now.getMonth() - 1);
       }
 
-      // Betaalde facturen zijn gerealiseerde omzet, verzonden facturen die nog
-      // niet betaald zijn ongerealiseerde omzet
-      const { data: invoices, error } = await supabaseAdmin
-        .from('invoices')
-        .select('created_at, total, status')
-        .eq('tenant_id', tenantId)
-        .in('status', ['paid', 'sent'])
-        .gte('created_at', startDate.toISOString())
-        .order('created_at', { ascending: true });
+      // Betaalde facturen zijn gerealiseerde omzet, op de dag dat ze betaald
+      // zijn. Verzonden facturen die nog niet betaald zijn, zijn ongerealiseerde
+      // omzet, op de dag dat ze gemaakt zijn
+      const since = startDate.toISOString();
+      const [paid, open] = await Promise.all([
+        supabaseAdmin
+          .from('invoices')
+          .select('paid_at, total')
+          .eq('tenant_id', tenantId)
+          .eq('status', 'paid')
+          .gte('paid_at', since),
+        supabaseAdmin
+          .from('invoices')
+          .select('created_at, total')
+          .eq('tenant_id', tenantId)
+          .eq('status', 'sent')
+          .gte('created_at', since),
+      ]);
 
-      if (error) throw error;
+      if (paid.error) throw paid.error;
+      if (open.error) throw open.error;
+
+      const invoices = [
+        ...(paid.data || []).map(invoice => ({ date: invoice.paid_at as string, total: invoice.total, paid: true })),
+        ...(open.data || []).map(invoice => ({ date: invoice.created_at as string, total: invoice.total, paid: false })),
+      ];
 
       // Group invoices by date and sum the totals
       const revenueByDate = new Map<string, RevenuePoint>();
 
       invoices.forEach((invoice) => {
-        const date = new Date(invoice.created_at);
+        const date = new Date(invoice.date);
         let dateKey: string;
 
         if (period === 'today') {
@@ -73,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const point = revenueByDate.get(dateKey) || { date: dateKey, revenue: 0, unrealized: 0 };
-        if (invoice.status === 'paid') point.revenue += invoice.total;
+        if (invoice.paid) point.revenue += invoice.total;
         else point.unrealized += invoice.total;
         revenueByDate.set(dateKey, point);
       });

@@ -1015,6 +1015,7 @@ export default function Settings() {
                                 <li><code>data-slot=&quot;blok&quot;</code> — de inhoud van dat blok</li>
                                 <li><code>data-slot=&quot;bloktitel&quot;</code> — de titel van dat blok</li>
                                 <li><code>data-slot=&quot;totaal&quot;</code> — het eindbedrag</li>
+                                <li><code>data-slot=&quot;betaling&quot;</code> — alleen op een factuur: de QR-code om te betalen, met IBAN, bedrag en omschrijving</li>
                             </ul>
                             <p>
                                 Elke pagina krijgt ook <code>data-blok-titel</code> mee, zodat je één
