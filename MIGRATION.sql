@@ -384,6 +384,20 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
 ALTER TABLE whatsapp_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 9. Tweestapsverificatie met een authenticator-app
+--
+-- Per gebruiker de geheime sleutel van de app (versleuteld met
+-- MAIL_ENCRYPTION_KEY), sinds wanneer het aan staat, de laatst gebruikte
+-- tijdstap zodat een code maar één keer werkt, en de back-upcodes als hash.
+-- Staat er wel een sleutel maar geen datum, dan is iemand halverwege het
+-- aanzetten en telt het nog niet.
+-- ------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_last_counter BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_backup_codes TEXT[];
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -398,7 +412,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen negen regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen tien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -463,4 +477,11 @@ UNION ALL SELECT 'WhatsApp',
        CASE WHEN (
          SELECT count(*) FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name IN ('whatsapp_accounts', 'whatsapp_messages')
-       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 8 niet gelukt' END;
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 8 niet gelukt' END
+
+UNION ALL SELECT 'Tweestapsverificatie',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'users'
+           AND column_name IN ('totp_secret', 'totp_enabled_at', 'totp_last_counter', 'totp_backup_codes')
+       ) = 4 THEN 'ja - 4 van 4 kolommen' ELSE 'NEE - onderdeel 9 niet gelukt' END;

@@ -4,7 +4,8 @@ import { authOptions } from '../auth/[...nextauth]';
 import { supabaseAdmin } from '@/lib/supabase';
 
 /**
- * De gegevens van wie er ingelogd is. GET geeft naam en e-mailadres, PATCH
+ * De gegevens van wie er ingelogd is. GET geeft naam, e-mailadres en of
+ * tweestapsverificatie aan staat; PATCH
  * met { name } past de naam aan. Het e-mailadres is ook de inlognaam en
  * verandert hier niet.
  */
@@ -16,9 +17,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      const { data, error } = await supabaseAdmin.from('users').select('name, email').eq('id', userId).single();
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .select('name, email, totp_enabled_at, totp_backup_codes')
+        .eq('id', userId)
+        .single();
       if (error) throw error;
-      return res.status(200).json(data);
+      // Van de back-upcodes alleen hoeveel er nog over zijn, nooit de codes zelf
+      return res.status(200).json({
+        name: data.name,
+        email: data.email,
+        two_factor_enabled_at: data.totp_enabled_at,
+        backup_codes_left: data.totp_backup_codes?.length ?? 0,
+      });
     }
 
     if (req.method === 'PATCH') {

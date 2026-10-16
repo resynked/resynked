@@ -132,6 +132,9 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 .login-wrapper .login-block input {margin: 0 0 var(--space10) 0; padding: var(--space15);}
 .login-wrapper .login-block input:focus-visible {border-color: var(--color1);}
 .login-wrapper .login-block .button {width: 100%; display: block; box-sizing: border-box; padding: var(--space15);}
+.login-wrapper .login-block .login-form > p {margin: 0 0 var(--space15) 0; text-align: center; font-size: var(--fontsize2); line-height: 1.5;}
+.login-wrapper .login-block .back {display: block; width: 100%; margin: var(--space10) 0 0 0; text-align: center; color: var(--font-color2);}
+.login-wrapper .login-block .back:hover {color: var(--font-color1);}
 .login-wrapper .login-block .register {margin: var(--space20) 0; text-align: center; display: none;}
 
 .register-wrapper {min-height: 100vh; display: flex; align-items: center; justify-content: center;}
@@ -832,6 +835,15 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 .calendar .view-select {width: 160px;}
 
 /* Knoppen die aan elkaar vastzitten, zoals vorige / vandaag / volgende */
+/* Losse knoppen naast elkaar, zoals Annuleren en Bevestigen onder een veld */
+.button-row {display: flex; flex-wrap: wrap; gap: var(--space10);}
+
+/* Tweestapsverificatie bij Instellingen: de QR-code en de back-upcodes */
+.two-factor-setup p {margin: 0;}
+.two-factor-setup .qr {display: block; width: 180px; height: 180px; padding: var(--space5); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
+.two-factor-setup code {word-break: break-all; color: var(--font-color1);}
+.backup-codes {display: grid; grid-template-columns: repeat(2, max-content); gap: var(--space5) var(--space30); margin: 0; padding: var(--space15); list-style: none; background: var(--color3); border: 1px solid var(--border-color); border-radius: var(--border-radius1); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: .05em;}
+
 .button-group {display: inline-flex;}
 .button-group .button {border-radius: 0; margin-left: -1px;}
 .button-group .button:first-child {border-radius: var(--border-radius1) 0 0 var(--border-radius1); margin-left: 0;}

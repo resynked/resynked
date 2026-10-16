@@ -5,13 +5,16 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
-import { pageTitle } from '@/lib/constants';
+import { TWO_FACTOR_INVALID, TWO_FACTOR_REQUIRED, pageTitle } from '@/lib/constants';
 import { useToast } from '@/components/Toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Tweede stap: na een juist wachtwoord de code uit de authenticator-app
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const toast = useToast();
@@ -24,6 +27,10 @@ export default function Login() {
       toast.error('Fout', 'Vul alle velden in.');
       return;
     }
+    if (needsCode && !code.trim()) {
+      toast.error('Fout', 'Vul de code uit je authenticator-app in.');
+      return;
+    }
 
     setIsLoading(true);
 
@@ -32,10 +39,19 @@ export default function Login() {
         redirect: false,
         email,
         password,
+        ...(needsCode ? { code: code.trim() } : {}),
         callbackUrl: '/',
       });
 
-      if (result?.error) {
+      if (result?.error === TWO_FACTOR_REQUIRED) {
+        // Wachtwoord klopt; nu nog de code
+        setNeedsCode(true);
+        setIsLoading(false);
+      } else if (result?.error === TWO_FACTOR_INVALID) {
+        toast.error('Fout', 'Deze code klopt niet. Probeer de code die nu in de app staat.');
+        setCode('');
+        setIsLoading(false);
+      } else if (result?.error) {
         toast.error('Fout', 'Ongeldige inloggegevens.');
         setIsLoading(false);
       } else {
@@ -63,7 +79,36 @@ export default function Login() {
           <div className="logo">
             <Image src="/logo.svg" alt="Khance Logo" width={60} height={60} priority />
           </div>
-          <h1>Inloggen bij Khance</h1>
+          <h1>{needsCode ? 'Tweestapsverificatie' : 'Inloggen bij Khance'}</h1>
+          {needsCode && (
+            <form onSubmit={handleSubmit} className="login-form">
+              <p className="placeholder">Vul de code van 6 cijfers uit je authenticator-app in, of een van je back-upcodes.</p>
+              <input
+                id="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="Vul de code in"
+              />
+              <button className="button" type="submit" disabled={isLoading}>
+                {isLoading ? 'Bezig met controleren...' : 'Bevestigen'}
+              </button>
+              <button
+                type="button"
+                className="back"
+                onClick={() => {
+                  setNeedsCode(false);
+                  setCode('');
+                }}
+              >
+                Terug
+              </button>
+            </form>
+          )}
+          {!needsCode && (
           <form onSubmit={handleSubmit} className="login-form">
             <input
               id="email"
@@ -94,6 +139,7 @@ export default function Login() {
               {isLoading ? 'Bezig met inloggen...' : 'Login'}
             </button>
           </form>
+          )}
           <div className="register">
               Nog geen account? <Link href="/register"> Registreer hier </Link>
           </div>

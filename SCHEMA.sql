@@ -78,6 +78,13 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   name TEXT,
   role TEXT NOT NULL DEFAULT 'user',
+  -- Tweestapsverificatie: de sleutel van de authenticator-app (versleuteld),
+  -- sinds wanneer het aan staat, de laatst gebruikte tijdstap en de
+  -- back-upcodes als hash. Sleutel zonder datum = halverwege het aanzetten
+  totp_secret TEXT,
+  totp_enabled_at TIMESTAMPTZ,
+  totp_last_counter BIGINT,
+  totp_backup_codes TEXT[],
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

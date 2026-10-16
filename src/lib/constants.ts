@@ -9,6 +9,14 @@ export function pageTitle(title?: string): string {
   return title ? `${title} - ${APP_NAME}` : APP_NAME;
 }
 
+/**
+ * Wat de inlogpagina terugkrijgt als het wachtwoord klopt maar er nog een
+ * code uit de authenticator-app nodig is, of als die code niet klopt. NextAuth
+ * geeft de tekst van een fout uit authorize door als `error`.
+ */
+export const TWO_FACTOR_REQUIRED = '2FA_REQUIRED';
+export const TWO_FACTOR_INVALID = '2FA_INVALID';
+
 /** Zo kort mag een nieuw wachtwoord minimaal zijn */
 export const MIN_PASSWORD_LENGTH = 8;
 

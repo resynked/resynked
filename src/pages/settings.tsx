@@ -11,6 +11,7 @@ import SidePanel from '@/components/SidePanel';
 import PluginsSettings from '@/components/PluginsSettings';
 import type { Tenant } from '@/lib/supabase';
 import { MIN_PASSWORD_LENGTH } from '@/lib/constants';
+import { formatDate } from '@/lib/utils';
 
 /** Boven deze grootte wordt het logo te zwaar om in de offerte mee te sturen */
 const MAX_LOGO_BYTES = 300 * 1024;
@@ -71,16 +72,122 @@ export default function Settings() {
     if (passwords.repeat !== passwords.next) passwordErrors.repeat = 'De wachtwoorden zijn niet hetzelfde';
     const shownPasswordErrors = showPasswordErrors ? passwordErrors : {};
 
-    useEffect(() => {
+    // Tweestapsverificatie. Tijdens het aanzetten staat de QR-code in beeld,
+    // daarna eenmalig de back-upcodes
+    const [twoFactor, setTwoFactor] = useState<{ enabledAt: string | null; backupLeft: number }>({
+        enabledAt: null,
+        backupLeft: 0,
+    });
+    const [twoFactorSetup, setTwoFactorSetup] = useState<{ qr: string; secret: string } | null>(null);
+    const [twoFactorCode, setTwoFactorCode] = useState('');
+    const [twoFactorPassword, setTwoFactorPassword] = useState('');
+    const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+    const [isTwoFactorBusy, setIsTwoFactorBusy] = useState(false);
+
+    const loadAccount = () =>
         fetch('/api/account')
             .then(res => (res.ok ? res.json() : null))
-            .then((account: { name: string | null; email: string } | null) => {
-                if (!account) return;
-                setProfile({ name: account.name || '', email: account.email });
-                setSavedName(account.name || '');
-            })
+            .then(
+                (
+                    account: {
+                        name: string | null;
+                        email: string;
+                        two_factor_enabled_at: string | null;
+                        backup_codes_left: number;
+                    } | null
+                ) => {
+                    if (!account) return;
+                    setProfile({ name: account.name || '', email: account.email });
+                    setSavedName(account.name || '');
+                    setTwoFactor({ enabledAt: account.two_factor_enabled_at, backupLeft: account.backup_codes_left });
+                }
+            )
             .catch(() => {});
+
+    useEffect(() => {
+        loadAccount();
     }, []);
+
+    /** Eén stap bij het aan- of uitzetten; geeft het antwoord terug, of null bij een fout */
+    const twoFactorRequest = async (body: Record<string, string>) => {
+        setIsTwoFactorBusy(true);
+        try {
+            const response = await fetch('/api/account/two-factor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                toast.error('Tweestapsverificatie', data.error || 'Er ging iets mis');
+                return null;
+            }
+            return data;
+        } catch {
+            toast.error('Tweestapsverificatie', 'Er ging iets mis');
+            return null;
+        } finally {
+            setIsTwoFactorBusy(false);
+        }
+    };
+
+    const startTwoFactor = async () => {
+        const data = await twoFactorRequest({ action: 'setup' });
+        if (data) {
+            setTwoFactorSetup(data);
+            setTwoFactorCode('');
+        }
+    };
+
+    const confirmTwoFactor = async () => {
+        if (!twoFactorCode.trim()) {
+            toast.error('Nog niet compleet', 'Vul de code uit je authenticator-app in');
+            return;
+        }
+        const data = await twoFactorRequest({ action: 'enable', code: twoFactorCode });
+        if (data) {
+            setTwoFactorSetup(null);
+            setBackupCodes(data.backupCodes);
+            toast.success('Gelukt', 'Tweestapsverificatie staat aan');
+            loadAccount();
+        }
+    };
+
+    const disableTwoFactor = async () => {
+        if (!twoFactorPassword) {
+            toast.error('Nog niet compleet', 'Vul je wachtwoord in');
+            return;
+        }
+        const data = await twoFactorRequest({ action: 'disable', password: twoFactorPassword });
+        if (data) {
+            setTwoFactorPassword('');
+            setBackupCodes(null);
+            toast.success('Gelukt', 'Tweestapsverificatie staat uit');
+            loadAccount();
+        }
+    };
+
+    const renewBackupCodes = async () => {
+        if (!twoFactorPassword) {
+            toast.error('Nog niet compleet', 'Vul je wachtwoord in');
+            return;
+        }
+        const data = await twoFactorRequest({ action: 'backup-codes', password: twoFactorPassword });
+        if (data) {
+            setTwoFactorPassword('');
+            setBackupCodes(data.backupCodes);
+            loadAccount();
+        }
+    };
+
+    const copyBackupCodes = async () => {
+        try {
+            await navigator.clipboard.writeText((backupCodes || []).join('\n'));
+            toast.success('Gekopieerd', 'Bewaar ze op een veilige plek');
+        } catch {
+            toast.error('Kopiëren mislukt', 'Selecteer de codes en kopieer ze zelf');
+        }
+    };
 
     useEffect(() => {
         fetch('/api/tenant')
@@ -412,6 +519,132 @@ export default function Settings() {
                                     </div>
                                 </div>
                             </div>
+
+                            <h3>Tweestapsverificatie</h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Authenticator-app</span>
+                                    <span className="description">
+                                        Naast je wachtwoord vraagt Khance bij het inloggen om een code uit een app
+                                        zoals Google Authenticator, Microsoft Authenticator of 1Password.
+                                    </span>
+                                </div>
+                                <div>
+                                    {twoFactor.enabledAt ? (
+                                        <div className="form-section">
+                                            <p>
+                                                Staat aan sinds {formatDate(twoFactor.enabledAt)}. Je hebt nog{' '}
+                                                {twoFactor.backupLeft} {twoFactor.backupLeft === 1 ? 'back-upcode' : 'back-upcodes'} over.
+                                            </p>
+                                            <input
+                                                type="password"
+                                                value={twoFactorPassword}
+                                                autoComplete="current-password"
+                                                aria-label="Wachtwoord"
+                                                onChange={(e) => setTwoFactorPassword(e.target.value)}
+                                                placeholder="Vul je wachtwoord in om iets te wijzigen"
+                                            />
+                                            <div className="button-row">
+                                                <button
+                                                    type="button"
+                                                    className="button cancel"
+                                                    onClick={renewBackupCodes}
+                                                    disabled={isTwoFactorBusy}
+                                                >
+                                                    Nieuwe back-upcodes
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="button negative"
+                                                    onClick={disableTwoFactor}
+                                                    disabled={isTwoFactorBusy}
+                                                >
+                                                    Uitzetten
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : twoFactorSetup ? (
+                                        <div className="form-section two-factor-setup">
+                                            <p>1. Scan deze QR-code met je authenticator-app.</p>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={twoFactorSetup.qr} alt="QR-code voor je authenticator-app" className="qr" />
+                                            <p className="placeholder">
+                                                Lukt scannen niet? Vul deze sleutel in de app in:{' '}
+                                                <code>{twoFactorSetup.secret}</code>
+                                            </p>
+                                            <p>2. Vul de code van 6 cijfers in die de app nu toont.</p>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                autoComplete="one-time-code"
+                                                value={twoFactorCode}
+                                                aria-label="Code uit de app"
+                                                onChange={(e) => setTwoFactorCode(e.target.value)}
+                                                placeholder="Vul de code in"
+                                            />
+                                            <div className="button-row">
+                                                <button
+                                                    type="button"
+                                                    className="button cancel"
+                                                    onClick={() => setTwoFactorSetup(null)}
+                                                    disabled={isTwoFactorBusy}
+                                                >
+                                                    Annuleren
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="button"
+                                                    onClick={confirmTwoFactor}
+                                                    disabled={isTwoFactorBusy}
+                                                >
+                                                    Bevestigen
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="form-section">
+                                            <p className="placeholder">Staat uit.</p>
+                                            <div className="button-row">
+                                                <button
+                                                    type="button"
+                                                    className="button"
+                                                    onClick={startTwoFactor}
+                                                    disabled={isTwoFactorBusy}
+                                                >
+                                                    Aanzetten
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {backupCodes && (
+                                <div className="row-section">
+                                    <div className="information">
+                                        <span className="title">Je back-upcodes</span>
+                                        <span className="description">
+                                            Telefoon kwijt? Dan log je in met een van deze codes; elke code werkt één
+                                            keer. Bewaar ze op een veilige plek: je ziet ze hierna niet meer.
+                                        </span>
+                                    </div>
+                                    <div className="form-section">
+                                        <ul className="backup-codes">
+                                            {backupCodes.map((code) => (
+                                                <li key={code}>{code}</li>
+                                            ))}
+                                        </ul>
+                                        <div className="button-row">
+                                            <button type="button" className="button cancel" onClick={copyBackupCodes}>
+                                                Kopiëren
+                                            </button>
+                                            <button type="button" className="button" onClick={() => setBackupCodes(null)}>
+                                                Ik heb ze bewaard
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <h3>Bedrijf</h3>
                             <div className="row-section">
