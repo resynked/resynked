@@ -9,6 +9,9 @@ export function pageTitle(title?: string): string {
   return title ? `${title} - ${APP_NAME}` : APP_NAME;
 }
 
+/** Zo kort mag een nieuw wachtwoord minimaal zijn */
+export const MIN_PASSWORD_LENGTH = 8;
+
 /** De statussen van een offerte, met hun naam en hun kleur in de lijst. */
 export const QUOTE_STATUS: Record<string, { label: string; className: string }> = {
   draft: { label: 'Concept', className: 'status-draft' },

@@ -58,11 +58,17 @@ export const authOptions: NextAuthOptions = {
     error: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.tenantId = (user as any).tenantId;
         token.role = (user as any).role;
+      }
+      // Na het wijzigen van de naam bij Instellingen: opnieuw uit de database,
+      // zodat de zijbalk meteen de nieuwe naam toont. Nooit wat de browser stuurt
+      if (trigger === 'update' && token.id) {
+        const { data } = await supabaseAdmin.from('users').select('name').eq('id', token.id).single();
+        if (data) token.name = data.name;
       }
       return token;
     },
