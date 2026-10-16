@@ -211,8 +211,6 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 .grid.four {grid-template-columns: repeat(4, minmax(0, 1fr));}
 
-/* Een kerncijfer: label, groot getal en een regel uitleg. Op het dashboard als
-   eigen blok, boven de omzetgrafiek als legenda */
 .stat {display: flex; flex-direction: column; gap: var(--space5);}
 .stat .label {display: inline-flex; align-items: center; gap: var(--space5); font-size: var(--fontsize2); font-weight: 500; color: var(--font-color2);}
 .stat .value {font-size: var(--h4-size); font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
