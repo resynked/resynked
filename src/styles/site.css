@@ -1,13 +1,13 @@
 /* De website op khance.com: wit, ruim en met dunne lijnen. Alles staat
-   onder .site, zodat het niets in de app raakt. De knoppen, formulieren en
-   productbeelden gebruiken de klassen van de app uit globals.css. */
+   onder .site, zodat het niets in de app raakt. Knoppen en formulieren zijn
+   die van de app uit globals.css. */
 .site {min-height: 100vh; display: flex; flex-direction: column; background: var(--color2); font-size: 15px; line-height: 1.6;}
 .site main {flex: 1;}
 .site .site-container {width: 100%; max-width: var(--max-width-small); margin: 0 auto; padding: 0 var(--space20); box-sizing: border-box;}
 .site .site-narrow {max-width: 760px;}
-.site .button:not(.mock-window .button) {display: inline-flex; align-items: center; justify-content: center; padding: 12px var(--space20); font-size: var(--fontsize1);}
-.site .button:not(.mock-window .button):hover {opacity: .85; color: var(--color2);}
-.site a:not(.mock-window a):hover {color: var(--font-color1);}
+.site .button {display: inline-flex; align-items: center; justify-content: center; padding: 12px var(--space20); font-size: var(--fontsize1);}
+.site .button:hover {opacity: .85; color: var(--color2);}
+.site a:hover {color: var(--font-color1);}
 
 .site .site-header {position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, .85); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid var(--border-color);}
 .site .site-header .site-container {display: flex; align-items: center; gap: var(--space40); height: 64px;}
@@ -20,23 +20,18 @@
 .site .site-hero {position: relative; padding: var(--space100) 0 0 0; text-align: center; overflow: hidden; background-image: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px); background-size: 64px 64px; background-position: center top;}
 .site .site-hero::before {content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 55% at 50% 30%, transparent 0%, var(--color2) 85%); pointer-events: none;}
 .site .site-hero .site-container {position: relative;}
-.site .site-hero .site-container > h1 {max-width: 900px; margin: var(--space30) auto var(--space20) auto; font-size: clamp(40px, 6.5vw, 72px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;}
+.site .site-hero h1 {max-width: 900px; margin: var(--space30) auto var(--space20) auto; font-size: clamp(40px, 6.5vw, 72px); font-weight: 600; line-height: 1.05; letter-spacing: -.045em;}
 .site .site-lead {max-width: 620px; margin: 0 auto var(--space30) auto; color: var(--font-color2); font-size: 19px; line-height: 1.55;}
 .site .site-pill {display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--border-color); border-radius: 100px; background: var(--color2); color: var(--font-color1); font-size: var(--fontsize1); text-decoration: none; box-shadow: 0 1px 2px rgba(0, 0, 0, .04);}
 .site .site-pill svg:first-child {color: var(--color5);}
 .site .site-cta {display: flex; justify-content: center; gap: var(--space10); flex-wrap: wrap;}
 .site .site-hero-visual {margin: 72px auto 0 auto; max-width: 1080px; text-align: left; mask-image: linear-gradient(to bottom, #000 70%, transparent); -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);}
 
-.site .site-trades {border-block: 1px solid var(--border-color);}
-.site .site-trades .site-container {display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space15) var(--space40); padding-block: var(--space30);}
-.site .site-trades span {color: var(--font-color2); font-size: var(--fontsize1);}
-.site .site-trades strong {font-size: 17px; font-weight: 600; letter-spacing: -.02em; color: #b5b5b5;}
-
-.site .site-section {padding: var(--space100)}
+.site .site-section {padding: var(--space100) 0;}
 .site .site-section-head {max-width: 720px; margin: 0 0 var(--space50) 0;}
 .site .site-eyebrow {display: block; margin: 0 0 var(--space10) 0; color: var(--color5); font-size: var(--fontsize1); font-weight: 500;}
-.site h2:not(.mock-window h2) {font-size: clamp(30px, 4vw, 44px); font-weight: 600; line-height: 1.1; letter-spacing: -.035em;}
-.site h3:not(.mock-window h3) {font-size: 17px; font-weight: 600; letter-spacing: -.01em;}
+.site h2 {font-size: clamp(30px, 4vw, 44px); font-weight: 600; line-height: 1.1; letter-spacing: -.035em;}
+.site h3 {font-size: 17px; font-weight: 600; letter-spacing: -.01em;}
 
 .site .site-grid {display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--border-color); border-left: 1px solid var(--border-color);}
 .site .site-grid-cell {padding: var(--space30); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); transition: .3s all ease;}
@@ -100,29 +95,14 @@
 .site .site-footer-links a {text-decoration: none;}
 .site .site-footer-bottom {padding-block: var(--space20); border-top: 1px solid var(--border-color); color: var(--font-color2); font-size: var(--fontsize1);}
 
-/* Productbeelden: de echte app in een browservenster, verkleind met zoom.
-   Alleen wat nodig is om de app in een venster te laten passen staat hier;
-   de rest is de opmaak van de app zelf. */
-.site .mock-window {border: 1px solid var(--border-color); border-radius: 12px; background: var(--color3); overflow: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 24px 60px -12px rgba(0, 0, 0, .12); line-height: 1.75em; font-size: var(--fontsize1);}
-.site .mock-window-bar {display: flex; align-items: center; gap: 6px; padding: var(--space10) var(--space15); border-bottom: 1px solid var(--border-color); background: var(--color2);}
-.site .mock-window-bar > span {width: 10px; height: 10px; border-radius: 50%; background: #e2e2e2;}
-.site .mock-window-url {margin: 0 auto; padding: 2px var(--space30); border-radius: var(--border-radius1); background: var(--color4); color: var(--font-color2); font-size: 11px; line-height: 1.6;}
-.site .mock-window-body {zoom: .72; pointer-events: none; user-select: none;}
-.site .mock-window .layout {min-height: 0;}
-.site .mock-window .sidebar {position: static; height: auto;}
-.site .mock-window .inbox {height: 520px; grid-template-columns: 170px 300px minmax(0, 1fr); border: 0; border-radius: 0;}
-.site .mock-window .inbox .highlight {background: var(--color5); color: var(--color2); border-radius: var(--border-radius1);}
-.site .mock-window .inbox .highlight::after {display: block; opacity: 1;}
-.site .mock-window .public-document {padding: var(--space20);}
-.site .mock-window .payment-details {margin: 0;}
-
-.site .site-feature-visual .mock-window-body {zoom: .6;}
-.site .site-feature-visual .mock-window.actual-size .mock-window-body {zoom: 1; max-height: 560px; overflow: hidden;}
-.site .site-feature.reverse .site-feature-visual .mock-window {margin-left: 120px;}
-.site .mock-phone {position: absolute; left: -24px; bottom: 0; width: 200px; padding: var(--space10); border: 1px solid var(--border-color); border-radius: 22px; background: #efeae2; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .25); font-size: var(--fontsize2); line-height: 1.45;}
-.site .mock-phone-head {margin: 0 0 var(--space10) 0; padding: 0 0 var(--space5) 0; border-bottom: 1px solid rgba(0, 0, 0, .08); font-weight: 600; text-align: center;}
-.site .mock-bubble {max-width: 85%; margin: 0 0 6px 0; padding: 6px var(--space10); border-radius: var(--border-radius2); background: var(--color2); word-break: break-word;}
-.site .mock-bubble.own {margin-left: auto; background: #d9fdd3;}
+/* Schermafbeeldingen van de app (public/screens), en het WhatsApp-gesprek
+   dat over de offerte heen valt */
+.site .screenshot {display: block; width: 100%; height: auto; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .12);}
+.site .site-feature.reverse .screenshot {width: calc(100% - 120px); margin-left: auto;}
+.site .whatsapp {position: absolute; left: 0; bottom: 0; width: 220px; padding: var(--space10); border-radius: 22px; background: #efeae2; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .25); font-size: var(--fontsize2); line-height: 1.45;}
+.site .whatsapp .title {margin: 0 0 var(--space10) 0; font-weight: 600; text-align: center;}
+.site .whatsapp p {max-width: 85%; margin: 0 0 6px 0; padding: 6px var(--space10); border-radius: var(--border-radius2); background: var(--color2);}
+.site .whatsapp p.own {margin-left: auto; background: #d9fdd3;}
 
 @media (max-width: 1000px) {
   .site .site-nav {display: none;}
@@ -132,7 +112,6 @@
   .site .site-feature.reverse .site-feature-text {order: 0;}
   .site .site-price-head {border-right: 0; border-bottom: 1px solid var(--border-color);}
   .site .site-footer > .site-container:first-child {flex-direction: column;}
-  .site .mock-window-body {zoom: .6;}
 }
 
 @media (max-width: 640px) {
@@ -140,10 +119,8 @@
   .site .site-lead {font-size: 17px;}
   .site .site-grid, .site .site-price ul {grid-template-columns: minmax(0, 1fr);}
   .site .site-actions .button.tertiary {display: none;}
-  .site .mock-window-body, .site .site-feature-visual .mock-window-body {zoom: .45;}
-  .site .site-feature.reverse .site-feature-visual .mock-window {margin-left: 0;}
-  .site .mock-window .sidebar {display: none;}
-  .site .mock-phone {position: static; width: auto; margin: var(--space30) 0 0 0;}
+  .site .site-feature.reverse .screenshot {width: 100%;}
+  .site .whatsapp {position: static; width: auto; margin: var(--space20) 0 0 0;}
   .site .site-price ul, .site .site-price-head {padding: var(--space30);}
   .site .site-footer-links {flex-wrap: wrap; gap: var(--space30);}
   .site .form-section .form-row {flex-direction: column;}

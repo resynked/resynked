@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -12,7 +13,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import SiteLayout from '@/components/site/SiteLayout';
-import { DashboardMock, InboxMock, PaymentMock, QuoteMock, WhatsAppMock } from '@/components/site/ProductMocks';
 
 /** Wat er in het abonnement zit; alleen wat Khance echt kan */
 const INCLUDED = [
@@ -118,17 +118,16 @@ export default function Home() {
             </Link>
           </div>
           <div className="site-hero-visual">
-            <DashboardMock />
+            <Image
+              src="/screens/dashboard.webp"
+              alt="Het dashboard van Khance met openstaande offertes, facturen en de omzet"
+              width={1680}
+              height={1070}
+              sizes="(max-width: 1120px) 100vw, 1080px"
+              className="screenshot"
+              priority
+            />
           </div>
-        </div>
-      </section>
-
-      <section className="site-trades">
-        <div className="site-container">
-          <span>Gemaakt voor</span>
-          {['Aannemers', 'Schilders', 'Tegelzetters', 'Installateurs', 'Timmerlieden', 'Klusbedrijven'].map((trade) => (
-            <strong key={trade}>{trade}</strong>
-          ))}
         </div>
       </section>
 
@@ -167,7 +166,14 @@ export default function Home() {
               </p>
             </div>
             <div className="site-feature-visual">
-              <InboxMock />
+              <Image
+                src="/screens/inbox.webp"
+                alt="De inbox in Khance met een aanvraag die je omzet naar een offerte"
+                width={1200}
+                height={602}
+                sizes="(max-width: 1000px) 100vw, 640px"
+                className="screenshot"
+              />
             </div>
           </div>
 
@@ -181,8 +187,23 @@ export default function Home() {
               </p>
             </div>
             <div className="site-feature-visual">
-              <QuoteMock />
-              <WhatsAppMock />
+              <Image
+                src="/screens/quote.webp"
+                alt="Een ondertekende offerte zoals de klant hem ziet"
+                width={818}
+                height={800}
+                sizes="(max-width: 1000px) 100vw, 520px"
+                className="screenshot"
+              />
+              {/* Een offerte maken met één WhatsApp-bericht aan de bot */}
+              <div className="whatsapp" aria-hidden="true">
+                <div className="title">Khance</div>
+                <p className="own">
+                  Familie Verhoef, Voorbeeldlaan 12. Keuken en gang 45 m² oude tegels eruit, vloerverwarming en
+                  opnieuw tegelen.
+                </p>
+                <p>Offerte OFF-118 staat als concept klaar voor Familie Verhoef, € 7.308,40.</p>
+              </div>
             </div>
           </div>
 
@@ -196,7 +217,14 @@ export default function Home() {
               </p>
             </div>
             <div className="site-feature-visual">
-              <PaymentMock />
+              <Image
+                src="/screens/payment.webp"
+                alt="Het betaalblok op een factuur met een QR-code voor de bank-app"
+                width={600}
+                height={270}
+                sizes="(max-width: 1000px) 100vw, 600px"
+                className="screenshot"
+              />
             </div>
           </div>
         </div>

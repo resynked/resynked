@@ -14,30 +14,19 @@ const COLLAPSED_KEY = 'khance:sidebar-collapsed';
 // elke klik eerst even uitgeklapt staan voordat de opgeslagen stand er is
 let rememberedCollapsed: boolean | null = null;
 
-/** De zijbalk als voorbeeld op de website: verzonnen gegevens, niets opgehaald */
-export interface SidebarPreview {
-  path: string;
-  name: string;
-  email: string;
-  unread: number;
-}
-
-export default function Sidebar({ preview }: { preview?: SidebarPreview }) {
+export default function Sidebar() {
   const router = useRouter();
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   // De Inbox staat er alleen als de module aan staat: als er een mailbox gekoppeld is
-  const mailAccount = useMailAccount(!preview);
-  const fetchedUnread = useMailUnread(!!mailAccount && !preview);
-  const showMail = preview ? true : !!mailAccount;
-  const unreadMail = preview ? preview.unread : fetchedUnread;
-  const pathname = preview?.path ?? router.pathname;
+  const mailAccount = useMailAccount();
+  const unreadMail = useMailUnread(!!mailAccount);
   const dropdownRef = useRef<HTMLDivElement>(null);
   // Ingeklapt blijven alleen de iconen over; een klik op het logo klapt hem weer uit
-  const [collapsed, setCollapsed] = useState(preview ? false : rememberedCollapsed ?? false);
+  const [collapsed, setCollapsed] = useState(rememberedCollapsed ?? false);
 
   useEffect(() => {
-    if (preview || rememberedCollapsed !== null) return;
+    if (rememberedCollapsed !== null) return;
     try {
       rememberedCollapsed = localStorage.getItem(COLLAPSED_KEY) === '1';
       setCollapsed(rememberedCollapsed);
@@ -58,7 +47,7 @@ export default function Sidebar({ preview }: { preview?: SidebarPreview }) {
   };
 
   const isActive = (path: string) => {
-    return pathname === path;
+    return router.pathname === path;
   };
 
   // Close dropdown when clicking outside
@@ -84,8 +73,8 @@ export default function Sidebar({ preview }: { preview?: SidebarPreview }) {
       .slice(0, 2);
   };
 
-  const userName = preview?.name || (session?.user as any)?.name || 'User';
-  const userEmail = preview?.email ?? (session?.user as any)?.email ?? '';
+  const userName = (session?.user as any)?.name || 'User';
+  const userEmail = (session?.user as any)?.email || '';
 
   return (
     <div className={`sidebar${collapsed ? ' collapsed' : ''}`}>
@@ -110,36 +99,36 @@ export default function Sidebar({ preview }: { preview?: SidebarPreview }) {
           <LayoutDashboard size={18} />
           <span className="label">Dashboard</span>
         </Link>
-        {showMail && (
+        {mailAccount && (
           <Link href="/inbox" className={isActive('/inbox') ? 'active' : ''} data-label="Inbox">
             <Inbox size={18} />
             <span className="label">Inbox</span>
             {!!unreadMail && <span className="count">{unreadMail > 999 ? '999+' : unreadMail}</span>}
           </Link>
         )}
-        {showMail && (
+        {mailAccount && (
           <Link href="/calendar" className={isActive('/calendar') ? 'active' : ''} data-label="Agenda">
             <CalendarDays size={18} />
             <span className="label">Agenda</span>
           </Link>
         )}
-        <Link href="/customers" className={isActive('/customers') || pathname.startsWith('/customers') ? 'active' : ''} data-label="Klanten">
+        <Link href="/customers" className={isActive('/customers') || router.pathname.startsWith('/customers') ? 'active' : ''} data-label="Klanten">
           <Users size={18} />
           <span className="label">Klanten</span>
         </Link>
-        <Link href="/quotes" className={isActive('/quotes') || pathname.startsWith('/quotes') ? 'active' : ''} data-label="Offertes">
+        <Link href="/quotes" className={isActive('/quotes') || router.pathname.startsWith('/quotes') ? 'active' : ''} data-label="Offertes">
           <FileText size={18} />
           <span className="label">Offertes</span>
         </Link>
-        <Link href="/invoices" className={isActive('/invoices') || pathname.startsWith('/invoices') ? 'active' : ''} data-label="Facturen">
+        <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''} data-label="Facturen">
           <ReceiptEuro size={18} />
           <span className="label">Facturen</span>
         </Link>
-        <Link href="/products" className={isActive('/products') || pathname.startsWith('/products') ? 'active' : ''} data-label="Producten">
+        <Link href="/products" className={isActive('/products') || router.pathname.startsWith('/products') ? 'active' : ''} data-label="Producten">
           <Package size={18} />
           <span className="label">Producten</span>
         </Link>
-        <Link href="/notes" className={isActive('/notes') || pathname.startsWith('/notes') ? 'active' : ''} data-label="Notities">
+        <Link href="/notes" className={isActive('/notes') || router.pathname.startsWith('/notes') ? 'active' : ''} data-label="Notities">
           <FilePen size={18} />
           <span className="label">Notities</span>
         </Link>
