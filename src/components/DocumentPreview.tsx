@@ -1340,6 +1340,8 @@ export default function DocumentPreview({
     return (
       <InlineEditContext.Provider value={inlineEditing}>
         <div className="document-window" ref={vensterRef}>
+          {/* Het formaat op de printer en in de PDF, uit de instelling bij Offertes en Facturen */}
+          <style>{`@page { size: A4 ${tenant?.paper_orientation === 'landscape' ? 'landscape' : 'portrait'}; margin: 0; }`}</style>
           <div
             // Liggend A4 voor het standaardsjabloon; een eigen sjabloon kiest zelf
             className={`document-paper${tenant?.paper_orientation === 'landscape' ? ' landscape' : ''}`}

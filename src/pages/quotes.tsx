@@ -183,7 +183,11 @@ export default function Quotes() {
   const handleBulkConvert = async () => {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
-      message: `${convertible.length} offerte(s) omzetten naar een factuur? Alle regels worden overgenomen.`,
+      message: `${convertible.length} offerte(s) omzetten naar een factuur? Alle regels worden overgenomen.${
+        convertible.some(quote => quote.status !== 'approved')
+          ? ' Let op: niet alle offertes zijn ondertekend door de klant.'
+          : ''
+      }`,
       confirmText: 'Omzetten',
       cancelText: 'Annuleren',
     });
@@ -278,7 +282,11 @@ export default function Quotes() {
   const handleConvertToInvoice = async (quoteId: string) => {
     const confirmed = await confirm({
       title: 'Omzetten naar factuur',
-      message: 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.',
+      // Normaal pas na de handtekening; een akkoord per mail of telefoon kan ook
+      message:
+        quotes.find(quote => quote.id === quoteId)?.status === 'approved'
+          ? 'Deze offerte omzetten naar een factuur? Alle regels worden overgenomen.'
+          : 'Let op: deze offerte is nog niet ondertekend door de klant. Heb je zijn akkoord op een andere manier, bijvoorbeeld per mail of telefoon? Dan kun je hem toch omzetten.',
       confirmText: 'Omzetten',
       cancelText: 'Annuleren'
     });
