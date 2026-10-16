@@ -285,19 +285,30 @@ button[data-label]:hover::after {display: block;}
    Een vel staat op de maat die het ook bij het afdrukken heeft, en wordt als
    geheel verkleind tot het in beeld past. Daardoor breekt de tekst op het
    scherm precies waar hij in de PDF breekt: wat je in de editor ziet is wat
-   er uit de printer komt. Een sjabloon dat staand papier wil, zet zelf
-   --sheet-width en --sheet-height. */
+   er uit de printer komt.
+
+   Het formaat volgt de instelling bij Offertes en Facturen: staand A4, of
+   liggend met de class "landscape" op het papier. Op het scherm, op de
+   printer en in de PDF. Een eigen sjabloon dat per se een ander formaat wil,
+   zet zelf --sheet-width en --sheet-height op zijn pagina. */
 .document-window {overflow: hidden; contain: inline-size;}
-.document-paper {transform-origin: top left;}
+.document-paper {transform-origin: top left; --sheet-width: 210mm; --sheet-height: 297mm;}
+.document-paper.landscape {--sheet-width: 297mm; --sheet-height: 210mm;}
 .document-paper [data-blok-titel][data-blok-titel] {
   position: relative;
-  width: var(--sheet-width, 297mm);
-  height: var(--sheet-height, 210mm);
-  min-height: var(--sheet-height, 210mm);
-  max-height: var(--sheet-height, 210mm);
+  width: var(--sheet-width);
+  height: var(--sheet-height);
+  min-height: var(--sheet-height);
+  max-height: var(--sheet-height);
   overflow: hidden;
   box-sizing: border-box;
+  page: document-portrait;
+  break-after: page;
 }
+.document-paper.landscape [data-blok-titel][data-blok-titel] {page: document-landscape;}
+.document-paper [data-blok-titel]:last-of-type {break-after: auto;}
+@page document-portrait {size: A4 portrait; margin: 0;}
+@page document-landscape {size: A4 landscape; margin: 0;}
 
 /* De knop op een vervolgvel ligt over het papier heen, zodat hij de inhoud
    niet verschuift en dus ook niet meetelt voor wat er op een vel past */
@@ -425,8 +436,8 @@ input[aria-invalid="true"], .invalid .select .control, .invalid .rich-editor {bo
 .field-error {margin: var(--space5) 0 0 0; font-size: var(--fontsize2); color: var(--color6);}
 .row-section + h3, h2 + h3 {margin: var(--space20) 0 var(--space5) 0;}
 
-h2 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
-h2 .help:hover {background: var(--color4); color: var(--font-color1);}
+h2 .help, h3 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
+h2 .help:hover, h3 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 

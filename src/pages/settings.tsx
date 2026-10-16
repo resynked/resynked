@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import { CircleUserRound, ShieldCheck, Mail, LayoutTemplate, CircleQuestionMark, Plug } from 'lucide-react';
+import { CircleUserRound, ShieldCheck, FileText, ReceiptEuro, CircleQuestionMark, Plug } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -325,25 +325,34 @@ export default function Settings() {
 
     // Ongewijzigd het standaardsjabloon? Dan bewaren we niets, zodat verbeteringen
     // aan het standaardsjabloon later vanzelf meekomen
-    const handleSaveTemplates = () =>
+    const handleSaveQuotes = () =>
         save(
             {
+                quote_number_next: numbering.quote_number_next,
                 quote_template_html:
                     templates.quote_template_html === DEFAULT_QUOTE_TEMPLATE ? '' : templates.quote_template_html,
+                paper_orientation: paperOrientation,
+                quote_email_subject: emailSettings.quote_email_subject,
+                quote_email_intro_text: emailSettings.quote_email_intro_text,
+                quote_reminder_days: reminderEnabled ? emailSettings.quote_reminder_days : '',
+            },
+            'Offerte-instellingen opgeslagen'
+        );
+
+    const handleSaveInvoices = () =>
+        save(
+            {
+                invoice_number_next: numbering.invoice_number_next,
                 invoice_template_html:
                     templates.invoice_template_html === DEFAULT_INVOICE_TEMPLATE ? '' : templates.invoice_template_html,
                 paper_orientation: paperOrientation,
+                invoice_email_subject: emailSettings.invoice_email_subject,
+                invoice_email_intro_text: emailSettings.invoice_email_intro_text,
             },
-            'Sjabloon opgeslagen'
+            'Factuurinstellingen opgeslagen'
         );
 
-    const handleSaveEmail = () =>
-        save(
-            { ...emailSettings, quote_reminder_days: reminderEnabled ? emailSettings.quote_reminder_days : '' },
-            'E-mailinstellingen opgeslagen'
-        );
-
-    /** De knop Opslaan bij Account: je naam, als die veranderd is, en de nummering */
+    /** De knop Opslaan bij Account: je naam, als die veranderd is, en de bedrijfsgegevens */
     const handleSaveAccount = async () => {
         const name = profile.name.trim();
         if (!name) {
@@ -367,7 +376,7 @@ export default function Settings() {
             await updateSession();
         }
 
-        await save({ ...company, ...numbering }, 'Account opgeslagen');
+        await save(company, 'Account opgeslagen');
     };
 
     /** Eén verzoek aan de wachtwoord-API; geeft true als het gelukt is */
@@ -433,16 +442,13 @@ export default function Settings() {
                         </button>
                     </div>
                 )}
-                {activeTab === 'sjabloon' && (
+                {(activeTab === 'offertes' || activeTab === 'facturen') && (
                     <div className="actions">
-                        <button className="button" onClick={handleSaveTemplates} disabled={isSaving}>
-                            {isSaving ? 'Opslaan...' : 'Opslaan'}
-                        </button>
-                    </div>
-                )}
-                {activeTab === 'email' && (
-                    <div className="actions">
-                        <button className="button" onClick={handleSaveEmail} disabled={isSaving}>
+                        <button
+                            className="button"
+                            onClick={activeTab === 'offertes' ? handleSaveQuotes : handleSaveInvoices}
+                            disabled={isSaving}
+                        >
                             {isSaving ? 'Opslaan...' : 'Opslaan'}
                         </button>
                     </div>
@@ -475,17 +481,6 @@ export default function Settings() {
                             <span>Privacy</span>
                         </Link>
                         <Link
-                            href="#sjabloon"
-                            className={`${activeTab === 'sjabloon' ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab('sjabloon');
-                            }}
-                        >
-                            <LayoutTemplate size={18} />
-                            <span>Sjabloon</span>
-                        </Link>
-                        <Link
                             href="#plugins"
                             className={`${activeTab === 'plugins' ? 'active' : ''}`}
                             onClick={(e) => {
@@ -500,15 +495,26 @@ export default function Settings() {
                     <nav>
                         <span className="section-title">Overige instellingen</span>
                         <Link
-                            href="#email"
-                            className={`${activeTab === 'email' ? 'active' : ''}`}
+                            href="#offertes"
+                            className={`${activeTab === 'offertes' ? 'active' : ''}`}
                             onClick={(e) => {
                                 e.preventDefault();
-                                setActiveTab('email');
+                                setActiveTab('offertes');
                             }}
                         >
-                            <Mail size={18} />
-                            <span>E-mail</span>
+                            <FileText size={18} />
+                            <span>Offertes</span>
+                        </Link>
+                        <Link
+                            href="#facturen"
+                            className={`${activeTab === 'facturen' ? 'active' : ''}`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab('facturen');
+                            }}
+                        >
+                            <ReceiptEuro size={18} />
+                            <span>Facturen</span>
                         </Link>
                     </nav>
                 </div>
@@ -603,22 +609,6 @@ export default function Settings() {
 
                             <div className="row-section">
                                 <div className="information">
-                                    <label className="title" htmlFor="company_email">E-mailadres</label>
-                                    <span className="description">Voor vragen van je klanten; staat onder je offertes en facturen.</span>
-                                </div>
-                                <div>
-                                    <input
-                                        id="company_email"
-                                        type="email" autoComplete="email"
-                                        value={company.email}
-                                        onChange={(e) => setCompany({ ...company, email: e.target.value })}
-                                        placeholder="Vul een e-mailadres in"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
                                     <label className="title" htmlFor="company_phone">Telefoonnummer</label>
                                     <span className="description">Staat onder je offertes, facturen en mails.</span>
                                 </div>
@@ -635,49 +625,44 @@ export default function Settings() {
 
                             <div className="row-section">
                                 <div className="information">
-                                    <label className="title" htmlFor="company_kvk">KvK-nummer</label>
-                                    <span className="description">Verplicht op een factuur.</span>
+                                    <span className="title">KvK, btw en IBAN</span>
+                                    <span className="description">
+                                        Verplicht op een factuur. Op het IBAN betalen je klanten, ook met de QR-code.
+                                    </span>
                                 </div>
-                                <div>
-                                    <input
-                                        id="company_kvk"
-                                        type="text"
-                                        value={company.kvk}
-                                        onChange={(e) => setCompany({ ...company, kvk: e.target.value })}
-                                        placeholder="Vul een KvK-nummer in"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="company_btw">Btw-nummer</label>
-                                    <span className="description">Verplicht op een factuur.</span>
-                                </div>
-                                <div>
-                                    <input
-                                        id="company_btw"
-                                        type="text"
-                                        value={company.btw_number}
-                                        onChange={(e) => setCompany({ ...company, btw_number: e.target.value })}
-                                        placeholder="Vul een btw-nummer in"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="company_iban">IBAN</label>
-                                    <span className="description">Hierop betalen je klanten, ook met de QR-code op de factuur.</span>
-                                </div>
-                                <div>
-                                    <input
-                                        id="company_iban"
-                                        type="text"
-                                        value={company.iban}
-                                        onChange={(e) => setCompany({ ...company, iban: e.target.value })}
-                                        placeholder="Vul een IBAN in"
-                                    />
+                                <div className="form-section">
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label htmlFor="company_kvk">KvK-nummer</label>
+                                            <input
+                                                id="company_kvk"
+                                                type="text"
+                                                value={company.kvk}
+                                                onChange={(e) => setCompany({ ...company, kvk: e.target.value })}
+                                                placeholder="Vul een KvK-nummer in"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="company_btw">Btw-nummer</label>
+                                            <input
+                                                id="company_btw"
+                                                type="text"
+                                                value={company.btw_number}
+                                                onChange={(e) => setCompany({ ...company, btw_number: e.target.value })}
+                                                placeholder="Vul een btw-nummer in"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="company_iban">IBAN</label>
+                                            <input
+                                                id="company_iban"
+                                                type="text"
+                                                value={company.iban}
+                                                onChange={(e) => setCompany({ ...company, iban: e.target.value })}
+                                                placeholder="Vul een IBAN in"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -701,151 +686,6 @@ export default function Settings() {
                                 </div>
                             </div>
 
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="quote_number_next">Volgend offertenummer</label>
-                                    <span className="description">
-                                        Het nummer dat de volgende offerte krijgt. De cijfers achteraan
-                                        tellen daarna vanzelf op.
-                                    </span>
-                                </div>
-                                <div>
-                                    <input
-                                        id="quote_number_next"
-                                        type="text"
-                                        value={numbering.quote_number_next}
-                                        onChange={(e) =>
-                                            setNumbering({ ...numbering, quote_number_next: e.target.value })
-                                        }
-                                        placeholder="Vul het volgende offertenummer in"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="invoice_number_next">Volgend factuurnummer</label>
-                                    <span className="description">
-                                        Zelfde opzet als bij de offertes, met een eigen reeks.
-                                    </span>
-                                </div>
-                                <div>
-                                    <input
-                                        id="invoice_number_next"
-                                        type="text"
-                                        value={numbering.invoice_number_next}
-                                        onChange={(e) =>
-                                            setNumbering({ ...numbering, invoice_number_next: e.target.value })
-                                        }
-                                        placeholder="Vul het volgende factuurnummer in"
-                                    />
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {activeTab === 'sjabloon' && (
-                        <>
-                            <h2>
-                                Sjabloon
-                                <button
-                                    type="button"
-                                    className="help"
-                                    title="Uitleg over sjablonen"
-                                    aria-label="Uitleg over sjablonen"
-                                    onClick={() => setShowTemplateHelp(true)}
-                                >
-                                    <CircleQuestionMark size={16} />
-                                </button>
-                            </h2>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <span className="title">Papierformaat</span>
-                                    <span className="description">
-                                        Voor het standaardsjabloon. Een eigen sjabloon bepaalt zelf zijn formaat.
-                                    </span>
-                                </div>
-                                <div>
-                                    <Select
-                                        value={PAPER_OPTIONS.find(o => o.value === paperOrientation) || null}
-                                        onChange={(option) =>
-                                            setPaperOrientation(option?.value === 'landscape' ? 'landscape' : 'portrait')
-                                        }
-                                        options={PAPER_OPTIONS}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="quote_template_html">Offertesjabloon</label>
-                                    <span className="description">
-                                        {templates.quote_template_html === DEFAULT_TEMPLATES.quote_template_html
-                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
-                                            : 'De HTML van je eigen offerteontwerp.'}
-                                    </span>
-                                </div>
-                                <div className="form-section">
-                                    <textarea
-                                        id="quote_template_html"
-                                        value={templates.quote_template_html}
-                                        onChange={(e) =>
-                                            setTemplates({ ...templates, quote_template_html: e.target.value })
-                                        }
-                                        placeholder="Vul de HTML van je offertesjabloon in"
-                                        rows={20}
-                                    />
-                                    {templates.quote_template_html !== DEFAULT_TEMPLATES.quote_template_html && (
-                                        <div className="form-row">
-                                            <button
-                                                type="button"
-                                                className="button cancel"
-                                                onClick={() =>
-                                                    setTemplates({ ...templates, quote_template_html: DEFAULT_TEMPLATES.quote_template_html })
-                                                }
-                                            >
-                                                Standaard herstellen
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="row-section">
-                                <div className="information">
-                                    <label className="title" htmlFor="invoice_template_html">Factuursjabloon</label>
-                                    <span className="description">
-                                        {templates.invoice_template_html === DEFAULT_TEMPLATES.invoice_template_html
-                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
-                                            : 'De HTML van je eigen factuurontwerp.'}
-                                    </span>
-                                </div>
-                                <div className="form-section">
-                                    <textarea
-                                        id="invoice_template_html"
-                                        value={templates.invoice_template_html}
-                                        onChange={(e) =>
-                                            setTemplates({ ...templates, invoice_template_html: e.target.value })
-                                        }
-                                        placeholder="Vul de HTML van je factuursjabloon in"
-                                        rows={20}
-                                    />
-                                    {templates.invoice_template_html !== DEFAULT_TEMPLATES.invoice_template_html && (
-                                        <div className="form-row">
-                                            <button
-                                                type="button"
-                                                className="button cancel"
-                                                onClick={() =>
-                                                    setTemplates({ ...templates, invoice_template_html: DEFAULT_TEMPLATES.invoice_template_html })
-                                                }
-                                            >
-                                                Standaard herstellen
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
                         </>
                     )}
 
@@ -1085,16 +925,101 @@ export default function Settings() {
 
                     {activeTab === 'plugins' && <PluginsSettings />}
 
-                    {activeTab === 'email' && (
+                    {activeTab === 'offertes' && (
                         <>
-                            <h2>E-mail</h2>
+                            <h2>Offertes</h2>
 
-                            <p className="field-note">
-                                Offertes gaan vanuit de Gmail of Outlook die je bij Plug-ins hebt gekoppeld.
-                                Hieronder stel je de tekst van die mail in.
-                            </p>
+                            <h3>Nummering</h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="quote_number_next">Volgend offertenummer</label>
+                                    <span className="description">
+                                        Het nummer dat de volgende offerte krijgt. De cijfers achteraan
+                                        tellen daarna vanzelf op.
+                                    </span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="quote_number_next"
+                                        type="text"
+                                        value={numbering.quote_number_next}
+                                        onChange={(e) =>
+                                            setNumbering({ ...numbering, quote_number_next: e.target.value })
+                                        }
+                                        placeholder="Vul het volgende offertenummer in"
+                                    />
+                                </div>
+                            </div>
+
+                            <h3>
+                                Opmaak
+                                <button
+                                    type="button"
+                                    className="help"
+                                    title="Uitleg over sjablonen"
+                                    aria-label="Uitleg over sjablonen"
+                                    onClick={() => setShowTemplateHelp(true)}
+                                >
+                                    <CircleQuestionMark size={16} />
+                                </button>
+                            </h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Papierformaat</span>
+                                    <span className="description">
+                                        Staand of liggend A4. Geldt voor offertes en facturen allebei.
+                                    </span>
+                                </div>
+                                <div>
+                                    <Select
+                                        value={PAPER_OPTIONS.find(o => o.value === paperOrientation) || null}
+                                        onChange={(option) =>
+                                            setPaperOrientation(option?.value === 'landscape' ? 'landscape' : 'portrait')
+                                        }
+                                        options={PAPER_OPTIONS}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="quote_template_html">Offertesjabloon</label>
+                                    <span className="description">
+                                        {templates.quote_template_html === DEFAULT_TEMPLATES.quote_template_html
+                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
+                                            : 'De HTML van je eigen offerteontwerp.'}
+                                    </span>
+                                </div>
+                                <div className="form-section">
+                                    <textarea
+                                        id="quote_template_html"
+                                        value={templates.quote_template_html}
+                                        onChange={(e) =>
+                                            setTemplates({ ...templates, quote_template_html: e.target.value })
+                                        }
+                                        placeholder="Vul de HTML van je offertesjabloon in"
+                                        rows={20}
+                                    />
+                                    {templates.quote_template_html !== DEFAULT_TEMPLATES.quote_template_html && (
+                                        <div className="form-row">
+                                            <button
+                                                type="button"
+                                                className="button cancel"
+                                                onClick={() =>
+                                                    setTemplates({ ...templates, quote_template_html: DEFAULT_TEMPLATES.quote_template_html })
+                                                }
+                                            >
+                                                Standaard herstellen
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
                             <h3>Offertemail</h3>
+                            <p className="field-note">
+                                Gaat vanuit de Gmail of Outlook die je bij Plug-ins hebt gekoppeld.
+                            </p>
 
                             <div className="row-section">
                                 <div className="information">
@@ -1180,7 +1105,102 @@ export default function Settings() {
                                 </div>
                             </div>
 
+                        </>
+                    )}
+
+                    {activeTab === 'facturen' && (
+                        <>
+                            <h2>Facturen</h2>
+
+                            <h3>Nummering</h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="invoice_number_next">Volgend factuurnummer</label>
+                                    <span className="description">
+                                        Het nummer dat de volgende factuur krijgt. De cijfers achteraan
+                                        tellen daarna vanzelf op.
+                                    </span>
+                                </div>
+                                <div>
+                                    <input
+                                        id="invoice_number_next"
+                                        type="text"
+                                        value={numbering.invoice_number_next}
+                                        onChange={(e) =>
+                                            setNumbering({ ...numbering, invoice_number_next: e.target.value })
+                                        }
+                                        placeholder="Vul het volgende factuurnummer in"
+                                    />
+                                </div>
+                            </div>
+                            <h3>
+                                Opmaak
+                                <button
+                                    type="button"
+                                    className="help"
+                                    title="Uitleg over sjablonen"
+                                    aria-label="Uitleg over sjablonen"
+                                    onClick={() => setShowTemplateHelp(true)}
+                                >
+                                    <CircleQuestionMark size={16} />
+                                </button>
+                            </h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Papierformaat</span>
+                                    <span className="description">
+                                        Staand of liggend A4. Geldt voor offertes en facturen allebei.
+                                    </span>
+                                </div>
+                                <div>
+                                    <Select
+                                        value={PAPER_OPTIONS.find(o => o.value === paperOrientation) || null}
+                                        onChange={(option) =>
+                                            setPaperOrientation(option?.value === 'landscape' ? 'landscape' : 'portrait')
+                                        }
+                                        options={PAPER_OPTIONS}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <label className="title" htmlFor="invoice_template_html">Factuursjabloon</label>
+                                    <span className="description">
+                                        {templates.invoice_template_html === DEFAULT_TEMPLATES.invoice_template_html
+                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
+                                            : 'De HTML van je eigen factuurontwerp.'}
+                                    </span>
+                                </div>
+                                <div className="form-section">
+                                    <textarea
+                                        id="invoice_template_html"
+                                        value={templates.invoice_template_html}
+                                        onChange={(e) =>
+                                            setTemplates({ ...templates, invoice_template_html: e.target.value })
+                                        }
+                                        placeholder="Vul de HTML van je factuursjabloon in"
+                                        rows={20}
+                                    />
+                                    {templates.invoice_template_html !== DEFAULT_TEMPLATES.invoice_template_html && (
+                                        <div className="form-row">
+                                            <button
+                                                type="button"
+                                                className="button cancel"
+                                                onClick={() =>
+                                                    setTemplates({ ...templates, invoice_template_html: DEFAULT_TEMPLATES.invoice_template_html })
+                                                }
+                                            >
+                                                Standaard herstellen
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <h3>Factuurmail</h3>
+                            <p className="field-note">
+                                Gaat vanuit de Gmail of Outlook die je bij Plug-ins hebt gekoppeld.
+                            </p>
 
                             <div className="row-section">
                                 <div className="information">

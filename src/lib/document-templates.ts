@@ -1,8 +1,8 @@
 /**
  * Het standaardsjabloon voor offertes en facturen, in de huisstijl van Khance:
- * zwart-wit, Inter, dunne grijze lijnen, A4. Staand of liggend kiest het bedrijf
- * bij Instellingen > Sjabloon; het papier krijgt dan de class "landscape" en
- * dit sjabloon past zich daaraan aan, op het scherm, op papier en in de PDF. Wie bij Instellingen >
+ * zwart-wit, Inter, dunne grijze lijnen. Het formaat (staand of liggend A4)
+ * zit niet in het sjabloon maar komt uit de instelling bij Offertes en
+ * Facturen; zie .document-paper in globals.css. Wie bij Instellingen >
  * Sjabloon niets eigens invult, krijgt dit.
  *
  * Het werkt zoals elk eigen sjabloon (zie de uitleg bij Instellingen): één
@@ -18,15 +18,9 @@
 
 const styles = (invoice: boolean) => `
 <style>
-/* Elk vel is één pagina, op het formaat dat het bedrijf heeft gekozen */
-@page document-portrait {size: A4 portrait; margin: 0;}
-@page document-landscape {size: A4 landscape; margin: 0;}
-
+/* Het formaat (staand of liggend A4) komt uit de instelling; hier alleen de
+   marges, iets kleiner boven en onder als het vel liggend staat */
 .document-page {
-  --sheet-width: 210mm;
-  --sheet-height: 297mm;
-  page: document-portrait;
-  break-after: page;
   position: relative;
   padding: 16mm 18mm ${invoice ? '70mm' : '30mm'};
   background: #fff;
@@ -35,13 +29,7 @@ const styles = (invoice: boolean) => `
   font-size: 9.5pt;
   line-height: 1.6;
 }
-.landscape .document-page {
-  --sheet-width: 297mm;
-  --sheet-height: 210mm;
-  page: document-landscape;
-  padding: 12mm 18mm ${invoice ? '60mm' : '26mm'};
-}
-.document-page:last-of-type {break-after: auto;}
+.landscape .document-page {padding: 12mm 18mm ${invoice ? '60mm' : '26mm'};}
 
 /* Kop: logo links, bedrijf rechts */
 .document-page .document-header {display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; padding: 0 0 7mm 0; margin: 0 0 8mm 0; border-bottom: 1px solid #efefef;}
