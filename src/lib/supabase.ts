@@ -203,6 +203,18 @@ export interface Quote {
   updated_at: string;
 }
 
+/** Een vaste post om in een prijstabel te kiezen, zoals "Uurloon" of "m² tegelwerk" */
+export interface Product {
+  id: number;
+  tenant_id: string;
+  name: string;
+  unit: string | null;
+  /** Prijs per eenheid, exclusief btw */
+  price: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Note {
   id: number;
   tenant_id: string;

@@ -14,10 +14,16 @@ aannemers komen elkaar nooit tegen.
   eigen tekst uit Instellingen > E-mail en een knop naar een pagina waar hij de
   offerte kan bekijken en met vinger of muis kan **ondertekenen**
 - **Notities** per klant
-- **Omzetgrafiek** op het dashboard, gevoed door betaalde facturen
-
-Er is bewust geen artikelen- of productenbestand: een aannemer schrijft zijn
-regels vrij uit.
+- **Producten**: vast werk en materiaal met prijs en eenheid, zoals uurloon of
+  m² tegelwerk. In de prijstabel kies je er een met "Product toevoegen"; de
+  regel krijgt een kopie, dus een prijswijziging verandert geen oude offertes.
+  Vrij uitgeschreven regels blijven gewoon kunnen
+- **Factuur versturen en betalen**: de klant krijgt een mail met de
+  betaalgegevens en een QR-code (EPC/GiroCode) voor zijn bank-app, en een knop
+  naar een pagina waar hij de factuur bekijkt. Met de optionele Mollie-plug-in
+  betaalt hij daar direct met iDEAL en staat de factuur vanzelf op betaald
+- **Omzetgrafiek** op het dashboard, gevoed door betaalde facturen op hun
+  betaaldatum
 
 ## Techniek
 

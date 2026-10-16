@@ -206,7 +206,8 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 
 .content .block {background: var(--color2); padding: var(--space20); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
 
-.content .block .table-container .data-table td.amount {text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;}
+/* Bedragen in een tabel rechts uitgelijnd, met cijfers recht onder elkaar */
+.table-container .data-table td.amount {text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;}
 .content .block .table-container .data-table:has(td.amount) th:last-child {text-align: right;}
 
 .grid.four {grid-template-columns: repeat(4, minmax(0, 1fr));}

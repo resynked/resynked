@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase';
-import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note } from './supabase';
+import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note, Product } from './supabase';
 import { calculateDocumentTotal, lineTotal } from './utils';
 import { copyBlocks } from './blocks';
 import { isCountable, nextNumber } from './numbering';
@@ -845,4 +845,53 @@ export async function deleteNote(id: string | number, tenantId: string) {
 
   if (error) throw error;
   return { success: true };
+}
+
+// ============================================================
+// Producten: vaste posten met prijs en eenheid, om in een prijstabel te kiezen
+// ============================================================
+
+export type ProductInput = Pick<Product, 'name' | 'unit' | 'price'>;
+
+/** Een product zoals hij binnenkomt: een naam is verplicht, de prijs een getal */
+export function validateProduct(body: any): ProductInput | string {
+  const name = String(body?.name || '').trim();
+  if (!name) return 'Geef het product een naam';
+  const price = Number(body?.price);
+  if (!Number.isFinite(price) || price < 0) return 'Vul een geldige prijs in';
+  const unit = String(body?.unit || '').trim() || null;
+  return { name: name.slice(0, 200), unit, price: Math.round(price * 100) / 100 };
+}
+
+export async function getProducts(tenantId: string) {
+  const { data, error } = await supabase.from('products').select('*').eq('tenant_id', tenantId).order('name');
+  if (error) throw error;
+  return data as Product[];
+}
+
+export async function createProduct(tenantId: string, product: ProductInput) {
+  const { data, error } = await supabase
+    .from('products')
+    .insert({ ...product, tenant_id: tenantId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Product;
+}
+
+export async function updateProduct(id: string | number, tenantId: string, product: ProductInput) {
+  const { data, error } = await supabase
+    .from('products')
+    .update(product)
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Product;
+}
+
+export async function deleteProduct(id: string | number, tenantId: string) {
+  const { error } = await supabase.from('products').delete().eq('id', id).eq('tenant_id', tenantId);
+  if (error) throw error;
 }
