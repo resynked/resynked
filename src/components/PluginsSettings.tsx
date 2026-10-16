@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/Modal';
 import PluginDetail, { PLUGINS, WHATSAPP_PLUGIN, type PluginProvider } from '@/components/PluginDetail';
 import AiPluginsSection from '@/components/AiPluginsSection';
+import MolliePluginSection from '@/components/MolliePluginSection';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -291,6 +292,8 @@ export default function PluginsSettings() {
         </div>
 
         <AiPluginsSection />
+
+        <MolliePluginSection />
       </div>
 
       <Modal isOpen={!!dialogPlugin} onClose={() => setDialogFor(null)} title="">
