@@ -1247,10 +1247,15 @@ export default function Settings() {
                     {showTemplateHelp && (
                         <SidePanel title="Uitleg sjablonen" onClose={() => setShowTemplateHelp(false)}>
                             <p>
-                                Plak bij Offertesjabloon en Factuursjabloon de HTML van je eigen ontwerp.
-                                Alles wat vast is — de zijbalk, kleuren, logo, paginanummers — schrijf je
-                                zelf. De plekken die met het document meegroeien laat je leeg; die vult het
-                                systeem.
+                                Plak bij het sjabloon de HTML van je eigen ontwerp. Alles wat vast is — de
+                                zijbalk, kleuren, logo, paginanummers — schrijf je zelf. De plekken die met
+                                het document meegroeien laat je leeg; die vult het systeem.
+                            </p>
+                            <p>
+                                Het vel zelf regelt Khance: het formaat (staand of liggend A4, bij Opmaak),
+                                de rand en de ruimte tussen de pagina&apos;s op het scherm, en het afdrukken en
+                                de PDF. Zet daar in je sjabloon dus geen @page, rand of paginahoogte voor;
+                                je sjabloon doet alleen de opmaak binnen het vel.
                             </p>
 
                             <h3>Plekken die het systeem vult</h3>

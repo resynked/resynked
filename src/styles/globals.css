@@ -289,8 +289,12 @@ button[data-label]:hover::after {display: block;}
 
    Het formaat volgt de instelling bij Offertes en Facturen: staand A4, of
    liggend met de class "landscape" op het papier. Op het scherm, op de
-   printer en in de PDF. Een eigen sjabloon dat per se een ander formaat wil,
-   zet zelf --sheet-width en --sheet-height op zijn pagina. */
+   printer en in de PDF.
+
+   De houder van elk vel staat hier, voor elk sjabloon hetzelfde: formaat,
+   rand, tussenruimte en de afdrukregels. Een sjabloon doet alleen de opmaak
+   binnen het vel. De rand is een schaduwlijn en geen border, want een border
+   telt mee in de maat en duwt bij het afdrukken een leeg vel naar buiten. */
 .document-window {overflow: hidden; contain: inline-size;}
 .document-paper {transform-origin: top left; --sheet-width: 210mm; --sheet-height: 297mm;}
 .document-paper.landscape {--sheet-width: 297mm; --sheet-height: 210mm;}
@@ -302,9 +306,14 @@ button[data-label]:hover::after {display: block;}
   max-height: var(--sheet-height);
   overflow: hidden;
   box-sizing: border-box;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: var(--border-radius1);
+  box-shadow: 0 0 0 1px var(--border-color);
   page: document-portrait;
   break-after: page;
 }
+.document-paper [data-blok-titel] ~ [data-blok-titel] {margin-top: var(--space30);}
 .document-paper.landscape [data-blok-titel][data-blok-titel] {page: document-landscape;}
 .document-paper [data-blok-titel]:last-of-type {break-after: auto;}
 @page document-portrait {size: A4 portrait; margin: 0;}
@@ -330,6 +339,8 @@ button[data-label]:hover::after {display: block;}
   /* Bij het afdrukken staat het papier al op ware grootte */
   .document-window {overflow: visible; height: auto !important; contain: none;}
   .document-paper {transform: none !important; width: auto !important;}
+  /* Op papier staan de vellen tegen elkaar aan, zonder rand */
+  .document-paper [data-blok-titel][data-blok-titel] {margin: 0; border-radius: 0; box-shadow: none;}
 }
 
 /* Strook tussen twee blokken: de knoppen verschijnen pas bij hover */
