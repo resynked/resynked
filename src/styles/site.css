@@ -32,8 +32,7 @@
 .site .site-trades span {color: var(--font-color2); font-size: var(--fontsize1);}
 .site .site-trades strong {font-size: 17px; font-weight: 600; letter-spacing: -.02em; color: #b5b5b5;}
 
-.site .site-section {padding: 120px 0 0 0;}
-.site .site-section:last-of-type {padding-bottom: 120px;}
+.site .site-section {padding: var(--space100)}
 .site .site-section-head {max-width: 720px; margin: 0 0 var(--space50) 0;}
 .site .site-eyebrow {display: block; margin: 0 0 var(--space10) 0; color: var(--color5); font-size: var(--fontsize1); font-weight: 500;}
 .site h2:not(.mock-window h2) {font-size: clamp(30px, 4vw, 44px); font-weight: 600; line-height: 1.1; letter-spacing: -.035em;}
@@ -139,7 +138,6 @@
 @media (max-width: 640px) {
   .site .site-hero {padding-top: var(--space50);}
   .site .site-lead {font-size: 17px;}
-  .site .site-section {padding-top: 80px;}
   .site .site-grid, .site .site-price ul {grid-template-columns: minmax(0, 1fr);}
   .site .site-actions .button.tertiary {display: none;}
   .site .mock-window-body, .site .site-feature-visual .mock-window-body {zoom: .45;}
