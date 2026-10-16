@@ -6,7 +6,7 @@
 .site .site-container {width: 100%; max-width: var(--max-width-small); margin: 0 auto; padding: 0 var(--space20); box-sizing: border-box;}
 .site .site-narrow {max-width: 760px;}
 .site .button:not(.mock-window .button) {display: inline-flex; align-items: center; justify-content: center; padding: 12px var(--space20); font-size: var(--fontsize1);}
-.site .button:not(.mock-window .button):hover {opacity: .85;}
+.site .button:not(.mock-window .button):hover {opacity: .85; color: var(--color2);}
 .site a:not(.mock-window a):hover {color: var(--font-color1);}
 
 .site .site-header {position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, .85); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid var(--border-color);}
