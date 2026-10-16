@@ -8,7 +8,6 @@ import {
   Heading,
   IdCard,
   ListPlus,
-  Package,
   Percent,
   Pilcrow,
   Plus,
@@ -17,7 +16,6 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import Link from 'next/link';
 import Modal from '@/components/Modal';
 import ToolButton from '@/components/ToolButton';
 import Select from '@/components/Select';
@@ -25,8 +23,7 @@ import FormattingToolbar from '@/components/FormattingToolbar';
 import { fieldKeys, type EditTarget } from '@/components/InlineEditing';
 import { duplicateElement, emptyElement, emptyHeading, emptyItem } from '@/lib/blocks';
 import { verplaats } from '@/lib/sorteren';
-import type { DocumentBlock, DocumentElement, ElementKind, LineItem, Product } from '@/lib/supabase';
-import { formatCurrency } from '@/lib/utils';
+import type { DocumentBlock, DocumentElement, ElementKind, LineItem } from '@/lib/supabase';
 
 interface IslandBarProps {
   block: DocumentBlock;
@@ -88,19 +85,7 @@ export default function IslandBar({
 }: IslandBarProps) {
   // De knoppen om een element toe te voegen nemen even de plek van de rest in
   const [adding, setAdding] = useState(false);
-  const [dialog, setDialog] = useState<'gegevens' | 'prijstabel' | 'product' | null>(null);
-  // De producten voor "Product toevoegen"; pas opgehaald als je erom vraagt
-  const [products, setProducts] = useState<Product[] | null>(null);
-
-  const openProducts = () => {
-    setDialog('product');
-    if (products === null) {
-      fetch('/api/products')
-        .then(res => (res.ok ? res.json() : []))
-        .then(setProducts)
-        .catch(() => setProducts([]));
-    }
-  };
+  const [dialog, setDialog] = useState<'gegevens' | 'prijstabel' | null>(null);
 
   const elementIndex = selected.element;
   const element = elementIndex !== undefined ? block.elements[elementIndex] : undefined;
@@ -199,9 +184,6 @@ export default function IslandBar({
           <ToolButton title="Regel toevoegen" onClick={() => addItem(emptyItem())}>
             <ListPlus size={15} />
           </ToolButton>
-          <ToolButton title="Product toevoegen" onClick={openProducts}>
-            <Package size={15} />
-          </ToolButton>
           <ToolButton title="Tussenkop toevoegen" onClick={() => addItem(emptyHeading())}>
             <Heading size={15} />
           </ToolButton>
@@ -280,37 +262,6 @@ export default function IslandBar({
 
       <Modal isOpen={dialog === 'gegevens'} onClose={() => setDialog(null)} title="Klant en gegevens">
         {dataFields}
-      </Modal>
-
-      <Modal isOpen={dialog === 'product'} onClose={() => setDialog(null)} title="Product toevoegen">
-        {products === null ? (
-          <p className="placeholder">Laden...</p>
-        ) : products.length === 0 ? (
-          <p className="placeholder">
-            Je hebt nog geen producten. Zet ze neer bij <Link href="/products">Producten</Link> in het menu.
-          </p>
-        ) : (
-          <div className="form-section">
-            <div className="form-group">
-              <label>Product</label>
-              {/* Een kopie in de regel: een latere prijswijziging verandert dit document niet */}
-              <Select
-                value={null}
-                onChange={(option) => {
-                  const product = products.find(p => String(p.id) === option?.value);
-                  if (!product) return;
-                  setDialog(null);
-                  addItem({ ...emptyItem(), description: product.name, unit: product.unit, price: Number(product.price) });
-                }}
-                options={products.map(p => ({
-                  value: String(p.id),
-                  label: `${p.name} · ${formatCurrency(Number(p.price))}${p.unit ? ` per ${p.unit}` : ''}`,
-                }))}
-                placeholder="Selecteer een product"
-              />
-            </div>
-          </div>
-        )}
       </Modal>
 
       <Modal isOpen={dialog === 'prijstabel'} onClose={() => setDialog(null)} title="BTW en korting">

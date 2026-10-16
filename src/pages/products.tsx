@@ -10,6 +10,7 @@ import { SkeletonTable } from '@/components/Skeleton';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
 import { usePagination } from '@/hooks/usePagination';
+import { invalidateProducts } from '@/hooks/useProducts';
 import { UNITS } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/lib/supabase';
@@ -19,10 +20,10 @@ const unitOptions = UNITS.map(unit => ({ value: unit, label: unit }));
 const EMPTY_FORM = { name: '', unit: '', price: '' };
 
 /**
- * Producten: werk en materiaal dat je vaak gebruikt, met prijs en eenheid. In
- * de prijstabel van een offerte of factuur kies je er een met "Product
- * toevoegen"; de regel krijgt een kopie, dus een latere prijswijziging
- * verandert geen oude offertes.
+ * Producten: werk en materiaal dat je vaak gebruikt, met prijs en eenheid.
+ * Typ je in de prijstabel een omschrijving, dan komen ze als suggestie; de
+ * regel krijgt een kopie, dus een latere prijswijziging verandert geen oude
+ * offertes.
  */
 export default function Products() {
   const toast = useToast();
@@ -100,6 +101,7 @@ export default function Products() {
         )
       );
       setFormOpen(false);
+      invalidateProducts();
       toast.success('Gelukt', editing ? 'Het product is bijgewerkt' : 'Het product is toegevoegd');
     } catch {
       toast.error('Fout', 'Opslaan mislukt');
@@ -124,6 +126,7 @@ export default function Products() {
       return;
     }
     setProducts(current => current.filter(p => p.id !== product.id));
+    invalidateProducts();
     toast.success('Verwijderd', `${product.name} is verwijderd`);
   };
 
@@ -148,7 +151,7 @@ export default function Products() {
           <p>
             {searchTerm
               ? 'Probeer een andere zoekterm.'
-              : 'Zet hier je vaste werk en materiaal neer, zoals uurloon of m² tegelwerk. In een offerte of factuur kies je ze dan met één klik.'}
+              : 'Zet hier je vaste werk en materiaal neer, zoals uurloon of m² tegelwerk. Typ je in een offerte of factuur een omschrijving, dan verschijnen ze als suggestie.'}
           </p>
         </div>
       ) : (

@@ -2,6 +2,8 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GripVertical } from 'lucide-react';
 import TemplatedDocument from '@/components/TemplatedDocument';
 import PaymentDetails from '@/components/PaymentDetails';
+import ProductSuggestions, { matchProducts } from '@/components/ProductSuggestions';
+import { useProducts } from '@/hooks/useProducts';
 import { documentTemplate } from '@/lib/document-templates';
 import { Skeleton } from '@/components/Skeleton';
 import {
@@ -15,7 +17,7 @@ import {
   type CaretPosition,
   type EditTarget,
 } from '@/components/InlineEditing';
-import type { Customer, DocumentBlock, DocumentElement, LineItem, Tenant } from '@/lib/supabase';
+import type { Customer, DocumentBlock, DocumentElement, LineItem, Product, Tenant } from '@/lib/supabase';
 import { isRichTextEmpty, toDisplayHtml } from '@/lib/richtext';
 import {
   eersteIndeling,
@@ -246,6 +248,38 @@ function PriceTable({
   const changeItem = (index: number, changes: Partial<LineItem>) =>
     edit?.onChange(element.items.map((item, i) => (i === index ? { ...item, ...changes } : item)));
 
+  // Productsuggesties terwijl je een omschrijving typt; alleen bij het bewerken
+  const products = useProducts(!!edit);
+  const [suggest, setSuggest] = useState<{ index: number; anchor: HTMLElement } | null>(null);
+  const [activeSuggestion, setActiveSuggestion] = useState(0);
+  const suggestions = suggest ? matchProducts(products, element.items[suggest.index]?.description || '') : [];
+
+  const typeDescription = (index: number, field: string, description: string) => {
+    changeItem(index, { description });
+    const anchor = document.querySelector<HTMLElement>(`[data-bewerk="${CSS.escape(field)}"]`);
+    setSuggest(anchor ? { index, anchor } : null);
+    setActiveSuggestion(0);
+  };
+
+  // Een product kiezen: de regel krijgt naam, eenheid en prijs als kopie
+  const pickProduct = (index: number, product: Product) => {
+    changeItem(index, { description: product.name, unit: product.unit, price: Number(product.price) });
+    setSuggest(null);
+  };
+
+  const suggestionKeys = (index: number) => (event: React.KeyboardEvent<HTMLElement>) => {
+    if (!suggest || suggest.index !== index || suggestions.length === 0) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      setActiveSuggestion((current) => (current + step + suggestions.length) % suggestions.length);
+    } else if (event.key === 'Enter') {
+      pickProduct(index, suggestions[activeSuggestion] || suggestions[0]);
+    } else if (event.key === 'Escape') {
+      setSuggest(null);
+    }
+  };
+
   // De regel waar je in klikt wordt de gekozen regel, voor de knoppen erboven
   const selectItem = (index: number) => (event: React.FocusEvent) => {
     if (!edit) return;
@@ -267,6 +301,14 @@ function PriceTable({
 
   return (
     <>
+      {suggest && (
+        <ProductSuggestions
+          anchor={suggest.anchor}
+          products={suggestions}
+          active={activeSuggestion}
+          onPick={(product) => pickProduct(suggest.index, product)}
+        />
+      )}
       {regels.length > 0 && (
         <div className="table-container">
           <table className="product-table">
@@ -300,7 +342,11 @@ function PriceTable({
                         as="td"
                         field={fieldKeys.description(edit.block, edit.element, index)}
                         value={item.description}
-                        onChange={(description) => changeItem(index, { description })}
+                        onChange={(description) =>
+                          typeDescription(index, fieldKeys.description(edit.block, edit.element, index), description)
+                        }
+                        onKeyDown={suggestionKeys(index)}
+                        onBlur={() => setSuggest(null)}
                       />
                       {showQuantity && <td>{item.quantity}</td>}
                       {showQuantity && <td>{item.unit || ''}</td>}
