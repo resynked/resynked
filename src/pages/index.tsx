@@ -1,224 +1,258 @@
-import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Layout from '@/components/Layout';
-import Table from '@/components/Table';
-import OmzetChart from '@/components/OmzetChart';
-import { Skeleton } from '@/components/Skeleton';
-import { QUOTE_STATUS } from '@/lib/constants';
-import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
-import type { Customer } from '@/lib/supabase';
+import {
+  ArrowRight,
+  BellRing,
+  Check,
+  FileSignature,
+  Inbox,
+  MessageCircle,
+  Package,
+  QrCode,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import SiteLayout from '@/components/site/SiteLayout';
+import { DashboardMock, InboxMock, PaymentMock, QuoteMock, WhatsAppMock } from '@/components/site/ProductMocks';
 
-interface Document {
-  id: string;
-  customer: Pick<Customer, 'name' | 'first_name' | 'middle_name' | 'last_name' | 'company_name'> | null;
-  total: number;
-  status: string;
-}
+/** Wat er in het abonnement zit; alleen wat Khance echt kan */
+const INCLUDED = [
+  'Onbeperkt offertes en facturen',
+  'Online laten tekenen en betalen met QR-code',
+  'Inbox en agenda van Gmail of Outlook',
+  'AI: van mail naar offerte',
+  'Offertes via WhatsApp',
+  'Eigen sjabloon en huisstijl',
+  'Herinneringen en "geopend door de klant"',
+  'Tweestapsverificatie',
+];
 
-interface Quote extends Document {
-  quote_number: string;
-  valid_until: string;
-}
+const FEATURES = [
+  {
+    icon: FileSignature,
+    title: 'Offerte laten tekenen',
+    text: 'Je klant opent de offerte via een link en tekent met zijn vinger of muis. Je ziet wanneer hij hem opent.',
+  },
+  {
+    icon: QrCode,
+    title: 'Sneller betaald',
+    text: 'Elke factuur heeft een QR-code voor de bank-app. Met Mollie betaalt je klant direct met iDEAL.',
+  },
+  {
+    icon: Inbox,
+    title: 'Je mail en agenda erbij',
+    text: 'Gmail of Outlook in Khance: lees, beantwoord en plan zonder te wisselen tussen programma’s.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Van mail naar offerte',
+    text: 'Een aanvraag in je inbox wordt met één klik een conceptofferte, met prijzen uit je eerdere werk.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Offerte via WhatsApp',
+    text: 'Stuur vanaf de bouwplaats een bericht met wat je ziet; de offerte staat klaar als je thuis bent.',
+  },
+  {
+    icon: Package,
+    title: 'Je vaste prijzen',
+    text: 'Uurloon, m² tegelwerk, voorrijkosten: zet ze één keer neer en kies ze terwijl je typt.',
+  },
+  {
+    icon: BellRing,
+    title: 'Vanzelf opvolgen',
+    text: 'Nog niet getekend? Khance stuurt na een paar dagen een vriendelijke herinnering namens jou.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Veilig',
+    text: 'Je gegevens staan versleuteld, met tweestapsverificatie en een slot op te veel inlogpogingen.',
+  },
+];
 
-interface Invoice extends Document {
-  invoice_number: string | null;
-  due_date: string | null;
-}
+const FAQ = [
+  {
+    q: 'Voor wie is Khance?',
+    a: 'Voor aannemers en vakmensen: schilders, tegelzetters, installateurs, timmerlieden en klusbedrijven die snel een nette offerte willen maken en sneller betaald willen worden.',
+  },
+  {
+    q: 'Kan ik mijn eigen huisstijl gebruiken?',
+    a: 'Ja. Je zet je logo en bedrijfsgegevens erin, kiest staand of liggend A4, en wie wil, krijgt een volledig eigen sjabloon voor offertes en facturen.',
+  },
+  {
+    q: 'Gaan mails vanuit mijn eigen adres?',
+    a: 'Ja. Je koppelt je eigen Gmail of Outlook; offertes en facturen gaan vanaf je eigen adres en staan ook in je Verzonden. Antwoorden komen gewoon in je eigen inbox.',
+  },
+  {
+    q: 'Hoe betaalt mijn klant?',
+    a: 'Met de QR-code op de factuur, met zijn eigen bank-app, of met iDEAL als je Mollie koppelt. Het geld gaat altijd rechtstreeks naar jouw rekening.',
+  },
+  {
+    q: 'Moet ik zelf iets installeren?',
+    a: 'Nee. Khance werkt in de browser op je computer, tablet en telefoon. Vraag een demo aan, dan laten we je alles zien en zetten we je account klaar.',
+  },
+];
 
-/** Zoveel regels per tabel; de rest staat bij Offertes en Facturen */
-const TABLE_ROWS = 5;
-
-const sum = (documents: Document[]) => documents.reduce((total, document) => total + (document.total || 0), 0);
-
-/** Een verzonden factuur waarvan de vervaldatum voorbij is */
-const isOverdue = (invoice: Invoice) => {
-  if (invoice.status !== 'sent' || !invoice.due_date) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return new Date(invoice.due_date) < today;
-};
-
-/** Eerst wat het snelst verloopt; zonder datum achteraan */
-const byDate = (date: (document: any) => string | null) => (a: Document, b: Document) =>
-  (date(a) || '9999').localeCompare(date(b) || '9999');
-
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
-
-export default function Dashboard() {
-  const { status } = useSession();
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchDocuments();
-    }
-  }, [status]);
-
-  const fetchDocuments = async () => {
-    try {
-      const [quotesRes, invoicesRes] = await Promise.all([
-        fetch('/api/quotes'),
-        fetch('/api/invoices'),
-      ]);
-
-      const quotesData = await quotesRes.json();
-      const invoicesData = await invoicesRes.json();
-
-      setQuotes(Array.isArray(quotesData) ? quotesData : []);
-      setInvoices(Array.isArray(invoicesData) ? invoicesData : []);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const customerName = (document: Document) =>
-    document.customer ? getCustomerDisplayName(document.customer) : '';
-
-  const openQuotes = quotes
-    .filter((quote) => quote.status === 'draft' || quote.status === 'sent')
-    .sort(byDate((quote: Quote) => quote.valid_until));
-  const openInvoices = invoices
-    .filter((invoice) => invoice.status === 'draft' || invoice.status === 'sent')
-    .sort(byDate((invoice: Invoice) => invoice.due_date));
-  const sentInvoices = invoices.filter((invoice) => invoice.status === 'sent');
-  const overdueInvoices = sentInvoices.filter(isOverdue);
-
-  // Van de offertes waar een besluit over is: hoeveel zijn er goedgekeurd
-  const approved = quotes.filter((quote) => quote.status === 'approved').length;
-  const decided = quotes.filter((quote) => ['approved', 'rejected', 'expired'].includes(quote.status)).length;
-
-  const stats = [
-    {
-      label: 'Te ontvangen',
-      value: formatCurrency(sum(sentInvoices)),
-      note: plural(sentInvoices.length, 'factuur wacht op betaling', 'facturen wachten op betaling'),
-    },
-    {
-      label: 'Verlopen',
-      value: formatCurrency(sum(overdueInvoices)),
-      note: overdueInvoices.length
-        ? plural(overdueInvoices.length, 'factuur over de vervaldatum', 'facturen over de vervaldatum')
-        : 'Alles op tijd betaald',
-      className: overdueInvoices.length ? 'negative' : '',
-    },
-    {
-      label: 'Openstaande offertes',
-      value: formatCurrency(sum(openQuotes)),
-      note: plural(openQuotes.length, 'offerte staat open', 'offertes staan open'),
-    },
-    {
-      label: 'Goedgekeurd',
-      value: decided ? `${Math.round((approved / decided) * 100)}%` : '–',
-      note: decided ? `${approved} van ${plural(decided, 'offerte', 'offertes')}` : 'Nog geen offertes beoordeeld',
-    },
-  ];
-
+/**
+ * De homepage van khance.com: wat Khance is, wat het kan, wat het kost, en
+ * een demo aanvragen. Ingelogd? Dan staat er in de kop "Naar dashboard".
+ */
+export default function Home() {
   return (
-    <Layout title="Dashboard">
-      <div className="header">
-        <h1>Dashboard</h1>
-        <div className="actions">
-          <Link href="/invoices/new" className="button tertiary">
-            Factuur maken
+    <SiteLayout description="Khance is het offerte- en factuursysteem voor vakmensen. Offertes laten tekenen, facturen met QR-code, je mail en agenda erbij, en AI die aanvragen omzet naar offertes. € 35 per maand.">
+      <section className="site-hero">
+        <div className="site-container">
+          <Link href="/#functies" className="site-pill">
+            <Sparkles size={13} /> Nieuw: van mail naar offerte met AI <ArrowRight size={13} />
           </Link>
-          <Link href="/quotes/new" className="button">
-            Offerte maken
+          <h1>Offertes en facturen voor vakmensen. In minuten klaar.</h1>
+          <p className="site-lead">
+            Maak een offerte, laat hem online tekenen en krijg sneller betaald. Met je mail, agenda en klanten op
+            één plek.
+          </p>
+          <div className="site-cta">
+            <Link href="/demo" className="button">
+              Demo aanvragen
+            </Link>
+            <Link href="/#functies" className="button tertiary">
+              Bekijk de functies
+            </Link>
+          </div>
+          <div className="site-hero-visual">
+            <DashboardMock />
+          </div>
+        </div>
+      </section>
+
+      <section className="site-trades">
+        <div className="site-container">
+          <span>Gemaakt voor</span>
+          {['Aannemers', 'Schilders', 'Tegelzetters', 'Installateurs', 'Timmerlieden', 'Klusbedrijven'].map((trade) => (
+            <strong key={trade}>{trade}</strong>
+          ))}
+        </div>
+      </section>
+
+      <section id="functies" className="site-section">
+        <div className="site-container">
+          <div className="site-section-head">
+            <span className="site-eyebrow">Functies</span>
+            <h2>Alles wat je nodig hebt, niets wat in de weg zit.</h2>
+          </div>
+          <div className="site-grid">
+            {FEATURES.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="site-grid-cell">
+                <Icon size={20} />
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="werkwijze" className="site-section">
+        <div className="site-container">
+          <div className="site-section-head">
+            <span className="site-eyebrow">Werkwijze</span>
+            <h2>Van aanvraag tot betaald, in drie stappen.</h2>
+          </div>
+
+          <div className="site-feature">
+            <div className="site-feature-text">
+              <span className="site-step">01</span>
+              <h3>Maak de offerte</h3>
+              <p>
+                Vanuit een mail met één klik, via WhatsApp vanaf de bouwplaats, of zelf met je vaste producten. Je ziet
+                meteen hoe hij op papier komt, in je eigen huisstijl.
+              </p>
+            </div>
+            <InboxMock />
+          </div>
+
+          <div className="site-feature reverse">
+            <div className="site-feature-text">
+              <span className="site-step">02</span>
+              <h3>Laat hem online tekenen</h3>
+              <p>
+                Je klant krijgt een nette mail met een knop. Hij bekijkt de offerte en tekent hem direct; jij ziet wanneer
+                hij hem opende, en Khance stuurt zelf een herinnering als het even duurt.
+              </p>
+            </div>
+            <div className="site-feature-visual">
+              <QuoteMock />
+              <WhatsAppMock />
+            </div>
+          </div>
+
+          <div className="site-feature">
+            <div className="site-feature-text">
+              <span className="site-step">03</span>
+              <h3>Krijg betaald</h3>
+              <p>
+                Zet de offerte om naar een factuur en verstuur hem. Je klant scant de QR-code met zijn bank-app of betaalt
+                met iDEAL, en het geld staat op je eigen rekening.
+              </p>
+            </div>
+            <PaymentMock />
+          </div>
+        </div>
+      </section>
+
+      <section id="prijzen" className="site-section">
+        <div className="site-container">
+          <div className="site-section-head">
+            <span className="site-eyebrow">Prijzen</span>
+            <h2>Eén abonnement. Alles erin.</h2>
+          </div>
+          <div className="site-price">
+            <div className="site-price-head">
+              <span className="title">Khance</span>
+              <div className="amount">
+                <strong>€ 35</strong>
+                <span>per maand, excl. btw</span>
+              </div>
+              <Link href="/demo" className="button">
+                Demo aanvragen
+              </Link>
+            </div>
+            <ul>
+              {INCLUDED.map((item) => (
+                <li key={item}>
+                  <Check size={16} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="vragen" className="site-section">
+        <div className="site-container site-narrow">
+          <div className="site-section-head">
+            <span className="site-eyebrow">Vragen</span>
+            <h2>Veelgestelde vragen</h2>
+          </div>
+          <div className="site-faq">
+            {FAQ.map(({ q, a }) => (
+              <details key={q}>
+                <summary>{q}</summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="site-closing">
+        <div className="site-container">
+          <h2>Klaar om tijd te besparen?</h2>
+          <p>We laten je in een halfuur zien hoe Khance werkt, met jouw manier van werken.</p>
+          <Link href="/demo" className="button">
+            Demo aanvragen
           </Link>
         </div>
-      </div>
-
-      <div className="grid four">
-        {stats.map((stat) => (
-          <div key={stat.label} className={`block stat ${stat.className || ''}`}>
-            <span className="label">{stat.label}</span>
-            <div className="value">{isLoading ? <Skeleton height="28px" width="60%" /> : stat.value}</div>
-            <div className="note">{isLoading ? <Skeleton height="12px" width="80%" /> : stat.note}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid">
-        <div className="block">
-          <OmzetChart />
-        </div>
-      </div>
-
-      <div className="grid two">
-        <div className="block">
-          <div className="header">
-            <h2>
-              Openstaande offertes <span className="count">{openQuotes.length}</span>
-            </h2>
-            <Link href="/quotes">Alles bekijken</Link>
-          </div>
-          {isLoading ? (
-            <Skeleton height="150px" />
-          ) : openQuotes.length === 0 ? (
-            <p className="placeholder">Geen openstaande offertes.</p>
-          ) : (
-            <Table headers={['Offerte #', 'Klant', 'Status', 'Geldig tot', 'Totaal']}>
-              {openQuotes.slice(0, TABLE_ROWS).map((quote) => (
-                <tr key={quote.id}>
-                  <td>
-                    <Link href={`/quotes/${quote.id}`}>{quote.quote_number}</Link>
-                  </td>
-                  <td>{customerName(quote)}</td>
-                  <td>
-                    <span className={`status-badge ${QUOTE_STATUS[quote.status]?.className || ''}`}>
-                      {QUOTE_STATUS[quote.status]?.label || quote.status}
-                    </span>
-                  </td>
-                  <td>{formatDate(quote.valid_until)}</td>
-                  <td className="amount">{formatCurrency(quote.total)}</td>
-                </tr>
-              ))}
-            </Table>
-          )}
-        </div>
-
-        <div className="block">
-          <div className="header">
-            <h2>
-              Openstaande facturen <span className="count">{openInvoices.length}</span>
-            </h2>
-            <Link href="/invoices">Alles bekijken</Link>
-          </div>
-          {isLoading ? (
-            <Skeleton height="150px" />
-          ) : openInvoices.length === 0 ? (
-            <p className="placeholder">Geen openstaande facturen.</p>
-          ) : (
-            <Table headers={['Factuur #', 'Klant', 'Status', 'Vervaldatum', 'Totaal']}>
-              {openInvoices.slice(0, TABLE_ROWS).map((invoice) => (
-                <tr key={invoice.id}>
-                  <td>
-                    <Link href={`/invoices/${invoice.id}`}>
-                      {invoice.invoice_number || `#${invoice.id}`}
-                    </Link>
-                  </td>
-                  <td>{customerName(invoice)}</td>
-                  <td>
-                    {isOverdue(invoice) ? (
-                      <span className="status-badge status-cancelled">Verlopen</span>
-                    ) : (
-                      <span className={`status-badge status-${invoice.status}`}>
-                        {invoice.status === 'sent' ? 'Verzonden' : 'Concept'}
-                      </span>
-                    )}
-                  </td>
-                  <td>{formatDate(invoice.due_date)}</td>
-                  <td className="amount">{formatCurrency(invoice.total)}</td>
-                </tr>
-              ))}
-            </Table>
-          )}
-        </div>
-      </div>
-    </Layout>
+      </section>
+    </SiteLayout>
   );
 }

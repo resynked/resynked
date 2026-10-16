@@ -4,8 +4,14 @@ import { getToken } from 'next-auth/jwt';
 /** Pagina's die je zonder account moet kunnen openen. */
 const ZONDER_ACCOUNT = ['/login', '/register', '/forgot-password'];
 
-/** De link uit de herstelmail werkt altijd, ook als je nog ergens ingelogd bent */
-const ALTIJD_OPEN = ['/reset-password'];
+/**
+ * Altijd open, ingelogd of niet: de website (de homepage, een demo aanvragen,
+ * privacy en voorwaarden) en de link uit de herstelmail
+ */
+const ALTIJD_OPEN = ['/', '/demo', '/privacy', '/voorwaarden', '/reset-password'];
+
+/** Waar je na het inloggen terechtkomt */
+const DASHBOARD = '/dashboard';
 
 /**
  * Wie niet ingelogd is gaat al op de server naar de inlogpagina. Anders laadt
@@ -13,21 +19,23 @@ const ALTIJD_OPEN = ['/reset-password'];
  * de browser doorheeft dat er geen sessie is.
  */
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname, search } = req.nextUrl;
 
+  // De website hoeft niet te weten wie je bent; dat scheelt bij elk bezoek
   if (ALTIJD_OPEN.includes(pathname)) return NextResponse.next();
+
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   if (ZONDER_ACCOUNT.includes(pathname)) {
     // Al ingelogd: dan heeft de inlogpagina geen zin meer
-    return token ? NextResponse.redirect(new URL('/', req.url)) : NextResponse.next();
+    return token ? NextResponse.redirect(new URL(DASHBOARD, req.url)) : NextResponse.next();
   }
 
   if (token) return NextResponse.next();
 
   // Na het inloggen terug naar de pagina waar je heen wilde
   const login = new URL('/login', req.url);
-  if (pathname !== '/') login.searchParams.set('callbackUrl', pathname + search);
+  if (pathname !== DASHBOARD) login.searchParams.set('callbackUrl', pathname + search);
   return NextResponse.redirect(login);
 }
 

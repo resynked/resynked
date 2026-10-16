@@ -311,3 +311,32 @@ export function buildInvoiceEmailSubject(
 export function isEmailAddress(value: string): boolean {
   return /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(value.trim());
 }
+
+export interface DemoRequest {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  message: string;
+}
+
+/** Een demo-aanvraag van de website, naar Khance zelf. Met "Beantwoorden" mail je de aanvrager. */
+export function buildDemoRequestEmailHtml(request: DemoRequest): string {
+  const rows = [
+    ['Naam', request.name],
+    ['Bedrijf', request.company],
+    ['E-mail', request.email],
+    ['Telefoon', request.phone],
+  ]
+    .filter(([, value]) => value)
+    .map(([label, value]) => `<tr><td style="padding:0 16px 4px 0;color:#7f7f7f;">${label}</td><td style="padding:0 0 4px 0;">${escapeHtml(value)}</td></tr>`)
+    .join('');
+
+  return emailLayout({
+    top: `<tr><td style="padding:0 0 24px 0;font-size:18px;font-weight:600;">Nieuwe demo-aanvraag</td></tr>`,
+    content: `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px 0;">${rows}</table>
+       ${request.message ? `<p style="margin:0;white-space:pre-line;">${escapeHtml(request.message)}</p>` : ''}`,
+    button: { label: `Mail ${request.name}`, url: `mailto:${request.email}` },
+    footer: 'Verstuurd via het formulier op de website',
+  });
+}

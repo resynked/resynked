@@ -8,7 +8,18 @@
  * EMAIL_FROM, of anders noreply@ op het domein van de app (APP_URL), zoals
  * "Khance <noreply@khance.com>". Dat domein moet bij Resend geverifieerd zijn.
  */
-export async function sendSystemEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+export async function sendSystemEmail({
+  to,
+  subject,
+  html,
+  replyTo,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  /** Waar "Beantwoorden" naartoe gaat, zoals de aanvrager van een demo */
+  replyTo?: string;
+}) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error('Zet RESEND_API_KEY in de omgevingsvariabelen');
   const from = process.env.EMAIL_FROM || defaultFrom();
@@ -16,7 +27,7 @@ export async function sendSystemEmail({ to, subject, html }: { to: string; subje
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: [to], subject, html }),
+    body: JSON.stringify({ from, to: [to], subject, html, ...(replyTo && { reply_to: replyTo }) }),
   });
 
   if (!response.ok) {

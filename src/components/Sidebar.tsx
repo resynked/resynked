@@ -95,7 +95,7 @@ export default function Sidebar() {
         )}
       </div>
       <nav className="navigation">
-        <Link href="/" className={isActive('/') ? 'active' : ''} data-label="Dashboard">
+        <Link href="/dashboard" className={isActive('/dashboard') ? 'active' : ''} data-label="Dashboard">
           <LayoutDashboard size={18} />
           <span className="label">Dashboard</span>
         </Link>

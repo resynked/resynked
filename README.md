@@ -53,6 +53,8 @@ RLS-policies op de tabellen vormen de tweede laag.
    RESEND_API_KEY=...
    # Optioneel; zonder dit wordt het noreply@ op het domein van APP_URL
    EMAIL_FROM="Khance <noreply@khance.com>"
+   # Waar demo-aanvragen van de website naartoe gaan
+   DEMO_REQUEST_EMAIL=info@khance.com
 
    # Dagelijkse taken (vercel.json), zoals herinneringen voor offertes.
    # Vercel stuurt dit mee; zonder deze waarde weigert de taak elke aanroep
