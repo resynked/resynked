@@ -76,6 +76,7 @@ export default function Notes() {
       title: 'Notitie verwijderen',
       message: 'Weet je zeker dat je deze notitie wilt verwijderen?',
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 
@@ -110,6 +111,7 @@ export default function Notes() {
       title: 'Notities verwijderen',
       message: `Weet je zeker dat je ${selectedIds.length} notitie(s) wilt verwijderen?`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 

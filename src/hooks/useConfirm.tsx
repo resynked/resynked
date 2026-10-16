@@ -6,6 +6,8 @@ interface ConfirmOptions {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  /** Rode knop, voor iets wat niet terug te draaien is, zoals verwijderen */
+  negative?: boolean;
 }
 
 interface ConfirmContextType {
@@ -21,6 +23,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     message: string;
     confirmText: string;
     cancelText: string;
+    negative: boolean;
     resolver?: (value: boolean) => void;
   }>({
     isOpen: false,
@@ -28,6 +31,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     message: '',
     confirmText: 'Bevestigen',
     cancelText: 'Annuleren',
+    negative: false,
   });
 
   const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
@@ -38,6 +42,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         message: options.message,
         confirmText: options.confirmText || 'Bevestigen',
         cancelText: options.cancelText || 'Annuleren',
+        negative: !!options.negative,
         resolver: resolve,
       });
     });
@@ -66,7 +71,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           <button className="button cancel" onClick={handleCancel}>
             {confirmState.cancelText}
           </button>
-          <button className="button negative" onClick={handleConfirm}>
+          <button className={`button${confirmState.negative ? ' negative' : ''}`} onClick={handleConfirm}>
             {confirmState.confirmText}
           </button>
         </div>

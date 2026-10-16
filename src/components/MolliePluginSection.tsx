@@ -77,6 +77,7 @@ export default function MolliePluginSection() {
       title: 'Mollie verwijderen',
       message: 'Je API-sleutel wordt verwijderd en de betaalknop verdwijnt van je facturen. De QR-code blijft staan.',
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren',
     });
     if (!confirmed) return;

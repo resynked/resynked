@@ -50,6 +50,7 @@ export default function AiPluginsSection() {
       title: `${NAMES[account.provider]} verwijderen`,
       message: 'Je API-sleutel wordt verwijderd en "Omzetten naar offerte" verdwijnt uit je Inbox.',
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren',
     });
     if (!confirmed) return false;

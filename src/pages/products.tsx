@@ -116,6 +116,7 @@ export default function Products() {
       title: 'Product verwijderen',
       message: `${product.name} verwijderen? Offertes en facturen waarin hij al staat, blijven zoals ze zijn.`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren',
     });
     if (!confirmed) return;

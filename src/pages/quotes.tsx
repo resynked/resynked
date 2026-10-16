@@ -79,6 +79,7 @@ export default function Quotes() {
       title: 'Offerte verwijderen',
       message: 'Weet je zeker dat je deze offerte wilt verwijderen?',
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 
@@ -113,6 +114,7 @@ export default function Quotes() {
       title: 'Offertes verwijderen',
       message: `Weet je zeker dat je ${selectedIds.length} offerte(s) wilt verwijderen?`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 

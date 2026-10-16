@@ -564,7 +564,7 @@ export async function getInvoiceByToken(token: string) {
   const { data, error } = await supabase
     .from('invoices')
     .select(
-      'id, tenant_id, invoice_number, invoice_date, due_date, total, status, currency, paid_at, credit_for_invoice_id, ' +
+      'id, tenant_id, invoice_number, invoice_date, due_date, total, status, currency, paid_at, ' +
         'customer:customers(name, first_name, middle_name, last_name, company_name, street_address, postal_code, city)'
     )
     .eq('public_token', token)
@@ -576,24 +576,40 @@ export async function getInvoiceByToken(token: string) {
   const invoice = data as any;
   const tenant = await getTenant(invoice.tenant_id);
 
-  // Bij een creditfactuur het nummer van de factuur die hij corrigeert
-  const { data: creditFor } = invoice.credit_for_invoice_id
-    ? await supabase
-        .from('invoices')
-        .select('invoice_number')
-        .eq('id', invoice.credit_for_invoice_id)
-        .eq('tenant_id', invoice.tenant_id)
-        .maybeSingle()
-    : { data: null };
+  const creditFor = await findCreditFor(invoice.id, invoice.tenant_id);
 
   return {
     invoice: {
       ...invoice,
       blocks: await fetchBlocks('invoice', invoice.id, invoice.tenant_id),
-      credit_for: creditFor || null,
+      credit_for_invoice_id: creditFor?.id ?? null,
+      credit_for: creditFor,
     },
     tenant,
   };
+}
+
+/**
+ * Bij een creditfactuur: de factuur die hij corrigeert. Los opgevraagd, en een
+ * fout telt als "geen creditfactuur": de pagina die de klant opent en de
+ * QR-code in de mail mogen niet stuk, ook niet als MIGRATION.sql onderdeel 16
+ * nog niet gedraaid is.
+ */
+async function findCreditFor(invoiceId: number, tenantId: string) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('credit_for_invoice_id')
+    .eq('id', invoiceId)
+    .maybeSingle();
+  if (error || !data?.credit_for_invoice_id) return null;
+
+  const { data: original } = await supabase
+    .from('invoices')
+    .select('id, invoice_number')
+    .eq('id', data.credit_for_invoice_id)
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+  return original ?? null;
 }
 
 /**

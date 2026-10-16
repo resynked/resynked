@@ -184,6 +184,7 @@ export default function CalendarPage() {
       title: 'Afspraak verwijderen',
       message: `"${event.title}" wordt uit je agenda verwijderd.`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren',
     });
     if (!confirmed) return;

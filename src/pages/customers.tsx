@@ -53,6 +53,7 @@ export default function Customers() {
       title: 'Klant verwijderen',
       message: 'Weet je zeker dat je deze klant wilt verwijderen?',
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 
@@ -87,6 +88,7 @@ export default function Customers() {
       title: 'Klanten verwijderen',
       message: `Weet je zeker dat je ${selectedIds.length} klant(en) wilt verwijderen?`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 

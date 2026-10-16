@@ -148,6 +148,7 @@ export default function PluginsSettings() {
       title: `${account ? PROVIDER_NAMES[account.provider] : 'Koppeling'} uitzetten`,
       message: `${account?.email || 'Je account'} wordt ontkoppeld; Inbox en Agenda verdwijnen uit Khance. Je mail en afspraken blijven gewoon in ${account ? PROVIDER_NAMES[account.provider] : 'je account'} staan.`,
       confirmText: 'Uitzetten',
+      negative: true,
       cancelText: 'Annuleren',
     });
 
@@ -192,6 +193,7 @@ export default function PluginsSettings() {
       title: 'WhatsApp uitzetten',
       message: `${whatsapp?.phone || 'Je nummer'} wordt ontkoppeld; berichten aan de bot worden dan geen offertes meer. Offertes die al gemaakt zijn blijven staan.`,
       confirmText: 'Uitzetten',
+      negative: true,
       cancelText: 'Annuleren',
     });
 

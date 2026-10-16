@@ -152,6 +152,7 @@ export default function DocumentEditor({
       title: 'Blok verwijderen',
       message: `${block?.title ? `"${block.title}"` : 'Dit blok'} verwijderen, met alles erin? Met Cmd+Z zet je het terug.`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren',
     });
     if (!confirmed) return;

@@ -75,6 +75,7 @@ export default function Invoices() {
       title: 'Factuur verwijderen',
       message: 'Weet je zeker dat je deze factuur wilt verwijderen?',
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 
@@ -116,6 +117,7 @@ export default function Invoices() {
         kept ? ` ${kept} verstuurde factu(u)r(en) blijven bewaard.` : ''
       }`,
       confirmText: 'Verwijderen',
+      negative: true,
       cancelText: 'Annuleren'
     });
 
