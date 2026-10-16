@@ -3,12 +3,13 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-import { CircleUserRound, Languages, Bell, UserRoundPlus, Mail, LayoutTemplate, CircleQuestionMark, Plug } from 'lucide-react';
+import { CircleUserRound, ShieldCheck, Mail, LayoutTemplate, CircleQuestionMark, Plug } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
 import RichTextEditor from '@/components/RichTextEditor';
 import SidePanel from '@/components/SidePanel';
 import PluginsSettings from '@/components/PluginsSettings';
+import Toggle from '@/components/Toggle';
 import type { Tenant } from '@/lib/supabase';
 import { MIN_PASSWORD_LENGTH } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
@@ -59,13 +60,12 @@ export default function Settings() {
     const { update: updateSession } = useSession();
     const [profile, setProfile] = useState({ name: '', email: '' });
     const [savedName, setSavedName] = useState('');
-    const [passwords, setPasswords] = useState({ current: '', next: '', repeat: '' });
+    const [passwords, setPasswords] = useState({ next: '', repeat: '' });
     // Wat er mist pas tonen na de eerste poging, niet al bij het openen
     const [showPasswordErrors, setShowPasswordErrors] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const passwordErrors: Partial<Record<keyof typeof passwords, string>> = {};
-    if (!passwords.current) passwordErrors.current = 'Vul je huidige wachtwoord in';
     if (passwords.next.length < MIN_PASSWORD_LENGTH) {
         passwordErrors.next = `Minimaal ${MIN_PASSWORD_LENGTH} tekens`;
     }
@@ -83,6 +83,8 @@ export default function Settings() {
     const [twoFactorPassword, setTwoFactorPassword] = useState('');
     const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
     const [isTwoFactorBusy, setIsTwoFactorBusy] = useState(false);
+    // Wat er onder de schakelaar open staat: de QR-code, of het wachtwoord voor uitzetten of nieuwe codes
+    const [twoFactorMode, setTwoFactorMode] = useState<'setup' | 'disable' | 'renew' | null>(null);
 
     const loadAccount = () =>
         fetch('/api/account')
@@ -136,6 +138,18 @@ export default function Settings() {
         if (data) {
             setTwoFactorSetup(data);
             setTwoFactorCode('');
+            setTwoFactorMode('setup');
+        }
+    };
+
+    /** De schakelaar: aan begint met de QR-code, uit vraagt eerst je wachtwoord */
+    const handleTwoFactorToggle = (checked: boolean) => {
+        if (checked) {
+            startTwoFactor();
+        } else if (twoFactorMode === 'setup') {
+            setTwoFactorMode(null);
+        } else {
+            setTwoFactorMode('disable');
         }
     };
 
@@ -147,6 +161,7 @@ export default function Settings() {
         const data = await twoFactorRequest({ action: 'enable', code: twoFactorCode });
         if (data) {
             setTwoFactorSetup(null);
+            setTwoFactorMode(null);
             setBackupCodes(data.backupCodes);
             toast.success('Gelukt', 'Tweestapsverificatie staat aan');
             loadAccount();
@@ -161,6 +176,7 @@ export default function Settings() {
         const data = await twoFactorRequest({ action: 'disable', password: twoFactorPassword });
         if (data) {
             setTwoFactorPassword('');
+            setTwoFactorMode(null);
             setBackupCodes(null);
             toast.success('Gelukt', 'Tweestapsverificatie staat uit');
             loadAccount();
@@ -175,6 +191,7 @@ export default function Settings() {
         const data = await twoFactorRequest({ action: 'backup-codes', password: twoFactorPassword });
         if (data) {
             setTwoFactorPassword('');
+            setTwoFactorMode(null);
             setBackupCodes(data.backupCodes);
             loadAccount();
         }
@@ -300,7 +317,7 @@ export default function Settings() {
             const response = await fetch('/api/account/password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ current_password: passwords.current, new_password: passwords.next }),
+                body: JSON.stringify({ new_password: passwords.next }),
             });
             const data = await response.json().catch(() => ({}));
             if (!response.ok) {
@@ -308,7 +325,7 @@ export default function Settings() {
                 return;
             }
             toast.success('Gelukt', 'Je wachtwoord is gewijzigd');
-            setPasswords({ current: '', next: '', repeat: '' });
+            setPasswords({ next: '', repeat: '' });
             setShowPasswordErrors(false);
         } catch {
             toast.error('Wachtwoord niet gewijzigd', 'Probeer het opnieuw');
@@ -325,6 +342,13 @@ export default function Settings() {
                     <div className="actions">
                         <button className="button" onClick={handleSaveAccount} disabled={isSaving}>
                             {isSaving ? 'Opslaan...' : 'Opslaan'}
+                        </button>
+                    </div>
+                )}
+                {activeTab === 'privacy' && (
+                    <div className="actions">
+                        <button className="button" onClick={handleChangePassword} disabled={isChangingPassword}>
+                            {isChangingPassword ? 'Opslaan...' : 'Opslaan'}
                         </button>
                     </div>
                 )}
@@ -359,6 +383,17 @@ export default function Settings() {
                             <span>Account</span>
                         </Link>
                         <Link
+                            href="#privacy"
+                            className={`${activeTab === 'privacy' ? 'active' : ''}`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab('privacy');
+                            }}
+                        >
+                            <ShieldCheck size={18} />
+                            <span>Privacy</span>
+                        </Link>
+                        <Link
                             href="#sjabloon"
                             className={`${activeTab === 'sjabloon' ? 'active' : ''}`}
                             onClick={(e) => {
@@ -368,39 +403,6 @@ export default function Settings() {
                         >
                             <LayoutTemplate size={18} />
                             <span>Sjabloon</span>
-                        </Link>
-                        <Link
-                            href="#taalinstellingen"
-                            className={`${activeTab === 'taalinstellingen' ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab('taalinstellingen');
-                            }}
-                        >
-                            <Languages size={18} />
-                            <span>Taalinstellingen</span>
-                        </Link>
-                        <Link
-                            href="#meldingen"
-                            className={`${activeTab === 'meldingen' ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab('meldingen');
-                            }}
-                        >
-                            <Bell size={18} />
-                            <span>Meldingen</span>
-                        </Link>
-                        <Link
-                            href="#gebruikers"
-                            className={`${activeTab === 'gebruikers' ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setActiveTab('gebruikers');
-                            }}
-                        >
-                            <UserRoundPlus size={18} />
-                            <span>Gebruikers</span>
                         </Link>
                         <Link
                             href="#plugins"
@@ -461,190 +463,6 @@ export default function Settings() {
                                     <input id="account_email" type="email" value={profile.email} disabled />
                                 </div>
                             </div>
-
-                            <h3>Wachtwoord</h3>
-                            <div className="row-section">
-                                <div className="information">
-                                    <span className="title">Wachtwoord wijzigen</span>
-                                    <span className="description">
-                                        Eerst je huidige wachtwoord, dan twee keer je nieuwe. Minimaal {MIN_PASSWORD_LENGTH} tekens.
-                                    </span>
-                                </div>
-                                <div className="form-section">
-                                    <div>
-                                        <input
-                                            type="password"
-                                            value={passwords.current}
-                                            autoComplete="current-password"
-                                            aria-label="Huidig wachtwoord"
-                                            aria-invalid={!!shownPasswordErrors.current}
-                                            onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                                            placeholder="Vul je huidige wachtwoord in"
-                                        />
-                                        {shownPasswordErrors.current && <p className="field-error">{shownPasswordErrors.current}</p>}
-                                    </div>
-                                    <div>
-                                        <input
-                                            type="password"
-                                            value={passwords.next}
-                                            autoComplete="new-password"
-                                            aria-label="Nieuw wachtwoord"
-                                            aria-invalid={!!shownPasswordErrors.next}
-                                            onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
-                                            placeholder="Vul een nieuw wachtwoord in"
-                                        />
-                                        {shownPasswordErrors.next && <p className="field-error">{shownPasswordErrors.next}</p>}
-                                    </div>
-                                    <div>
-                                        <input
-                                            type="password"
-                                            value={passwords.repeat}
-                                            autoComplete="new-password"
-                                            aria-label="Nieuw wachtwoord herhalen"
-                                            aria-invalid={!!shownPasswordErrors.repeat}
-                                            onChange={(e) => setPasswords({ ...passwords, repeat: e.target.value })}
-                                            placeholder="Vul het nieuwe wachtwoord nogmaals in"
-                                        />
-                                        {shownPasswordErrors.repeat && <p className="field-error">{shownPasswordErrors.repeat}</p>}
-                                    </div>
-                                    <div>
-                                        <button
-                                            type="button"
-                                            className="button"
-                                            onClick={handleChangePassword}
-                                            disabled={isChangingPassword}
-                                        >
-                                            {isChangingPassword ? 'Wijzigen...' : 'Wachtwoord wijzigen'}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <h3>Tweestapsverificatie</h3>
-                            <div className="row-section">
-                                <div className="information">
-                                    <span className="title">Authenticator-app</span>
-                                    <span className="description">
-                                        Naast je wachtwoord vraagt Khance bij het inloggen om een code uit een app
-                                        zoals Google Authenticator, Microsoft Authenticator of 1Password.
-                                    </span>
-                                </div>
-                                <div>
-                                    {twoFactor.enabledAt ? (
-                                        <div className="form-section">
-                                            <p>
-                                                Staat aan sinds {formatDate(twoFactor.enabledAt)}. Je hebt nog{' '}
-                                                {twoFactor.backupLeft} {twoFactor.backupLeft === 1 ? 'back-upcode' : 'back-upcodes'} over.
-                                            </p>
-                                            <input
-                                                type="password"
-                                                value={twoFactorPassword}
-                                                autoComplete="current-password"
-                                                aria-label="Wachtwoord"
-                                                onChange={(e) => setTwoFactorPassword(e.target.value)}
-                                                placeholder="Vul je wachtwoord in om iets te wijzigen"
-                                            />
-                                            <div className="button-row">
-                                                <button
-                                                    type="button"
-                                                    className="button cancel"
-                                                    onClick={renewBackupCodes}
-                                                    disabled={isTwoFactorBusy}
-                                                >
-                                                    Nieuwe back-upcodes
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="button negative"
-                                                    onClick={disableTwoFactor}
-                                                    disabled={isTwoFactorBusy}
-                                                >
-                                                    Uitzetten
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : twoFactorSetup ? (
-                                        <div className="form-section two-factor-setup">
-                                            <p>1. Scan deze QR-code met je authenticator-app.</p>
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={twoFactorSetup.qr} alt="QR-code voor je authenticator-app" className="qr" />
-                                            <p className="placeholder">
-                                                Lukt scannen niet? Vul deze sleutel in de app in:{' '}
-                                                <code>{twoFactorSetup.secret}</code>
-                                            </p>
-                                            <p>2. Vul de code van 6 cijfers in die de app nu toont.</p>
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                autoComplete="one-time-code"
-                                                value={twoFactorCode}
-                                                aria-label="Code uit de app"
-                                                onChange={(e) => setTwoFactorCode(e.target.value)}
-                                                placeholder="Vul de code in"
-                                            />
-                                            <div className="button-row">
-                                                <button
-                                                    type="button"
-                                                    className="button cancel"
-                                                    onClick={() => setTwoFactorSetup(null)}
-                                                    disabled={isTwoFactorBusy}
-                                                >
-                                                    Annuleren
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="button"
-                                                    onClick={confirmTwoFactor}
-                                                    disabled={isTwoFactorBusy}
-                                                >
-                                                    Bevestigen
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="form-section">
-                                            <p className="placeholder">Staat uit.</p>
-                                            <div className="button-row">
-                                                <button
-                                                    type="button"
-                                                    className="button"
-                                                    onClick={startTwoFactor}
-                                                    disabled={isTwoFactorBusy}
-                                                >
-                                                    Aanzetten
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {backupCodes && (
-                                <div className="row-section">
-                                    <div className="information">
-                                        <span className="title">Je back-upcodes</span>
-                                        <span className="description">
-                                            Telefoon kwijt? Dan log je in met een van deze codes; elke code werkt één
-                                            keer. Bewaar ze op een veilige plek: je ziet ze hierna niet meer.
-                                        </span>
-                                    </div>
-                                    <div className="form-section">
-                                        <ul className="backup-codes">
-                                            {backupCodes.map((code) => (
-                                                <li key={code}>{code}</li>
-                                            ))}
-                                        </ul>
-                                        <div className="button-row">
-                                            <button type="button" className="button cancel" onClick={copyBackupCodes}>
-                                                Kopiëren
-                                            </button>
-                                            <button type="button" className="button" onClick={() => setBackupCodes(null)}>
-                                                Ik heb ze bewaard
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             <h3>Bedrijf</h3>
                             <div className="row-section">
@@ -767,19 +585,210 @@ export default function Settings() {
                         </>
                     )}
 
-                    {activeTab === 'taalinstellingen' && (
-                        <h2>Taalinstellingen</h2>
+                    {activeTab === 'privacy' && (
+                        <>
+                            <h2>Privacy</h2>
 
-                    )}
+                            <h3>Wachtwoord</h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Nieuw wachtwoord</span>
+                                    <span className="description">
+                                        Minimaal {MIN_PASSWORD_LENGTH} tekens. Sla op met de knop rechtsboven.
+                                    </span>
+                                </div>
+                                <div className="form-section">
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <input
+                                                type="password"
+                                                value={passwords.next}
+                                                autoComplete="new-password"
+                                                aria-label="Nieuw wachtwoord"
+                                                aria-invalid={!!shownPasswordErrors.next}
+                                                onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
+                                                placeholder="Vul een nieuw wachtwoord in"
+                                            />
+                                            {shownPasswordErrors.next && <p className="field-error">{shownPasswordErrors.next}</p>}
+                                        </div>
+                                        <div className="form-group">
+                                            <input
+                                                type="password"
+                                                value={passwords.repeat}
+                                                autoComplete="new-password"
+                                                aria-label="Nieuw wachtwoord herhalen"
+                                                aria-invalid={!!shownPasswordErrors.repeat}
+                                                onChange={(e) => setPasswords({ ...passwords, repeat: e.target.value })}
+                                                placeholder="Vul het wachtwoord nogmaals in"
+                                            />
+                                            {shownPasswordErrors.repeat && <p className="field-error">{shownPasswordErrors.repeat}</p>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {activeTab === 'meldingen' && (
-                        <h2>Meldingen</h2>
+                            <h3>Tweestapsverificatie</h3>
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Authenticator-app</span>
+                                    <span className="description">
+                                        Naast je wachtwoord vraagt Khance bij het inloggen om een code uit een app
+                                        zoals Google Authenticator, Microsoft Authenticator of 1Password.
+                                    </span>
+                                </div>
+                                <div className="two-factor">
+                                    <label className="toggle-label">
+                                        <Toggle
+                                            label="Tweestapsverificatie"
+                                            checked={!!twoFactor.enabledAt || twoFactorMode === 'setup'}
+                                            onChange={handleTwoFactorToggle}
+                                            disabled={isTwoFactorBusy}
+                                        />
+                                        <span>
+                                            {twoFactor.enabledAt
+                                                ? `Aan sinds ${formatDate(twoFactor.enabledAt)}`
+                                                : twoFactorMode === 'setup'
+                                                  ? 'Bezig met aanzetten'
+                                                  : 'Uit'}
+                                        </span>
+                                    </label>
 
-                    )}
+                                    {twoFactor.enabledAt && !twoFactorMode && (
+                                        <p className="status">
+                                            Nog {twoFactor.backupLeft}{' '}
+                                            {twoFactor.backupLeft === 1 ? 'back-upcode' : 'back-upcodes'} over.{' '}
+                                            <button type="button" onClick={() => setTwoFactorMode('renew')}>
+                                                Nieuwe back-upcodes
+                                            </button>
+                                        </p>
+                                    )}
 
-                    {activeTab === 'gebruikers' && (
-                        <h2>Gebruikers</h2>
+                                    {twoFactorMode === 'setup' && twoFactorSetup && (
+                                        <div className="edit-holder setup">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={twoFactorSetup.qr} alt="QR-code voor je authenticator-app" className="qr" />
+                                            <div className="steps">
+                                                <p>
+                                                    <strong>1.</strong> Scan de QR-code met je authenticator-app.
+                                                </p>
+                                                <p className="placeholder">
+                                                    Lukt scannen niet? Vul deze sleutel in de app in:{' '}
+                                                    <code>{twoFactorSetup.secret}</code>
+                                                </p>
+                                                <p>
+                                                    <strong>2.</strong> Vul de code van 6 cijfers in die de app nu toont.
+                                                </p>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    autoComplete="one-time-code"
+                                                    value={twoFactorCode}
+                                                    aria-label="Code uit de app"
+                                                    onChange={(e) => setTwoFactorCode(e.target.value)}
+                                                    placeholder="Vul de code in"
+                                                />
+                                                <div className="button-row">
+                                                    <button
+                                                        type="button"
+                                                        className="button cancel"
+                                                        onClick={() => setTwoFactorMode(null)}
+                                                        disabled={isTwoFactorBusy}
+                                                    >
+                                                        Annuleren
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="button"
+                                                        onClick={confirmTwoFactor}
+                                                        disabled={isTwoFactorBusy}
+                                                    >
+                                                        Bevestigen
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
+                                    {(twoFactorMode === 'disable' || twoFactorMode === 'renew') && (
+                                        <div className="edit-holder confirm">
+                                            <p>
+                                                {twoFactorMode === 'disable'
+                                                    ? 'Vul je wachtwoord in om tweestapsverificatie uit te zetten.'
+                                                    : 'Vul je wachtwoord in voor nieuwe back-upcodes. De oude werken daarna niet meer.'}
+                                            </p>
+                                            <input
+                                                type="password"
+                                                value={twoFactorPassword}
+                                                autoComplete="current-password"
+                                                autoFocus
+                                                aria-label="Wachtwoord"
+                                                onChange={(e) => setTwoFactorPassword(e.target.value)}
+                                                placeholder="Vul je wachtwoord in"
+                                            />
+                                            <div className="button-row">
+                                                <button
+                                                    type="button"
+                                                    className="button cancel"
+                                                    onClick={() => {
+                                                        setTwoFactorMode(null);
+                                                        setTwoFactorPassword('');
+                                                    }}
+                                                    disabled={isTwoFactorBusy}
+                                                >
+                                                    Annuleren
+                                                </button>
+                                                {twoFactorMode === 'disable' ? (
+                                                    <button
+                                                        type="button"
+                                                        className="button negative"
+                                                        onClick={disableTwoFactor}
+                                                        disabled={isTwoFactorBusy}
+                                                    >
+                                                        Uitzetten
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="button"
+                                                        onClick={renewBackupCodes}
+                                                        disabled={isTwoFactorBusy}
+                                                    >
+                                                        Nieuwe back-upcodes
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {backupCodes && (
+                                <div className="row-section">
+                                    <div className="information">
+                                        <span className="title">Je back-upcodes</span>
+                                        <span className="description">
+                                            Telefoon kwijt? Dan log je in met een van deze codes; elke code werkt één
+                                            keer. Bewaar ze op een veilige plek: je ziet ze hierna niet meer.
+                                        </span>
+                                    </div>
+                                    <div className="form-section">
+                                        <ul className="backup-codes">
+                                            {backupCodes.map((code) => (
+                                                <li key={code}>{code}</li>
+                                            ))}
+                                        </ul>
+                                        <div className="button-row">
+                                            <button type="button" className="button cancel" onClick={copyBackupCodes}>
+                                                Kopiëren
+                                            </button>
+                                            <button type="button" className="button" onClick={() => setBackupCodes(null)}>
+                                                Ik heb ze bewaard
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {activeTab === 'plugins' && <PluginsSettings />}

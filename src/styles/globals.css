@@ -14,7 +14,7 @@
   --fontsize2: 12px;
   --h1-size: 20px;
   --h2-size: 18px;
-  --h3-size: 16px;
+  --h3-size: 15px;
   --h4-size: 28px;
   --h5-size: 26px;
   --max-width: 1500px;
@@ -838,10 +838,18 @@ h2 .help:hover {background: var(--color4); color: var(--font-color1);}
 /* Losse knoppen naast elkaar, zoals Annuleren en Bevestigen onder een veld */
 .button-row {display: flex; flex-wrap: wrap; gap: var(--space10);}
 
-/* Tweestapsverificatie bij Instellingen: de QR-code en de back-upcodes */
-.two-factor-setup p {margin: 0;}
-.two-factor-setup .qr {display: block; width: 180px; height: 180px; padding: var(--space5); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius2);}
-.two-factor-setup code {word-break: break-all; color: var(--font-color1);}
+/* Tweestapsverificatie bij Instellingen › Privacy: een schakelaar, en eronder
+   in een grijs vak de QR-code of het wachtwoord om iets te wijzigen */
+.two-factor .toggle-label {color: var(--font-color1); font-size: var(--fontsize1);}
+.two-factor .status {margin: var(--space5) 0 0 0; font-size: var(--fontsize2); color: var(--font-color2);}
+.two-factor .status button {font-size: inherit; color: var(--font-color1); font-weight: 500;}
+.two-factor .status button:hover {text-decoration: underline;}
+.two-factor .edit-holder {margin: var(--space15) 0 0 0; padding: var(--space15);}
+.two-factor .edit-holder p {margin: 0;}
+.two-factor .edit-holder.setup {display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--space20); align-items: start;}
+.two-factor .edit-holder.confirm, .two-factor .edit-holder .steps {display: flex; flex-direction: column; gap: var(--space10);}
+.two-factor .qr {display: block; width: 160px; height: 160px; padding: var(--space5); box-sizing: border-box; background: var(--color2); border: 1px solid var(--border-color); border-radius: var(--border-radius1);}
+.two-factor code {word-break: break-all; color: var(--font-color1);}
 .backup-codes {display: grid; grid-template-columns: repeat(2, max-content); gap: var(--space5) var(--space30); margin: 0; padding: var(--space15); list-style: none; background: var(--color3); border: 1px solid var(--border-color); border-radius: var(--border-radius1); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; letter-spacing: .05em;}
 
 .button-group {display: inline-flex;}
