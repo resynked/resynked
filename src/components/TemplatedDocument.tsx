@@ -8,8 +8,6 @@ interface TemplatedDocumentProps {
   values: Record<string, string>;
   /** Inhoud voor de plekken met data-slot, die met de offerte meegroeien */
   slots: Record<string, ReactNode>;
-  /** Label boven een aanklikbaar onderdeel, per slot */
-  labels?: Record<string, string>;
   /** Welk onderdeel op dit moment bewerkt wordt */
   activeSlot?: string | null;
   /** Aangeroepen als er op een onderdeel geklikt wordt */
@@ -133,7 +131,6 @@ export default function TemplatedDocument({
   html,
   values,
   slots,
-  labels = {},
   activeSlot,
   onSelect,
   repeatCounts = {},
@@ -247,14 +244,13 @@ export default function TemplatedDocument({
       const handleClick = () => onSelect(name);
 
       element.classList.add('editable-region');
-      element.setAttribute('data-label', labels[name] || name);
       element.addEventListener('click', handleClick);
 
       return () => element.removeEventListener('click', handleClick);
     });
 
     return () => cleanups.forEach((cleanup) => cleanup());
-  }, [targets, labels, onSelect]);
+  }, [targets, onSelect]);
 
   useLayoutEffect(() => {
     targets.forEach(({ name, element }) => {

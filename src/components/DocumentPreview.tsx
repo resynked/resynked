@@ -473,14 +473,6 @@ interface BlockViewProps {
   edit?: { block: number; onChange: (element: number, changes: Partial<DocumentElement>) => void };
 }
 
-const ELEMENT_LABELS: Record<DocumentElement['kind'], string> = {
-  gegevens: 'Gegevens',
-  kop: 'Kop',
-  tekst: 'Tekst',
-  prijstabel: 'Prijstabel',
-  handtekening: 'Handtekening',
-};
-
 /** Alles wat er in één blok staat, in volgorde. */
 function BlockView({ onderdelen, currency, customer, meta, signature, signatureField, bewerkbaar, edit }: BlockViewProps) {
   const editing = useContext(InlineEditContext);
@@ -551,7 +543,6 @@ function BlockView({ onderdelen, currency, customer, meta, signature, signatureF
             data-stuk={stuk}
             data-van={van ?? 0}
             className={region(index)}
-            data-label={ELEMENT_LABELS[element.kind]}
             // Een klik in een veld kiest dat veld zelf, met de regel erbij
             onClick={(event) => {
               if (!(event.target as HTMLElement).closest('[data-bewerk]')) select(index)();
@@ -1258,8 +1249,6 @@ export default function DocumentPreview({
       betaling: paymentBlock,
     };
 
-    const labels: Record<string, string> = {};
-
     // Eén slot per vel, niet per blok: een blok dat overloopt vult twee vellen
     // en krijgt op beide hetzelfde opschrift, met een doorlopend nummer
     vellen.forEach((vel, index) => {
@@ -1268,8 +1257,6 @@ export default function DocumentPreview({
 
       slots[`blok-${index}`] = toon(vel.blok, elementenVanVel(block, vel));
       slots[`bloktitel-${index}`] = blokTitel(vel.blok);
-      labels[`blok-${index}`] = block.title || 'Blok';
-      labels[`bloktitel-${index}`] = 'Titel';
     });
 
     // Op elk vel een handvat om het te verplaatsen. Een vel dat bij hetzelfde
@@ -1382,7 +1369,6 @@ export default function DocumentPreview({
         <TemplatedDocument
           html={template}
           values={values}
-          labels={labels}
           activeSlot={actiefVel < 0 ? null : `blok-${actiefVel}`}
           // Alleen tijdens het bewerken; anders krijgt de klant op zijn eigen
           // offertepagina de omlijning en het label van een bewerkbaar vlak
@@ -1445,7 +1431,6 @@ export default function DocumentPreview({
 
           <div
             className={onSelect ? `editable-region${selected?.block === index ? ' active' : ''}` : undefined}
-            data-label={block.title || 'Blok'}
             onClick={
               onSelect
                 ? (event) => {
