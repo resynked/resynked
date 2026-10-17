@@ -68,6 +68,19 @@ export const EXPENSE_CATEGORIES: { value: string; label: string; account: string
   { value: 'other', label: 'Overige kosten', account: '4990' },
 ];
 
+/**
+ * Wat een banktransactie kan zijn als er geen factuur of bon bij hoort, met
+ * de grootboekrekening waar hij in de jaarcijfers op komt.
+ */
+export const BANK_CATEGORIES: { value: string; label: string; account: string }[] = [
+  { value: 'private', label: 'Privé', account: '0600' },
+  { value: 'tax', label: 'Belastingdienst (btw)', account: '1520' },
+  { value: 'transfer', label: 'Overboeking of uitbetaling (zoals Mollie)', account: '2200' },
+  { value: 'bank_costs', label: 'Bankkosten', account: '4900' },
+  { value: 'other_income', label: 'Overige inkomsten', account: '8900' },
+  { value: 'other_costs', label: 'Overige kosten zonder bon', account: '4990' },
+];
+
 /** De btw-tarieven in Nederland */
 export const VAT_RATES = [21, 9, 0] as const;
 

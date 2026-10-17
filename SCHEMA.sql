@@ -380,6 +380,51 @@ CREATE TABLE expense_lines (
 CREATE INDEX expense_lines_expense_id_idx ON expense_lines(expense_id);
 
 -- ------------------------------------------------------------
+-- Bank: rekeningen en hun transacties, uit een afschrift of de bankkoppeling
+-- ------------------------------------------------------------
+CREATE TABLE bank_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  iban TEXT NOT NULL,
+  name TEXT,
+  -- Het saldo aan het begin van het eerste afschrift; daarop telt de rest
+  opening_balance NUMERIC(12,2),
+  opening_date DATE,
+  -- Via de bankkoppeling: het id van de rekening bij GoCardless
+  external_id TEXT,
+  last_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, iban)
+);
+
+CREATE TABLE bank_transactions (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  bank_account_id BIGINT NOT NULL REFERENCES bank_accounts(id) ON DELETE CASCADE,
+  booked_on DATE NOT NULL,
+  -- Positief is bij, negatief is af
+  amount NUMERIC(12,2) NOT NULL,
+  counterparty_name TEXT,
+  counterparty_iban TEXT,
+  description TEXT,
+  -- Van de bank, of anders afgeleid uit de transactie; zo komt hij er bij
+  -- een tweede import niet dubbel in
+  external_id TEXT NOT NULL,
+  invoice_id BIGINT REFERENCES invoices(id) ON DELETE SET NULL,
+  expense_id BIGINT REFERENCES expenses(id) ON DELETE SET NULL,
+  -- Zonder factuur of bon: een van BANK_CATEGORIES, zoals privé of bankkosten
+  category TEXT,
+  -- Deze transactie zette de factuur of kostenpost op betaald; ontkoppelen draait dat terug
+  settled BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (bank_account_id, external_id)
+);
+
+CREATE INDEX bank_transactions_tenant_id_idx ON bank_transactions(tenant_id, booked_on);
+CREATE INDEX bank_transactions_invoice_id_idx ON bank_transactions(invoice_id);
+CREATE INDEX bank_transactions_expense_id_idx ON bank_transactions(expense_id);
+
+-- ------------------------------------------------------------
 -- Notities per klant
 -- ------------------------------------------------------------
 CREATE TABLE notes (
@@ -601,6 +646,8 @@ ALTER TABLE mollie_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE moneybird_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------

@@ -641,6 +641,58 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('documents', 'documents', false)
 ON CONFLICT (id) DO NOTHING;
 
+-- ------------------------------------------------------------
+-- 19. Bank: afschriften importeren en betalingen koppelen
+--
+-- Per bankrekening de transacties uit een geïmporteerd afschrift (of later
+-- uit de bankkoppeling). Een transactie hoort bij een factuur, een
+-- kostenpost of een categorie zoals privé; zo kloppen de jaarcijfers.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bank_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  iban TEXT NOT NULL,
+  name TEXT,
+  -- Het saldo aan het begin van het eerste afschrift; daarop telt de rest
+  opening_balance NUMERIC(12,2),
+  opening_date DATE,
+  -- Via de bankkoppeling: het id van de rekening bij GoCardless
+  external_id TEXT,
+  last_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, iban)
+);
+
+CREATE TABLE IF NOT EXISTS bank_transactions (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  bank_account_id BIGINT NOT NULL REFERENCES bank_accounts(id) ON DELETE CASCADE,
+  booked_on DATE NOT NULL,
+  -- Positief is bij, negatief is af
+  amount NUMERIC(12,2) NOT NULL,
+  counterparty_name TEXT,
+  counterparty_iban TEXT,
+  description TEXT,
+  -- Van de bank, of anders afgeleid uit de transactie; zo komt hij er bij
+  -- een tweede import niet dubbel in
+  external_id TEXT NOT NULL,
+  invoice_id BIGINT REFERENCES invoices(id) ON DELETE SET NULL,
+  expense_id BIGINT REFERENCES expenses(id) ON DELETE SET NULL,
+  -- Zonder factuur of bon: een van BANK_CATEGORIES, zoals privé of bankkosten
+  category TEXT,
+  -- Deze transactie zette de factuur of kostenpost op betaald; ontkoppelen draait dat terug
+  settled BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (bank_account_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS bank_transactions_tenant_id_idx ON bank_transactions(tenant_id, booked_on);
+CREATE INDEX IF NOT EXISTS bank_transactions_invoice_id_idx ON bank_transactions(invoice_id);
+CREATE INDEX IF NOT EXISTS bank_transactions_expense_id_idx ON bank_transactions(expense_id);
+
+ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -655,7 +707,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen negentien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen twintig regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -794,4 +846,10 @@ UNION ALL SELECT 'Kosten',
          SELECT count(*) FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name IN ('expenses', 'expense_lines')
        ) = 2 AND EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'documents')
-       THEN 'ja' ELSE 'NEE - onderdeel 18 niet gelukt' END;
+       THEN 'ja' ELSE 'NEE - onderdeel 18 niet gelukt' END
+
+UNION ALL SELECT 'Bank',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name IN ('bank_accounts', 'bank_transactions')
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 19 niet gelukt' END;

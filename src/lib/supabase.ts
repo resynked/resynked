@@ -264,6 +264,38 @@ export interface Expense {
   updated_at: string;
 }
 
+/** Een bankrekening van het bedrijf */
+export interface BankAccount {
+  id: number;
+  tenant_id: string;
+  iban: string;
+  name: string | null;
+  opening_balance: number | null;
+  opening_date: string | null;
+  external_id: string | null;
+  last_synced_at: string | null;
+  created_at: string;
+}
+
+/** Eén bij- of afschrijving; positief is bij, negatief is af */
+export interface BankTransaction {
+  id: number;
+  tenant_id: string;
+  bank_account_id: number;
+  booked_on: string;
+  amount: number;
+  counterparty_name: string | null;
+  counterparty_iban: string | null;
+  description: string | null;
+  external_id: string;
+  invoice_id: number | null;
+  expense_id: number | null;
+  /** Een van BANK_CATEGORIES als er geen factuur of bon bij hoort */
+  category: string | null;
+  settled: boolean;
+  created_at: string;
+}
+
 export interface Note {
   id: number;
   tenant_id: string;

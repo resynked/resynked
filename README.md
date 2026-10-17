@@ -32,6 +32,10 @@ aannemers komen elkaar nooit tegen.
   bedragen per btw-tarief. Het bestand staat afgeschermd in Supabase Storage
   (bucket `documents`); met een AI-plug-in worden de gegevens van een foto of
   PDF vanzelf ingevuld
+- **Bank**: een afschrift uit de bank-app importeren (CAMT.053 of MT940).
+  Betalingen van klanten en aan leveranciers worden waar het zeker is vanzelf
+  aan de factuur of kostenpost gekoppeld en op betaald gezet; de rest koppel
+  je zelf of deel je in (privé, bankkosten, Belastingdienst, …)
 - **Btw-aangifte** per kwartaal of jaar, rubriek voor rubriek: omzet en btw
   per tarief (op factuurdatum), de voorbelasting uit de kosten, en wat je
   betaalt of terugkrijgt. De export is een CSV voor de boekhouder. Met de optionele Moneybird-plug-in gaat elke vastgelegde factuur

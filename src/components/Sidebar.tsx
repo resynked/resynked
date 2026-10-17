@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useMailAccount } from '@/hooks/useMailAccount';
 import { useMailUnread } from '@/hooks/useMailUnread';
-import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, Package, PanelLeft, Percent, Receipt } from 'lucide-react';
+import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, Package, PanelLeft, Percent, Receipt, Landmark } from 'lucide-react';
 
 // Of de zijbalk ingeklapt staat, onthouden voor de volgende keer
 const COLLAPSED_KEY = 'synbased:sidebar-collapsed';
@@ -127,6 +127,10 @@ export default function Sidebar() {
         <Link href="/expenses" className={isActive('/expenses') || router.pathname.startsWith('/expenses') ? 'active' : ''} data-label="Kosten">
           <Receipt size={18} />
           <span className="label">Kosten</span>
+        </Link>
+        <Link href="/bank" className={isActive('/bank') ? 'active' : ''} data-label="Bank">
+          <Landmark size={18} />
+          <span className="label">Bank</span>
         </Link>
         <Link href="/vat" className={isActive('/vat') ? 'active' : ''} data-label="Btw-overzicht">
           <Percent size={18} />
