@@ -54,6 +54,7 @@ export default function EditInvoice() {
   const [isCrediting, setIsCrediting] = useState(false);
   const [paidAt, setPaidAt] = useState<string | null>(null);
   const [sentAt, setSentAt] = useState<string | null>(null);
+  const [reminder, setReminder] = useState<{ count: number; sentAt: string } | null>(null);
   const [creditFor, setCreditFor] = useState<LinkedInvoice | null>(null);
   const [creditNotes, setCreditNotes] = useState<LinkedInvoice[]>([]);
 
@@ -94,6 +95,7 @@ export default function EditInvoice() {
       setSourceQuoteId(invoice.quote_id || null);
       setPaidAt(invoice.paid_at || null);
       setSentAt(invoice.sent_at || null);
+      setReminder(invoice.reminder_count && invoice.reminder_sent_at ? { count: invoice.reminder_count, sentAt: invoice.reminder_sent_at } : null);
       setCreditFor(invoice.credit_for || null);
       setCreditNotes(invoice.credit_notes || []);
       setFormData({
@@ -350,7 +352,10 @@ export default function EditInvoice() {
               {formData.status === 'paid' && paidAt
                 ? `Betaald op ${formatDate(paidAt)}`
                 : formData.status === 'sent' && sentAt
-                  ? `Verzonden op ${formatDate(sentAt)}`
+                  ? `Verzonden op ${formatDate(sentAt)}${
+                      // De laatste betalingsherinnering, zie Instellingen > Facturen
+                      reminder ? ` · ${reminder.count > 1 ? 'tweede herinnering' : 'herinnering'} op ${formatDate(reminder.sentAt)}` : ''
+                    }`
                   : STATUS_TEXT[formData.status] || formData.status}
             </span>
           )}

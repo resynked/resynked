@@ -65,6 +65,8 @@ export interface Tenant {
   invoice_number_next: string | null;
   /** Na zoveel dagen zonder handtekening gaat er één herinnering; null is nooit */
   quote_reminder_days: number | null;
+  /** Zoveel dagen na de vervaldatum een betalingsherinnering, en daarna nog één; null is nooit */
+  invoice_reminder_days: number | null;
   /** Staand of liggend A4 voor offertes en facturen, met elk sjabloon */
   paper_orientation: 'portrait' | 'landscape';
   /** Afzendadres van deze aannemer; leeg betekent het systeemadres uit EMAIL_FROM */
@@ -174,6 +176,11 @@ export interface Invoice {
   mollie_payment_id?: string | null;
   /** Bij een creditfactuur: de factuur die hij (deels) terugdraait */
   credit_for_invoice_id?: number | null;
+  /** Hoeveel betalingsherinneringen er gingen, en wanneer de laatste */
+  reminder_count?: number;
+  reminder_sent_at?: string | null;
+  /** Onder welk id hij in Moneybird staat, als die plug-in aan staat */
+  moneybird_invoice_id?: string | null;
   created_at: string;
   updated_at: string;
 }

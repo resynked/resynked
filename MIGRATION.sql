@@ -550,6 +550,39 @@ WHERE e.kind = 'prijstabel' AND NOT e.show_quantity AND EXISTS (
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS credit_for_invoice_id BIGINT REFERENCES invoices(id) ON DELETE RESTRICT;
 CREATE INDEX IF NOT EXISTS invoices_credit_for_invoice_id_idx ON invoices(credit_for_invoice_id);
 
+-- ------------------------------------------------------------
+-- 17. Betalingsherinneringen en Moneybird
+--
+-- Een verstuurde factuur die over de vervaldatum is, krijgt na het ingestelde
+-- aantal dagen een herinnering, en daarna nog één. De factuur onthoudt
+-- hoeveel er al gingen en wanneer de laatste. Met de Moneybird-plug-in gaat
+-- elke vastgelegde factuur naar de boekhouding; de factuur onthoudt onder
+-- welk id hij daar staat.
+-- ------------------------------------------------------------
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS invoice_reminder_days INTEGER;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reminder_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS moneybird_invoice_id TEXT;
+
+CREATE TABLE IF NOT EXISTS moneybird_accounts (
+  id BIGSERIAL PRIMARY KEY,
+  -- Eén administratie per bedrijf
+  tenant_id UUID NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE,
+  -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de Mollie-sleutel
+  api_token TEXT NOT NULL,
+  administration_id TEXT NOT NULL,
+  administration_name TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS update_moneybird_accounts_updated_at ON moneybird_accounts;
+CREATE TRIGGER update_moneybird_accounts_updated_at
+  BEFORE UPDATE ON moneybird_accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE moneybird_accounts ENABLE ROW LEVEL SECURITY;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -564,7 +597,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen zeventien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen achttien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -685,4 +718,15 @@ UNION ALL SELECT 'Creditfacturen',
        CASE WHEN EXISTS (
          SELECT 1 FROM information_schema.columns
          WHERE table_schema = 'public' AND table_name = 'invoices' AND column_name = 'credit_for_invoice_id'
-       ) THEN 'ja' ELSE 'NEE - onderdeel 16 niet gelukt' END;
+       ) THEN 'ja' ELSE 'NEE - onderdeel 16 niet gelukt' END
+
+UNION ALL SELECT 'Betalingsherinneringen en Moneybird',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND ((table_name = 'invoices' AND column_name IN ('reminder_count', 'reminder_sent_at', 'moneybird_invoice_id'))
+             OR (table_name = 'tenants' AND column_name = 'invoice_reminder_days'))
+       ) = 4 AND EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = 'moneybird_accounts'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 17 niet gelukt' END;

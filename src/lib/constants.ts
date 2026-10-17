@@ -31,5 +31,13 @@ export const QUOTE_STATUS: Record<string, { label: string; className: string }> 
   expired: { label: 'Verlopen', className: 'status-cancelled' },
 };
 
+/** De statussen van een factuur, met hun naam en hun kleur in de lijst. */
+export const INVOICE_STATUS: Record<string, { label: string; className: string }> = {
+  draft: { label: 'Concept', className: 'status-draft' },
+  sent: { label: 'Verzonden', className: 'status-sent' },
+  paid: { label: 'Betaald', className: 'status-paid' },
+  cancelled: { label: 'Geannuleerd', className: 'status-cancelled' },
+};
+
 /** Eenheden waarin een aannemer regels uitschrijft */
 export const UNITS = ['stuks', 'uur', 'dag', 'm', 'm²', 'm³', 'kg', 'ton', 'post'] as const;

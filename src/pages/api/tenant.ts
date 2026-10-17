@@ -26,6 +26,7 @@ const EDITABLE_FIELDS = [
   'quote_number_next',
   'invoice_number_next',
   'quote_reminder_days',
+  'invoice_reminder_days',
   'paper_orientation',
 ] as const;
 
@@ -67,13 +68,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Een herinnering na 1 tot 60 dagen, of geen (leeg)
-      const days = updates.quote_reminder_days;
-      if (days !== undefined && days !== null) {
+      for (const field of ['quote_reminder_days', 'invoice_reminder_days'] as const) {
+        const days = updates[field];
+        if (days === undefined || days === null) continue;
         const value = Number(days);
         if (!Number.isInteger(value) || value < 1 || value > 60) {
           return res.status(400).json({ error: 'Kies voor de herinnering een aantal dagen tussen 1 en 60' });
         }
-        updates.quote_reminder_days = value;
+        updates[field] = value;
       }
 
       const tenant = await updateTenant(tenantId, updates);

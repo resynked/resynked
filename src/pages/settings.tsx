@@ -64,9 +64,11 @@ export default function Settings() {
         invoice_email_subject: '',
         invoice_email_intro_text: '',
         quote_reminder_days: '',
+        invoice_reminder_days: '',
     });
     // De herinnering staat aan of uit; het aantal dagen blijft bewaard als je hem even uitzet
     const [reminderEnabled, setReminderEnabled] = useState(false);
+    const [invoiceReminderEnabled, setInvoiceReminderEnabled] = useState(false);
     const [numbering, setNumbering] = useState({
         quote_number_next: '',
         invoice_number_next: '',
@@ -258,8 +260,10 @@ export default function Settings() {
                     invoice_email_subject: tenant.invoice_email_subject || '',
                     invoice_email_intro_text: tenant.invoice_email_intro_text || '',
                     quote_reminder_days: tenant.quote_reminder_days ? String(tenant.quote_reminder_days) : '',
+                    invoice_reminder_days: tenant.invoice_reminder_days ? String(tenant.invoice_reminder_days) : '',
                 });
                 setReminderEnabled(!!tenant.quote_reminder_days);
+                setInvoiceReminderEnabled(!!tenant.invoice_reminder_days);
                 setNumbering({
                     quote_number_next: tenant.quote_number_next || '',
                     invoice_number_next: tenant.invoice_number_next || '',
@@ -348,6 +352,7 @@ export default function Settings() {
                 paper_orientation: paperOrientation,
                 invoice_email_subject: emailSettings.invoice_email_subject,
                 invoice_email_intro_text: emailSettings.invoice_email_intro_text,
+                invoice_reminder_days: invoiceReminderEnabled ? emailSettings.invoice_reminder_days : '',
             },
             'Factuurinstellingen opgeslagen'
         );
@@ -1239,6 +1244,51 @@ export default function Settings() {
                                         }
                                         placeholder="Vul een tekst in"
                                     />
+                                </div>
+                            </div>
+
+                            <div className="row-section">
+                                <div className="information">
+                                    <span className="title">Betalingsherinnering</span>
+                                    <span className="description">
+                                        Nog niet betaald na de vervaldatum? Dan gaat er na een aantal dagen een
+                                        vriendelijke herinnering met de betaalgegevens, en na nog eens zoveel dagen een
+                                        tweede. Vanuit je eigen mailbox.
+                                    </span>
+                                </div>
+                                <div className="form-section setting-option">
+                                    <Toggle
+                                        label="Betalingsherinnering versturen"
+                                        checked={invoiceReminderEnabled}
+                                        onChange={(on) => {
+                                            setInvoiceReminderEnabled(on);
+                                            if (on && !emailSettings.invoice_reminder_days) {
+                                                setEmailSettings({ ...emailSettings, invoice_reminder_days: '7' });
+                                            }
+                                        }}
+                                    />
+                                    {invoiceReminderEnabled && (
+                                        <div className="edit-holder form-section">
+                                            <p className="field-note">
+                                                Na hoeveel dagen over de vervaldatum gaat de herinnering?
+                                            </p>
+                                            <div className="form-row">
+                                                <div className="form-group">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={60}
+                                                        value={emailSettings.invoice_reminder_days}
+                                                        aria-label="Aantal dagen"
+                                                        onChange={(e) =>
+                                                            setEmailSettings({ ...emailSettings, invoice_reminder_days: e.target.value })
+                                                        }
+                                                        placeholder="Vul een aantal dagen in"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </>

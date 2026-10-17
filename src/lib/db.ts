@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase';
 import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note, Product } from './supabase';
-import { calculateDocumentTotal, lineTotal } from './utils';
+import { calculateDocumentTotal, calculateElementTotals, lineTotal } from './utils';
 import { copyBlocks } from './blocks';
 import { isCreditNote, isFinalInvoice } from './invoices';
 import { isCountable, nextNumber } from './numbering';
@@ -883,6 +883,13 @@ export async function updateInvoice(
     await saveBlocks('invoice', id, tenantId, blocks);
   }
 
+  // Vastgelegd of betaald: naar de boekhouding, als de Moneybird-plug-in aan
+  // staat. Pas hier geladen, want moneybird.ts leest de factuur weer via dit bestand
+  if (updates.status === 'sent' || updates.status === 'paid') {
+    const { syncInvoiceToMoneybird } = await import('./moneybird');
+    await syncInvoiceToMoneybird(id, tenantId);
+  }
+
   return data as Invoice;
 }
 
@@ -995,6 +1002,102 @@ export async function createCreditNote(invoiceId: string | number, tenantId: str
     } as Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
     blocks
   );
+}
+
+/** Omzet en btw van één tarief */
+export interface VatRate {
+  rate: number;
+  base: number;
+  vat: number;
+}
+
+/** Eén factuur in het btw-overzicht, met zijn bedragen excl. en btw */
+export interface VatInvoice {
+  id: number;
+  invoice_number: string | null;
+  invoice_date: string;
+  status: string;
+  paid_at: string | null;
+  credit_for_invoice_id: number | null;
+  customer: any;
+  base: number;
+  vat: number;
+  total: number;
+  rates: VatRate[];
+}
+
+const cents = (amount: number) => Math.round(amount * 100) / 100;
+
+/** Telt de bedragen per tarief bij elkaar op, hoogste tarief eerst */
+function addRates(target: Map<number, VatRate>, rates: VatRate[]) {
+  for (const { rate, base, vat } of rates) {
+    const current = target.get(rate) || { rate, base: 0, vat: 0 };
+    target.set(rate, { rate, base: cents(current.base + base), vat: cents(current.vat + vat) });
+  }
+}
+
+const sortedRates = (rates: Map<number, VatRate>) => [...rates.values()].sort((a, b) => b.rate - a.rate);
+
+/**
+ * Het btw-overzicht over een periode, voor de btw-aangifte: per tarief de
+ * omzet exclusief btw en de btw, en de facturen waaruit dat komt.
+ *
+ * Op factuurdatum, want zo werkt de aangifte (het factuurstelsel). Alleen
+ * vastgelegde facturen tellen: verzonden en betaald, met creditfacturen als
+ * min-bedragen. Concepten en geannuleerde facturen tellen niet mee. Elke
+ * prijstabel wordt op centen afgerond, net als op de factuur zelf.
+ */
+export async function getVatOverview(tenantId: string, from: string, to: string) {
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select(`id, invoice_number, invoice_date, status, total, paid_at, credit_for_invoice_id, customer:customers(${CUSTOMER_SUMMARY}, btw_number)`)
+    .eq('tenant_id', tenantId)
+    .in('status', ['sent', 'paid'])
+    .gte('invoice_date', from)
+    .lte('invoice_date', to)
+    .order('invoice_date', { ascending: true })
+    .order('invoice_number', { ascending: true });
+
+  if (error) throw error;
+
+  // De prijstabellen van al die facturen, in stukken zodat de vraag niet te lang wordt
+  const ratesPerInvoice = new Map<number, Map<number, VatRate>>();
+  const ids = (invoices || []).map((invoice: any) => invoice.id);
+
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data: blocks, error: blocksError } = await supabase
+      .from('invoice_blocks')
+      .select('invoice_id, elements:invoice_elements(kind, tax_percentage, discount_percentage, items:invoice_items(quantity, price, is_heading))')
+      .eq('tenant_id', tenantId)
+      .in('invoice_id', ids.slice(i, i + 200));
+
+    if (blocksError) throw blocksError;
+
+    for (const block of (blocks || []) as any[]) {
+      const rates = ratesPerInvoice.get(block.invoice_id) || new Map<number, VatRate>();
+      for (const element of block.elements || []) {
+        if (element.kind !== 'prijstabel') continue;
+        const totals = calculateElementTotals(element);
+        addRates(rates, [{
+          rate: Number(element.tax_percentage) || 0,
+          base: cents(totals.subtotal - totals.discount),
+          vat: cents(totals.tax),
+        }]);
+      }
+      ratesPerInvoice.set(block.invoice_id, rates);
+    }
+  }
+
+  const totalRates = new Map<number, VatRate>();
+  const rows: VatInvoice[] = (invoices || []).map((invoice: any) => {
+    const rates = sortedRates(ratesPerInvoice.get(invoice.id) || new Map());
+    addRates(totalRates, rates);
+    const base = cents(rates.reduce((sum, r) => sum + r.base, 0));
+    const vat = cents(rates.reduce((sum, r) => sum + r.vat, 0));
+    return { ...invoice, base, vat, total: Number(invoice.total) || 0, rates };
+  });
+
+  return { rates: sortedRates(totalRates), invoices: rows };
 }
 
 // Notes

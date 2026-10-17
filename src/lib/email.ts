@@ -186,37 +186,25 @@ export function buildQuoteReminderEmailHtml({ tenant, customer, quote, token }: 
   });
 }
 
+type InvoiceEmailInvoice = Pick<Invoice, 'id' | 'invoice_number' | 'total' | 'due_date' | 'public_token'>;
+
 /**
- * De mail waarmee een factuur de deur uit gaat: logo, de eigen tekst uit
- * Instellingen, daaronder de betaalgegevens met de QR-code voor de bank-app,
- * en een knop naar de pagina waar de klant de factuur bekijkt en (met Mollie)
- * direct betaalt.
+ * De betaalgegevens met de QR-code voor de bank-app, zoals in de factuurmail
+ * en de betalingsherinnering. Leeg als er geen IBAN of bedrag is.
  *
  * De QR-code is een gewone afbeelding van onze eigen server: een data-URL of
  * SVG laten de meeste mailprogramma's niet zien.
  */
-export function buildInvoiceEmailHtml({
-  tenant,
-  customer,
-  invoice,
-}: {
-  tenant: Tenant;
-  customer: Customer;
-  invoice: Pick<Invoice, 'id' | 'invoice_number' | 'total' | 'due_date' | 'public_token'>;
-}): string {
+function invoicePaymentBlock(tenant: Tenant, invoice: InvoiceEmailInvoice): string {
   const token = invoice.public_token || '';
   const reference = invoiceReference(invoice);
   const amount = Number(invoice.total) || 0;
   const amountText = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
 
-  const intro = tenant.invoice_email_intro_text
-    ? toDisplayHtml(tenant.invoice_email_intro_text)
-    : `<p>Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
-       <p>Hierbij ontvangt u onze factuur van ${escapeHtml(amountText)}. U kunt hem hieronder bekijken en betalen.</p>`;
-
   const payment = { name: tenant.company_name || tenant.name || '', iban: tenant.iban || '', amount, reference };
-  const paymentBlock = canRequestPayment(payment)
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0 0 0;border:1px solid #efefef;border-radius:8px;">
+  if (!canRequestPayment(payment)) return '';
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0 0 0;border:1px solid #efefef;border-radius:8px;">
         <tr>
           <td width="120" style="padding:16px;vertical-align:top;">
             <img src="${escapeHtml(appUrl())}/api/public/invoices/${escapeHtml(token)}/qr"
@@ -233,15 +221,85 @@ export function buildInvoiceEmailHtml({
             <span style="color:#7f7f7f;">Omschrijving</span> ${escapeHtml(reference)}
           </td>
         </tr>
-      </table>`
-    : '';
+      </table>`;
+}
+
+/**
+ * De mail waarmee een factuur de deur uit gaat: logo, de eigen tekst uit
+ * Instellingen, daaronder de betaalgegevens met de QR-code voor de bank-app,
+ * en een knop naar de pagina waar de klant de factuur bekijkt en (met Mollie)
+ * direct betaalt.
+ */
+export function buildInvoiceEmailHtml({
+  tenant,
+  customer,
+  invoice,
+}: {
+  tenant: Tenant;
+  customer: Customer;
+  invoice: InvoiceEmailInvoice;
+}): string {
+  const amountText = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(
+    Number(invoice.total) || 0
+  );
+
+  const intro = tenant.invoice_email_intro_text
+    ? toDisplayHtml(tenant.invoice_email_intro_text)
+    : `<p>Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
+       <p>Hierbij ontvangt u onze factuur van ${escapeHtml(amountText)}. U kunt hem hieronder bekijken en betalen.</p>`;
 
   return emailLayout({
     top: tenantLogoRow(tenant),
-    content: intro + paymentBlock,
-    button: { label: 'Factuur bekijken en betalen', url: invoiceLink(token) },
+    content: intro + invoicePaymentBlock(tenant, invoice),
+    button: { label: 'Factuur bekijken en betalen', url: invoiceLink(invoice.public_token || '') },
     footer: tenantFooter(tenant),
   });
+}
+
+/**
+ * De betalingsherinnering als een factuur over de vervaldatum is. Zelfde
+ * opmaak, betaalgegevens en knop als de factuurmail, met een korte tekst; de
+ * tweede herinnering is iets dringender, maar blijft vriendelijk.
+ */
+export function buildInvoiceReminderEmailHtml({
+  tenant,
+  customer,
+  invoice,
+  count,
+}: {
+  tenant: Tenant;
+  customer: Customer;
+  invoice: InvoiceEmailInvoice;
+  /** De hoeveelste herinnering dit is: 1 of 2 */
+  count: number;
+}): string {
+  const number = escapeHtml(invoice.invoice_number || '');
+  const dueDate = invoice.due_date ? escapeHtml(new Date(invoice.due_date).toLocaleDateString('nl-NL')) : '';
+
+  const text =
+    count > 1
+      ? `<p style="margin:0 0 16px 0;">Eerder stuurden wij u een herinnering voor factuur ${number}, maar wij hebben de betaling nog niet ontvangen. Wilt u het bedrag zo snel mogelijk overmaken?</p>`
+      : `<p style="margin:0 0 16px 0;">Volgens onze administratie staat factuur ${number}${dueDate ? `, met als vervaldatum ${dueDate},` : ''} nog open. Wellicht is het u ontschoten.</p>`;
+
+  return emailLayout({
+    top: tenantLogoRow(tenant),
+    content: `<p style="margin:0 0 16px 0;">Beste ${escapeHtml(getCustomerDisplayName(customer))},</p>
+       ${text}
+       <p style="margin:0;">Heeft u inmiddels betaald? Dan kunt u deze mail als niet verzonden beschouwen. Heeft u vragen over de factuur, beantwoord dan gerust deze mail.</p>
+       ${invoicePaymentBlock(tenant, invoice)}`,
+    button: { label: 'Factuur bekijken en betalen', url: invoiceLink(invoice.public_token || '') },
+    footer: tenantFooter(tenant),
+  });
+}
+
+/** Het onderwerp van de betalingsherinnering */
+export function buildInvoiceReminderEmailSubject(
+  tenant: Tenant,
+  invoice: { invoice_number?: string | null },
+  customer: Partial<Customer>,
+  count: number
+): string {
+  return `${count > 1 ? 'Tweede herinnering' : 'Herinnering'}: ${buildInvoiceEmailSubject(tenant, invoice, customer)}`;
 }
 
 /**

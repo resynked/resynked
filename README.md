@@ -24,6 +24,14 @@ aannemers komen elkaar nooit tegen.
   betaalt hij daar direct met iDEAL en staat de factuur vanzelf op betaald
 - **Omzetgrafiek** op het dashboard, gevoed door betaalde facturen op hun
   betaaldatum
+- **Betalingsherinneringen**: staat het aan bij Instellingen > Facturen, dan
+  krijgt een verstuurde factuur die het ingestelde aantal dagen over de
+  vervaldatum is een herinnering met de betaalgegevens, en na nog eens zoveel
+  dagen een tweede. Vanuit de mailbox van wie de factuur verstuurde
+- **Btw-overzicht** per kwartaal of jaar: omzet en btw per tarief met de
+  rubriek op de aangifte, op factuurdatum. De export is een CSV voor de
+  boekhouder. Met de optionele Moneybird-plug-in gaat elke vastgelegde factuur
+  (en zijn betaling) vanzelf naar de boekhouding
 
 ## Techniek
 
@@ -56,7 +64,7 @@ RLS-policies op de tabellen vormen de tweede laag.
    # Waar demo-aanvragen van de website naartoe gaan
    DEMO_REQUEST_EMAIL=info@synbased.com
 
-   # Dagelijkse taken (vercel.json), zoals herinneringen voor offertes.
+   # Dagelijkse taken (vercel.json): herinneringen voor offertes en facturen.
    # Vercel stuurt dit mee; zonder deze waarde weigert de taak elke aanroep
    CRON_SECRET=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
 
@@ -159,6 +167,7 @@ diensten te verbeteren.
 | `quotes`, `quote_items` | offertes met vrije regels |
 | `invoices`, `invoice_items` | facturen met vrije regels |
 | `notes` | notities per klant |
+| `mollie_accounts`, `moneybird_accounts` | plug-ins voor betalen en boekhouding, met versleutelde sleutel |
 
 Een offerte die is omgezet houdt `converted_to_invoice_id` vast; de factuur
 verwijst met `quote_id` terug.
