@@ -1,5 +1,5 @@
 /**
- * Het standaardsjabloon voor offertes en facturen, in de huisstijl van Khance:
+ * Het standaardsjabloon voor offertes en facturen, in de huisstijl van Synbased:
  * zwart-wit, Inter, dunne grijze lijnen. Het formaat (staand of liggend A4)
  * zit niet in het sjabloon maar komt uit de instelling bij Offertes en
  * Facturen; zie .document-paper in globals.css. Wie bij Instellingen >
@@ -108,7 +108,7 @@ ${invoice ? '\n  <div class="document-payment" data-slot="betaling"></div>\n' : 
 export const DEFAULT_QUOTE_TEMPLATE = (styles(false) + page(false)).trim();
 export const DEFAULT_INVOICE_TEMPLATE = (styles(true) + page(true)).trim();
 
-/** Het sjabloon voor een document: het eigen sjabloon van de aannemer, of anders dat van Khance */
+/** Het sjabloon voor een document: het eigen sjabloon van de aannemer, of anders dat van Synbased */
 export function documentTemplate(title: 'Offerte' | 'Factuur' | 'Creditfactuur', own?: string | null): string {
   if (own?.trim()) return own;
   return title === 'Offerte' ? DEFAULT_QUOTE_TEMPLATE : DEFAULT_INVOICE_TEMPLATE;

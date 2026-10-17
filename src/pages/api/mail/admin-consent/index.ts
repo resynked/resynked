@@ -3,7 +3,7 @@ import { appUrl } from '@/lib/email';
 
 /**
  * De link die een gebruiker naar zijn IT-beheerder stuurt. De beheerder heeft
- * zelf geen account bij Khance; deze route stuurt alleen door naar Microsoft,
+ * zelf geen account bij Synbased; deze route stuurt alleen door naar Microsoft,
  * waar hij met één klik toestemming geeft voor de hele organisatie.
  *
  * .default vraagt precies de rechten die in de app-registratie staan.

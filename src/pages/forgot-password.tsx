@@ -51,7 +51,7 @@ export default function ForgotPassword() {
       <div className="login-wrapper">
         <div className="login-block">
           <div className="logo">
-            <Image src="/logo.svg" alt="Khance Logo" width={60} height={60} priority />
+            <Image src="/logo.svg" alt="Synbased Logo" width={60} height={60} priority />
           </div>
           <h1>Wachtwoord vergeten</h1>
           {sent ? (

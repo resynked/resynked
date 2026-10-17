@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return finish(res, {
       ok: false,
       adminRequired: true,
-      error: 'Je organisatie wil dat een beheerder Khance eerst goedkeurt',
+      error: 'Je organisatie wil dat een beheerder Synbased eerst goedkeurt',
     });
   }
 

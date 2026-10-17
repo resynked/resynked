@@ -275,22 +275,22 @@ export function buildCreditNoteEmailHtml({
 }
 
 /**
- * De mail met de link om een nieuw wachtwoord te kiezen. Van Khance zelf, dus
- * met het logo van Khance bovenaan in plaats van dat van een aannemer.
+ * De mail met de link om een nieuw wachtwoord te kiezen. Van Synbased zelf, dus
+ * met het logo van Synbased bovenaan in plaats van dat van een aannemer.
  */
 export function buildPasswordResetEmailHtml({ name, link }: { name: string | null; link: string }): string {
   return emailLayout({
     // Het logo als PNG: mailprogramma's tonen geen SVG
     top: `<tr>
         <td style="padding:0 0 24px 0;">
-          <img src="${escapeHtml(appUrl())}/logo-email.png" alt="Khance" width="40" height="40" style="display:block;border:0;">
+          <img src="${escapeHtml(appUrl())}/logo-email.png" alt="Synbased" width="40" height="40" style="display:block;border:0;">
         </td>
       </tr>`,
     content: `<p style="margin:0 0 16px 0;">${name ? `Hoi ${escapeHtml(name)},` : 'Hoi,'}</p>
-       <p style="margin:0;">Je hebt gevraagd om een nieuw wachtwoord voor je Khance-account. Met de knop hieronder kies je er een.</p>`,
+       <p style="margin:0;">Je hebt gevraagd om een nieuw wachtwoord voor je Synbased-account. Met de knop hieronder kies je er een.</p>`,
     button: { label: 'Nieuw wachtwoord kiezen', url: link },
     note: 'Deze link werkt één keer en is een uur geldig. Heb je dit niet zelf gevraagd? Dan kun je deze mail negeren; je wachtwoord blijft hetzelfde.',
-    footer: 'Khance',
+    footer: 'Synbased',
   });
 }
 
@@ -344,7 +344,7 @@ export interface DemoRequest {
   message: string;
 }
 
-/** Een demo-aanvraag van de website, naar Khance zelf. Met "Beantwoorden" mail je de aanvrager. */
+/** Een demo-aanvraag van de website, naar Synbased zelf. Met "Beantwoorden" mail je de aanvrager. */
 export function buildDemoRequestEmailHtml(request: DemoRequest): string {
   const rows = [
     ['Naam', request.name],

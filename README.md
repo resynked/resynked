@@ -1,4 +1,4 @@
-# Khance
+# Synbased
 
 Offerte- en factuursysteem voor aannemers. Elke aannemer heeft een eigen account
 (tenant) met zijn eigen klanten, offertes en facturen; gegevens van verschillende
@@ -48,13 +48,13 @@ RLS-policies op de tabellen vormen de tweede laag.
    # Het adres van de app, voor de link in de offertemail
    APP_URL=http://localhost:3000
 
-   # Mail van Khance zelf, zoals "Wachtwoord vergeten" (resend.com).
+   # Mail van Synbased zelf, zoals "Wachtwoord vergeten" (resend.com).
    # Het domein van de afzender moet bij Resend geverifieerd zijn
    RESEND_API_KEY=...
    # Optioneel; zonder dit wordt het noreply@ op het domein van APP_URL
-   EMAIL_FROM="Khance <noreply@khance.com>"
+   EMAIL_FROM="Synbased <noreply@synbased.com>"
    # Waar demo-aanvragen van de website naartoe gaan
-   DEMO_REQUEST_EMAIL=info@khance.com
+   DEMO_REQUEST_EMAIL=info@synbased.com
 
    # Dagelijkse taken (vercel.json), zoals herinneringen voor offertes.
    # Vercel stuurt dit mee; zonder deze waarde weigert de taak elke aanroep
@@ -67,7 +67,7 @@ RLS-policies op de tabellen vormen de tweede laag.
    MICROSOFT_CLIENT_ID=...
    MICROSOFT_CLIENT_SECRET=...
 
-   # WhatsApp-bot van Khance, voor iedereen hetzelfde (zie hieronder)
+   # WhatsApp-bot van Synbased, voor iedereen hetzelfde (zie hieronder)
    WHATSAPP_VERIFY_TOKEN=...     # zelf verzonnen, zelfde als bij Meta bij de webhook
    WHATSAPP_TOKEN=...            # permanente token van een systeemgebruiker
    WHATSAPP_PHONE_NUMBER_ID=...  # het id van het nummer bij Meta, niet het nummer zelf
@@ -123,7 +123,7 @@ registrations*:
    personal Microsoft accounts*.
 2. Redirect-URI's (platform *Web*): `{APP_URL}/api/mail/callback/microsoft` en
    `{APP_URL}/api/mail/admin-consent/done` (voor de link die een IT-beheerder
-   gebruikt om Khance voor zijn hele organisatie goed te keuren).
+   gebruikt om Synbased voor zijn hele organisatie goed te keuren).
 3. Onder *API permissions* (Microsoft Graph, delegated): `Mail.ReadWrite`,
    `Mail.Send`, `Calendars.ReadWrite`, `User.Read`, `offline_access`.
 4. Onder *Certificates & secrets* een client secret aanmaken.
@@ -165,7 +165,7 @@ verwijst met `quote_id` terug.
 
 ## WhatsApp: offerte maken met een bericht
 
-Khance heeft één WhatsApp-nummer, de bot, met één app bij Meta. De gegevens
+Synbased heeft één WhatsApp-nummer, de bot, met één app bij Meta. De gegevens
 daarvan staan in de omgevingsvariabelen en gelden voor iedereen. Bij
 **Instellingen > Plug-ins > WhatsApp** ziet een gebruiker het nummer van de bot
 en (ingekort) de token, maar kan hij ze niet wijzigen; hij vult alleen zijn
@@ -188,7 +188,7 @@ erbij. `stop` wist zo'n half afgemaakte offerte, `help` geeft een voorbeeld.
 Alleen tekstberichten; spraakberichten en foto's worden (nog) niet gelezen.
 
 Instellen bij [Meta for Developers](https://developers.facebook.com/), eenmalig
-voor heel Khance:
+voor heel Synbased:
 
 1. Maak een app van het type *Business* en voeg het product **WhatsApp** toe.
 2. Koppel het telefoonnummer van de bot: één nummer voor alle gebruikers, dat

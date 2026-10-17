@@ -28,7 +28,7 @@ const PROVIDER_NAMES: Record<MailProviderName, string> = {
  * gekoppeld is, vervangt die koppeling.
  *
  * WhatsApp koppelt geen mailbox maar het eigen mobiele nummer van de
- * gebruiker aan de bot van Khance, en staat daar los van.
+ * gebruiker aan de bot van Synbased, en staat daar los van.
  */
 export default function PluginsSettings() {
   const toast = useToast();
@@ -85,7 +85,7 @@ export default function PluginsSettings() {
       setAdminRequired(false);
       toast.success(
         'Gekoppeld',
-        connected ? `Je mail en agenda van ${connected.email} staan nu in Khance` : 'Je account is gekoppeld'
+        connected ? `Je mail en agenda van ${connected.email} staan nu in Synbased` : 'Je account is gekoppeld'
       );
     };
 
@@ -146,7 +146,7 @@ export default function PluginsSettings() {
   const disconnect = async () => {
     const confirmed = await confirm({
       title: `${account ? PROVIDER_NAMES[account.provider] : 'Koppeling'} uitzetten`,
-      message: `${account?.email || 'Je account'} wordt ontkoppeld; Inbox en Agenda verdwijnen uit Khance. Je mail en afspraken blijven gewoon in ${account ? PROVIDER_NAMES[account.provider] : 'je account'} staan.`,
+      message: `${account?.email || 'Je account'} wordt ontkoppeld; Inbox en Agenda verdwijnen uit Synbased. Je mail en afspraken blijven gewoon in ${account ? PROVIDER_NAMES[account.provider] : 'je account'} staan.`,
       confirmText: 'Uitzetten',
       negative: true,
       cancelText: 'Annuleren',

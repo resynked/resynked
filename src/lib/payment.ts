@@ -53,7 +53,7 @@ export function epcPayload({ name, iban, amount, reference }: PaymentRequest): s
   ].join('\n');
 }
 
-/** De omschrijving bij de betaling: het factuurnummer, of anders het nummer in Khance */
+/** De omschrijving bij de betaling: het factuurnummer, of anders het nummer in Synbased */
 export function invoiceReference(invoice: { id: number | string; invoice_number?: string | null }): string {
   return `Factuur ${invoice.invoice_number || invoice.id}`;
 }

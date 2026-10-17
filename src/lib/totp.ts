@@ -89,7 +89,7 @@ export function verifyCode(secret: string, code: string, lastCounter: number | n
   return null;
 }
 
-/** De link in de QR-code. De app toont "Khance" met het e-mailadres eronder */
+/** De link in de QR-code. De app toont "Synbased" met het e-mailadres eronder */
 export function otpauthUrl(secret: string, email: string): string {
   const label = encodeURIComponent(`${APP_NAME}:${email}`);
   const params = new URLSearchParams({

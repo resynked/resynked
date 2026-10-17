@@ -25,11 +25,11 @@ const PENDING_MINUTES = 60;
 const CANCEL_PATTERN = /^\s*(stop|annuleer|annuleren|wis)\s*[.!]?\s*$/i;
 const HELP_PATTERN = /^\s*(help|hulp|\?)\s*$/i;
 
-const HELP_TEXT = `Stuur me wat je bij de klant ziet of opmeet, dan zet ik een conceptofferte voor je klaar in Khance. Bijvoorbeeld:
+const HELP_TEXT = `Stuur me wat je bij de klant ziet of opmeet, dan zet ik een conceptofferte voor je klaar in Synbased. Bijvoorbeeld:
 
 _Keuken 25 m² muren schilderen, plafond 12 m² sauzen. Klant Jan de Vries, Dorpsstraat 1, 1234 AB Utrecht, 06 12345678_
 
-Noem je een klant die al in Khance staat, dan gebruik ik die; anders maak ik een nieuwe klant aan. Stuur *stop* om een half afgemaakte offerte te wissen.`;
+Noem je een klant die al in Synbased staat, dan gebruik ik die; anders maak ik een nieuwe klant aan. Stuur *stop* om een half afgemaakte offerte te wissen.`;
 
 /** Eén binnengekomen bericht, zoals de webhook het doorgeeft. */
 export interface IncomingMessage {
@@ -47,7 +47,7 @@ export async function handleMessage(message: IncomingMessage) {
   if (!account) {
     console.warn('WhatsApp: bericht van een nummer dat bij niemand gekoppeld is:', message.from);
     return reply(
-      'Dit nummer is nog niet gekoppeld aan Khance. Vul in Khance bij Instellingen › Plug-ins › WhatsApp je mobiele nummer in, dan kun je meteen beginnen.'
+      'Dit nummer is nog niet gekoppeld aan Synbased. Vul in Synbased bij Instellingen › Plug-ins › WhatsApp je mobiele nummer in, dan kun je meteen beginnen.'
     );
   }
 
@@ -74,7 +74,7 @@ async function createQuoteFromMessage(account: WhatsAppAccountRow, message: Inco
     ai = await openAi(account.user_id);
   } catch (error) {
     if (error instanceof AiKeyError) {
-      return reply('Om offertes te maken heb ik een AI-plug-in nodig. Zet er een aan bij Instellingen › Plug-ins › AI in Khance.');
+      return reply('Om offertes te maken heb ik een AI-plug-in nodig. Zet er een aan bij Instellingen › Plug-ins › AI in Synbased.');
     }
     throw error;
   }
@@ -118,7 +118,7 @@ async function createQuoteFromMessage(account: WhatsAppAccountRow, message: Inco
   if (!number) {
     await setPending(account.id, transcript);
     return reply(
-      'Ik kan nog geen offertenummer geven. Stel bij Instellingen › Account in Khance het eerstvolgende offertenummer in en stuur me dan een berichtje, dan maak ik hem alsnog.'
+      'Ik kan nog geen offertenummer geven. Stel bij Instellingen › Account in Synbased het eerstvolgende offertenummer in en stuur me dan een berichtje, dan maak ik hem alsnog.'
     );
   }
 

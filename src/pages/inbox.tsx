@@ -64,7 +64,7 @@ const FOLDER_ICONS: Record<MailFolderKind, typeof Inbox> = {
 
 /** Zoveel labels staan er in beeld; de rest komt tevoorschijn met "Meer tonen" */
 const LABELS_VISIBLE = 8;
-const LABELS_COLLAPSED_KEY = 'khance:mail-labels-collapsed';
+const LABELS_COLLAPSED_KEY = 'synbased:mail-labels-collapsed';
 
 /** Wat je met een gesprek kunt doen waarna het uit de lijst verdwijnt */
 type RemoveAction = 'archive' | 'trash' | 'spam' | 'notspam';

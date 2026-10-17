@@ -8,7 +8,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 
 const DASHBOARD = 'https://my.mollie.com/dashboard/developers/api-keys';
 
-/** Wat Mollie binnen Khance aanzet, bovenop de QR-code die iedereen al heeft */
+/** Wat Mollie binnen Synbased aanzet, bovenop de QR-code die iedereen al heeft */
 const PARTS = [
   {
     icon: Zap,
@@ -139,7 +139,7 @@ export default function MolliePluginSection() {
           <div className="plugin-detail-title">
             <div>
               <h2>Mollie</h2>
-              <span className="description">Door Khance</span>
+              <span className="description">Door Synbased</span>
             </div>
             {connected ? (
               <button type="button" className="button negative" onClick={remove}>
@@ -208,7 +208,7 @@ export default function MolliePluginSection() {
             <dt>Mogelijkheden</dt>
             <dd>Facturen online laten betalen en automatisch op betaald zetten</dd>
             <dt>Ontwikkelaar</dt>
-            <dd>Khance</dd>
+            <dd>Synbased</dd>
             <dt>Categorie</dt>
             <dd>Betalingen</dd>
             <dt>Kosten</dt>

@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await sendSystemEmail({
       to: email,
-      subject: 'Kies een nieuw wachtwoord voor Khance',
+      subject: 'Kies een nieuw wachtwoord voor Synbased',
       html: buildPasswordResetEmailHtml({
         name: user.name,
         link: `${appUrl()}/reset-password?token=${encodeURIComponent(token)}`,

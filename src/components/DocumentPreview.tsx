@@ -1132,7 +1132,7 @@ export default function DocumentPreview({
         dueDate={payment.dueDate}
       />
     ) : null;
-  // Het eigen sjabloon van de aannemer, of anders het standaardsjabloon van Khance
+  // Het eigen sjabloon van de aannemer, of anders het standaardsjabloon van Synbased
   const template = documentTemplate(
     title,
     title === 'Offerte' ? tenant?.quote_template_html : tenant?.invoice_template_html

@@ -240,7 +240,7 @@ export default function EditInvoice() {
     setIsMarking(false);
   };
 
-  /** Betaald buiten Khance om, zoals met de QR-code: legt meteen de betaaldatum vast */
+  /** Betaald buiten Synbased om, zoals met de QR-code: legt meteen de betaaldatum vast */
   const handleMarkPaid = async (paid: boolean) => {
     if (paid && !isFinal) {
       const confirmed = await confirm({

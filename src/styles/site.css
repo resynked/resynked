@@ -1,4 +1,4 @@
-/* De website op khance.com: wit, ruim en met dunne lijnen. Alles staat
+/* De website op synbased.com: wit, ruim en met dunne lijnen. Alles staat
    onder .site, zodat het niets in de app raakt. Knoppen en formulieren zijn
    die van de app uit globals.css. */
 .site {min-height: 100vh; display: flex; flex-direction: column; background: var(--color2); font-size: 15px; line-height: 1.6;}

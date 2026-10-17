@@ -51,7 +51,7 @@ async function startBrowser(): Promise<Browser> {
 }
 
 /**
- * Het adres waarop de gebruiker de download startte, zoals https://khance.com.
+ * Het adres waarop de gebruiker de download startte, zoals https://synbased.com.
  * De PDF-browser moet precies daar de pagina ophalen: de sessiecookie hoort
  * bij dat adres. Met APP_URL ging het mis zodra die ook maar iets anders was
  * (met of zonder www), en dan kwam de PDF-browser uit op het inloggen.

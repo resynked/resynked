@@ -527,7 +527,7 @@ export default function Settings() {
                             <div className="row-section">
                                 <div className="information">
                                     <label className="title" htmlFor="account_name">Naam</label>
-                                    <span className="description">Zo staat je naam in Khance, onder andere linksonder in het menu.</span>
+                                    <span className="description">Zo staat je naam in Synbased, onder andere linksonder in het menu.</span>
                                 </div>
                                 <div>
                                     <input
@@ -986,7 +986,7 @@ export default function Settings() {
                                     <label className="title" htmlFor="quote_template_html">Offertesjabloon</label>
                                     <span className="description">
                                         {templates.quote_template_html === DEFAULT_TEMPLATES.quote_template_html
-                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
+                                            ? 'Het standaardsjabloon van Synbased. Pas het aan naar je eigen ontwerp.'
                                             : 'De HTML van je eigen offerteontwerp.'}
                                     </span>
                                 </div>
@@ -1168,7 +1168,7 @@ export default function Settings() {
                                     <label className="title" htmlFor="invoice_template_html">Factuursjabloon</label>
                                     <span className="description">
                                         {templates.invoice_template_html === DEFAULT_TEMPLATES.invoice_template_html
-                                            ? 'Het standaardsjabloon van Khance. Pas het aan naar je eigen ontwerp.'
+                                            ? 'Het standaardsjabloon van Synbased. Pas het aan naar je eigen ontwerp.'
                                             : 'De HTML van je eigen factuurontwerp.'}
                                     </span>
                                 </div>
@@ -1252,7 +1252,7 @@ export default function Settings() {
                                 het document meegroeien laat je leeg; die vult het systeem.
                             </p>
                             <p>
-                                Het vel zelf regelt Khance: het formaat (staand of liggend A4, bij Opmaak),
+                                Het vel zelf regelt Synbased: het formaat (staand of liggend A4, bij Opmaak),
                                 de rand en de ruimte tussen de pagina&apos;s op het scherm, en het afdrukken en
                                 de PDF. Zet daar in je sjabloon dus geen @page, rand of paginahoogte voor;
                                 je sjabloon doet alleen de opmaak binnen het vel.
@@ -1293,7 +1293,7 @@ export default function Settings() {
                             </ul>
 
                             <p>
-                                Zonder eigen sjabloon krijgt je document het standaardsjabloon van Khance.
+                                Zonder eigen sjabloon krijgt je document het standaardsjabloon van Synbased.
                                 Met &quot;Standaard herstellen&quot; ga je daar terug naartoe.
                             </p>
                         </SidePanel>

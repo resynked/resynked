@@ -1,12 +1,12 @@
 /**
- * Mail van Khance zelf, zoals de link voor een nieuw wachtwoord. Die kan niet
+ * Mail van Synbased zelf, zoals de link voor een nieuw wachtwoord. Die kan niet
  * via de gekoppelde Gmail of Outlook van de gebruiker: wie zijn wachtwoord kwijt
  * is, is niet ingelogd, en heeft misschien nooit een mailbox gekoppeld.
  *
  * Verstuurd via Resend (resend.com), rechtstreeks met hun API.
  * RESEND_API_KEY is de sleutel uit hun dashboard. Het afzendadres is
  * EMAIL_FROM, of anders noreply@ op het domein van de app (APP_URL), zoals
- * "Khance <noreply@khance.com>". Dat domein moet bij Resend geverifieerd zijn.
+ * "Synbased <noreply@synbased.com>". Dat domein moet bij Resend geverifieerd zijn.
  */
 export async function sendSystemEmail({
   to,
@@ -41,5 +41,5 @@ function defaultFrom(): string {
   const url = process.env.APP_URL || process.env.NEXTAUTH_URL;
   if (!url) throw new Error('Zet EMAIL_FROM of APP_URL in de omgevingsvariabelen');
   const host = new URL(url).hostname.replace(/^www\./, '');
-  return `Khance <noreply@${host}>`;
+  return `Synbased <noreply@${host}>`;
 }

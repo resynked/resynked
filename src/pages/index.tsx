@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import SiteLayout from '@/components/site/SiteLayout';
 
-/** Wat er in het abonnement zit; alleen wat Khance echt kan */
+/** Wat er in het abonnement zit; alleen wat Synbased echt kan */
 const INCLUDED = [
   'Onbeperkt offertes en facturen',
   'Online laten tekenen en betalen met QR-code',
@@ -40,7 +40,7 @@ const FEATURES = [
   {
     icon: Inbox,
     title: 'Je mail en agenda erbij',
-    text: 'Gmail of Outlook in Khance: lees, beantwoord en plan zonder te wisselen tussen programma’s.',
+    text: 'Gmail of Outlook in Synbased: lees, beantwoord en plan zonder te wisselen tussen programma’s.',
   },
   {
     icon: Sparkles,
@@ -60,7 +60,7 @@ const FEATURES = [
   {
     icon: BellRing,
     title: 'Vanzelf opvolgen',
-    text: 'Nog niet getekend? Khance stuurt na een paar dagen een vriendelijke herinnering namens jou.',
+    text: 'Nog niet getekend? Synbased stuurt na een paar dagen een vriendelijke herinnering namens jou.',
   },
   {
     icon: ShieldCheck,
@@ -71,7 +71,7 @@ const FEATURES = [
 
 const FAQ = [
   {
-    q: 'Voor wie is Khance?',
+    q: 'Voor wie is Synbased?',
     a: 'Voor aannemers en vakmensen: schilders, tegelzetters, installateurs, timmerlieden en klusbedrijven die snel een nette offerte willen maken en sneller betaald willen worden.',
   },
   {
@@ -88,17 +88,17 @@ const FAQ = [
   },
   {
     q: 'Moet ik zelf iets installeren?',
-    a: 'Nee. Khance werkt in de browser op je computer, tablet en telefoon. Vraag een demo aan, dan laten we je alles zien en zetten we je account klaar.',
+    a: 'Nee. Synbased werkt in de browser op je computer, tablet en telefoon. Vraag een demo aan, dan laten we je alles zien en zetten we je account klaar.',
   },
 ];
 
 /**
- * De homepage van khance.com: wat Khance is, wat het kan, wat het kost, en
+ * De homepage van synbased.com: wat Synbased is, wat het kan, wat het kost, en
  * een demo aanvragen. Ingelogd? Dan staat er in de kop "Naar dashboard".
  */
 export default function Home() {
   return (
-    <SiteLayout description="Khance is het offerte- en factuursysteem voor vakmensen. Offertes laten tekenen, facturen met QR-code, je mail en agenda erbij, en AI die aanvragen omzet naar offertes. € 35 per maand.">
+    <SiteLayout description="Synbased is het offerte- en factuursysteem voor vakmensen. Offertes laten tekenen, facturen met QR-code, je mail en agenda erbij, en AI die aanvragen omzet naar offertes. € 35 per maand.">
       <section className="site-hero">
         <div className="site-container">
           <Link href="/#functies" className="site-pill">
@@ -120,7 +120,7 @@ export default function Home() {
           <div className="site-hero-visual">
             <Image
               src="/screens/dashboard.webp"
-              alt="Het dashboard van Khance met openstaande offertes, facturen en de omzet"
+              alt="Het dashboard van Synbased met openstaande offertes, facturen en de omzet"
               width={1680}
               height={1070}
               sizes="(max-width: 1120px) 100vw, 1080px"
@@ -168,7 +168,7 @@ export default function Home() {
             <div className="site-feature-visual">
               <Image
                 src="/screens/inbox.webp"
-                alt="De inbox in Khance met een aanvraag die je omzet naar een offerte"
+                alt="De inbox in Synbased met een aanvraag die je omzet naar een offerte"
                 width={1200}
                 height={602}
                 sizes="(max-width: 1000px) 100vw, 640px"
@@ -183,7 +183,7 @@ export default function Home() {
               <h3>Laat hem online tekenen</h3>
               <p>
                 Je klant krijgt een nette mail met een knop. Hij bekijkt de offerte en tekent hem direct; jij ziet wanneer
-                hij hem opende, en Khance stuurt zelf een herinnering als het even duurt.
+                hij hem opende, en Synbased stuurt zelf een herinnering als het even duurt.
               </p>
             </div>
             <div className="site-feature-visual">
@@ -197,7 +197,7 @@ export default function Home() {
               />
               {/* Een offerte maken met één WhatsApp-bericht aan de bot */}
               <div className="whatsapp" aria-hidden="true">
-                <div className="title">Khance</div>
+                <div className="title">Synbased</div>
                 <p className="own">
                   Familie Verhoef, Voorbeeldlaan 12. Keuken en gang 45 m² oude tegels eruit, vloerverwarming en
                   opnieuw tegelen.
@@ -238,7 +238,7 @@ export default function Home() {
           </div>
           <div className="site-price">
             <div className="site-price-head">
-              <span className="title">Khance</span>
+              <span className="title">Synbased</span>
               <div className="amount">
                 <strong>€ 35</strong>
                 <span>per maand, excl. btw</span>
@@ -279,7 +279,7 @@ export default function Home() {
       <section className="site-closing">
         <div className="site-container">
           <h2>Klaar om tijd te besparen?</h2>
-          <p>We laten je in een halfuur zien hoe Khance werkt, met jouw manier van werken.</p>
+          <p>We laten je in een halfuur zien hoe Synbased werkt, met jouw manier van werken.</p>
           <Link href="/demo" className="button">
             Demo aanvragen
           </Link>

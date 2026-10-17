@@ -79,9 +79,9 @@ export default function Login() {
       <div className="login-wrapper">
         <div className="login-block">
           <div className="logo">
-            <Image src="/logo.svg" alt="Khance Logo" width={60} height={60} priority />
+            <Image src="/logo.svg" alt="Synbased Logo" width={60} height={60} priority />
           </div>
-          <h1>{needsCode ? 'Tweestapsverificatie' : 'Inloggen bij Khance'}</h1>
+          <h1>{needsCode ? 'Tweestapsverificatie' : 'Inloggen bij Synbased'}</h1>
           {needsCode && (
             <form onSubmit={handleSubmit} className="login-form">
               <p className="placeholder">Vul de code van 6 cijfers uit je authenticator-app in, of een van je back-upcodes.</p>

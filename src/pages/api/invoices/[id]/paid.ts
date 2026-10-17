@@ -5,7 +5,7 @@ import { updateInvoice } from '@/lib/db';
 
 /**
  * Een factuur als betaald markeren, of dat terugdraaien: POST { paid }.
- * Voor betalingen die buiten Khance binnenkomen, zoals een overschrijving met
+ * Voor betalingen die buiten Synbased binnenkomen, zoals een overschrijving met
  * de QR-code. De betaaldatum gaat mee (zie updateInvoice); daarop telt de omzet.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { pageTitle } from '@/lib/constants';
 
 /**
- * De omlijsting van de website op khance.com: kop met menu, en de voet.
+ * De omlijsting van de website op synbased.com: kop met menu, en de voet.
  * Wie al ingelogd is, ziet "Naar dashboard" in plaats van "Inloggen".
  */
 export default function SiteLayout({
@@ -14,7 +14,7 @@ export default function SiteLayout({
   description,
   children,
 }: {
-  /** Leeg voor de homepage: dan staat er alleen "Khance" in het tabblad */
+  /** Leeg voor de homepage: dan staat er alleen "Synbased" in het tabblad */
   title?: string;
   description: string;
   children: ReactNode;
@@ -25,18 +25,18 @@ export default function SiteLayout({
   return (
     <div className="site">
       <Head>
-        <title>{title ? pageTitle(title) : 'Khance - Offertes en facturen voor vakmensen'}</title>
+        <title>{title ? pageTitle(title) : 'Synbased - Offertes en facturen voor vakmensen'}</title>
         <meta name="description" content={description} />
-        <meta property="og:title" content={title ? pageTitle(title) : 'Khance'} />
+        <meta property="og:title" content={title ? pageTitle(title) : 'Synbased'} />
         <meta property="og:description" content={description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <header className="site-header">
         <div className="site-container">
-          <Link href="/" className="site-logo" aria-label="Khance, naar de homepage">
+          <Link href="/" className="site-logo" aria-label="Synbased, naar de homepage">
             <Image src="/logo.svg" alt="" width={28} height={28} priority />
-            <span>Khance</span>
+            <span>Synbased</span>
           </Link>
 
           <nav className="site-nav" aria-label="Hoofdmenu">
@@ -72,7 +72,7 @@ export default function SiteLayout({
           <div className="site-footer-brand">
             <Link href="/" className="site-logo">
               <Image src="/logo.svg" alt="" width={24} height={24} />
-              <span>Khance</span>
+              <span>Synbased</span>
             </Link>
             <p>Offertes, facturen en mail voor vakmensen. Alles op één plek.</p>
           </div>
@@ -98,7 +98,7 @@ export default function SiteLayout({
         </div>
 
         <div className="site-container site-footer-bottom">
-          <span>© {new Date().getFullYear()} Khance</span>
+          <span>© {new Date().getFullYear()} Synbased</span>
         </div>
       </footer>
     </div>

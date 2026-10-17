@@ -5,11 +5,11 @@ import SiteLayout from '@/components/site/SiteLayout';
  * De privacyverklaring. Google vraagt hierom voor de koppeling met Gmail, en
  * de tekst over Google-gegevens ("Limited Use") moet erin blijven staan.
  *
- * Concept: laat dit nakijken door een jurist voordat Khance live gaat.
+ * Concept: laat dit nakijken door een jurist voordat Synbased live gaat.
  */
 export default function Privacy() {
   return (
-    <SiteLayout title="Privacyverklaring" description="Hoe Khance omgaat met je gegevens en die van je klanten.">
+    <SiteLayout title="Privacyverklaring" description="Hoe Synbased omgaat met je gegevens en die van je klanten.">
       <section className="site-section">
         <article className="site-container site-narrow site-legal">
           <span className="site-eyebrow">Juridisch</span>
@@ -17,20 +17,20 @@ export default function Privacy() {
           <p className="placeholder">Laatst bijgewerkt: 16 oktober 2026</p>
 
           <p>
-            Khance is een online programma voor offertes, facturen, klanten, mail en agenda. In deze verklaring lees je
+            Synbased is een online programma voor offertes, facturen, klanten, mail en agenda. In deze verklaring lees je
             welke gegevens we verwerken, waarom, en wat je rechten zijn.
           </p>
 
           <h2>Wie we zijn</h2>
           <p>
-            Khance, ingeschreven bij de Kamer van Koophandel onder nummer [KvK-nummer], gevestigd aan [adres]. Vragen
-            over privacy stuur je naar <a href="mailto:info@khance.com">info@khance.com</a>.
+            Synbased, ingeschreven bij de Kamer van Koophandel onder nummer [KvK-nummer], gevestigd aan [adres]. Vragen
+            over privacy stuur je naar <a href="mailto:info@synbased.com">info@synbased.com</a>.
           </p>
 
           <h2>Twee rollen</h2>
           <p>
             Voor je eigen account (je naam, e-mailadres en wachtwoord) en voor demo-aanvragen zijn wij
-            verwerkingsverantwoordelijke. De gegevens die jij in Khance zet over je klanten, zoals namen, adressen,
+            verwerkingsverantwoordelijke. De gegevens die jij in Synbased zet over je klanten, zoals namen, adressen,
             offertes en facturen, verwerken we in opdracht van jou: dan ben jij verantwoordelijk en zijn wij
             verwerker. De afspraken daarover staan in de verwerkersovereenkomst, die onderdeel is van de{' '}
             <Link href="/terms">algemene voorwaarden</Link>.
@@ -60,17 +60,17 @@ export default function Privacy() {
 
           <h2>Je mailbox en agenda (Google en Microsoft)</h2>
           <p>
-            Koppel je Gmail of Outlook, dan leest Khance je mail en agenda om ze in Khance te tonen, en verstuurt het
+            Koppel je Gmail of Outlook, dan leest Synbased je mail en agenda om ze in Synbased te tonen, en verstuurt het
             offertes, facturen en antwoorden vanaf jouw adres. De toegangssleutels slaan we versleuteld op. Je kunt de
             koppeling op elk moment verbreken in Instellingen &gt; Plug-ins, en intrekken bij Google of Microsoft.
           </p>
           <p>
-            Het gebruik en het doorgeven van gegevens die Khance van Google API&rsquo;s ontvangt, voldoet aan het{' '}
+            Het gebruik en het doorgeven van gegevens die Synbased van Google API&rsquo;s ontvangt, voldoet aan het{' '}
             <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noreferrer">
               Google API Services User Data Policy
             </a>
             , inclusief de eisen voor beperkt gebruik (Limited Use). We gebruiken deze gegevens alleen voor de functies
-            die jij in Khance ziet, verkopen ze niet, gebruiken ze niet voor advertenties en niet om AI-modellen te
+            die jij in Synbased ziet, verkopen ze niet, gebruiken ze niet voor advertenties en niet om AI-modellen te
             trainen.
           </p>
 
@@ -82,11 +82,11 @@ export default function Privacy() {
           </p>
 
           <h2>Met wie we gegevens delen</h2>
-          <p>We verkopen geen gegevens. We werken met deze dienstverleners, die alleen doen wat nodig is voor Khance:</p>
+          <p>We verkopen geen gegevens. We werken met deze dienstverleners, die alleen doen wat nodig is voor Synbased:</p>
           <ul>
             <li>Vercel (hosting van de website en de app)</li>
             <li>Supabase (database en opslag van bestanden)</li>
-            <li>Resend (mail van Khance zelf, zoals een nieuw wachtwoord)</li>
+            <li>Resend (mail van Synbased zelf, zoals een nieuw wachtwoord)</li>
             <li>Google en Microsoft (als je je mailbox koppelt)</li>
             <li>Meta (als je offertes via WhatsApp maakt)</li>
             <li>Mollie (als je betalingen via Mollie koppelt)</li>
@@ -113,13 +113,13 @@ export default function Privacy() {
           <h2>Je rechten</h2>
           <p>
             Je mag je gegevens inzien, laten verbeteren of verwijderen, bezwaar maken, de verwerking laten beperken en
-            je gegevens meenemen. Mail ons via <a href="mailto:info@khance.com">info@khance.com</a>; we reageren binnen
+            je gegevens meenemen. Mail ons via <a href="mailto:info@synbased.com">info@synbased.com</a>; we reageren binnen
             een maand. Ben je het niet met ons eens, dan kun je een klacht indienen bij de Autoriteit Persoonsgegevens.
           </p>
 
           <h2>Cookies</h2>
           <p>
-            Khance gebruikt alleen cookies die nodig zijn om in te loggen. We gebruiken geen advertentie- of
+            Synbased gebruikt alleen cookies die nodig zijn om in te loggen. We gebruiken geen advertentie- of
             volgcookies.
           </p>
 

@@ -9,7 +9,7 @@ import type { WhatsAppAccountInfo, WhatsAppConfig } from '@/lib/whatsapp/types';
 
 export type PluginProvider = MailProviderName | 'whatsapp';
 
-/** Wat een plug-in binnen Khance aanzet. */
+/** Wat een plug-in binnen Synbased aanzet. */
 interface PluginPart {
   icon: ComponentType<{ size?: number }>;
   name: string;
@@ -41,9 +41,9 @@ export const PLUGINS: Plugin<MailProviderName>[] = [
     provider: 'google',
     name: 'Google',
     icon: GoogleIcon,
-    summary: 'Gmail en Google Agenda in Khance',
+    summary: 'Gmail en Google Agenda in Synbased',
     about:
-      'Lees en beantwoord je Gmail vanuit je Inbox in Khance, en zie je afspraken uit Google Agenda. Wat je verstuurt gaat via Gmail zelf, dus het staat daar ook gewoon in Verzonden.',
+      'Lees en beantwoord je Gmail vanuit je Inbox in Synbased, en zie je afspraken uit Google Agenda. Wat je verstuurt gaat via Gmail zelf, dus het staat daar ook gewoon in Verzonden.',
     capabilities: 'Mail lezen, versturen en ordenen, agenda bekijken',
     parts: MAIL_PARTS,
     links: {
@@ -56,9 +56,9 @@ export const PLUGINS: Plugin<MailProviderName>[] = [
     provider: 'microsoft',
     name: 'Microsoft',
     icon: MicrosoftIcon,
-    summary: 'Outlook-mail en -agenda in Khance',
+    summary: 'Outlook-mail en -agenda in Synbased',
     about:
-      'Lees en beantwoord je Outlook-mail vanuit je Inbox in Khance, en zie je afspraken uit je Outlook-agenda. Werkt met Microsoft 365 voor bedrijven en met Outlook.com. Wat je verstuurt staat ook gewoon in Outlook in Verzonden.',
+      'Lees en beantwoord je Outlook-mail vanuit je Inbox in Synbased, en zie je afspraken uit je Outlook-agenda. Werkt met Microsoft 365 voor bedrijven en met Outlook.com. Wat je verstuurt staat ook gewoon in Outlook in Verzonden.',
     capabilities: 'Mail lezen, versturen en ordenen, agenda bekijken',
     parts: MAIL_PARTS,
     links: {
@@ -70,16 +70,16 @@ export const PLUGINS: Plugin<MailProviderName>[] = [
 ];
 
 /**
- * WhatsApp staat los van de mailbox: de bot van Khance, met het eigen
+ * WhatsApp staat los van de mailbox: de bot van Synbased, met het eigen
  * mobiele nummer van de gebruiker, naast Google of Microsoft.
  */
 export const WHATSAPP_PLUGIN: Plugin<'whatsapp'> = {
   provider: 'whatsapp',
   name: 'WhatsApp',
   icon: WhatsAppIcon,
-  summary: 'Maak onderweg een offerte met één WhatsApp-bericht aan de Khance-bot',
+  summary: 'Maak onderweg een offerte met één WhatsApp-bericht aan de Synbased-bot',
   about:
-    'Maak een offerte op de plek waar je bent. Stuur vanaf je telefoon een WhatsApp-bericht aan de Khance-bot met het werk, de aantallen en de klant, en Khance zet de offerte als concept klaar. Een klant die al in Khance staat wordt herkend; anders komt er een nieuwe klant bij. Je krijgt meteen een berichtje terug met het offertenummer en een link om hem na te lezen en te versturen.',
+    'Maak een offerte op de plek waar je bent. Stuur vanaf je telefoon een WhatsApp-bericht aan de Synbased-bot met het werk, de aantallen en de klant, en Synbased zet de offerte als concept klaar. Een klant die al in Synbased staat wordt herkend; anders komt er een nieuwe klant bij. Je krijgt meteen een berichtje terug met het offertenummer en een link om hem na te lezen en te versturen.',
   capabilities: 'Berichten lezen en beantwoorden, klanten zoeken en aanmaken, conceptoffertes aanmaken',
   parts: [
     {
@@ -112,7 +112,7 @@ interface PluginDetailProps {
   /** De vorige poging liep vast op toestemming van een beheerder */
   adminRequired: boolean;
   config: { googleClientId: string | null; microsoftAdminConsentUrl: string | null } | null;
-  /** Alleen bij WhatsApp: het gekoppelde nummer, de bot van Khance, en of er een AI-plug-in aan staat */
+  /** Alleen bij WhatsApp: het gekoppelde nummer, de bot van Synbased, en of er een AI-plug-in aan staat */
   whatsapp?: { account: WhatsAppAccountInfo | null; config: WhatsAppConfig; hasAi: boolean };
 }
 
@@ -134,7 +134,7 @@ function ExternalRow({ label, href }: { label: string; href: string }) {
  * goedkeuring komt kijken, met rechtsboven de knop om te koppelen.
  *
  * Bij WhatsApp staan daar de gegevens van de bot, zoals de API-sleutel bij een
- * AI-plug-in, maar vast: Khance stelt ze voor iedereen in. De gebruiker vult
+ * AI-plug-in, maar vast: Synbased stelt ze voor iedereen in. De gebruiker vult
  * alleen zijn eigen mobiele nummer in.
  */
 export default function PluginDetail({
@@ -170,7 +170,7 @@ export default function PluginDetail({
       <div className="plugin-detail-title">
         <div>
           <h2>{plugin.name}</h2>
-          <span className="description">Door Khance</span>
+          <span className="description">Door Synbased</span>
         </div>
         {connected ? (
           <button type="button" className="button negative" onClick={onRemove}>
@@ -215,7 +215,7 @@ export default function PluginDetail({
           <h3>Gegevens van Meta</h3>
           {whatsapp.config.configured ? (
             <p>
-              De bot draait op het WhatsApp-nummer van Khance; die gegevens stellen wij voor iedereen in, je hoeft
+              De bot draait op het WhatsApp-nummer van Synbased; die gegevens stellen wij voor iedereen in, je hoeft
               bij Meta niets aan te maken.{' '}
               {whatsapp.account
                 ? 'Berichten vanaf je mobiele nummer hieronder worden offertes in jouw account.'
@@ -223,7 +223,7 @@ export default function PluginDetail({
             </p>
           ) : (
             <div className="plugin-approval highlight">
-              <p>WhatsApp is nog niet ingesteld voor Khance. Zodra de bot aan staat, kun je hem hier installeren.</p>
+              <p>WhatsApp is nog niet ingesteld voor Synbased. Zodra de bot aan staat, kun je hem hier installeren.</p>
             </div>
           )}
           {!whatsapp.hasAi && (
@@ -264,7 +264,7 @@ export default function PluginDetail({
             </div>
             {whatsapp.account && (
               <p className="field-note">
-                Sla de bot op in je telefoon als Khance, met nummer {whatsapp.config.botNumber}, en stuur hem{' '}
+                Sla de bot op in je telefoon als Synbased, met nummer {whatsapp.config.botNumber}, en stuur hem{' '}
                 <strong>help</strong> voor een voorbeeld. Ander nummer? Verwijder de koppeling en installeer opnieuw.
               </p>
             )}
@@ -277,11 +277,11 @@ export default function PluginDetail({
             {plugin.provider === 'microsoft' ? (
               <>
                 <p>
-                  Met een werk- of schoolaccount kan je organisatie eisen dat een IT-beheerder Khance
+                  Met een werk- of schoolaccount kan je organisatie eisen dat een IT-beheerder Synbased
                   eerst goedkeurt. Je ziet dan bij het inloggen <strong>Goedkeuring van beheerder nodig</strong>.
                 </p>
                 <p>
-                  Stuur je beheerder deze link. Met één klik geeft hij Khance toestemming voor iedereen in
+                  Stuur je beheerder deze link. Met één klik geeft hij Synbased toestemming voor iedereen in
                   je organisatie; daarna kun je hier gewoon inloggen.
                 </p>
                 {config?.microsoftAdminConsentUrl && (
@@ -297,13 +297,13 @@ export default function PluginDetail({
             ) : (
               <>
                 <p>
-                  Google laat je bij het inloggen kiezen welke toegang je Khance geeft. Vink alles aan,
+                  Google laat je bij het inloggen kiezen welke toegang je Synbased geeft. Vink alles aan,
                   anders werken je Inbox of Agenda niet volledig. Toon Google de melding{' '}
                   <strong>Google heeft deze app niet geverifieerd</strong>, kies dan <strong>Geavanceerd</strong> en{' '}
-                  <strong>Doorgaan naar Khance</strong>.
+                  <strong>Doorgaan naar Synbased</strong>.
                 </p>
                 <p>
-                  Werk je met Google Workspace? Dan kan je beheerder Khance vooraf vertrouwen via
+                  Werk je met Google Workspace? Dan kan je beheerder Synbased vooraf vertrouwen via
                   Admin console › Beveiliging › Toegang en gegevensbeheer › API-beheer › App-toegang
                   beheren, met deze Client-ID:
                 </p>
@@ -326,7 +326,7 @@ export default function PluginDetail({
         <dt>Mogelijkheden</dt>
         <dd>{plugin.capabilities}</dd>
         <dt>Ontwikkelaar</dt>
-        <dd>Khance</dd>
+        <dd>Synbased</dd>
         <dt>Categorie</dt>
         <dd>Communicatie</dd>
         <ExternalRow label="Website" href={plugin.links.website} />
@@ -337,13 +337,13 @@ export default function PluginDetail({
       {whatsapp ? (
         <p className="field-note">
           Wat je de bot stuurt, gaat samen met je eerdere offerteregels naar je AI-plug-in om de offerte te maken.
-          Khance bewaart je berichten niet; alleen een bericht waar nog een klant bij ontbreekt, blijft een uur staan
+          Synbased bewaart je berichten niet; alleen een bericht waar nog een klant bij ontbreekt, blijft een uur staan
           tot je het aanvult. Je kunt de koppeling op elk moment hier bij Plug-ins verwijderen. De offerte zelf
-          controleer en verstuur je altijd in Khance; <Link href="/quotes">bij Offertes</Link> staat hij als concept.
+          controleer en verstuur je altijd in Synbased; <Link href="/quotes">bij Offertes</Link> staat hij als concept.
         </p>
       ) : (
         <p className="field-note">
-          Khance haalt je mail en afspraken steeds rechtstreeks bij {plugin.name} op en bewaart ze niet.
+          Synbased haalt je mail en afspraken steeds rechtstreeks bij {plugin.name} op en bewaart ze niet.
           Alleen de sleutel om toegang te krijgen staat versleuteld bij ons opgeslagen. Je kunt de koppeling
           op elk moment uitzetten hier bij Plug-ins, of de toegang intrekken bij {plugin.name} via Toegang beheren.
         </p>

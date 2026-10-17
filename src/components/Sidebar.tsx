@@ -8,7 +8,7 @@ import { useMailUnread } from '@/hooks/useMailUnread';
 import { LayoutDashboard, Inbox, CalendarDays, Users, FileText, ReceiptEuro, FilePen, Package, PanelLeft } from 'lucide-react';
 
 // Of de zijbalk ingeklapt staat, onthouden voor de volgende keer
-const COLLAPSED_KEY = 'khance:sidebar-collapsed';
+const COLLAPSED_KEY = 'synbased:sidebar-collapsed';
 
 // Elke pagina bouwt de zijbalk opnieuw op. Zonder dit geheugen zou hij bij
 // elke klik eerst even uitgeklapt staan voordat de opgeslagen stand er is
@@ -82,12 +82,12 @@ export default function Sidebar() {
         {collapsed ? (
           // Ingeklapt is het logo de knop om uit te klappen; bij hover zie je dat
           <button type="button" className="expand" aria-label="Zijbalk uitklappen" onClick={() => toggleCollapsed(false)}>
-            <Image src="/logo.svg" alt="Khance Logo" width={30} height={30} className="sidebar-logo" />
+            <Image src="/logo.svg" alt="Synbased Logo" width={30} height={30} className="sidebar-logo" />
             <PanelLeft size={18} className="expand-icon" />
           </button>
         ) : (
           <>
-            <Image src="/logo.svg" alt="Khance Logo" width={30} height={30} className="sidebar-logo" />
+            <Image src="/logo.svg" alt="Synbased Logo" width={30} height={30} className="sidebar-logo" />
             <button type="button" className="collapse" aria-label="Zijbalk inklappen" onClick={() => toggleCollapsed(true)}>
               <PanelLeft size={18} />
             </button>

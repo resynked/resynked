@@ -83,7 +83,7 @@ export async function apiFetch(url: string, accessToken: string, init: RequestIn
       response.status === 403 &&
       (/insufficient/i.test(message) ||
         ['ErrorAccessDenied', 'AccessDenied', 'Authorization_RequestDenied'].includes(data.error?.code));
-    if (missingScope) throw new MailAuthError('Geef Khance opnieuw toegang om dit te kunnen zien');
+    if (missingScope) throw new MailAuthError('Geef Synbased opnieuw toegang om dit te kunnen zien');
 
     // Gmail en Outlook hebben een grens op het aantal aanvragen per minuut
     if (response.status === 429 || /quota exceeded|rate ?limit/i.test(message)) {

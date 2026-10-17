@@ -41,7 +41,7 @@ export const AI_PLUGINS: AiPlugin[] = [
   },
 ];
 
-/** Wat een AI-plug-in binnen Khance aanzet. */
+/** Wat een AI-plug-in binnen Synbased aanzet. */
 const PARTS = [
   {
     icon: FileText,
@@ -83,7 +83,7 @@ export default function AiPluginDetail({ plugin, connected, replaces, saving, on
       <div className="plugin-detail-title">
         <div>
           <h2>{plugin.name}</h2>
-          <span className="description">Door Khance</span>
+          <span className="description">Door Synbased</span>
         </div>
         {connected ? (
           <button type="button" className="button negative" onClick={onRemove}>
@@ -155,7 +155,7 @@ export default function AiPluginDetail({ plugin, connected, replaces, saving, on
         <dt>Mogelijkheden</dt>
         <dd>Mail lezen en een voorstel maken voor klant en offerte</dd>
         <dt>Ontwikkelaar</dt>
-        <dd>Khance</dd>
+        <dd>Synbased</dd>
         <dt>Categorie</dt>
         <dd>AI</dd>
         {[
@@ -176,7 +176,7 @@ export default function AiPluginDetail({ plugin, connected, replaces, saving, on
 
       <p className="field-note">
         Alleen als je zelf op "Omzetten naar offerte" klikt, gaat de tekst van die ene mail naar {plugin.name},
-        samen met je eerdere offerteregels voor de prijzen. Khance bewaart geen mail; je sleutel staat versleuteld
+        samen met je eerdere offerteregels voor de prijzen. Synbased bewaart geen mail; je sleutel staat versleuteld
         opgeslagen en kun je hier op elk moment verwijderen of bij {plugin.name} intrekken.
       </p>
     </div>

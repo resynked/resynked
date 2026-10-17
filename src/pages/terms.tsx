@@ -4,11 +4,11 @@ import SiteLayout from '@/components/site/SiteLayout';
 /**
  * De algemene voorwaarden, met de verwerkersovereenkomst erin.
  *
- * Concept: laat dit nakijken door een jurist voordat Khance live gaat.
+ * Concept: laat dit nakijken door een jurist voordat Synbased live gaat.
  */
 export default function Terms() {
   return (
-    <SiteLayout title="Algemene voorwaarden" description="De algemene voorwaarden van Khance.">
+    <SiteLayout title="Algemene voorwaarden" description="De algemene voorwaarden van Synbased.">
       <section className="site-section">
         <article className="site-container site-narrow site-legal">
           <span className="site-eyebrow">Juridisch</span>
@@ -17,14 +17,14 @@ export default function Terms() {
 
           <h2>1. Wie en wat</h2>
           <p>
-            Deze voorwaarden gelden voor het gebruik van Khance, een online programma van Khance, ingeschreven bij de
+            Deze voorwaarden gelden voor het gebruik van Synbased, een online programma van Synbased, ingeschreven bij de
             Kamer van Koophandel onder nummer [KvK-nummer] (&ldquo;wij&rdquo;). Ze gelden tussen ons en het bedrijf dat
-            een account afneemt (&ldquo;jij&rdquo;). Khance is bedoeld voor zakelijk gebruik.
+            een account afneemt (&ldquo;jij&rdquo;). Synbased is bedoeld voor zakelijk gebruik.
           </p>
 
           <h2>2. Het abonnement</h2>
           <p>
-            Khance kost € 35 per maand, exclusief btw, per account. We factureren [maandelijks vooraf]. Het abonnement
+            Synbased kost € 35 per maand, exclusief btw, per account. We factureren [maandelijks vooraf]. Het abonnement
             loopt [per maand en is maandelijks opzegbaar]. Prijswijzigingen melden we minstens een maand van tevoren.
           </p>
 
@@ -36,14 +36,14 @@ export default function Terms() {
 
           <h2>4. Jouw gegevens</h2>
           <p>
-            Alles wat je in Khance zet, blijft van jou. Je bent zelf verantwoordelijk voor de inhoud van je offertes en
+            Alles wat je in Synbased zet, blijft van jou. Je bent zelf verantwoordelijk voor de inhoud van je offertes en
             facturen, en voor het bewaren ervan zolang de wet dat vraagt. Je kunt ze altijd als PDF downloaden.
           </p>
 
           <h2>5. Verwerkersovereenkomst</h2>
           <p>
             Over je klanten verwerken we persoonsgegevens in jouw opdracht. Daarvoor geldt: we verwerken ze alleen om
-            Khance te leveren en volgens jouw instructies; onze medewerkers en dienstverleners zijn tot geheimhouding
+            Synbased te leveren en volgens jouw instructies; onze medewerkers en dienstverleners zijn tot geheimhouding
             verplicht; we nemen passende beveiligingsmaatregelen; we schakelen alleen de dienstverleners in die in de{' '}
             <Link href="/privacy">privacyverklaring</Link> staan en melden nieuwe vooraf; we helpen je bij verzoeken van
             betrokkenen; een datalek melden we zonder onnodige vertraging; en na het einde van het abonnement
@@ -52,14 +52,14 @@ export default function Terms() {
 
           <h2>6. Beschikbaarheid</h2>
           <p>
-            We doen ons best om Khance altijd bereikbaar te houden, maar kunnen dat niet garanderen. Onderhoud plannen
+            We doen ons best om Synbased altijd bereikbaar te houden, maar kunnen dat niet garanderen. Onderhoud plannen
             we zoveel mogelijk buiten werktijden.
           </p>
 
           <h2>7. Koppelingen met anderen</h2>
           <p>
             Koppel je Gmail, Outlook, WhatsApp of Mollie, dan gelden ook de voorwaarden van die partijen. Voor hun
-            diensten zijn wij niet verantwoordelijk. Betalingen van je klanten gaan rechtstreeks naar jou; Khance
+            diensten zijn wij niet verantwoordelijk. Betalingen van je klanten gaan rechtstreeks naar jou; Synbased
             beheert geen geld.
           </p>
 
@@ -72,12 +72,12 @@ export default function Terms() {
           <h2>9. Aansprakelijkheid</h2>
           <p>
             Onze aansprakelijkheid is beperkt tot directe schade en tot ten hoogste het bedrag dat je in de twaalf
-            maanden daarvoor voor Khance betaalde, behalve bij opzet of grove schuld.
+            maanden daarvoor voor Synbased betaalde, behalve bij opzet of grove schuld.
           </p>
 
           <h2>10. Opzeggen en beëindigen</h2>
           <p>
-            Je kunt opzeggen per mail aan <a href="mailto:info@khance.com">info@khance.com</a>. Bij ernstig misbruik of
+            Je kunt opzeggen per mail aan <a href="mailto:info@synbased.com">info@synbased.com</a>. Bij ernstig misbruik of
             niet betalen mogen wij je account na een waarschuwing stopzetten.
           </p>
 

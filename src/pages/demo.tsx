@@ -7,7 +7,7 @@ import { useToast } from '@/components/Toast';
 const EMPTY = { name: '', company: '', email: '', phone: '', message: '' };
 
 /**
- * Demo aanvragen: een kort formulier dat als mail bij Khance binnenkomt.
+ * Demo aanvragen: een kort formulier dat als mail bij Synbased binnenkomt.
  * Daarna bellen of mailen we om een moment af te spreken.
  */
 export default function Demo() {
@@ -49,13 +49,13 @@ export default function Demo() {
   return (
     <SiteLayout
       title="Demo aanvragen"
-      description="Vraag een demo van Khance aan. We laten je in een halfuur zien hoe je offertes en facturen maakt, laat tekenen en sneller betaald krijgt."
+      description="Vraag een demo van Synbased aan. We laten je in een halfuur zien hoe je offertes en facturen maakt, laat tekenen en sneller betaald krijgt."
     >
       <section className="site-section">
         <div className="site-container site-split">
           <div>
             <span className="site-eyebrow">Demo aanvragen</span>
-            <h1>Zie Khance werken, met jouw manier van werken.</h1>
+            <h1>Zie Synbased werken, met jouw manier van werken.</h1>
             <p className="site-lead">
               In een halfuur laten we zien hoe je een offerte maakt, laat tekenen en omzet naar een factuur. Daarna
               zetten we je account klaar, met je eigen logo en gegevens.

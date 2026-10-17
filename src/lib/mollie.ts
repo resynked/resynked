@@ -7,7 +7,7 @@ import { decrypt, encrypt } from './crypto';
  *
  * Eén account per bedrijf, met de API-sleutel uit het eigen Mollie-dashboard
  * van de aannemer. Het geld gaat daardoor rechtstreeks naar zijn rekening;
- * Khance komt er niet aan. De sleutel staat versleuteld in de database en
+ * Synbased komt er niet aan. De sleutel staat versleuteld in de database en
  * verlaat de server niet.
  *
  * We praten rechtstreeks met de API van Mollie (api.mollie.com/v2).

@@ -4,7 +4,7 @@ export type MailProviderName = 'google' | 'microsoft';
 export const MAIL_PROVIDERS: MailProviderName[] = ['google', 'microsoft'];
 
 /** Het kanaal waarover het popupvenster Instellingen laat weten hoe het koppelen ging. */
-export const MAIL_CHANNEL = 'khance-mail';
+export const MAIL_CHANNEL = 'synbased-mail';
 
 export interface MailAddress {
   name: string;
