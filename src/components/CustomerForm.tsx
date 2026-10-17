@@ -9,7 +9,6 @@ import { useConfirm } from '@/hooks/useConfirm';
 import type { Customer, Note } from '@/lib/supabase';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { QUOTE_STATUS } from '@/lib/constants';
-import { toDisplayHtml } from '@/lib/richtext';
 import Table from '@/components/Table';
 import { SkeletonForm } from '@/components/Skeleton';
 
@@ -501,18 +500,19 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                     <p>Nog geen notities toegevoegd voor deze klant.</p>
                   </div>
                 ) : (
-                  notes.map((note) => (
-                    <div key={note.id} className="form-section edit-holder">
-                      <div className="header">
-                        <h4>
-                          <Link href={`/notes/${note.id}`}>{note.title}</Link>
-                        </h4>
-                        <span>{formatDate(note.created_at)}</span>
-                      </div>
-                      {/* Opgemaakt uit de teksteditor; oude notities als platte tekst gaan ook goed */}
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: toDisplayHtml(note.content) }} />
-                    </div>
-                  ))
+                  // Dezelfde tabel als bij Notities; de inhoud staat op de notitie zelf
+                  <Table headers={['Notitie', 'Laatst bewerkt']}>
+                    {notes.map((note) => (
+                      <tr key={note.id}>
+                        <td className="note-cell">
+                          <Link href={`/notes/${note.id}`} className="title">
+                            {note.title}
+                          </Link>
+                        </td>
+                        <td>{formatDate(note.updated_at || note.created_at)}</td>
+                      </tr>
+                    ))}
+                  </Table>
                 )}
               </div>
             )}
