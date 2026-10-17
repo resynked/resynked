@@ -146,6 +146,11 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <div className="site-cta site-more-modules">
+            <Link href="/modules" className="button tertiary">
+              Bekijk alle modules
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -126,3 +126,27 @@
   .site .site-footer-links {flex-wrap: wrap; gap: var(--space30);}
   .site .form-section .form-row {flex-direction: column;}
 }
+
+/* Modules: per groep een kopje boven het raster; een blok is een link naar
+   de detailpagina, met de kop en een kaart met feitjes ernaast */
+.site .site-group {margin: 0 0 var(--space50) 0;}
+.site .site-group:last-child {margin-bottom: 0;}
+.site .site-group > h3 {margin: 0 0 var(--space15) 0;}
+/* Elk blok zijn eigen rand, zodat een rij met minder blokken niet doorloopt tot de rand */
+.site .site-group .site-grid {border: 0;}
+.site .site-group .site-grid-cell {border: 1px solid var(--border-color); margin: 0 -1px -1px 0;}
+.site .site-grid-cell img {margin: 0 0 var(--space20) 0;}
+.site a.site-grid-cell {display: flex; flex-direction: column; color: inherit; text-decoration: none;}
+.site .site-grid-cell .site-more {display: inline-flex; align-items: center; gap: 4px; margin: auto 0 0 0; padding: var(--space15) 0 0 0; font-size: var(--fontsize1); font-weight: 500;}
+.site .site-grid.three {grid-template-columns: repeat(3, minmax(0, 1fr));}
+.site .site-more-modules {margin: var(--space30) 0 0 0;}
+.site .site-module-head {margin: var(--space40) 0 0 0;}
+.site .site-module-head .site-cta {justify-content: flex-start;}
+.site .site-facts {display: grid; gap: var(--space10); margin: var(--space20) 0; padding: 0 0 var(--space20) 0; border-bottom: 1px solid var(--border-color);}
+.site .site-facts div {display: grid; grid-template-columns: 110px 1fr; gap: var(--space20);}
+.site .site-facts dt {color: var(--font-color2);}
+.site .site-facts dd {margin: 0;}
+
+@media (max-width: 1000px) {
+  .site .site-grid.three {grid-template-columns: minmax(0, 1fr);}
+}

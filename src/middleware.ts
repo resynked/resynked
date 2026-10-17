@@ -5,10 +5,13 @@ import { getToken } from 'next-auth/jwt';
 const LOGGED_OUT_ONLY = ['/login', '/register', '/forgot-password'];
 
 /**
- * Altijd open, ingelogd of niet: de website (de homepage, een demo aanvragen,
- * privacy en voorwaarden) en de link uit de herstelmail
+ * Altijd open, ingelogd of niet: de website (de homepage, de modules, een
+ * demo aanvragen, privacy en voorwaarden) en de link uit de herstelmail
  */
-const ALWAYS_OPEN = ['/', '/demo', '/privacy', '/terms', '/reset-password'];
+const ALWAYS_OPEN = ['/', '/demo', '/modules', '/privacy', '/terms', '/reset-password'];
+
+/** Ook altijd open: alles daaronder, zoals de pagina van elke module */
+const ALWAYS_OPEN_PREFIXES = ['/modules/'];
 
 /** Waar je na het inloggen terechtkomt */
 const DASHBOARD = '/dashboard';
@@ -22,7 +25,9 @@ export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   // De website hoeft niet te weten wie je bent; dat scheelt bij elk bezoek
-  if (ALWAYS_OPEN.includes(pathname)) return NextResponse.next();
+  if (ALWAYS_OPEN.includes(pathname) || ALWAYS_OPEN_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
+    return NextResponse.next();
+  }
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 

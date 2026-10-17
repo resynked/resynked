@@ -41,6 +41,7 @@ export default function SiteLayout({
 
           <nav className="site-nav" aria-label="Hoofdmenu">
             <Link href="/#functies">Functies</Link>
+            <Link href="/modules">Modules</Link>
             <Link href="/#werkwijze">Werkwijze</Link>
             <Link href="/#prijzen">Prijzen</Link>
             <Link href="/#vragen">Vragen</Link>
@@ -81,6 +82,7 @@ export default function SiteLayout({
             <div>
               <span className="title">Product</span>
               <Link href="/#functies">Functies</Link>
+              <Link href="/modules">Modules</Link>
               <Link href="/#prijzen">Prijzen</Link>
               <Link href="/demo">Demo aanvragen</Link>
             </div>
