@@ -36,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const {
         customer_id,
         status,
-        invoice_number,
         invoice_date,
         due_date,
         currency,
@@ -55,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         updates.status = status;
       }
-      if (invoice_number !== undefined) updates.invoice_number = invoice_number;
+      // Het factuurnummer komt bij het vastleggen uit de teller en is hier niet te wijzigen
       if (invoice_date !== undefined) updates.invoice_date = invoice_date;
       if (due_date !== undefined) updates.due_date = due_date;
       if (currency !== undefined) updates.currency = currency;

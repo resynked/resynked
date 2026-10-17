@@ -58,7 +58,7 @@ export default function PrintInvoice() {
     <>
       <Head>
         {/* De browser stelt deze naam voor als bestandsnaam van de PDF */}
-        <title>{invoice ? `${invoiceTitle(invoice)} ${invoice.invoice_number || invoice.id}` : 'Factuur'}</title>
+        <title>{invoice ? `${invoiceTitle(invoice)} ${invoice.invoice_number || 'concept'}` : 'Factuur'}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 

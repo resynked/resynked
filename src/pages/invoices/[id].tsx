@@ -37,7 +37,7 @@ interface LinkedInvoice {
 }
 
 /** Na deze stap ligt de factuur vast; dat staat in elke bevestiging */
-const FINAL_NOTE = 'Daarna kun je hem niet meer wijzigen; corrigeren gaat met een creditfactuur.';
+const FINAL_NOTE = 'Hij krijgt dan zijn nummer en is daarna niet meer te wijzigen; corrigeren gaat met een creditfactuur.';
 
 export default function EditInvoice() {
   const toast = useToast();
@@ -153,7 +153,6 @@ export default function EditInvoice() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoice_number: formData.invoice_number,
           invoice_date: formData.invoice_date,
           due_date: creditFor ? null : formData.due_date,
           customer_id: formData.customer_id,
@@ -214,8 +213,8 @@ export default function EditInvoice() {
       }
 
       toast.success('Verstuurd', `De ${title.toLowerCase()} is naar ${data.to} gestuurd`);
-      setSentAt(new Date().toISOString());
-      setFormData((current) => ({ ...current, status: current.status === 'draft' ? 'sent' : current.status }));
+      // Opnieuw ophalen: bij het versturen heeft hij zijn nummer gekregen
+      fetchInvoice();
     } catch {
       toast.error('Versturen mislukt', 'Er is iets misgegaan. Probeer het opnieuw.');
     } finally {
@@ -227,7 +226,7 @@ export default function EditInvoice() {
   const handleMarkSent = async () => {
     const confirmed = await confirm({
       title: 'Markeren als verzonden',
-      message: `Heb je de ${title.toLowerCase()} zelf naar de klant gestuurd? ${FINAL_NOTE}`,
+      message: `Verstuur je de ${title.toLowerCase()} zelf? Download hem dan na deze stap, dan staat het nummer erop. ${FINAL_NOTE}`,
       confirmText: 'Markeren als verzonden',
       cancelText: 'Annuleren',
     });
@@ -235,7 +234,7 @@ export default function EditInvoice() {
 
     setIsMarking(true);
     if (await save('sent')) {
-      setFormData((current) => ({ ...current, status: 'sent' }));
+      fetchInvoice();
       toast.success('Gelukt', `De ${title.toLowerCase()} staat op verzonden`);
     }
     setIsMarking(false);
@@ -268,8 +267,7 @@ export default function EditInvoice() {
         return;
       }
 
-      setFormData((current) => ({ ...current, status: data.status }));
-      setPaidAt(data.paid_at || null);
+      fetchInvoice();
       toast.success('Gelukt', paid ? `De ${title.toLowerCase()} staat op betaald` : `De ${title.toLowerCase()} staat weer open`);
     } catch {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
@@ -368,7 +366,7 @@ export default function EditInvoice() {
           )}
           {creditNotes.map((note) => (
             <Link key={note.id} href={`/invoices/${note.id}`} className="button cancel">
-              Bekijk creditfactuur {note.invoice_number}
+              Bekijk creditfactuur {note.invoice_number || '(concept)'}
             </Link>
           ))}
           {mailAccount && (
@@ -444,19 +442,6 @@ export default function EditInvoice() {
                     onChange={(option) => setFormData({ ...formData, customer_id: option?.value || '' })}
                     options={customerOptions}
                     placeholder="Selecteer een klant"
-                  />
-                </div>
-              </div>
-
-              <div className="form-section">
-                <div className="form-group">
-                  <label htmlFor="invoice_number">Factuurnummer</label>
-                  <input
-                    id="invoice_number"
-                    type="text"
-                    value={formData.invoice_number}
-                    onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
-                    placeholder="Vul een factuurnummer in"
                   />
                 </div>
               </div>

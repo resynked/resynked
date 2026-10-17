@@ -121,9 +121,11 @@ export default function Quotes() {
     if (!confirmed) return;
 
     try {
-      await Promise.all(
-        selectedIds.map(id => fetch(`/api/quotes/${id}`, { method: 'DELETE' }))
-      );
+      // Eén voor één in lijstvolgorde, hoogste nummer eerst: zo geeft elke
+      // verwijderde offerte zijn nummer terug aan de teller
+      for (const quote of quotes.filter(q => selectedIds.includes(q.id))) {
+        await fetch(`/api/quotes/${quote.id}`, { method: 'DELETE' });
+      }
       setSelectedIds([]);
       fetchQuotes();
     } catch (error) {

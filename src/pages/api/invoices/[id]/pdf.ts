@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cookie: req.headers.cookie,
     });
 
-    const naam = `${invoiceTitle(invoice)} ${invoice.invoice_number || id}.pdf`;
+    const naam = `${invoiceTitle(invoice)} ${invoice.invoice_number || 'concept'}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${naam.replace(/"/g, '')}"`);

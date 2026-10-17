@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../auth/[...nextauth]';
-import { getInvoice, getTenant, updateInvoice } from '@/lib/db';
+import { assignInvoiceNumber, getInvoice, getTenant, updateInvoice } from '@/lib/db';
 import { buildCreditNoteEmailHtml, buildInvoiceEmailHtml, buildInvoiceEmailSubject } from '@/lib/email';
 import { isCreditNote } from '@/lib/invoices';
 import { MailAuthError, getMailAccount, openMailbox } from '@/lib/mail';
@@ -40,6 +40,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         error: 'Koppel eerst je Gmail of Outlook bij Instellingen > Plug-ins; facturen gaan vanuit je eigen mailbox.',
       });
     }
+
+    // Het nummer moet in de mail staan, dus het komt nu al; mislukt de mail,
+    // dan houdt het concept dit nummer voor de volgende poging
+    invoice.invoice_number = await assignInvoiceNumber(id, tenantId);
 
     // Een creditfactuur heeft een eigen mail, zonder betaalgegevens
     const subject = isCreditNote(invoice)

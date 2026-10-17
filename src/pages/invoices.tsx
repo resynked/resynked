@@ -124,9 +124,11 @@ export default function Invoices() {
     if (!confirmed) return;
 
     try {
-      await Promise.all(
-        deletable.map(invoice => fetch(`/api/invoices/${invoice.id}`, { method: 'DELETE' }))
-      );
+      // Eén voor één in lijstvolgorde, hoogste nummer eerst: zo geeft een
+      // concept met een nummer dat nummer terug aan de teller
+      for (const invoice of deletable) {
+        await fetch(`/api/invoices/${invoice.id}`, { method: 'DELETE' });
+      }
       setSelectedIds([]);
       fetchInvoices();
     } catch (error) {
@@ -249,7 +251,7 @@ export default function Invoices() {
                 </button>
               </td>
               <td>
-                {invoice.invoice_number || `#${invoice.id}`}
+                {invoice.invoice_number || 'Concept'}
                 {isCreditNote(invoice) && <span className="placeholder"> · Credit</span>}
               </td>
               <td>{invoice.customer ? getCustomerDisplayName(invoice.customer) : '-'}</td>

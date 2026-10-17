@@ -143,7 +143,7 @@ export default function NewInvoice() {
       <DocumentEditor
         title="Factuur"
         meta={[
-          { label: 'Factuurnummer', value: 'Wordt automatisch toegekend' },
+          { label: 'Factuurnummer', value: 'Volgt bij versturen' },
           { label: 'Factuurdatum', value: formatDate(formData.invoice_date) },
           { label: 'Vervaldatum', value: formatDate(formData.due_date) },
         ]}

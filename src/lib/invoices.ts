@@ -47,7 +47,8 @@ export function invoiceMeta(
   creditFor?: { invoice_number?: string | null } | null
 ): { label: string; value: string }[] {
   return [
-    { label: 'Factuurnummer', value: invoice.invoice_number || '' },
+    // Een concept krijgt zijn nummer pas bij het vastleggen
+    { label: 'Factuurnummer', value: invoice.invoice_number || 'Volgt bij versturen' },
     ...(creditFor ? [{ label: 'Bij factuur', value: creditFor.invoice_number || '' }] : []),
     { label: 'Factuurdatum', value: formatDate(invoice.invoice_date) },
     ...(creditFor ? [] : [{ label: 'Vervaldatum', value: formatDate(invoice.due_date) }]),

@@ -198,7 +198,7 @@ export default function Dashboard() {
                 <tr key={invoice.id}>
                   <td>
                     <Link href={`/invoices/${invoice.id}`}>
-                      {invoice.invoice_number || `#${invoice.id}`}
+                      {invoice.invoice_number || 'Concept'}
                     </Link>
                   </td>
                   <td>{customerName(invoice)}</td>

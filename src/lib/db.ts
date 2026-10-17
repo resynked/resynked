@@ -325,6 +325,104 @@ export async function takeDocumentNumber(tenantId: string, soort: Soort): Promis
 }
 
 /**
+ * Geeft een nummer terug aan de teller als het het laatst uitgedeelde was, zodat
+ * het volgende document het weer krijgt en er geen gat in de reeks valt. Staat
+ * de teller al verder, dan gebeurt er niets: dat nummer komt niet meer terug.
+ */
+export async function releaseDocumentNumber(tenantId: string, soort: Soort, number?: string | null) {
+  if (!number || !isCountable(number)) return;
+
+  const column = soort === 'quote' ? 'quote_number_next' : 'invoice_number_next';
+  const value = number.trim();
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ [column]: value, updated_at: now() })
+    .eq('id', tenantId)
+    .eq(column, nextNumber(value));
+
+  if (error) throw error;
+}
+
+/**
+ * Zonder eigen nummering zet de eerste vastgelegde factuur de teller zelf op
+ * FT plus een getal, verder dan de FT-nummers die er al zijn. Daarna telt hij
+ * door zoals een eigen nummering, en staat hij ook bij Instellingen.
+ */
+async function startInvoiceNumbering(tenantId: string) {
+  const tenant = await getTenant(tenantId);
+  const stored = tenant.invoice_number_next;
+
+  if ((stored || '').trim()) {
+    throw new Error('Het volgende factuurnummer bij Instellingen eindigt niet op cijfers, dus het systeem kan niet verder tellen. Pas het daar aan.');
+  }
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('invoice_number')
+    .eq('tenant_id', tenantId)
+    .like('invoice_number', 'FT%');
+
+  if (error) throw error;
+
+  const highest = Math.max(
+    10000,
+    ...(data || []).map(row => Number(/^FT(\d+)$/.exec(row.invoice_number || '')?.[1]) || 0)
+  );
+
+  // Alleen als hij nog leeg is; was iemand anders net eerder, dan telt die teller
+  let query = supabase
+    .from('tenants')
+    .update({ invoice_number_next: `FT${highest + 1}`, updated_at: now() })
+    .eq('id', tenantId);
+  query = stored === null ? query.is('invoice_number_next', null) : query.eq('invoice_number_next', stored);
+
+  const { error: updateError } = await query;
+  if (updateError) throw updateError;
+}
+
+/**
+ * Geeft een factuur zijn nummer, op het moment dat hij vastgelegd wordt. Een
+ * concept heeft nog geen nummer: zo kan een concept weg zonder dat er een gat
+ * in de reeks valt, en lopen de nummers van verstuurde facturen altijd door.
+ * Heeft de factuur al een nummer, dan blijft dat.
+ */
+export async function assignInvoiceNumber(id: string | number, tenantId: string): Promise<string> {
+  const { data: current, error } = await supabase
+    .from('invoices')
+    .select('invoice_number')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single();
+
+  if (error) throw error;
+  if (current.invoice_number) return current.invoice_number;
+
+  let number = await takeDocumentNumber(tenantId, 'invoice');
+  if (!number) {
+    await startInvoiceNumbering(tenantId);
+    number = await takeDocumentNumber(tenantId, 'invoice');
+  }
+  if (!number) throw new Error('Kon geen factuurnummer toekennen. Probeer het opnieuw.');
+
+  const { data: updated, error: updateError } = await supabase
+    .from('invoices')
+    .update({ invoice_number: number, updated_at: now() })
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .is('invoice_number', null)
+    .select('invoice_number');
+
+  if (updateError) throw updateError;
+  if (updated && updated.length > 0) return number;
+
+  // Tegelijk al een nummer gekregen, bijvoorbeeld door twee keer klikken: dit
+  // nummer gaat terug en het nummer dat er al staat blijft
+  await releaseDocumentNumber(tenantId, 'invoice', number);
+  return assignInvoiceNumber(id, tenantId);
+}
+
+/**
  * Het nummer waaronder een offerte of factuur opgeslagen wordt. Heeft iemand in
  * het scherm zelf een ander nummer ingetypt, dan wint dat en blijft de teller
  * staan waar hij staat.
@@ -517,6 +615,13 @@ export async function updateQuote(
 }
 
 export async function deleteQuote(id: string | number, tenantId: string) {
+  const { data: current } = await supabase
+    .from('quotes')
+    .select('quote_number')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from('quotes')
     .delete()
@@ -524,6 +629,9 @@ export async function deleteQuote(id: string | number, tenantId: string) {
     .eq('tenant_id', tenantId);
 
   if (error) throw error;
+
+  // Was dit de laatste offerte, dan krijgt de volgende zijn nummer weer
+  await releaseDocumentNumber(tenantId, 'quote', current?.quote_number);
   return { success: true };
 }
 
@@ -665,8 +773,8 @@ export async function getInvoices(tenantId: string) {
       customer:customers(${CUSTOMER_SUMMARY})
     `)
     .eq('tenant_id', tenantId)
-    // Op factuurnummer, nieuwste bovenaan
-    .order('invoice_number', { ascending: false, nullsFirst: false })
+    // Concepten (nog zonder nummer) bovenaan, daarna op factuurnummer, nieuwste eerst
+    .order('invoice_number', { ascending: false, nullsFirst: true })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -716,36 +824,21 @@ export async function createInvoice(
   invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>,
   blocks: DocumentBlock[]
 ) {
-  // Heeft de aannemer een eigen nummering, dan komt het nummer daaruit. Zo niet,
-  // dan wordt het uit het id afgeleid en moet de rij er dus eerst zijn.
+  // Een nieuwe factuur is een concept zonder nummer; dat komt pas bij het
+  // vastleggen (zie assignInvoiceNumber)
   const { invoice_number, ...invoiceWithoutNumber } = invoice as any;
-  const eigenNummer = invoice_number || (await takeDocumentNumber(invoice.tenant_id, 'invoice'));
 
   const { data: invoiceData, error: invoiceError } = await supabase
     .from('invoices')
-    .insert({ ...invoiceWithoutNumber, invoice_number: eigenNummer || null, updated_at: now() })
+    .insert({ ...invoiceWithoutNumber, invoice_number: null, updated_at: now() })
     .select()
     .single();
 
   if (invoiceError) throw invoiceError;
 
-  if (eigenNummer) {
-    await saveBlocks('invoice', invoiceData.id, invoice.tenant_id, blocks);
-    return invoiceData as Invoice;
-  }
+  await saveBlocks('invoice', invoiceData.id, invoice.tenant_id, blocks);
 
-  const { data: updatedInvoice, error: updateError } = await supabase
-    .from('invoices')
-    .update({ invoice_number: `FT${invoiceData.id + 10000}` })
-    .eq('id', invoiceData.id)
-    .select()
-    .single();
-
-  if (updateError) throw updateError;
-
-  await saveBlocks('invoice', updatedInvoice.id, invoice.tenant_id, blocks);
-
-  return updatedInvoice as Invoice;
+  return invoiceData as Invoice;
 }
 
 export async function updateInvoice(
@@ -771,6 +864,11 @@ export async function updateInvoice(
     }
   }
 
+  // Uit concept betekent vastleggen, en een vastliggende factuur heeft een nummer
+  if (updates.status !== undefined && updates.status !== 'draft') {
+    await assignInvoiceNumber(id, tenantId);
+  }
+
   const { data, error } = await supabase
     .from('invoices')
     .update({ ...updates, updated_at: now() })
@@ -792,7 +890,7 @@ export async function deleteInvoice(id: string | number, tenantId: string) {
   // Een verstuurde factuur hoort in de boekhouding en blijft dus bestaan
   const { data: current } = await supabase
     .from('invoices')
-    .select('status')
+    .select('status, invoice_number')
     .eq('id', id)
     .eq('tenant_id', tenantId)
     .maybeSingle();
@@ -807,6 +905,10 @@ export async function deleteInvoice(id: string | number, tenantId: string) {
     .eq('tenant_id', tenantId);
 
   if (error) throw error;
+
+  // Een concept met een nummer (van vóór de nummering bij vastleggen, of een
+  // mislukte verzending) geeft dat nummer terug als het het laatste was
+  await releaseDocumentNumber(tenantId, 'invoice', current?.invoice_number);
   return { success: true };
 }
 
