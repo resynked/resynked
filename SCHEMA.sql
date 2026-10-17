@@ -424,6 +424,23 @@ CREATE INDEX bank_transactions_tenant_id_idx ON bank_transactions(tenant_id, boo
 CREATE INDEX bank_transactions_invoice_id_idx ON bank_transactions(invoice_id);
 CREATE INDEX bank_transactions_expense_id_idx ON bank_transactions(expense_id);
 
+-- Bankkoppeling via GoCardless Bank Account Data: de toestemming per bank
+CREATE TABLE bank_connections (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- De toestemming bij GoCardless, en ons eigen kenmerk waarmee de klant terugkomt
+  requisition_id TEXT NOT NULL UNIQUE,
+  reference TEXT NOT NULL UNIQUE,
+  institution_id TEXT NOT NULL,
+  institution_name TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'linked', 'expired')),
+  -- Banken geven 90 dagen toegang; daarna moet de klant opnieuw toestemming geven
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX bank_connections_tenant_id_idx ON bank_connections(tenant_id);
+
 -- ------------------------------------------------------------
 -- Notities per klant
 -- ------------------------------------------------------------
@@ -648,6 +665,7 @@ ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------

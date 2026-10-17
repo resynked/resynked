@@ -693,6 +693,31 @@ CREATE INDEX IF NOT EXISTS bank_transactions_expense_id_idx ON bank_transactions
 ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 20. Bankkoppeling: transacties automatisch ophalen
+--
+-- Via GoCardless Bank Account Data (PSD2) geeft de klant bij zijn eigen bank
+-- toestemming om zijn transacties te lezen. De rekeningen komen in
+-- bank_accounts met hun id bij GoCardless (external_id).
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bank_connections (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- De toestemming bij GoCardless, en ons eigen kenmerk waarmee de klant terugkomt
+  requisition_id TEXT NOT NULL UNIQUE,
+  reference TEXT NOT NULL UNIQUE,
+  institution_id TEXT NOT NULL,
+  institution_name TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'linked', 'expired')),
+  -- Banken geven 90 dagen toegang; daarna moet de klant opnieuw toestemming geven
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS bank_connections_tenant_id_idx ON bank_connections(tenant_id);
+
+ALTER TABLE bank_connections ENABLE ROW LEVEL SECURITY;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -707,7 +732,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen twintig regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen eenentwintig regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -852,4 +877,10 @@ UNION ALL SELECT 'Bank',
        CASE WHEN (
          SELECT count(*) FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name IN ('bank_accounts', 'bank_transactions')
-       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 19 niet gelukt' END;
+       ) = 2 THEN 'ja' ELSE 'NEE - onderdeel 19 niet gelukt' END
+
+UNION ALL SELECT 'Bankkoppeling',
+       CASE WHEN EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = 'bank_connections'
+       ) THEN 'ja' ELSE 'NEE - onderdeel 20 niet gelukt' END;

@@ -35,7 +35,10 @@ aannemers komen elkaar nooit tegen.
 - **Bank**: een afschrift uit de bank-app importeren (CAMT.053 of MT940).
   Betalingen van klanten en aan leveranciers worden waar het zeker is vanzelf
   aan de factuur of kostenpost gekoppeld en op betaald gezet; de rest koppel
-  je zelf of deel je in (privé, bankkosten, Belastingdienst, …)
+  je zelf of deel je in (privé, bankkosten, Belastingdienst, …). Met de
+  optionele plug-in Bankkoppeling (GoCardless, PSD2) komen de transacties
+  elke ochtend vanzelf binnen; de klant geeft daarvoor 90 dagen toestemming
+  bij zijn eigen bank
 - **Jaarcijfers**: winst-en-verliesrekening en balans per jaar, met het
   grootboekjournaal als export voor de boekhouder. Het grootboek wordt onder
   water uit facturen, kosten en bank afgeleid (dubbel boekhouden, zie
@@ -76,9 +79,14 @@ RLS-policies op de tabellen vormen de tweede laag.
    # Waar demo-aanvragen van de website naartoe gaan
    DEMO_REQUEST_EMAIL=info@synbased.com
 
-   # Dagelijkse taken (vercel.json): herinneringen voor offertes en facturen.
+   # Dagelijkse taken (vercel.json): herinneringen en de bankkoppeling.
    # Vercel stuurt dit mee; zonder deze waarde weigert de taak elke aanroep
    CRON_SECRET=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`
+
+   # Optioneel: de bankkoppeling (Plug-ins > Bank) via GoCardless Bank Account
+   # Data. Zonder deze twee importeren klanten zelf een afschrift bij Bank
+   GOCARDLESS_SECRET_ID=...
+   GOCARDLESS_SECRET_KEY=...
 
    # Inbox (Instellingen > Plug-ins)
    MAIL_ENCRYPTION_KEY=...   # lange willekeurige tekst, bijv. `openssl rand -base64 32`

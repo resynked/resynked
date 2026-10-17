@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Landmark } from 'lucide-react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
@@ -40,6 +41,7 @@ const categoryLabel = (value: string) => BANK_CATEGORIES.find(c => c.value === v
  */
 export default function Bank() {
   const toast = useToast();
+  const router = useRouter();
   const [accounts, setAccounts] = useState<AccountWithBalance[] | null>(null);
   const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [filter, setFilter] = useState<SelectOption>(FILTER_OPTIONS[0]);
@@ -74,6 +76,34 @@ export default function Bank() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Terug van de bank na het koppelen (zie /api/bank/callback): de uitkomst melden en de link opschonen
+  useEffect(() => {
+    const { connected, imported, error } = router.query;
+    if (connected === undefined) return;
+    if (connected === '1') toast.success('Gekoppeld', `Je bank is gekoppeld; ${imported || 0} transactie(s) opgehaald`);
+    else toast.error('Koppelen mislukt', typeof error === 'string' ? error : 'Probeer het opnieuw');
+    router.replace('/bank', undefined, { shallow: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query.connected]);
+
+  const [syncing, setSyncing] = useState(false);
+
+  /** Nu ophalen bij de gekoppelde bank, in plaats van te wachten op de ochtend */
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const response = await fetch('/api/bank/sync', { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      toast.success('Opgehaald', data.imported ? `${data.imported} nieuwe transactie(s)` : 'Er waren geen nieuwe transacties');
+      load();
+    } catch (error: any) {
+      toast.error('Ophalen mislukt', error.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleImport = async (file: File) => {
     setImporting(true);
@@ -198,6 +228,11 @@ export default function Bank() {
       <div className="header">
         <h1>Bank</h1>
         <div className="actions">
+          {accounts?.some(a => a.external_id) && (
+            <button type="button" className="button cancel" onClick={handleSync} disabled={syncing}>
+              {syncing ? 'Ophalen...' : 'Nu ophalen'}
+            </button>
+          )}
           <button type="button" className="button" onClick={() => setImportOpen(true)}>
             Afschrift importeren
           </button>
@@ -209,8 +244,8 @@ export default function Bank() {
           <Landmark size={22} />
           <h2>Nog geen bankrekening</h2>
           <p>
-            Download in je bank-app een afschrift als CAMT.053 (XML) of MT940 en importeer het hier. Betalingen van
-            klanten worden dan vanzelf aan hun factuur gekoppeld.
+            Download in je bank-app een afschrift als CAMT.053 (XML) of MT940 en importeer het hier, of koppel je
+            bank bij Instellingen &gt; Plug-ins. Betalingen van klanten worden dan vanzelf aan hun factuur gekoppeld.
           </p>
         </div>
       ) : (

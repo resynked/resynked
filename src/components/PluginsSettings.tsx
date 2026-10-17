@@ -4,6 +4,7 @@ import PluginDetail, { PLUGINS, WHATSAPP_PLUGIN, type PluginProvider } from '@/c
 import AiPluginsSection from '@/components/AiPluginsSection';
 import MolliePluginSection from '@/components/MolliePluginSection';
 import MoneybirdPluginSection from '@/components/MoneybirdPluginSection';
+import BankPluginSection from '@/components/BankPluginSection';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -297,6 +298,8 @@ export default function PluginsSettings() {
         <AiPluginsSection />
 
         <MolliePluginSection />
+
+        <BankPluginSection />
 
         <MoneybirdPluginSection />
       </div>

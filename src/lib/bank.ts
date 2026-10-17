@@ -36,7 +36,7 @@ export interface ParsedStatement {
 const cents = (amount: number) => Math.round(amount * 100) / 100;
 
 /** Een kenmerk voor een transactie zonder kenmerk van de bank, uit zijn gegevens */
-function fingerprint(parts: (string | number)[]): string {
+export function fingerprint(parts: (string | number)[]): string {
   return 'h:' + createHash('sha1').update(parts.join('|')).digest('hex').slice(0, 24);
 }
 
