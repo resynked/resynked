@@ -217,7 +217,7 @@ function parseMt940(text: string): ParsedStatement[] {
 
 /** Leest een afschrift; gooit een leesbare fout als het geen CAMT.053 of MT940 is */
 export function parseStatement(content: string): ParsedStatement[] {
-  const text = content.replace(/^﻿/, '');
+  const text = content.replace(/^\uFEFF/, '');
   const statements = /<(\w+:)?Ntry[\s>]/.test(text) || /camt\.05[23]/.test(text)
     ? parseCamt(text)
     : /:61:/.test(text)

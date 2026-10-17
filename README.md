@@ -36,6 +36,10 @@ aannemers komen elkaar nooit tegen.
   Betalingen van klanten en aan leveranciers worden waar het zeker is vanzelf
   aan de factuur of kostenpost gekoppeld en op betaald gezet; de rest koppel
   je zelf of deel je in (privé, bankkosten, Belastingdienst, …)
+- **Jaarcijfers**: winst-en-verliesrekening en balans per jaar, met het
+  grootboekjournaal als export voor de boekhouder. Het grootboek wordt onder
+  water uit facturen, kosten en bank afgeleid (dubbel boekhouden, zie
+  `src/lib/ledger.ts`); er is geen aparte boekhouding om bij te houden
 - **Btw-aangifte** per kwartaal of jaar, rubriek voor rubriek: omzet en btw
   per tarief (op factuurdatum), de voorbelasting uit de kosten, en wat je
   betaalt of terugkrijgt. De export is een CSV voor de boekhouder. Met de optionele Moneybird-plug-in gaat elke vastgelegde factuur

@@ -1020,6 +1020,8 @@ export interface VatInvoice {
   invoice_date: string;
   status: string;
   paid_at: string | null;
+  /** Betaald via Mollie: het geld komt dan later als uitbetaling op de bank */
+  mollie_payment_id: string | null;
   credit_for_invoice_id: number | null;
   customer: any;
   base: number;
@@ -1069,7 +1071,7 @@ const sortedRates = (rates: Map<number, VatRate>) => [...rates.values()].sort((a
 export async function getVatOverview(tenantId: string, from: string, to: string) {
   const { data: invoices, error } = await supabase
     .from('invoices')
-    .select(`id, invoice_number, invoice_date, status, total, paid_at, credit_for_invoice_id, customer:customers(${CUSTOMER_SUMMARY}, btw_number)`)
+    .select(`id, invoice_number, invoice_date, status, total, paid_at, mollie_payment_id, credit_for_invoice_id, customer:customers(${CUSTOMER_SUMMARY}, btw_number)`)
     .eq('tenant_id', tenantId)
     .in('status', ['sent', 'paid'])
     .gte('invoice_date', from)
