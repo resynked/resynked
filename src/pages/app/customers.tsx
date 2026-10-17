@@ -1,36 +1,30 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
 import Pagination from '@/components/Pagination';
 import SelectionBar from '@/components/SelectionBar';
 import ToolButton from '@/components/ToolButton';
-import SearchInput from '@/components/SearchInput';
 import { usePagination } from '@/hooks/usePagination';
 import Link from 'next/link';
-import { Ellipsis, Check, Trash2, Search, FilePen } from 'lucide-react';
-import type { Customer, Note } from '@/lib/supabase';
+import { Ellipsis, Check, Trash2 } from 'lucide-react';
+import type { Customer } from '@/lib/supabase';
 import { useConfirm } from '@/hooks/useConfirm';
-import { formatDate, getCustomerDisplayName } from '@/lib/utils';
+import { getCustomerDisplayName } from '@/lib/utils';
 import { SkeletonTable } from '@/components/Skeleton';
 
-interface NoteWithCustomer extends Note {
-  customer: Pick<Customer, 'id' | 'name' | 'first_name' | 'middle_name' | 'last_name' | 'company_name'> | null;
-}
-
-export default function Notes() {
+export default function Customers() {
   const { confirm } = useConfirm();
-  const [notes, setNotes] = useState<NoteWithCustomer[]>([]);
-  const [filteredNotes, setFilteredNotes] = useState<NoteWithCustomer[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   // Lange lijsten in pagina's; de selectie en het verwijderen gaan over de hele lijst
-  const pagination = usePagination(filteredNotes);
-  const [searchTerm, setSearchTerm] = useState('');
+  const pagination = usePagination(customers);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchNotes();
+    fetchCustomers();
   }, []);
 
   useEffect(() => {
@@ -43,29 +37,13 @@ export default function Notes() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredNotes(notes);
-    } else {
-      const term = searchTerm.toLowerCase();
-      const filtered = notes.filter((note) =>
-        note.title.toLowerCase().includes(term) ||
-        // De inhoud is HTML; zoeken in de tekst, niet in de tags
-        note.content.replace(/<[^>]*>/g, ' ').toLowerCase().includes(term) ||
-        (note.customer ? getCustomerDisplayName(note.customer).toLowerCase().includes(term) : false)
-      );
-      setFilteredNotes(filtered);
-    }
-  }, [searchTerm, notes]);
-
-  const fetchNotes = async () => {
+  const fetchCustomers = async () => {
     try {
-      const res = await fetch('/api/notes');
+      const res = await fetch('/api/customers');
       const data = await res.json();
-      setNotes(data);
-      setFilteredNotes(data);
+      setCustomers(data);
     } catch (error) {
-      console.error('Error fetching notes:', error);
+      console.error('Error fetching customers:', error);
     } finally {
       setIsLoading(false);
     }
@@ -73,8 +51,8 @@ export default function Notes() {
 
   const handleDelete = async (id: number) => {
     const confirmed = await confirm({
-      title: 'Notitie verwijderen',
-      message: 'Weet je zeker dat je deze notitie wilt verwijderen?',
+      title: 'Klant verwijderen',
+      message: 'Weet je zeker dat je deze klant wilt verwijderen?',
       confirmText: 'Verwijderen',
       negative: true,
       cancelText: 'Annuleren'
@@ -83,18 +61,18 @@ export default function Notes() {
     if (!confirmed) return;
 
     try {
-      await fetch(`/api/notes/${id}`, { method: 'DELETE' });
-      fetchNotes();
+      await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      fetchCustomers();
     } catch (error) {
-      console.error('Error deleting note:', error);
+      console.error('Error deleting customer:', error);
     }
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.length === filteredNotes.length) {
+    if (selectedIds.length === customers.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredNotes.map(n => n.id));
+      setSelectedIds(customers.map(c => c.id));
     }
   };
 
@@ -108,8 +86,8 @@ export default function Notes() {
 
   const handleBulkDelete = async () => {
     const confirmed = await confirm({
-      title: 'Notities verwijderen',
-      message: `Weet je zeker dat je ${selectedIds.length} notitie(s) wilt verwijderen?`,
+      title: 'Klanten verwijderen',
+      message: `Weet je zeker dat je ${selectedIds.length} klant(en) wilt verwijderen?`,
       confirmText: 'Verwijderen',
       negative: true,
       cancelText: 'Annuleren'
@@ -119,53 +97,65 @@ export default function Notes() {
 
     try {
       await Promise.all(
-        selectedIds.map(id => fetch(`/api/notes/${id}`, { method: 'DELETE' }))
+        selectedIds.map(id => fetch(`/api/customers/${id}`, { method: 'DELETE' }))
       );
       setSelectedIds([]);
-      fetchNotes();
+      fetchCustomers();
     } catch (error) {
-      console.error('Error deleting notes:', error);
+      console.error('Error deleting customers:', error);
+    }
+  };
+
+  const handleDuplicate = async (customer: Customer) => {
+    try {
+      await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${customer.name} (kopie)`,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address,
+        }),
+      });
+      fetchCustomers();
+      setOpenDropdownId(null);
+    } catch (error) {
+      console.error('Error duplicating customer:', error);
     }
   };
 
   if (isLoading) {
     return (
-      <Layout title="Notities">
+      <Layout title="Klanten">
         <div className="header">
-          <h1>Notities</h1>
+          <h1>Klanten <HelpButton topic="customers" /></h1>
           <div className="actions">
-            <Link href="/notes/new" className="button">
-              Notitie toevoegen
+            <Link href="/app/customers/new" className="button">
+              Klant toevoegen
             </Link>
           </div>
         </div>
-        <SkeletonTable rows={5} columns={5} />
+        <SkeletonTable rows={10} columns={5} />
       </Layout>
     );
   }
 
   return (
-    <Layout title="Notities">
+    <Layout title="Klanten">
       <div className="header">
-        <h1>Notities</h1>
+        <h1>Klanten <HelpButton topic="customers" /></h1>
         <div className="actions">
-          <SearchInput value={searchTerm} label="Zoeken in notities" onChange={setSearchTerm} />
-          <Link href="/notes/new" className="button">
-            Notitie toevoegen
+          <Link href="/app/customers/new" className="button">
+            Klant toevoegen
           </Link>
         </div>
       </div>
 
-
-      {filteredNotes.length === 0 ? (
+      {customers.length === 0 ? (
         <div className="empty-state">
-          {searchTerm ? <Search size={22} /> : <FilePen size={22} />}
-          <h2>{searchTerm ? 'Geen notities gevonden' : 'Geen notities'}</h2>
-          <p>
-            {searchTerm
-              ? 'Probeer een andere zoekterm.'
-              : 'Je hebt nog geen notities toegevoegd. Begin met het toevoegen van je eerste notitie.'}
-          </p>
+          <h2>Geen klanten</h2>
+          <p>Je hebt nog geen klanten toegevoegd. Begin met het toevoegen van je eerste klant.</p>
         </div>
       ) : (
         <>
@@ -177,14 +167,14 @@ export default function Notes() {
               role="checkbox"
               className="checkbox"
               aria-checked={
-                selectedIds.length === filteredNotes.length
+                selectedIds.length === customers.length
                   ? true
                   : selectedIds.length === 0
                     ? false
                     : "mixed"
               }
               data-state={
-                selectedIds.length === filteredNotes.length
+                selectedIds.length === customers.length
                   ? "checked"
                   : selectedIds.length === 0
                     ? "unchecked"
@@ -195,64 +185,57 @@ export default function Notes() {
             >
               {(selectedIds.length > 0) && <Check size={14} />}
             </button>,
-            'Notitie',
-            'Klant',
-            'Laatst bewerkt',
+            'Klantnummer',
+            'Naam',
+            'E-mailadres',
             ''
           ]}
         >
-          {pagination.pageItems.map((note, index) => (
+          {pagination.pageItems.map((customer, index) => (
             <tr
-              key={note.id}
-              className={selectedIds.includes(note.id) ? 'selected' : ''}
+              key={customer.id}
+              className={selectedIds.includes(customer.id) ? 'selected' : ''}
             >
               <td>
                 <button
                   type="button"
                   role="checkbox"
-                  aria-checked={selectedIds.includes(note.id)}
-                  aria-label={`Select row ${note.title}`}
-                  onClick={() => handleSelectOne(note.id)}
+                  aria-checked={selectedIds.includes(customer.id)}
+                  aria-label={`Select row ${customer.name}`}
+                  onClick={() => handleSelectOne(customer.id)}
                   className="checkbox"
                 >
-                  {selectedIds.includes(note.id) && <Check size={14} />}
+                  {selectedIds.includes(customer.id) && <Check size={14} />}
                 </button>
               </td>
-              <td className="note-cell">
-                <Link href={`/notes/${note.id}`} className="title">
-                  {note.title}
-                </Link>
-              </td>
-              <td>
-                {note.customer ? (
-                  <Link href={`/customers/${note.customer.id}`}>{getCustomerDisplayName(note.customer)}</Link>
-                ) : (
-                  '-'
-                )}
-              </td>
-              <td>{formatDate(note.updated_at || note.created_at)}</td>
+              <td>{customer.customer_number || '-'}</td>
+              <td>{getCustomerDisplayName(customer)}</td>
+              <td>{customer.email || '-'}</td>
               <td className="actions">
                 <div
                   // Onderaan de tabel klapt het menu omhoog, anders valt het buiten beeld
                   className={`action-dropdown${index >= pagination.pageItems.length - 4 && pagination.pageItems.length > 4 ? ' up' : ''}`}
-                  ref={openDropdownId === note.id ? dropdownRef : null}
+                  ref={openDropdownId === customer.id ? dropdownRef : null}
                 >
                   <button
-                    onClick={() => setOpenDropdownId(openDropdownId === note.id ? null : note.id)}
+                    onClick={() => setOpenDropdownId(openDropdownId === customer.id ? null : customer.id)}
                   >
                     <Ellipsis size={18} />
                   </button>
-                  {openDropdownId === note.id && (
+                  {openDropdownId === customer.id && (
                     <div className="action-menu">
-                      <Link href={`/notes/${note.id}`} className="edit">
+                      <Link href={`/app/customers/${customer.id}`} className="edit">
                         Bewerken
+                      </Link>
+                      <Link href="" className="copy" onClick={() => handleDuplicate(customer)}>
+                        Kopiëren
                       </Link>
                       <Link
                         href=""
                         className="delete"
                         onClick={() => {
                           setOpenDropdownId(null);
-                          handleDelete(note.id);
+                          handleDelete(customer.id);
                         }}
                       >
                         Verwijderen
@@ -274,7 +257,7 @@ export default function Notes() {
         />
         </>
       )}
-      <SelectionBar count={selectedIds.length} noun={['notitie', 'notities']} onClear={() => setSelectedIds([])}>
+      <SelectionBar count={selectedIds.length} noun={['klant', 'klanten']} onClear={() => setSelectedIds([])}>
         <ToolButton title="Verwijderen" className="delete" onClick={handleBulkDelete}>
           <Trash2 size={15} />
         </ToolButton>

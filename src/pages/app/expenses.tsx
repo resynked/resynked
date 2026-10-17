@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Ellipsis, Check, Trash2, Search, Receipt } from 'lucide-react';
@@ -115,9 +116,9 @@ export default function Expenses() {
     return (
       <Layout title="Kosten">
         <div className="header">
-          <h1>Kosten</h1>
+          <h1>Kosten <HelpButton topic="expenses" /></h1>
           <div className="actions">
-            <Link href="/expenses/new" className="button">
+            <Link href="/app/expenses/new" className="button">
               Kosten toevoegen
             </Link>
           </div>
@@ -130,10 +131,10 @@ export default function Expenses() {
   return (
     <Layout title="Kosten">
       <div className="header">
-        <h1>Kosten</h1>
+        <h1>Kosten <HelpButton topic="expenses" /></h1>
         <div className="actions">
           <SearchInput value={searchTerm} label="Zoeken in kosten" onChange={setSearchTerm} />
-          <Link href="/expenses/new" className="button">
+          <Link href="/app/expenses/new" className="button">
             Kosten toevoegen
           </Link>
         </div>
@@ -193,7 +194,7 @@ export default function Expenses() {
                   </button>
                 </td>
                 <td className="note-cell">
-                  <Link href={`/expenses/${expense.id}`} className="title">
+                  <Link href={`/app/expenses/${expense.id}`} className="title">
                     {expense.supplier}
                   </Link>
                 </td>
@@ -217,7 +218,7 @@ export default function Expenses() {
                     </button>
                     {openDropdownId === expense.id && (
                       <div className="action-menu">
-                        <Link href={`/expenses/${expense.id}`} className="edit">
+                        <Link href={`/app/expenses/${expense.id}`} className="edit">
                           Bewerken
                         </Link>
                         <Link

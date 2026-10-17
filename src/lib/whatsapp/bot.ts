@@ -309,6 +309,6 @@ function summary(
     }`,
     ...(proposal.missing.length ? ['', 'Nog aanvullen:', ...proposal.missing.map(item => `- ${item}`)] : []),
     '',
-    `Bekijken en versturen: ${appUrl()}/quotes/${quote.id}`,
+    `Bekijken en versturen: ${appUrl()}/app/quotes/${quote.id}`,
   ].join('\n');
 }

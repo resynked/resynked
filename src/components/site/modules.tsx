@@ -13,7 +13,6 @@ import {
   ReceiptEuro,
   Sparkles,
   Users,
-  Bird,
   type LucideIcon,
 } from 'lucide-react';
 import { GoogleIcon, MicrosoftIcon, MollieIcon, WhatsAppIcon } from '@/components/BrandIcons';
@@ -471,32 +470,6 @@ export const MODULES: SiteModule[] = [
       { label: 'Werkt met', value: 'Nederlandse banken via GoCardless' },
     ],
     related: ['bank', 'facturen', 'jaarcijfers'],
-  },
-  {
-    slug: 'moneybird',
-    name: 'Moneybird',
-    kind: 'plugin',
-    group: 'Betalen en bank',
-    icon: Bird,
-    summary: 'Werk je boekhouding nog in Moneybird? Dan gaan je facturen er vanzelf heen.',
-    lead: 'Voor wie zijn boekhouding (nog) in Moneybird doet: elke verstuurde factuur en creditfactuur staat er meteen in, met de klant, de regels en de juiste btw. Zet je hem op betaald, dan gebeurt dat in Moneybird ook.',
-    features: [
-      { title: 'Facturen in de boekhouding', text: 'Als externe verkoopfactuur, met de juiste btw per regel.' },
-      { title: 'Betalingen mee', text: 'Betaald in Synbased is betaald in Moneybird.' },
-      { title: 'Bestaande facturen', text: 'Met één knop alsnog overzetten.' },
-      { title: 'Niets dubbel', text: 'Wat er al staat, wordt overgeslagen.' },
-    ],
-    steps: [
-      { title: 'Maak een API-token', text: 'In Moneybird bij Instellingen > Ontwikkelaars.' },
-      { title: 'Plak het token', text: 'Bij Instellingen > Plug-ins, en kies je administratie.' },
-      { title: 'Klaar', text: 'Nieuwe facturen gaan er vanzelf heen.' },
-    ],
-    facts: [
-      { label: 'Soort', value: 'Plug-in' },
-      { label: 'Kosten', value: 'Een Moneybird-abonnement' },
-      { label: 'Werkt met', value: 'Facturen' },
-    ],
-    related: ['facturen', 'jaarcijfers', 'btw-aangifte'],
   },
 ];
 

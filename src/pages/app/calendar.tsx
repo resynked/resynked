@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Plus } from 'lucide-react';
@@ -212,7 +213,7 @@ export default function CalendarPage() {
               ? 'Je koppeling mist nog toegang tot je agenda, of de toegang is verlopen. Verwijder de koppeling bij Plug-ins en installeer hem opnieuw; geef daarbij toegang tot je agenda.'
               : 'Koppel je Google- of Microsoft-account bij Instellingen > Plug-ins om je afspraken hier te zien.'}
           </p>
-          <Link href="/settings?tab=plugins" className="button">
+          <Link href="/app/settings?tab=plugins" className="button">
             Naar Plug-ins
           </Link>
         </div>
@@ -259,7 +260,7 @@ export default function CalendarPage() {
   return (
     <Layout title="Agenda">
       <div className="header">
-        <h1>Agenda</h1>
+        <h1>Agenda <HelpButton topic="calendar" /></h1>
       </div>
 
       <div className="block calendar">

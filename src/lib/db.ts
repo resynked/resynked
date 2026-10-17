@@ -885,13 +885,6 @@ export async function updateInvoice(
     await saveBlocks('invoice', id, tenantId, blocks);
   }
 
-  // Vastgelegd of betaald: naar de boekhouding, als de Moneybird-plug-in aan
-  // staat. Pas hier geladen, want moneybird.ts leest de factuur weer via dit bestand
-  if (updates.status === 'sent' || updates.status === 'paid') {
-    const { syncInvoiceToMoneybird } = await import('./moneybird');
-    await syncInvoiceToMoneybird(id, tenantId);
-  }
-
   return data as Invoice;
 }
 

@@ -1,15 +1,27 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { useToast } from '@/components/Toast';
 import NoteFields, { validateNote } from '@/components/NoteFields';
-import type { Customer } from '@/lib/supabase';
+import type { Customer, Note } from '@/lib/supabase';
 import { getCustomerOptionLabel } from '@/lib/utils';
+import { SkeletonForm } from '@/components/Skeleton';
 
-export default function NewNote() {
+interface NoteWithCustomer extends Note {
+  customer: {
+    id: number;
+    name: string;
+    email: string | null;
+  };
+}
+
+export default function EditNote() {
   const toast = useToast();
   const router = useRouter();
+  const { id } = router.query;
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [note, setNote] = useState<NoteWithCustomer | null>(null);
   const [formData, setFormData] = useState({
     customer_id: '',
     title: '',
@@ -18,18 +30,34 @@ export default function NewNote() {
   const [isLoading, setIsLoading] = useState(false);
   // Pas na de eerste keer opslaan tonen wat er ontbreekt, niet al bij het openen
   const [showErrors, setShowErrors] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
-  // Check if customer_id was passed via query params
   useEffect(() => {
-    const { customer_id } = router.query;
-    if (customer_id && typeof customer_id === 'string') {
-      setFormData(prev => ({ ...prev, customer_id }));
+    if (id) {
+      fetchNote();
+      fetchCustomers();
     }
-  }, [router.query]);
+  }, [id]);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  const fetchNote = async () => {
+    try {
+      const res = await fetch(`/api/notes/${id}`);
+      if (!res.ok) throw new Error('Note not found');
+
+      const data = await res.json();
+      setNote(data);
+      setFormData({
+        customer_id: String(data.customer_id),
+        title: data.title,
+        content: data.content,
+      });
+      setIsFetching(false);
+    } catch (error) {
+      console.error('Error fetching note:', error);
+      toast.error('Fout', 'Notitie niet gevonden');
+      setIsFetching(false);
+    }
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -52,8 +80,8 @@ export default function NewNote() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
+      const response = await fetch(`/api/notes/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
@@ -65,12 +93,7 @@ export default function NewNote() {
         return;
       }
 
-      // Navigate back to notes or to customer page if came from there
-      if (router.query.from === 'customer' && formData.customer_id) {
-        router.push(`/customers/${formData.customer_id}`);
-      } else {
-        router.push('/notes');
-      }
+      router.push('/app/notes');
     } catch (err) {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -82,10 +105,42 @@ export default function NewNote() {
     label: getCustomerOptionLabel(c),
   })) || [];
 
+  if (isFetching) {
+    return (
+      <Layout title="Notitie bewerken">
+        <div className="header">
+          <h1>Notitie bewerken <HelpButton topic="notes" /></h1>
+          <div className="actions">
+            <button type="button" className="button cancel" disabled>
+              Annuleren
+            </button>
+            <button type="submit" className="button" disabled>
+              Opslaan
+            </button>
+          </div>
+        </div>
+        <SkeletonForm />
+      </Layout>
+    );
+  }
+
+  if (!note) {
+    return (
+      <Layout title="Notitie bewerken">
+        <div className="header">
+          <h1>Notitie niet gevonden <HelpButton topic="notes" /></h1>
+        </div>
+        <div className="empty-state">
+          <p>Deze notitie bestaat niet of is verwijderd.</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout title="Nieuwe notitie">
+    <Layout title="Notitie bewerken">
       <div className="header">
-        <h1>Nieuwe notitie aanmaken</h1>
+        <h1>Notitie bewerken <HelpButton topic="notes" /></h1>
         <div className="actions">
           <button
             type="button"

@@ -339,7 +339,7 @@ export default function PluginDetail({
           Wat je de bot stuurt, gaat samen met je eerdere offerteregels naar je AI-plug-in om de offerte te maken.
           Synbased bewaart je berichten niet; alleen een bericht waar nog een klant bij ontbreekt, blijft een uur staan
           tot je het aanvult. Je kunt de koppeling op elk moment hier bij Plug-ins verwijderen. De offerte zelf
-          controleer en verstuur je altijd in Synbased; <Link href="/quotes">bij Offertes</Link> staat hij als concept.
+          controleer en verstuur je altijd in Synbased; <Link href="/app/quotes">bij Offertes</Link> staat hij als concept.
         </p>
       ) : (
         <p className="field-note">

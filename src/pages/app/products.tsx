@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useEffect, useRef, useState } from 'react';
 import { Ellipsis, Package, Search } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -134,7 +135,7 @@ export default function Products() {
   return (
     <Layout title="Producten">
       <div className="header">
-        <h1>Producten</h1>
+        <h1>Producten <HelpButton topic="products" /></h1>
         <div className="actions">
           <SearchInput value={searchTerm} label="Zoeken in producten" onChange={setSearchTerm} />
           <button type="button" className="button" onClick={() => openForm(null)}>

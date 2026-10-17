@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -509,7 +510,7 @@ export default function InboxPage() {
               ? 'De toegang tot je mailbox is verlopen of ingetrokken. Zet de koppeling opnieuw aan om je mail weer te zien.'
               : 'Koppel je Gmail- of Outlook-mailbox bij Instellingen > Plug-ins om je mail hier te lezen en te beantwoorden.'}
           </p>
-          <Link href="/settings?tab=plugins" className="button">
+          <Link href="/app/settings?tab=plugins" className="button">
             Naar Plug-ins
           </Link>
         </div>
@@ -605,7 +606,7 @@ export default function InboxPage() {
                   {checkedIds.length > 0 && <Check size={12} />}
                 </button>
               )}
-              <h1>{search ? 'Zoekresultaten' : currentFolder?.name || 'Inbox'}</h1>
+              <h1>{search ? 'Zoekresultaten' : currentFolder?.name || 'Inbox'} <HelpButton topic="inbox" /></h1>
               <div className="actions">
                 <label className="toggle-label">
                   <Toggle label="Alleen ongelezen" checked={unreadOnly} onChange={setUnreadOnly} />

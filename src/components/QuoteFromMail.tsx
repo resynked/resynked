@@ -201,7 +201,7 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
                 Sluiten
               </button>
               {error.reconnect && (
-                <Link href="/settings?tab=plugins" className="button">
+                <Link href="/app/settings?tab=plugins" className="button">
                   Naar Plug-ins
                 </Link>
               )}
@@ -375,7 +375,7 @@ export default function QuoteFromMail({ threadId, onClose, onReplyDraft }: Quote
               <button type="button" className="button cancel" onClick={onClose}>
                 Sluiten
               </button>
-              <button type="button" className="button" onClick={() => router.push(`/quotes/${created.id}`)}>
+              <button type="button" className="button" onClick={() => router.push(`/app/quotes/${created.id}`)}>
                 Offerte openen
               </button>
             </div>

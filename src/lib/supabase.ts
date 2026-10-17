@@ -179,8 +179,6 @@ export interface Invoice {
   /** Hoeveel betalingsherinneringen er gingen, en wanneer de laatste */
   reminder_count?: number;
   reminder_sent_at?: string | null;
-  /** Onder welk id hij in Moneybird staat, als die plug-in aan staat */
-  moneybird_invoice_id?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -12,6 +12,11 @@ const nextConfig = {
       { source: '/offerte/:token', destination: '/public/quotes/:token', permanent: true },
       { source: '/factuur/:token', destination: '/public/invoices/:token', permanent: true },
       { source: '/voorwaarden', destination: '/terms', permanent: true },
+      // De app staat sinds kort onder /app; bladwijzers naar de oude plek werken nog
+      ...['dashboard', 'inbox', 'calendar', 'customers', 'quotes', 'invoices', 'products', 'notes', 'settings'].flatMap(page => [
+        { source: `/${page}`, destination: `/app/${page}`, permanent: true },
+        { source: `/${page}/:path*`, destination: `/app/${page}/:path*`, permanent: true },
+      ]),
     ];
   },
 };

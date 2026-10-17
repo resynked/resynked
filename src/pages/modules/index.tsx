@@ -48,8 +48,8 @@ export default function Modules() {
             <Link href="/demo" className="button">
               Demo aanvragen
             </Link>
-            <Link href="#plug-ins" className="button tertiary">
-              Bekijk de plug-ins
+            <Link href="/prijzen" className="button tertiary">
+              Prijzen
             </Link>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function Modules() {
         </div>
       </section>
 
-      <section id="plug-ins" className="site-section">
+      <section className="site-section">
         <div className="site-container">
           <div className="site-section-head">
             <span className="site-eyebrow">Plug-ins</span>

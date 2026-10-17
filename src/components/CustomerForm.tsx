@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -184,7 +185,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
         : 'Klant succesvol bijgewerkt';
 
       toast.success('Gelukt', successMessage);
-      router.push('/customers');
+      router.push('/app/customers');
     } catch (err) {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
@@ -196,7 +197,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
     return (
       <>
         <div className="header">
-          <h1>Klant bewerken</h1>
+          <h1>Klant bewerken <HelpButton topic="customers" /></h1>
           <div className="actions">
             <button type="button" className="button cancel" disabled>
               Annuleren
@@ -225,9 +226,9 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
   return (
     <>
       <div className="header">
-        <h1>{mode === 'create' ? 'Nieuwe klant toevoegen' : 'Klant bewerken'}</h1>
+        <h1>{mode === 'create' ? 'Nieuwe klant toevoegen' : 'Klant bewerken'} <HelpButton topic="customers" /></h1>
         <div className="actions">
-          <button type="button" className="button cancel" onClick={() => router.push('/customers')}>
+          <button type="button" className="button cancel" onClick={() => router.push('/app/customers')}>
             Annuleren
           </button>
           <button type="submit" form="customer-form" className="button" disabled={isLoading}>
@@ -487,7 +488,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                   <h3>Notities</h3>
                   <div className="actions">
                     <Link
-                      href={`/notes/new?customer_id=${customerId}&from=customer`}
+                      href={`/app/notes/new?customer_id=${customerId}&from=customer`}
                       className="button"
                     >
                       Notitie toevoegen
@@ -505,7 +506,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                     {notes.map((note) => (
                       <tr key={note.id}>
                         <td className="note-cell">
-                          <Link href={`/notes/${note.id}`} className="title">
+                          <Link href={`/app/notes/${note.id}`} className="title">
                             {note.title}
                           </Link>
                         </td>
@@ -523,7 +524,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                 <div className="header">
                   <h3>Offertes</h3>
                   <div className="actions">
-                    <Link href={`/quotes/new?customer_id=${customerId}`} className="button">
+                    <Link href={`/app/quotes/new?customer_id=${customerId}`} className="button">
                       Offerte maken
                     </Link>
                   </div>
@@ -538,7 +539,7 @@ export default function CustomerForm({ mode, customerId }: CustomerFormProps) {
                     {quotes.map((quote) => (
                       <tr key={quote.id}>
                         <td>
-                          <Link href={`/quotes/${quote.id}`}>{quote.quote_number}</Link>
+                          <Link href={`/app/quotes/${quote.id}`}>{quote.quote_number}</Link>
                         </td>
                         <td>{formatDate(quote.quote_date)}</td>
                         <td>{formatDate(quote.valid_until)}</td>

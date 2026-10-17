@@ -10,16 +10,16 @@ import { completeBankConnection } from '@/lib/gocardless';
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
-  if (!session) return res.redirect('/login?callbackUrl=/bank');
+  if (!session) return res.redirect('/login?callbackUrl=/app/bank');
 
   const tenantId = (session.user as any).tenantId;
   const reference = typeof req.query.ref === 'string' ? req.query.ref : '';
 
   try {
     const { imported } = await completeBankConnection(tenantId, reference);
-    return res.redirect(`/bank?connected=1&imported=${imported}`);
+    return res.redirect(`/app/bank?connected=1&imported=${imported}`);
   } catch (error: any) {
     console.error('Bank callback error:', error);
-    return res.redirect(`/bank?connected=0&error=${encodeURIComponent(error.message || 'Koppelen mislukt')}`);
+    return res.redirect(`/app/bank?connected=0&error=${encodeURIComponent(error.message || 'Koppelen mislukt')}`);
   }
 }

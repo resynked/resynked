@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -167,7 +168,7 @@ export default function EditQuote() {
 
     try {
       await persist(formData, false);
-      router.push('/quotes');
+      router.push('/app/quotes');
     } catch (err: any) {
       toast.error('Fout', err.message || 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -247,7 +248,7 @@ export default function EditQuote() {
         return;
       }
 
-      router.push(`/invoices/${data.id}`);
+      router.push(`/app/invoices/${data.id}`);
     } catch (err) {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsConverting(false);
@@ -258,7 +259,7 @@ export default function EditQuote() {
     return (
       <Layout title="Offerte bewerken">
         <div className="header">
-          <h1>Offerte bewerken</h1>
+          <h1>Offerte bewerken <HelpButton topic="quotes" /></h1>
         </div>
         <SkeletonCard />
       </Layout>
@@ -268,7 +269,7 @@ export default function EditQuote() {
   return (
     <Layout title="Offerte bewerken">
       <div className="header">
-        <h1>Offerte bewerken</h1>
+        <h1>Offerte bewerken <HelpButton topic="quotes" /></h1>
         <div className="actions">
           <button
             type="button"
@@ -310,7 +311,7 @@ export default function EditQuote() {
             Downloaden
           </button>
           {convertedInvoiceId ? (
-            <Link href={`/invoices/${convertedInvoiceId}`} className="button cancel">
+            <Link href={`/app/invoices/${convertedInvoiceId}`} className="button cancel">
               Bekijk factuur
             </Link>
           ) : (
@@ -322,7 +323,7 @@ export default function EditQuote() {
               </button>
             )
           )}
-          <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
+          <button type="button" className="button cancel" onClick={() => router.push('/app/quotes')}>
             Annuleren
           </button>
           <button type="button" className="button" onClick={handleSubmit} disabled={isLoading}>

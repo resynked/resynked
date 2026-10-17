@@ -39,7 +39,7 @@ export default function Login() {
         email,
         password,
         ...(needsCode ? { code: code.trim() } : {}),
-        callbackUrl: '/dashboard',
+        callbackUrl: '/app/dashboard',
       });
 
       if (result?.error === TWO_FACTOR_REQUIRED) {
@@ -61,7 +61,7 @@ export default function Login() {
         // Terug naar de pagina waar je heen wilde, of anders het dashboard.
         // Alleen een pad binnen de app, geen adres van buiten
         const terug = router.query.callbackUrl;
-        const doel = typeof terug === 'string' && terug.startsWith('/') && !terug.startsWith('//') ? terug : '/dashboard';
+        const doel = typeof terug === 'string' && terug.startsWith('/') && !terug.startsWith('//') ? terug : '/app/dashboard';
         setTimeout(() => router.push(doel), 1000);
       }
     } catch (err) {

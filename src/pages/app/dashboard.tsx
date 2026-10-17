@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -121,12 +122,12 @@ export default function Dashboard() {
   return (
     <Layout title="Dashboard">
       <div className="header">
-        <h1>Dashboard</h1>
+        <h1>Dashboard <HelpButton topic="dashboard" /></h1>
         <div className="actions">
-          <Link href="/invoices/new" className="button tertiary">
+          <Link href="/app/invoices/new" className="button tertiary">
             Factuur maken
           </Link>
-          <Link href="/quotes/new" className="button">
+          <Link href="/app/quotes/new" className="button">
             Offerte maken
           </Link>
         </div>
@@ -154,7 +155,7 @@ export default function Dashboard() {
             <h2>
               Openstaande offertes <span className="count">{openQuotes.length}</span>
             </h2>
-            <Link href="/quotes">Alles bekijken</Link>
+            <Link href="/app/quotes">Alles bekijken</Link>
           </div>
           {isLoading ? (
             <Skeleton height="150px" />
@@ -165,7 +166,7 @@ export default function Dashboard() {
               {openQuotes.slice(0, TABLE_ROWS).map((quote) => (
                 <tr key={quote.id}>
                   <td>
-                    <Link href={`/quotes/${quote.id}`}>{quote.quote_number}</Link>
+                    <Link href={`/app/quotes/${quote.id}`}>{quote.quote_number}</Link>
                   </td>
                   <td>{customerName(quote)}</td>
                   <td>
@@ -186,7 +187,7 @@ export default function Dashboard() {
             <h2>
               Openstaande facturen <span className="count">{openInvoices.length}</span>
             </h2>
-            <Link href="/invoices">Alles bekijken</Link>
+            <Link href="/app/invoices">Alles bekijken</Link>
           </div>
           {isLoading ? (
             <Skeleton height="150px" />
@@ -197,7 +198,7 @@ export default function Dashboard() {
               {openInvoices.slice(0, TABLE_ROWS).map((invoice) => (
                 <tr key={invoice.id}>
                   <td>
-                    <Link href={`/invoices/${invoice.id}`}>
+                    <Link href={`/app/invoices/${invoice.id}`}>
                       {invoice.invoice_number || 'Concept'}
                     </Link>
                   </td>

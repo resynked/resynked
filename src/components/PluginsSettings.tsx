@@ -3,7 +3,6 @@ import Modal from '@/components/Modal';
 import PluginDetail, { PLUGINS, WHATSAPP_PLUGIN, type PluginProvider } from '@/components/PluginDetail';
 import AiPluginsSection from '@/components/AiPluginsSection';
 import MolliePluginSection from '@/components/MolliePluginSection';
-import MoneybirdPluginSection from '@/components/MoneybirdPluginSection';
 import BankPluginSection from '@/components/BankPluginSection';
 import Toggle from '@/components/Toggle';
 import { useToast } from '@/components/Toast';
@@ -300,8 +299,6 @@ export default function PluginsSettings() {
         <MolliePluginSection />
 
         <BankPluginSection />
-
-        <MoneybirdPluginSection />
       </div>
 
       <Modal isOpen={!!dialogPlugin} onClose={() => setDialogFor(null)} title="">

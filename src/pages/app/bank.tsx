@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -83,7 +84,7 @@ export default function Bank() {
     if (connected === undefined) return;
     if (connected === '1') toast.success('Gekoppeld', `Je bank is gekoppeld; ${imported || 0} transactie(s) opgehaald`);
     else toast.error('Koppelen mislukt', typeof error === 'string' ? error : 'Probeer het opnieuw');
-    router.replace('/bank', undefined, { shallow: true });
+    router.replace('/app/bank', undefined, { shallow: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.query.connected]);
 
@@ -203,10 +204,10 @@ export default function Bank() {
 
   const linkedTo = (transaction: TransactionRow) => {
     if (transaction.invoice) {
-      return <Link href={`/invoices/${transaction.invoice.id}`}>Factuur {transaction.invoice.invoice_number}</Link>;
+      return <Link href={`/app/invoices/${transaction.invoice.id}`}>Factuur {transaction.invoice.invoice_number}</Link>;
     }
     if (transaction.expense) {
-      return <Link href={`/expenses/${transaction.expense.id}`}>Kosten · {transaction.expense.supplier}</Link>;
+      return <Link href={`/app/expenses/${transaction.expense.id}`}>Kosten · {transaction.expense.supplier}</Link>;
     }
     if (transaction.category) return categoryLabel(transaction.category);
     return <span className="status-badge status-draft">Te verwerken</span>;
@@ -216,7 +217,7 @@ export default function Bank() {
     return (
       <Layout title="Bank">
         <div className="header">
-          <h1>Bank</h1>
+          <h1>Bank <HelpButton topic="bank" /></h1>
         </div>
         <Skeleton height="300px" />
       </Layout>
@@ -226,7 +227,7 @@ export default function Bank() {
   return (
     <Layout title="Bank">
       <div className="header">
-        <h1>Bank</h1>
+        <h1>Bank <HelpButton topic="bank" /></h1>
         <div className="actions">
           {accounts?.some(a => a.external_id) && (
             <button type="button" className="button cancel" onClick={handleSync} disabled={syncing}>

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import {
   ArrowRight,
   BellRing,
-  Check,
   FileSignature,
   Inbox,
   MessageCircle,
@@ -13,18 +12,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import SiteLayout from '@/components/site/SiteLayout';
-
-/** Wat er in het abonnement zit; alleen wat Synbased echt kan */
-const INCLUDED = [
-  'Onbeperkt offertes en facturen',
-  'Online laten tekenen en betalen met QR-code',
-  'Inbox en agenda van Gmail of Outlook',
-  'AI: van mail naar offerte',
-  'Offertes via WhatsApp',
-  'Eigen sjabloon en huisstijl',
-  'Herinneringen en "geopend door de klant"',
-  'Tweestapsverificatie',
-];
+import { ClosingSection, FaqSection, PricingSection } from '@/components/site/sections';
 
 const FEATURES = [
   {
@@ -69,39 +57,16 @@ const FEATURES = [
   },
 ];
 
-const FAQ = [
-  {
-    q: 'Voor wie is Synbased?',
-    a: 'Voor aannemers en vakmensen: schilders, tegelzetters, installateurs, timmerlieden en klusbedrijven die snel een nette offerte willen maken en sneller betaald willen worden.',
-  },
-  {
-    q: 'Kan ik mijn eigen huisstijl gebruiken?',
-    a: 'Ja. Je zet je logo en bedrijfsgegevens erin, kiest staand of liggend A4, en wie wil, krijgt een volledig eigen sjabloon voor offertes en facturen.',
-  },
-  {
-    q: 'Gaan mails vanuit mijn eigen adres?',
-    a: 'Ja. Je koppelt je eigen Gmail of Outlook; offertes en facturen gaan vanaf je eigen adres en staan ook in je Verzonden. Antwoorden komen gewoon in je eigen inbox.',
-  },
-  {
-    q: 'Hoe betaalt mijn klant?',
-    a: 'Met de QR-code op de factuur, met zijn eigen bank-app, of met iDEAL als je Mollie koppelt. Het geld gaat altijd rechtstreeks naar jouw rekening.',
-  },
-  {
-    q: 'Moet ik zelf iets installeren?',
-    a: 'Nee. Synbased werkt in de browser op je computer, tablet en telefoon. Vraag een demo aan, dan laten we je alles zien en zetten we je account klaar.',
-  },
-];
-
 /**
  * De homepage van synbased.com: wat Synbased is, wat het kan, wat het kost, en
- * een demo aanvragen. Ingelogd? Dan staat er in de kop "Naar dashboard".
+ * een demo aanvragen. Prijzen en vragen staan ook op hun eigen pagina. Ingelogd? Dan staat er in de kop "Naar dashboard".
  */
 export default function Home() {
   return (
     <SiteLayout description="Synbased is het offerte- en factuursysteem voor vakmensen. Offertes laten tekenen, facturen met QR-code, je mail en agenda erbij, en AI die aanvragen omzet naar offertes. € 35 per maand.">
       <section className="site-hero">
         <div className="site-container">
-          <Link href="/#functies" className="site-pill">
+          <Link href="/modules/ai" className="site-pill">
             <Sparkles size={13} /> Nieuw: van mail naar offerte met AI <ArrowRight size={13} />
           </Link>
           <h1>Offertes en facturen voor vakmensen. In minuten klaar.</h1>
@@ -113,8 +78,8 @@ export default function Home() {
             <Link href="/demo" className="button">
               Demo aanvragen
             </Link>
-            <Link href="/#functies" className="button tertiary">
-              Bekijk de functies
+            <Link href="/modules" className="button tertiary">
+              Bekijk de modules
             </Link>
           </div>
           <div className="site-hero-visual">
@@ -131,7 +96,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="functies" className="site-section">
+      <section className="site-section">
         <div className="site-container">
           <div className="site-section-head">
             <span className="site-eyebrow">Functies</span>
@@ -154,7 +119,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="werkwijze" className="site-section">
+      <section className="site-section">
         <div className="site-container">
           <div className="site-section-head">
             <span className="site-eyebrow">Werkwijze</span>
@@ -235,61 +200,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="prijzen" className="site-section">
-        <div className="site-container">
-          <div className="site-section-head">
-            <span className="site-eyebrow">Prijzen</span>
-            <h2>Eén abonnement. Alles erin.</h2>
-          </div>
-          <div className="site-price">
-            <div className="site-price-head">
-              <span className="title">Synbased</span>
-              <div className="amount">
-                <strong>€ 35</strong>
-                <span>per maand, excl. btw</span>
-              </div>
-              <Link href="/demo" className="button">
-                Demo aanvragen
-              </Link>
-            </div>
-            <ul>
-              {INCLUDED.map((item) => (
-                <li key={item}>
-                  <Check size={16} />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
-      <section id="vragen" className="site-section">
-        <div className="site-container site-narrow">
-          <div className="site-section-head">
-            <span className="site-eyebrow">Vragen</span>
-            <h2>Veelgestelde vragen</h2>
-          </div>
-          <div className="site-faq">
-            {FAQ.map(({ q, a }) => (
-              <details key={q}>
-                <summary>{q}</summary>
-                <p>{a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FaqSection />
 
-      <section className="site-closing">
-        <div className="site-container">
-          <h2>Klaar om tijd te besparen?</h2>
-          <p>We laten je in een halfuur zien hoe Synbased werkt, met jouw manier van werken.</p>
-          <Link href="/demo" className="button">
-            Demo aanvragen
-          </Link>
-        </div>
-      </section>
+      <ClosingSection />
     </SiteLayout>
   );
 }

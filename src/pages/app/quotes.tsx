@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
@@ -211,7 +212,7 @@ export default function Quotes() {
     }
 
     if (created.length === 1 && convertible.length === 1) {
-      router.push(`/invoices/${created[0]}`);
+      router.push(`/app/invoices/${created[0]}`);
       return;
     }
 
@@ -305,7 +306,7 @@ export default function Quotes() {
         return;
       }
 
-      router.push(`/invoices/${data.id}`);
+      router.push(`/app/invoices/${data.id}`);
     } catch (error) {
       console.error('Error converting quote to invoice:', error);
       toast.error('Omzetten mislukt', 'Er ging iets mis bij het omzetten van de offerte.');
@@ -337,9 +338,9 @@ export default function Quotes() {
   return (
     <Layout title="Offertes">
       <div className="header">
-        <h1>Offertes</h1>
+        <h1>Offertes <HelpButton topic="quotes" /></h1>
         <div className="actions">
-          <Link href="/quotes/new" className="button">
+          <Link href="/app/quotes/new" className="button">
             Offerte maken
           </Link>
         </div>
@@ -424,7 +425,7 @@ export default function Quotes() {
                   </button>
                   {openDropdownId === quote.id && (
                     <div className="action-menu">
-                      <Link href={`/quotes/${quote.id}`} className="edit">
+                      <Link href={`/app/quotes/${quote.id}`} className="edit">
                         Bewerken
                       </Link>
                       <Link href="" className="copy" onClick={() => handleDuplicate(quote)}>
@@ -451,7 +452,7 @@ export default function Quotes() {
                         Downloaden
                       </Link>
                       {quote.converted_to_invoice_id ? (
-                        <Link href={`/invoices/${quote.converted_to_invoice_id}`} className="edit">
+                        <Link href={`/app/invoices/${quote.converted_to_invoice_id}`} className="edit">
                           Bekijk factuur
                         </Link>
                       ) : (

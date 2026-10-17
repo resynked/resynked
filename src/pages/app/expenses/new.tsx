@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
@@ -89,7 +90,7 @@ export default function NewExpense() {
         return;
       }
 
-      router.push('/expenses');
+      router.push('/app/expenses');
     } catch {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -99,7 +100,7 @@ export default function NewExpense() {
   return (
     <Layout title="Kosten toevoegen">
       <div className="header">
-        <h1>Kosten toevoegen</h1>
+        <h1>Kosten toevoegen <HelpButton topic="expenses" /></h1>
         <div className="actions">
           <button type="button" className="button cancel" onClick={() => router.back()}>
             Annuleren

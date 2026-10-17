@@ -261,8 +261,6 @@ CREATE TABLE invoices (
   -- Hoeveel betalingsherinneringen er gingen, en wanneer de laatste
   reminder_count INTEGER NOT NULL DEFAULT 0,
   reminder_sent_at TIMESTAMPTZ,
-  -- Onder welk id hij in Moneybird staat, als die plug-in aan staat
-  moneybird_invoice_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -570,23 +568,6 @@ CREATE TRIGGER update_mollie_accounts_updated_at
   BEFORE UPDATE ON mollie_accounts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Moneybird: elke vastgelegde factuur gaat naar de boekhouding
-CREATE TABLE moneybird_accounts (
-  id BIGSERIAL PRIMARY KEY,
-  -- Eén administratie per bedrijf
-  tenant_id UUID NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE,
-  -- Versleuteld met MAIL_ENCRYPTION_KEY, net als de Mollie-sleutel
-  api_token TEXT NOT NULL,
-  administration_id TEXT NOT NULL,
-  administration_name TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TRIGGER update_moneybird_accounts_updated_at
-  BEFORE UPDATE ON moneybird_accounts
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- ------------------------------------------------------------
 -- Producten: vaste posten met prijs en eenheid, om in de prijstabel te
 -- kiezen. De regel krijgt een kopie, dus oude offertes blijven gelijk.
@@ -660,7 +641,6 @@ ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mollie_accounts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE moneybird_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;

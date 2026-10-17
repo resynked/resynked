@@ -95,56 +95,56 @@ export default function Sidebar() {
         )}
       </div>
       <nav className="navigation">
-        <Link href="/dashboard" className={isActive('/dashboard') ? 'active' : ''} data-label="Dashboard">
+        <Link href="/app/dashboard" className={isActive('/app/dashboard') ? 'active' : ''} data-label="Dashboard">
           <LayoutDashboard size={18} />
           <span className="label">Dashboard</span>
         </Link>
         {mailAccount && (
-          <Link href="/inbox" className={isActive('/inbox') ? 'active' : ''} data-label="Inbox">
+          <Link href="/app/inbox" className={isActive('/app/inbox') ? 'active' : ''} data-label="Inbox">
             <Inbox size={18} />
             <span className="label">Inbox</span>
             {!!unreadMail && <span className="count">{unreadMail > 999 ? '999+' : unreadMail}</span>}
           </Link>
         )}
         {mailAccount && (
-          <Link href="/calendar" className={isActive('/calendar') ? 'active' : ''} data-label="Agenda">
+          <Link href="/app/calendar" className={isActive('/app/calendar') ? 'active' : ''} data-label="Agenda">
             <CalendarDays size={18} />
             <span className="label">Agenda</span>
           </Link>
         )}
-        <Link href="/customers" className={isActive('/customers') || router.pathname.startsWith('/customers') ? 'active' : ''} data-label="Klanten">
+        <Link href="/app/customers" className={isActive('/app/customers') || router.pathname.startsWith('/app/customers') ? 'active' : ''} data-label="Klanten">
           <Users size={18} />
           <span className="label">Klanten</span>
         </Link>
-        <Link href="/quotes" className={isActive('/quotes') || router.pathname.startsWith('/quotes') ? 'active' : ''} data-label="Offertes">
+        <Link href="/app/quotes" className={isActive('/app/quotes') || router.pathname.startsWith('/app/quotes') ? 'active' : ''} data-label="Offertes">
           <FileText size={18} />
           <span className="label">Offertes</span>
         </Link>
-        <Link href="/invoices" className={isActive('/invoices') || router.pathname.startsWith('/invoices') ? 'active' : ''} data-label="Facturen">
+        <Link href="/app/invoices" className={isActive('/app/invoices') || router.pathname.startsWith('/app/invoices') ? 'active' : ''} data-label="Facturen">
           <ReceiptEuro size={18} />
           <span className="label">Facturen</span>
         </Link>
-        <Link href="/expenses" className={isActive('/expenses') || router.pathname.startsWith('/expenses') ? 'active' : ''} data-label="Kosten">
+        <Link href="/app/expenses" className={isActive('/app/expenses') || router.pathname.startsWith('/app/expenses') ? 'active' : ''} data-label="Kosten">
           <Receipt size={18} />
           <span className="label">Kosten</span>
         </Link>
-        <Link href="/bank" className={isActive('/bank') ? 'active' : ''} data-label="Bank">
+        <Link href="/app/bank" className={isActive('/app/bank') ? 'active' : ''} data-label="Bank">
           <Landmark size={18} />
           <span className="label">Bank</span>
         </Link>
-        <Link href="/vat" className={isActive('/vat') ? 'active' : ''} data-label="Btw-overzicht">
+        <Link href="/app/vat" className={isActive('/app/vat') ? 'active' : ''} data-label="Btw-overzicht">
           <Percent size={18} />
           <span className="label">Btw-overzicht</span>
         </Link>
-        <Link href="/reports" className={isActive('/reports') ? 'active' : ''} data-label="Jaarcijfers">
+        <Link href="/app/reports" className={isActive('/app/reports') ? 'active' : ''} data-label="Jaarcijfers">
           <ChartColumn size={18} />
           <span className="label">Jaarcijfers</span>
         </Link>
-        <Link href="/products" className={isActive('/products') || router.pathname.startsWith('/products') ? 'active' : ''} data-label="Producten">
+        <Link href="/app/products" className={isActive('/app/products') || router.pathname.startsWith('/app/products') ? 'active' : ''} data-label="Producten">
           <Package size={18} />
           <span className="label">Producten</span>
         </Link>
-        <Link href="/notes" className={isActive('/notes') || router.pathname.startsWith('/notes') ? 'active' : ''} data-label="Notities">
+        <Link href="/app/notes" className={isActive('/app/notes') || router.pathname.startsWith('/app/notes') ? 'active' : ''} data-label="Notities">
           <FilePen size={18} />
           <span className="label">Notities</span>
         </Link>
@@ -165,7 +165,7 @@ export default function Sidebar() {
 
 
             <div className="menu">
-              <Link href="/settings" className="item">
+              <Link href="/app/settings" className="item">
                 Account instellingen
               </Link>
 

@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Undo2, Redo2 } from 'lucide-react';
@@ -17,15 +18,14 @@ const currencyOptions = [
   { value: 'GBP', label: 'GBP (£)' },
 ];
 
-export default function NewQuote() {
+export default function NewInvoice() {
   const toast = useToast();
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   const [formData, setFormData] = useState({
-    quote_number: '',
-    quote_date: vandaag(),
-    valid_until: overDagen(30),
+    invoice_date: vandaag(),
+    due_date: overDagen(30),
     customer_id: '',
     currency: 'EUR',
     blocks: startBlocks() as DocumentBlock[],
@@ -36,41 +36,17 @@ export default function NewQuote() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Wachten tot het adres uitgelezen is, anders mist de klant uit de link
-    if (!router.isReady) return;
     fetchCustomers();
-    fetchNextNumber();
-  }, [router.isReady]);
-
-  // Het nummer dat de aannemer bij Instellingen heeft ingesteld staat alvast in
-  // het veld, zodat hij ziet wat hij krijgt en het desgewenst kan aanpassen
-  const fetchNextNumber = async () => {
-    try {
-      const res = await fetch('/api/tenant');
-      if (!res.ok) return;
-
-      const tenant = await res.json();
-      if (tenant?.quote_number_next) {
-        setFormData(prev => ({ ...prev, quote_number: tenant.quote_number_next }));
-      }
-    } catch (err) {
-      console.error('Error fetching next quote number:', err);
-    }
-  };
+  }, []);
 
   const fetchCustomers = async () => {
     try {
       const res = await fetch('/api/customers');
       const data = await res.json();
       setCustomers(data);
-
-      // Kom je hier vanuit een klant, dan staat die al goed; anders de eerste
-      const vanaf = router.query.customer_id;
-      const gekozen = typeof vanaf === 'string' && data.some((c: Customer) => String(c.id) === vanaf)
-        ? vanaf
-        : data.length > 0 ? String(data[0].id) : '';
-
-      if (gekozen) setFormData(prev => ({ ...prev, customer_id: gekozen }));
+      if (data.length > 0) {
+        setFormData(prev => ({ ...prev, customer_id: String(data[0].id) }));
+      }
     } catch (err) {
       console.error('Error fetching customers:', err);
     }
@@ -102,17 +78,17 @@ export default function NewQuote() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/quotes', {
+      const response = await fetch('/api/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          quote_number: formData.quote_number,
-          quote_date: formData.quote_date,
-          valid_until: formData.valid_until,
+          invoice_date: formData.invoice_date,
+          due_date: formData.due_date,
           customer_id: formData.customer_id,
           currency: formData.currency,
           intro_text: formData.intro_text || null,
           notes: formData.notes || null,
+          status: 'draft',
           blocks: formData.blocks,
         }),
       });
@@ -124,7 +100,7 @@ export default function NewQuote() {
         return;
       }
 
-      router.push('/quotes');
+      router.push('/app/invoices');
     } catch (err) {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -132,9 +108,9 @@ export default function NewQuote() {
   };
 
   return (
-    <Layout title="Nieuwe offerte">
+    <Layout title="Nieuwe factuur">
       <div className="header">
-        <h1>Nieuwe offerte aanmaken</h1>
+        <h1>Nieuwe factuur aanmaken <HelpButton topic="invoices" /></h1>
         <div className="actions">
           <button
             type="button"
@@ -156,7 +132,7 @@ export default function NewQuote() {
           >
             <Redo2 size={16} />
           </button>
-          <button type="button" className="button cancel" onClick={() => router.push('/quotes')}>
+          <button type="button" className="button cancel" onClick={() => router.push('/app/invoices')}>
             Annuleren
           </button>
           <button type="button" className="button" onClick={handleSubmit} disabled={isLoading}>
@@ -166,11 +142,11 @@ export default function NewQuote() {
       </div>
 
       <DocumentEditor
-        title="Offerte"
+        title="Factuur"
         meta={[
-          { label: 'Offertenummer', value: formData.quote_number },
-          { label: 'Offertedatum', value: formatDate(formData.quote_date) },
-          { label: 'Geldig tot', value: formatDate(formData.valid_until) },
+          { label: 'Factuurnummer', value: 'Volgt bij versturen' },
+          { label: 'Factuurdatum', value: formatDate(formData.invoice_date) },
+          { label: 'Vervaldatum', value: formatDate(formData.due_date) },
         ]}
         customer={selectedCustomer}
         blocks={formData.blocks}
@@ -192,32 +168,19 @@ export default function NewQuote() {
 
             <div className="form-section">
               <div className="form-group">
-                <label htmlFor="quote_number">Offertenummer</label>
-                <input
-                  id="quote_number"
-                  type="text"
-                  value={formData.quote_number}
-                  onChange={(e) => setFormData({ ...formData, quote_number: e.target.value })}
-                  placeholder="Vul een offertenummer in"
-                />
-              </div>
-            </div>
-
-            <div className="form-section">
-              <div className="form-group">
-                <label htmlFor="quote_date">Offertedatum</label>
+                <label htmlFor="invoice_date">Factuurdatum</label>
                 <DatePicker
-                  value={formData.quote_date}
-                  onChange={(date) => setFormData({ ...formData, quote_date: date })}
+                  value={formData.invoice_date}
+                  onChange={(date) => setFormData({ ...formData, invoice_date: date })}
                   placeholder="Selecteer een datum"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="valid_until">Geldig tot</label>
+                <label htmlFor="due_date">Vervaldatum</label>
                 <DatePicker
-                  value={formData.valid_until}
-                  onChange={(date) => setFormData({ ...formData, valid_until: date })}
+                  value={formData.due_date}
+                  onChange={(date) => setFormData({ ...formData, due_date: date })}
                   placeholder="Selecteer een datum"
                 />
               </div>
@@ -236,6 +199,7 @@ export default function NewQuote() {
           </>
         }
       />
+
     </Layout>
   );
 }

@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import Table from '@/components/Table';
@@ -181,9 +182,9 @@ export default function Invoices() {
   return (
     <Layout title="Facturen">
       <div className="header">
-        <h1>Facturen</h1>
+        <h1>Facturen <HelpButton topic="invoices" /></h1>
         <div className="actions">
-          <Link href="/invoices/new" className="button">
+          <Link href="/app/invoices/new" className="button">
             Factuur maken
           </Link>
         </div>
@@ -272,7 +273,7 @@ export default function Invoices() {
                   </button>
                   {openDropdownId === invoice.id && (
                     <div className="action-menu">
-                      <Link href={`/invoices/${invoice.id}`} className="edit">
+                      <Link href={`/app/invoices/${invoice.id}`} className="edit">
                         {isFinalInvoice(invoice) ? 'Bekijken' : 'Bewerken'}
                       </Link>
                       {!isCreditNote(invoice) && (

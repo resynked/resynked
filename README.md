@@ -45,8 +45,7 @@ aannemers komen elkaar nooit tegen.
   `src/lib/ledger.ts`); er is geen aparte boekhouding om bij te houden
 - **Btw-aangifte** per kwartaal of jaar, rubriek voor rubriek: omzet en btw
   per tarief (op factuurdatum), de voorbelasting uit de kosten, en wat je
-  betaalt of terugkrijgt. De export is een CSV voor de boekhouder. Met de optionele Moneybird-plug-in gaat elke vastgelegde factuur
-  (en zijn betaling) vanzelf naar de boekhouding
+  betaalt of terugkrijgt. De export is een CSV voor de boekhouder.
 
 ## Techniek
 
@@ -187,7 +186,7 @@ diensten te verbeteren.
 | `quotes`, `quote_items` | offertes met vrije regels |
 | `invoices`, `invoice_items` | facturen met vrije regels |
 | `notes` | notities per klant |
-| `mollie_accounts`, `moneybird_accounts` | plug-ins voor betalen en boekhouding, met versleutelde sleutel |
+| `mollie_accounts` | de Mollie-plug-in, met versleutelde sleutel |
 
 Een offerte die is omgezet houdt `converted_to_invoice_id` vast; de factuur
 verwijst met `quote_id` terug.

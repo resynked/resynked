@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
@@ -120,7 +121,7 @@ export default function EditExpense() {
         return;
       }
 
-      router.push('/expenses');
+      router.push('/app/expenses');
     } catch {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsLoading(false);
@@ -139,7 +140,7 @@ export default function EditExpense() {
     if (!confirmed) return;
 
     const response = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-    if (response.ok) router.push('/expenses');
+    if (response.ok) router.push('/app/expenses');
     else toast.error('Fout', 'Verwijderen mislukt');
   };
 
@@ -147,7 +148,7 @@ export default function EditExpense() {
     return (
       <Layout title="Kosten bewerken">
         <div className="header">
-          <h1>Kosten bewerken</h1>
+          <h1>Kosten bewerken <HelpButton topic="expenses" /></h1>
         </div>
         <SkeletonForm />
       </Layout>
@@ -157,12 +158,12 @@ export default function EditExpense() {
   return (
     <Layout title="Kosten bewerken">
       <div className="header">
-        <h1>Kosten bewerken</h1>
+        <h1>Kosten bewerken <HelpButton topic="expenses" /></h1>
         <div className="actions">
           <button type="button" className="button negative" onClick={handleDelete}>
             Verwijderen
           </button>
-          <button type="button" className="button cancel" onClick={() => router.push('/expenses')}>
+          <button type="button" className="button cancel" onClick={() => router.push('/app/expenses')}>
             Annuleren
           </button>
           <button type="submit" form="expense-form" className="button" disabled={isLoading || scanning}>

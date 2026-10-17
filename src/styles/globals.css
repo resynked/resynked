@@ -196,7 +196,7 @@ button {font-family: var(--font-family1); font-size: var(--fontsize2); backgroun
 /* In een blok: rechts een link (Alles bekijken) of een keuzelijst (periode) */
 .content .block .header > a {font-size: var(--fontsize2); font-weight: 500; text-decoration: none;}
 .content .block .header > a:hover {color: var(--font-color1);}
-.content .block .header .select {width: 180px;}
+.content .block .header .select, .content .header .actions .select {width: 180px;}
 .content .header .actions {display: flex; gap: var(--space10); align-items: center;}
 .content .header .selected-count {font-size: 13px; color: var(--font-color2);}
 
@@ -448,8 +448,8 @@ input[aria-invalid="true"], .invalid .select .control, .invalid .rich-editor {bo
 .field-error {margin: var(--space5) 0 0 0; font-size: var(--fontsize2); color: var(--color6);}
 .row-section + h3, h2 + h3 {margin: var(--space20) 0 var(--space5) 0;}
 
-h2 .help, h3 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
-h2 .help:hover, h3 .help:hover {background: var(--color4); color: var(--font-color1);}
+h1 .help, h2 .help, h3 .help {display: inline-flex; align-items: center; vertical-align: middle; margin: 0 0 0 var(--space5); padding: 3px; border-radius: var(--border-radius1); color: var(--font-color2); line-height: 0;}
+h1 .help:hover, h2 .help:hover, h3 .help:hover {background: var(--color4); color: var(--font-color1);}
 
 .edit-holder {background: var(--color3); border: 1px solid var(--border-color); padding: var(--space10); box-sizing: border-box; margin: 0 0 var(--space20) 0; border-radius: var(--border-radius1);}
 

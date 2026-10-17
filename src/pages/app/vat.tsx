@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
@@ -154,7 +155,7 @@ export default function Vat() {
   return (
     <Layout title="Btw-overzicht">
       <div className="header">
-        <h1>Btw-overzicht</h1>
+        <h1>Btw-overzicht <HelpButton topic="vat" /></h1>
         <div className="actions">
           <button type="button" className="button" onClick={handleExport} disabled={isLoading || isEmpty}>
             Exporteren
@@ -233,7 +234,7 @@ export default function Vat() {
               {invoices.map((invoice) => (
                 <tr key={invoice.id}>
                   <td>
-                    <Link href={`/invoices/${invoice.id}`}>{invoice.invoice_number}</Link>
+                    <Link href={`/app/invoices/${invoice.id}`}>{invoice.invoice_number}</Link>
                     {isCreditNote(invoice) && <span className="placeholder"> · Credit</span>}
                   </td>
                   <td>{formatDate(invoice.invoice_date)}</td>
@@ -265,7 +266,7 @@ export default function Vat() {
               {expenses.map((expense) => (
                 <tr key={expense.id}>
                   <td>
-                    <Link href={`/expenses/${expense.id}`}>{expense.supplier}</Link>
+                    <Link href={`/app/expenses/${expense.id}`}>{expense.supplier}</Link>
                   </td>
                   <td>{formatDate(expense.expense_date)}</td>
                   <td>{categoryLabel(expense.category)}</td>

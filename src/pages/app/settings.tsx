@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
@@ -439,7 +440,7 @@ export default function Settings() {
     return (
         <Layout title="Instellingen">
             <div className="header">
-                <h1>Instellingen</h1>
+                <h1>Instellingen <HelpButton topic="settings" /></h1>
                 {activeTab === 'account' && (
                     <div className="actions">
                         <button className="button" onClick={handleSaveAccount} disabled={isSaving}>

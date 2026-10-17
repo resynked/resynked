@@ -40,16 +40,14 @@ export default function SiteLayout({
           </Link>
 
           <nav className="site-nav" aria-label="Hoofdmenu">
-            <Link href="/#functies">Functies</Link>
             <Link href="/modules">Modules</Link>
-            <Link href="/#werkwijze">Werkwijze</Link>
-            <Link href="/#prijzen">Prijzen</Link>
-            <Link href="/#vragen">Vragen</Link>
+            <Link href="/prijzen">Prijzen</Link>
+            <Link href="/vragen">Vragen</Link>
           </nav>
 
           <div className="site-actions">
             {loggedIn ? (
-              <Link href="/dashboard" className="button">
+              <Link href="/app/dashboard" className="button">
                 Naar dashboard
               </Link>
             ) : (
@@ -81,9 +79,9 @@ export default function SiteLayout({
           <div className="site-footer-links">
             <div>
               <span className="title">Product</span>
-              <Link href="/#functies">Functies</Link>
               <Link href="/modules">Modules</Link>
-              <Link href="/#prijzen">Prijzen</Link>
+              <Link href="/prijzen">Prijzen</Link>
+              <Link href="/vragen">Vragen</Link>
               <Link href="/demo">Demo aanvragen</Link>
             </div>
             <div>

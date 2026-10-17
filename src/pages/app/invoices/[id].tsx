@@ -1,3 +1,4 @@
+import HelpButton from '@/components/HelpButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -180,7 +181,7 @@ export default function EditInvoice() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    if (await save()) router.push('/invoices');
+    if (await save()) router.push('/app/invoices');
     else setIsLoading(false);
   };
 
@@ -298,7 +299,7 @@ export default function EditInvoice() {
         setIsCrediting(false);
         return;
       }
-      router.push(`/invoices/${data.id}`);
+      router.push(`/app/invoices/${data.id}`);
     } catch {
       toast.error('Fout', 'Er is iets misgegaan. Probeer het opnieuw.');
       setIsCrediting(false);
@@ -311,7 +312,7 @@ export default function EditInvoice() {
     return (
       <Layout title="Factuur bewerken">
         <div className="header">
-          <h1>Factuur bewerken</h1>
+          <h1>Factuur bewerken <HelpButton topic="invoices" /></h1>
         </div>
         <SkeletonCard />
       </Layout>
@@ -321,7 +322,7 @@ export default function EditInvoice() {
   return (
     <Layout title={heading}>
       <div className="header">
-        <h1>{heading}</h1>
+        <h1>{heading} <HelpButton topic="invoices" /></h1>
         <div className="actions">
           {!isFinal && (
             <>
@@ -360,17 +361,17 @@ export default function EditInvoice() {
             </span>
           )}
           {sourceQuoteId && (
-            <Link href={`/quotes/${sourceQuoteId}`} className="button cancel">
+            <Link href={`/app/quotes/${sourceQuoteId}`} className="button cancel">
               Bekijk offerte
             </Link>
           )}
           {creditFor && (
-            <Link href={`/invoices/${creditFor.id}`} className="button cancel">
+            <Link href={`/app/invoices/${creditFor.id}`} className="button cancel">
               Bekijk factuur {creditFor.invoice_number}
             </Link>
           )}
           {creditNotes.map((note) => (
-            <Link key={note.id} href={`/invoices/${note.id}`} className="button cancel">
+            <Link key={note.id} href={`/app/invoices/${note.id}`} className="button cancel">
               Bekijk creditfactuur {note.invoice_number || '(concept)'}
             </Link>
           ))}
@@ -405,13 +406,13 @@ export default function EditInvoice() {
                   {isCrediting ? 'Bezig...' : 'Creditfactuur maken'}
                 </button>
               )}
-              <button type="button" className="button" onClick={() => router.push('/invoices')}>
+              <button type="button" className="button" onClick={() => router.push('/app/invoices')}>
                 Terug
               </button>
             </>
           ) : (
             <>
-              <button type="button" className="button cancel" onClick={() => router.push('/invoices')}>
+              <button type="button" className="button cancel" onClick={() => router.push('/app/invoices')}>
                 Annuleren
               </button>
               <button type="button" className="button" onClick={handleSubmit} disabled={isLoading}>
