@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { buildUserPrompt, systemPrompt } from './prompt';
-import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
+import { RECEIPT_PROMPT, buildUserPrompt, systemPrompt } from './prompt';
+import { AiKeyError, QuoteProposalSchema, ReceiptReadingSchema, type AiProvider } from './types';
 
 /**
  * Claude, met de sleutel van de gebruiker zelf.
@@ -61,6 +61,34 @@ export const anthropic: AiProvider = {
       }
       if (response.stop_reason === 'max_tokens' || !response.parsed_output) {
         throw new Error('De AI kwam niet tot een volledig voorstel. Probeer het opnieuw.');
+      }
+
+      return response.parsed_output;
+    } catch (error) {
+      throw explain(error);
+    }
+  },
+
+  async readReceipt(apiKey, file) {
+    try {
+      // Een PDF gaat mee als document, een foto als afbeelding
+      const attachment =
+        file.mediaType === 'application/pdf'
+          ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: file.base64 } }
+          : { type: 'image' as const, source: { type: 'base64' as const, media_type: file.mediaType as 'image/jpeg' | 'image/png' | 'image/webp', data: file.base64 } };
+
+      const response = await client(apiKey).beta.messages.parse({
+        model: MODEL,
+        max_tokens: 4000,
+        betas: ['server-side-fallback-2026-07-01'],
+        fallbacks: 'default',
+        system: RECEIPT_PROMPT,
+        messages: [{ role: 'user', content: [attachment, { type: 'text', text: 'Lees dit bonnetje of deze factuur uit.' }] }],
+        output_config: { effort: 'low', format: zodOutputFormat(ReceiptReadingSchema) },
+      });
+
+      if (response.stop_reason === 'refusal' || !response.parsed_output) {
+        throw new Error('De AI kon dit bestand niet lezen. Vul de gegevens met de hand in.');
       }
 
       return response.parsed_output;

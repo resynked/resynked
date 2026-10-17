@@ -334,6 +334,52 @@ ALTER TABLE quotes
   FOREIGN KEY (converted_to_invoice_id) REFERENCES invoices(id) ON DELETE SET NULL;
 
 -- ------------------------------------------------------------
+-- Kosten: inkoopfacturen en bonnetjes. Het bestand zelf staat in Supabase
+-- Storage, in de afgeschermde bucket "documents".
+-- ------------------------------------------------------------
+CREATE TABLE expenses (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  supplier TEXT NOT NULL DEFAULT '',
+  -- Het factuurnummer van de leverancier, als dat er is
+  reference TEXT,
+  expense_date DATE NOT NULL,
+  due_date DATE,
+  description TEXT,
+  category TEXT NOT NULL DEFAULT 'other',
+  total_excl NUMERIC(12,2) NOT NULL DEFAULT 0,
+  vat_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'paid')),
+  paid_at DATE,
+  file_path TEXT,
+  file_name TEXT,
+  file_type TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX expenses_tenant_id_idx ON expenses(tenant_id);
+CREATE INDEX expenses_expense_date_idx ON expenses(tenant_id, expense_date);
+
+CREATE TRIGGER update_expenses_updated_at
+  BEFORE UPDATE ON expenses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE expense_lines (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  expense_id BIGINT NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+  description TEXT NOT NULL DEFAULT '',
+  amount_excl NUMERIC(12,2) NOT NULL DEFAULT 0,
+  vat_rate NUMERIC(5,2) NOT NULL DEFAULT 21,
+  vat_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX expense_lines_expense_id_idx ON expense_lines(expense_id);
+
+-- ------------------------------------------------------------
 -- Notities per klant
 -- ------------------------------------------------------------
 CREATE TABLE notes (
@@ -553,6 +599,8 @@ ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mollie_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE moneybird_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expense_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------
@@ -575,3 +623,8 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 -- Ook voor tabellen die je hierna nog toevoegt
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
+
+-- Afgeschermde opslag voor bonnetjes en inkoopfacturen
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('documents', 'documents', false)
+ON CONFLICT (id) DO NOTHING;

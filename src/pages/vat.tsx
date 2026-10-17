@@ -8,20 +8,23 @@ import { useToast } from '@/components/Toast';
 import { INVOICE_STATUS } from '@/lib/constants';
 import { isCreditNote } from '@/lib/invoices';
 import { formatCurrency, formatDate, getCustomerDisplayName } from '@/lib/utils';
-import type { VatInvoice, VatRate } from '@/lib/db';
+import { categoryLabel } from '@/lib/expenses';
+import type { VatExpense, VatInvoice, VatRate } from '@/lib/db';
 
 interface Overview {
   rates: VatRate[];
   invoices: VatInvoice[];
+  expenses: VatExpense[];
+  inputVat: number;
 }
 
-/** De rubriek op de btw-aangifte bij een tarief */
-function rubric(rate: number): string {
-  if (rate === 21) return '1a';
-  if (rate === 9) return '1b';
-  if (rate === 0) return '1e';
-  return '1c';
-}
+/** De rubrieken voor omzet op de btw-aangifte, met welk tarief erin valt */
+const SALES_RUBRICS = [
+  { code: '1a', label: 'Leveringen/diensten belast met hoog tarief', matches: (rate: number) => rate === 21 },
+  { code: '1b', label: 'Leveringen/diensten belast met laag tarief', matches: (rate: number) => rate === 9 },
+  { code: '1c', label: 'Leveringen/diensten belast met overige tarieven', matches: (rate: number) => ![0, 9, 21].includes(rate) },
+  { code: '1e', label: 'Leveringen/diensten belast met 0% of niet bij u belast', matches: (rate: number) => rate === 0 },
+];
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -52,9 +55,11 @@ const csvAmount = (amount: number) => amount.toFixed(2).replace('.', ',');
 const csvField = (value: string) => (/[;"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
 
 /**
- * Btw-overzicht: per tarief de omzet en de btw over een kwartaal of jaar, met
- * de rubriek op de aangifte erbij, en de facturen waar het uit komt. De export
- * is een CSV voor de boekhouder of om zelf in Excel te openen.
+ * Btw-overzicht: de btw-aangifte over een kwartaal of jaar, rubriek voor
+ * rubriek zoals in Mijn Belastingdienst Zakelijk: omzet en btw per tarief,
+ * de voorbelasting uit de kosten, en wat je moet betalen of terugkrijgt.
+ * Daaronder de facturen en kosten waar het uit komt. De export is een CSV
+ * voor de boekhouder of om zelf in Excel te openen.
  */
 export default function Vat() {
   const toast = useToast();
@@ -80,18 +85,32 @@ export default function Vat() {
 
   const rates = overview?.rates || [];
   const invoices = overview?.invoices || [];
-  const totalBase = rates.reduce((sum, r) => sum + r.base, 0);
+  const expenses = overview?.expenses || [];
+  const inputVat = overview?.inputVat || 0;
   const totalVat = rates.reduce((sum, r) => sum + r.vat, 0);
+  const balance = Math.round((totalVat - inputVat) * 100) / 100;
+  const isEmpty = invoices.length === 0 && expenses.length === 0;
+
+  // Per rubriek de omzet en de btw; een rubriek zonder iets erin blijft 0
+  const salesRows = SALES_RUBRICS.map((rubric) => {
+    const matching = rates.filter(r => rubric.matches(r.rate));
+    return {
+      ...rubric,
+      base: matching.reduce((sum, r) => sum + r.base, 0),
+      vat: matching.reduce((sum, r) => sum + r.vat, 0),
+    };
+  });
 
   const handleExport = () => {
     // Een kolom per tarief, zodat de boekhouder per rubriek kan optellen
     const rateColumns = rates.map(r => r.rate);
     const header = [
-      'Factuurnummer', 'Factuurdatum', 'Klant', 'Btw-nummer klant',
+      'Soort', 'Nummer', 'Datum', 'Relatie', 'Btw-nummer',
       ...rateColumns.flatMap(rate => [`Omzet ${rate}%`, `Btw ${rate}%`]),
       'Totaal excl. btw', 'Btw', 'Totaal incl. btw', 'Status', 'Betaald op',
     ];
     const rows = invoices.map(invoice => [
+      isCreditNote(invoice) ? 'Creditfactuur' : 'Verkoop',
       invoice.invoice_number || '',
       formatDate(invoice.invoice_date),
       invoice.customer ? getCustomerDisplayName(invoice.customer) : '',
@@ -103,12 +122,27 @@ export default function Vat() {
       csvAmount(invoice.base),
       csvAmount(invoice.vat),
       csvAmount(invoice.total),
-      isCreditNote(invoice) ? 'Creditfactuur' : INVOICE_STATUS[invoice.status]?.label || invoice.status,
+      INVOICE_STATUS[invoice.status]?.label || invoice.status,
       formatDate(invoice.paid_at),
     ]);
 
+    // De kosten eronder; de btw daarvan is voorbelasting, behalve bij eten en drinken
+    const expenseRows = expenses.map(expense => [
+      `Inkoop: ${categoryLabel(expense.category)}`,
+      expense.reference || '',
+      formatDate(expense.expense_date),
+      expense.supplier,
+      '',
+      ...rateColumns.flatMap(() => ['', '']),
+      csvAmount(expense.total_excl),
+      csvAmount(expense.deductible),
+      csvAmount(expense.total),
+      expense.status === 'paid' ? 'Betaald' : 'Open',
+      formatDate(expense.paid_at),
+    ]);
+
     // Met BOM, anders toont Excel de é en ë verkeerd
-    const csv = '﻿' + [header, ...rows].map(row => row.map(csvField).join(';')).join('\r\n');
+    const csv = '\uFEFF' + [header, ...rows, ...expenseRows].map(row => row.map(csvField).join(';')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -122,7 +156,7 @@ export default function Vat() {
       <div className="header">
         <h1>Btw-overzicht</h1>
         <div className="actions">
-          <button type="button" className="button" onClick={handleExport} disabled={isLoading || invoices.length === 0}>
+          <button type="button" className="button" onClick={handleExport} disabled={isLoading || isEmpty}>
             Exporteren
           </button>
         </div>
@@ -131,45 +165,56 @@ export default function Vat() {
       <div className="grid">
         <div className="block">
           <div className="header">
-            <h2>Per tarief</h2>
+            <h2>Aangifte</h2>
             <Select options={options} value={period} onChange={(option) => option && setPeriod(option)} />
           </div>
 
           {isLoading ? (
             <Skeleton height="150px" />
-          ) : invoices.length === 0 ? (
+          ) : isEmpty ? (
             <div className="empty-state">
-              <h3>Geen facturen in deze periode</h3>
-              <p>Zodra je een factuur verstuurt of als betaald markeert, telt hij hier mee op zijn factuurdatum.</p>
+              <h3>Geen facturen of kosten in deze periode</h3>
+              <p>Een verstuurde factuur telt mee op zijn factuurdatum, een kostenpost op de datum van de bon.</p>
             </div>
           ) : (
             <>
-              <Table headers={['Rubriek', 'Tarief', 'Omzet excl. btw', 'Btw']}>
-                {rates.map((rate) => (
-                  <tr key={rate.rate}>
-                    <td>{rubric(rate.rate)}</td>
-                    <td>{rate.rate}%</td>
-                    <td>{formatCurrency(rate.base)}</td>
-                    <td>{formatCurrency(rate.vat)}</td>
+              <Table headers={['Rubriek', 'Omschrijving', 'Omzet', 'Btw']}>
+                {salesRows.map((row) => (
+                  <tr key={row.code}>
+                    <td>{row.code}</td>
+                    <td>{row.label}</td>
+                    <td>{formatCurrency(row.base)}</td>
+                    <td>{row.code === '1e' ? '' : formatCurrency(row.vat)}</td>
                   </tr>
                 ))}
                 <tr>
+                  <td>5a</td>
+                  <td>Verschuldigde btw</td>
+                  <td />
+                  <td>{formatCurrency(totalVat)}</td>
+                </tr>
+                <tr>
+                  <td>5b</td>
+                  <td>Voorbelasting</td>
+                  <td />
+                  <td>{formatCurrency(inputVat)}</td>
+                </tr>
+                <tr>
+                  <td />
                   <td>
-                    <strong>Totaal</strong>
+                    <strong>{balance >= 0 ? 'Te betalen' : 'Terug te vragen'}</strong>
                   </td>
                   <td />
                   <td>
-                    <strong>{formatCurrency(totalBase)}</strong>
-                  </td>
-                  <td>
-                    <strong>{formatCurrency(totalVat)}</strong>
+                    <strong>{formatCurrency(Math.abs(balance))}</strong>
                   </td>
                 </tr>
               </Table>
               <p className="field-note">
-                Op factuurdatum, zoals bij de btw-aangifte. Verstuurde en betaalde facturen tellen mee, creditfacturen
-                als min-bedrag; concepten niet. Bij btw verlegd of levering buiten Nederland kan de rubriek afwijken;
-                kijk dat na met je boekhouder.
+                Neem deze bedragen over in Mijn Belastingdienst Zakelijk; de Belastingdienst rondt af op hele euro's.
+                Omzet telt op factuurdatum (verstuurd en betaald, creditfacturen als min-bedrag, geen concepten), kosten
+                op de datum van de bon. Bij btw verlegd, of leveringen naar of uit het buitenland, horen bedragen in
+                andere rubrieken; kijk dat na met je boekhouder.
               </p>
             </>
           )}
@@ -201,6 +246,33 @@ export default function Vat() {
                       {INVOICE_STATUS[invoice.status]?.label || invoice.status}
                     </span>
                   </td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && expenses.length > 0 && (
+        <div className="grid">
+          <div className="block">
+            <div className="header">
+              <h2>
+                Kosten <span className="count">{expenses.length}</span>
+              </h2>
+            </div>
+            <Table headers={['Leverancier', 'Datum', 'Categorie', 'Excl. btw', 'Btw', 'Voorbelasting', 'Totaal']}>
+              {expenses.map((expense) => (
+                <tr key={expense.id}>
+                  <td>
+                    <Link href={`/expenses/${expense.id}`}>{expense.supplier}</Link>
+                  </td>
+                  <td>{formatDate(expense.expense_date)}</td>
+                  <td>{categoryLabel(expense.category)}</td>
+                  <td>{formatCurrency(expense.total_excl)}</td>
+                  <td>{formatCurrency(expense.vat_amount)}</td>
+                  <td>{formatCurrency(expense.deductible)}</td>
+                  <td>{formatCurrency(expense.total)}</td>
                 </tr>
               ))}
             </Table>

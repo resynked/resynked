@@ -28,9 +28,13 @@ aannemers komen elkaar nooit tegen.
   krijgt een verstuurde factuur die het ingestelde aantal dagen over de
   vervaldatum is een herinnering met de betaalgegevens, en na nog eens zoveel
   dagen een tweede. Vanuit de mailbox van wie de factuur verstuurde
-- **Btw-overzicht** per kwartaal of jaar: omzet en btw per tarief met de
-  rubriek op de aangifte, op factuurdatum. De export is een CSV voor de
-  boekhouder. Met de optionele Moneybird-plug-in gaat elke vastgelegde factuur
+- **Kosten**: inkoopfacturen en bonnetjes met leverancier, categorie en de
+  bedragen per btw-tarief. Het bestand staat afgeschermd in Supabase Storage
+  (bucket `documents`); met een AI-plug-in worden de gegevens van een foto of
+  PDF vanzelf ingevuld
+- **Btw-aangifte** per kwartaal of jaar, rubriek voor rubriek: omzet en btw
+  per tarief (op factuurdatum), de voorbelasting uit de kosten, en wat je
+  betaalt of terugkrijgt. De export is een CSV voor de boekhouder. Met de optionele Moneybird-plug-in gaat elke vastgelegde factuur
   (en zijn betaling) vanzelf naar de boekhouding
 
 ## Techniek

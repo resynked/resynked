@@ -228,6 +228,42 @@ export interface Product {
   updated_at: string;
 }
 
+/** Eén regel van een kostenpost, met zijn eigen btw-tarief */
+export interface ExpenseLine {
+  id?: number;
+  description: string;
+  amount_excl: number;
+  vat_rate: number;
+  vat_amount: number;
+  position?: number;
+}
+
+/** Een inkoopfactuur of bonnetje */
+export interface Expense {
+  id: number;
+  tenant_id: string;
+  supplier: string;
+  /** Het factuurnummer van de leverancier */
+  reference: string | null;
+  expense_date: string;
+  due_date: string | null;
+  description: string | null;
+  /** Een van EXPENSE_CATEGORIES */
+  category: string;
+  total_excl: number;
+  vat_amount: number;
+  total: number;
+  status: 'open' | 'paid';
+  paid_at: string | null;
+  /** Waar het bestand in Supabase Storage staat; de naam en het type om het te tonen */
+  file_path: string | null;
+  file_name: string | null;
+  file_type: string | null;
+  lines?: ExpenseLine[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Note {
   id: number;
   tenant_id: string;

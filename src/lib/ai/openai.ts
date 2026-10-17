@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
-import { buildUserPrompt, systemPrompt } from './prompt';
-import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
+import { RECEIPT_PROMPT, buildUserPrompt, systemPrompt } from './prompt';
+import { AiKeyError, QuoteProposalSchema, ReceiptReadingSchema, type AiProvider } from './types';
 
 /**
  * OpenAI, met de sleutel van de gebruiker zelf.
@@ -52,6 +52,37 @@ export const openai: AiProvider = {
 
       if (!response.output_parsed) {
         throw new Error('De AI kwam niet tot een volledig voorstel. Probeer het opnieuw.');
+      }
+
+      return response.output_parsed;
+    } catch (error) {
+      throw explain(error);
+    }
+  },
+
+  async readReceipt(apiKey, file) {
+    try {
+      const dataUrl = `data:${file.mediaType};base64,${file.base64}`;
+      // Een PDF gaat mee als bestand, een foto als afbeelding
+      const attachment =
+        file.mediaType === 'application/pdf'
+          ? { type: 'input_file' as const, filename: 'bon.pdf', file_data: dataUrl }
+          : { type: 'input_image' as const, image_url: dataUrl, detail: 'high' as const };
+
+      const response = await client(apiKey).responses.parse({
+        model: MODEL,
+        instructions: RECEIPT_PROMPT,
+        input: [
+          {
+            role: 'user',
+            content: [{ type: 'input_text', text: 'Lees dit bonnetje of deze factuur uit.' }, attachment],
+          },
+        ],
+        text: { format: zodTextFormat(ReceiptReadingSchema, 'receipt') },
+      });
+
+      if (!response.output_parsed) {
+        throw new Error('De AI kon dit bestand niet lezen. Vul de gegevens met de hand in.');
       }
 
       return response.output_parsed;

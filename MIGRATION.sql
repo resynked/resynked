@@ -583,6 +583,64 @@ CREATE TRIGGER update_moneybird_accounts_updated_at
 
 ALTER TABLE moneybird_accounts ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------
+-- 18. Kosten: inkoopfacturen en bonnetjes
+--
+-- Een kostenpost met leverancier, datum, categorie en regels per btw-tarief.
+-- Het bonnetje of de inkoopfactuur zelf staat in Supabase Storage, in de
+-- afgeschermde bucket "documents"; de kostenpost onthoudt waar.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS expenses (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  supplier TEXT NOT NULL DEFAULT '',
+  -- Het factuurnummer van de leverancier, als dat er is
+  reference TEXT,
+  expense_date DATE NOT NULL,
+  due_date DATE,
+  description TEXT,
+  category TEXT NOT NULL DEFAULT 'other',
+  total_excl NUMERIC(12,2) NOT NULL DEFAULT 0,
+  vat_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'paid')),
+  paid_at DATE,
+  file_path TEXT,
+  file_name TEXT,
+  file_type TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS expenses_tenant_id_idx ON expenses(tenant_id);
+CREATE INDEX IF NOT EXISTS expenses_expense_date_idx ON expenses(tenant_id, expense_date);
+
+DROP TRIGGER IF EXISTS update_expenses_updated_at ON expenses;
+CREATE TRIGGER update_expenses_updated_at
+  BEFORE UPDATE ON expenses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS expense_lines (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  expense_id BIGINT NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+  description TEXT NOT NULL DEFAULT '',
+  amount_excl NUMERIC(12,2) NOT NULL DEFAULT 0,
+  vat_rate NUMERIC(5,2) NOT NULL DEFAULT 21,
+  vat_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS expense_lines_expense_id_idx ON expense_lines(expense_id);
+
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expense_lines ENABLE ROW LEVEL SECURITY;
+
+-- Afgeschermd: bestanden gaan alleen via de server naar buiten, na inloggen
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('documents', 'documents', false)
+ON CONFLICT (id) DO NOTHING;
+
 -- De rechten opnieuw, zodat de nieuwe tabellen ze ook hebben
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
@@ -597,7 +655,7 @@ NOTIFY pgrst, 'reload schema';
 -- Controle achteraf
 --
 -- Eén opdracht, want de SQL-editor toont alleen de uitkomst van de laatste.
--- Er horen achttien regels uit te komen die allemaal met "ja" beginnen. Staat er
+-- Er horen negentien regels uit te komen die allemaal met "ja" beginnen. Staat er
 -- ergens NEE, dan is dat onderdeel niet gelukt.
 -- ------------------------------------------------------------
 SELECT 'Elementtypes offerte' AS controle,
@@ -729,4 +787,11 @@ UNION ALL SELECT 'Betalingsherinneringen en Moneybird',
        ) = 4 AND EXISTS (
          SELECT 1 FROM information_schema.tables
          WHERE table_schema = 'public' AND table_name = 'moneybird_accounts'
-       ) THEN 'ja' ELSE 'NEE - onderdeel 17 niet gelukt' END;
+       ) THEN 'ja' ELSE 'NEE - onderdeel 17 niet gelukt' END
+
+UNION ALL SELECT 'Kosten',
+       CASE WHEN (
+         SELECT count(*) FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name IN ('expenses', 'expense_lines')
+       ) = 2 AND EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'documents')
+       THEN 'ja' ELSE 'NEE - onderdeel 18 niet gelukt' END;

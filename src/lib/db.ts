@@ -1,9 +1,11 @@
 import { supabaseAdmin } from './supabase';
-import type { Customer, DocumentBlock, Invoice, Quote, Tenant, Note, Product } from './supabase';
+import type { Customer, DocumentBlock, Expense, ExpenseLine, Invoice, Quote, Tenant, Note, Product } from './supabase';
 import { calculateDocumentTotal, calculateElementTotals, lineTotal } from './utils';
 import { copyBlocks } from './blocks';
 import { isCreditNote, isFinalInvoice } from './invoices';
 import { isCountable, nextNumber } from './numbering';
+import { removeDocument, uploadDocument, type IncomingFile } from './storage';
+import { isVatDeductible } from './expenses';
 
 // Use supabaseAdmin for all database operations since we handle auth via NextAuth
 const supabase = supabaseAdmin;
@@ -1026,6 +1028,22 @@ export interface VatInvoice {
   rates: VatRate[];
 }
 
+/** Eén kostenpost in het btw-overzicht, met de btw die je terugkrijgt */
+export interface VatExpense {
+  id: number;
+  supplier: string;
+  reference: string | null;
+  expense_date: string;
+  category: string;
+  total_excl: number;
+  vat_amount: number;
+  total: number;
+  status: string;
+  paid_at: string | null;
+  /** De btw die als voorbelasting telt; 0 bij eten en drinken */
+  deductible: number;
+}
+
 const cents = (amount: number) => Math.round(amount * 100) / 100;
 
 /** Telt de bedragen per tarief bij elkaar op, hoogste tarief eerst */
@@ -1040,7 +1058,8 @@ const sortedRates = (rates: Map<number, VatRate>) => [...rates.values()].sort((a
 
 /**
  * Het btw-overzicht over een periode, voor de btw-aangifte: per tarief de
- * omzet exclusief btw en de btw, en de facturen waaruit dat komt.
+ * omzet exclusief btw en de btw, de voorbelasting uit de kosten, en de
+ * facturen en kosten waaruit dat komt.
  *
  * Op factuurdatum, want zo werkt de aangifte (het factuurstelsel). Alleen
  * vastgelegde facturen tellen: verzonden en betaald, met creditfacturen als
@@ -1097,7 +1116,172 @@ export async function getVatOverview(tenantId: string, from: string, to: string)
     return { ...invoice, base, vat, total: Number(invoice.total) || 0, rates };
   });
 
-  return { rates: sortedRates(totalRates), invoices: rows };
+  // De kosten in dezelfde periode, op hun datum: de btw daarop is voorbelasting,
+  // behalve bij eten en drinken, waar hij niet aftrekbaar is
+  const { data: expenses, error: expensesError } = await supabase
+    .from('expenses')
+    .select('id, supplier, reference, expense_date, category, total_excl, vat_amount, total, status, paid_at')
+    .eq('tenant_id', tenantId)
+    .gte('expense_date', from)
+    .lte('expense_date', to)
+    .order('expense_date', { ascending: true });
+
+  if (expensesError) throw expensesError;
+
+  const expenseRows: VatExpense[] = (expenses || []).map((expense: any) => ({
+    ...expense,
+    total_excl: Number(expense.total_excl) || 0,
+    vat_amount: Number(expense.vat_amount) || 0,
+    total: Number(expense.total) || 0,
+    deductible: isVatDeductible(expense.category) ? Number(expense.vat_amount) || 0 : 0,
+  }));
+
+  const inputVat = cents(expenseRows.reduce((sum, e) => sum + e.deductible, 0));
+
+  return { rates: sortedRates(totalRates), invoices: rows, expenses: expenseRows, inputVat };
+}
+
+// Expenses
+export async function getExpenses(tenantId: string) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    // Nieuwste bovenaan
+    .order('expense_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as Expense[];
+}
+
+export async function getExpense(id: string | number, tenantId: string) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*, lines:expense_lines(id, description, amount_excl, vat_rate, vat_amount, position)')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Kostenpost niet gevonden');
+
+  const expense = data as any;
+  return { ...expense, lines: [...(expense.lines || [])].sort(byPosition) } as Expense;
+}
+
+/** De bedragen van een kostenpost: de som van zijn regels, op centen */
+function expenseTotals(lines: ExpenseLine[]) {
+  const total_excl = cents(lines.reduce((sum, line) => sum + (Number(line.amount_excl) || 0), 0));
+  const vat_amount = cents(lines.reduce((sum, line) => sum + (Number(line.vat_amount) || 0), 0));
+  return { total_excl, vat_amount, total: cents(total_excl + vat_amount) };
+}
+
+/** Vervangt de regels van een kostenpost in zijn geheel */
+async function saveExpenseLines(expenseId: number | string, tenantId: string, lines: ExpenseLine[]) {
+  const { error: deleteError } = await supabase.from('expense_lines').delete().eq('expense_id', expenseId).eq('tenant_id', tenantId);
+  if (deleteError) throw deleteError;
+  if (lines.length === 0) return;
+
+  const { error } = await supabase.from('expense_lines').insert(
+    lines.map((line, position) => ({
+      tenant_id: tenantId,
+      expense_id: expenseId,
+      description: line.description || '',
+      amount_excl: cents(Number(line.amount_excl) || 0),
+      vat_rate: Number(line.vat_rate) || 0,
+      vat_amount: cents(Number(line.vat_amount) || 0),
+      position,
+    }))
+  );
+  if (error) throw error;
+}
+
+/** De velden van een kostenpost die iemand zelf invult */
+type ExpenseInput = Pick<Expense, 'supplier' | 'reference' | 'expense_date' | 'due_date' | 'description' | 'category' | 'status' | 'paid_at'>;
+
+/**
+ * Een nieuwe kostenpost, met het bonnetje of de inkoopfactuur erbij als die
+ * er is. De bedragen komen uit de regels, zodat ze altijd kloppen.
+ */
+export async function createExpense(tenantId: string, fields: ExpenseInput, lines: ExpenseLine[], file?: IncomingFile | null) {
+  const stored = file ? await uploadDocument(tenantId, 'expenses', file) : null;
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert({
+      ...fields,
+      ...expenseTotals(lines),
+      tenant_id: tenantId,
+      file_path: stored?.path ?? null,
+      file_name: stored?.name ?? null,
+      file_type: stored?.type ?? null,
+      updated_at: now(),
+    })
+    .select()
+    .single();
+
+  if (error) {
+    await removeDocument(tenantId, stored?.path);
+    throw error;
+  }
+
+  await saveExpenseLines(data.id, tenantId, lines);
+  return data as Expense;
+}
+
+/**
+ * Een kostenpost bijwerken. Een nieuw bestand vervangt het oude; file null
+ * haalt het weg, en zonder file blijft het zoals het was.
+ */
+export async function updateExpense(
+  id: string | number,
+  tenantId: string,
+  fields: Partial<ExpenseInput>,
+  lines?: ExpenseLine[],
+  file?: IncomingFile | null
+) {
+  const current = await getExpense(id, tenantId);
+  const updates: Record<string, unknown> = { ...fields, updated_at: now() };
+
+  if (lines) Object.assign(updates, expenseTotals(lines));
+
+  let stored: { path: string; name: string; type: string } | null = null;
+  if (file) {
+    stored = await uploadDocument(tenantId, 'expenses', file);
+    Object.assign(updates, { file_path: stored.path, file_name: stored.name, file_type: stored.type });
+  } else if (file === null) {
+    Object.assign(updates, { file_path: null, file_name: null, file_type: null });
+  }
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .update(updates)
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .select()
+    .single();
+
+  if (error) {
+    await removeDocument(tenantId, stored?.path);
+    throw error;
+  }
+
+  if (lines) await saveExpenseLines(id, tenantId, lines);
+  // Het oude bestand pas weg als het nieuwe er staat
+  if (file !== undefined && current.file_path) await removeDocument(tenantId, current.file_path);
+
+  return data as Expense;
+}
+
+export async function deleteExpense(id: string | number, tenantId: string) {
+  const current = await getExpense(id, tenantId);
+
+  const { error } = await supabase.from('expenses').delete().eq('id', id).eq('tenant_id', tenantId);
+  if (error) throw error;
+
+  await removeDocument(tenantId, current.file_path);
+  return { success: true };
 }
 
 // Notes

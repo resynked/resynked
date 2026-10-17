@@ -1,7 +1,7 @@
 import { ApiError, GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
-import { buildUserPrompt, systemPrompt } from './prompt';
-import { AiKeyError, QuoteProposalSchema, type AiProvider } from './types';
+import { RECEIPT_PROMPT, buildUserPrompt, systemPrompt } from './prompt';
+import { AiKeyError, QuoteProposalSchema, ReceiptReadingSchema, type AiProvider } from './types';
 
 /**
  * Google Gemini, met de sleutel van de gebruiker zelf. Via Google AI Studio is
@@ -16,6 +16,7 @@ const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 // Gemini kent maar een deel van JSON Schema; de verwijzing naar de
 // schemaversie hoort daar niet bij
 const { $schema: _version, ...RESPONSE_SCHEMA } = z.toJSONSchema(QuoteProposalSchema);
+const { $schema: _receiptVersion, ...RECEIPT_SCHEMA } = z.toJSONSchema(ReceiptReadingSchema);
 
 function client(apiKey: string) {
   return new GoogleGenAI({ apiKey });
@@ -66,6 +67,37 @@ export const gemini: AiProvider = {
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new Error('De AI kwam niet tot een volledig voorstel. Probeer het opnieuw.');
+      }
+      throw explain(error);
+    }
+  },
+
+  async readReceipt(apiKey, file) {
+    try {
+      const response = await client(apiKey).models.generateContent({
+        model: MODEL,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: file.mediaType, data: file.base64 } },
+              { text: 'Lees dit bonnetje of deze factuur uit.' },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: RECEIPT_PROMPT,
+          responseMimeType: 'application/json',
+          responseJsonSchema: RECEIPT_SCHEMA,
+        },
+      });
+
+      const parsed = ReceiptReadingSchema.safeParse(JSON.parse(response.text || 'null'));
+      if (!parsed.success) throw new Error('De AI kon dit bestand niet lezen. Vul de gegevens met de hand in.');
+      return parsed.data;
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Error('De AI kon dit bestand niet lezen. Vul de gegevens met de hand in.');
       }
       throw explain(error);
     }

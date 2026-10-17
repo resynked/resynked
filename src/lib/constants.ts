@@ -39,5 +39,37 @@ export const INVOICE_STATUS: Record<string, { label: string; className: string }
   cancelled: { label: 'Geannuleerd', className: 'status-cancelled' },
 };
 
+/** De statussen van een kostenpost */
+export const EXPENSE_STATUS: Record<string, { label: string; className: string }> = {
+  open: { label: 'Open', className: 'status-sent' },
+  paid: { label: 'Betaald', className: 'status-paid' },
+};
+
+/**
+ * Soorten kosten, elk met de grootboekrekening waar ze in de jaarcijfers op
+ * komen. Bij eten en drinken mag de btw niet worden afgetrokken; die telt dan
+ * als kosten in plaats van als voorbelasting.
+ */
+export const EXPENSE_CATEGORIES: { value: string; label: string; account: string; vatDeductible?: false }[] = [
+  { value: 'materials', label: 'Inkoop materiaal', account: '7000' },
+  { value: 'subcontracting', label: 'Onderaanneming', account: '7100' },
+  { value: 'tools', label: 'Gereedschap en klein materiaal', account: '4500' },
+  { value: 'vehicle', label: 'Auto en vervoer', account: '4300' },
+  { value: 'fuel', label: 'Brandstof', account: '4310' },
+  { value: 'housing', label: 'Huisvesting', account: '4200' },
+  { value: 'office', label: 'Kantoorkosten', account: '4400' },
+  { value: 'phone', label: 'Telefoon en internet', account: '4410' },
+  { value: 'software', label: 'Software en abonnementen', account: '4420' },
+  { value: 'marketing', label: 'Reclame en marketing', account: '4600' },
+  { value: 'representation', label: 'Eten, drinken en relatiegeschenken', account: '4610', vatDeductible: false },
+  { value: 'insurance', label: 'Verzekeringen', account: '4700' },
+  { value: 'education', label: 'Opleiding', account: '4800' },
+  { value: 'bank', label: 'Bankkosten', account: '4900' },
+  { value: 'other', label: 'Overige kosten', account: '4990' },
+];
+
+/** De btw-tarieven in Nederland */
+export const VAT_RATES = [21, 9, 0] as const;
+
 /** Eenheden waarin een aannemer regels uitschrijft */
 export const UNITS = ['stuks', 'uur', 'dag', 'm', 'm²', 'm³', 'kg', 'ton', 'post'] as const;

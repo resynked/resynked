@@ -74,11 +74,49 @@ export interface QuoteRequestInput {
   pastLines: PastQuoteLine[];
 }
 
+/**
+ * Wat de AI van een bonnetje of inkoopfactuur leest. Een lege tekst of null
+ * betekent "niet te lezen" — liever leeg dan verzonnen; de gebruiker vult aan.
+ */
+export const ReceiptReadingSchema = z.object({
+  supplier: z.string(),
+  /** Het factuurnummer van de leverancier; leeg bij een kassabon zonder nummer */
+  reference: z.string(),
+  /** jjjj-mm-dd */
+  date: z.string(),
+  /** jjjj-mm-dd, alleen als er een vervaldatum of betaaltermijn staat */
+  due_date: z.string(),
+  /** Een korte omschrijving, zoals "Tegellijm en voegmiddel" */
+  description: z.string(),
+  /** Een van de categorieën uit de opdracht */
+  category: z.string(),
+  /** Per btw-tarief het bedrag exclusief btw en de btw */
+  lines: z.array(
+    z.object({
+      description: z.string(),
+      amount_excl: z.number(),
+      vat_rate: z.number(),
+      vat_amount: z.number(),
+    })
+  ),
+  /** Of het al betaald is, zoals bij een kassabon of "voldaan" */
+  paid: z.boolean(),
+});
+
+export type ReceiptReading = z.infer<typeof ReceiptReadingSchema>;
+
+/** Een bonnetje als base64, met zijn type (image/jpeg, image/png, image/webp of application/pdf) */
+export interface ReceiptFile {
+  base64: string;
+  mediaType: string;
+}
+
 /** Wat elke AI-dienst moet kunnen. */
 export interface AiProvider {
   /** Controleert of de sleutel werkt; gooit een leesbare fout als dat niet zo is */
   verifyKey(apiKey: string): Promise<void>;
   proposeQuote(apiKey: string, input: QuoteRequestInput): Promise<QuoteProposal>;
+  readReceipt(apiKey: string, file: ReceiptFile): Promise<ReceiptReading>;
 }
 
 /** De sleutel werkt niet (meer); opnieuw invullen is nodig. */
