@@ -2,7 +2,7 @@ import SiteLayout from '@/components/site/SiteLayout';
 import { ClosingSection, FAQ, FaqSection, MORE_FAQ } from '@/components/site/sections';
 
 /** Veelgestelde vragen op synbased.com, over het product en over de boekhouding */
-export default function Questions() {
+export default function Faq() {
   return (
     <SiteLayout
       title="Veelgestelde vragen"

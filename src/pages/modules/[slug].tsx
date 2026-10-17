@@ -33,7 +33,7 @@ export default function ModulePage({ slug }: { slug: string }) {
                 <Link href="/demo" className="button">
                   Demo aanvragen
                 </Link>
-                <Link href="/prijzen" className="button tertiary">
+                <Link href="/pricing" className="button tertiary">
                   Prijzen
                 </Link>
               </div>

@@ -51,7 +51,7 @@ export const MODULE_GROUPS = ['Verkoop', 'Financiën', 'Overzicht', 'E-mail en a
 
 export const MODULES: SiteModule[] = [
   {
-    slug: 'offertes',
+    slug: 'quotes',
     name: 'Offertes',
     kind: 'standard',
     group: 'Verkoop',
@@ -75,10 +75,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Werkt met', value: 'Facturen, Producten, Klanten' },
     ],
     screenshot: { src: '/screens/quote.webp', alt: 'Een ondertekende offerte zoals de klant hem ziet', width: 818, height: 800 },
-    related: ['facturen', 'producten', 'ai'],
+    related: ['invoices', 'products', 'ai'],
   },
   {
-    slug: 'facturen',
+    slug: 'invoices',
     name: 'Facturen',
     kind: 'standard',
     group: 'Verkoop',
@@ -102,10 +102,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Werkt met', value: 'Offertes, Mollie, Bank' },
     ],
     screenshot: { src: '/screens/payment.webp', alt: 'Het betaalblok op een factuur met een QR-code voor de bank-app', width: 600, height: 270 },
-    related: ['offertes', 'mollie', 'bank'],
+    related: ['quotes', 'mollie', 'bank'],
   },
   {
-    slug: 'klanten',
+    slug: 'customers',
     name: 'Klanten',
     kind: 'standard',
     group: 'Verkoop',
@@ -128,10 +128,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Offertes, Notities' },
     ],
-    related: ['notities', 'offertes', 'ai'],
+    related: ['notes', 'quotes', 'ai'],
   },
   {
-    slug: 'producten',
+    slug: 'products',
     name: 'Producten',
     kind: 'standard',
     group: 'Verkoop',
@@ -154,10 +154,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Offertes, Facturen' },
     ],
-    related: ['offertes', 'facturen', 'ai'],
+    related: ['quotes', 'invoices', 'ai'],
   },
   {
-    slug: 'kosten',
+    slug: 'expenses',
     name: 'Kosten',
     kind: 'standard',
     group: 'Financiën',
@@ -180,7 +180,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen; AI met je eigen sleutel' },
       { label: 'Werkt met', value: 'Btw-aangifte, Bank, AI' },
     ],
-    related: ['btw-aangifte', 'bank', 'ai'],
+    related: ['vat', 'bank', 'ai'],
   },
   {
     slug: 'bank',
@@ -206,10 +206,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Facturen, Kosten, Bankkoppeling' },
     ],
-    related: ['bankkoppeling', 'facturen', 'jaarcijfers'],
+    related: ['bank-connection', 'invoices', 'reports'],
   },
   {
-    slug: 'btw-aangifte',
+    slug: 'vat',
     name: 'Btw-aangifte',
     kind: 'standard',
     group: 'Financiën',
@@ -232,10 +232,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Facturen, Kosten' },
     ],
-    related: ['kosten', 'jaarcijfers', 'facturen'],
+    related: ['expenses', 'reports', 'invoices'],
   },
   {
-    slug: 'jaarcijfers',
+    slug: 'reports',
     name: 'Jaarcijfers',
     kind: 'standard',
     group: 'Financiën',
@@ -258,7 +258,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Facturen, Kosten, Bank' },
     ],
-    related: ['btw-aangifte', 'bank', 'kosten'],
+    related: ['vat', 'bank', 'expenses'],
   },
   {
     slug: 'dashboard',
@@ -285,10 +285,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Werkt met', value: 'Offertes, Facturen' },
     ],
     screenshot: { src: '/screens/dashboard.webp', alt: 'Het dashboard van Synbased met openstaande offertes, facturen en de omzet', width: 1680, height: 1070 },
-    related: ['facturen', 'offertes', 'jaarcijfers'],
+    related: ['invoices', 'quotes', 'reports'],
   },
   {
-    slug: 'notities',
+    slug: 'notes',
     name: 'Notities',
     kind: 'standard',
     group: 'Overzicht',
@@ -311,7 +311,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Klanten' },
     ],
-    related: ['klanten', 'offertes', 'whatsapp'],
+    related: ['customers', 'quotes', 'whatsapp'],
   },
   {
     slug: 'google',
@@ -338,7 +338,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Werkt met', value: 'Gmail, Google Agenda' },
     ],
     screenshot: { src: '/screens/inbox.webp', alt: 'De inbox in Synbased met een aanvraag die je omzet naar een offerte', width: 1200, height: 602 },
-    related: ['microsoft', 'ai', 'offertes'],
+    related: ['microsoft', 'ai', 'quotes'],
   },
   {
     slug: 'microsoft',
@@ -365,7 +365,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Werkt met', value: 'Microsoft 365, Outlook.com' },
     ],
     screenshot: { src: '/screens/inbox.webp', alt: 'De inbox in Synbased met een aanvraag die je omzet naar een offerte', width: 1200, height: 602 },
-    related: ['google', 'ai', 'offertes'],
+    related: ['google', 'ai', 'quotes'],
   },
   {
     slug: 'whatsapp',
@@ -391,7 +391,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen; AI met je eigen sleutel' },
       { label: 'Werkt met', value: 'Offertes, AI' },
     ],
-    related: ['ai', 'offertes', 'klanten'],
+    related: ['ai', 'quotes', 'customers'],
   },
   {
     slug: 'ai',
@@ -417,7 +417,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Per gebruik bij je AI-dienst' },
       { label: 'Werkt met', value: 'Anthropic, OpenAI, Google Gemini' },
     ],
-    related: ['kosten', 'whatsapp', 'google'],
+    related: ['expenses', 'whatsapp', 'google'],
   },
   {
     slug: 'mollie',
@@ -443,10 +443,10 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Per betaling bij Mollie, iDEAL rond € 0,30' },
       { label: 'Werkt met', value: 'Facturen' },
     ],
-    related: ['facturen', 'bankkoppeling', 'bank'],
+    related: ['invoices', 'bank-connection', 'bank'],
   },
   {
-    slug: 'bankkoppeling',
+    slug: 'bank-connection',
     name: 'Bankkoppeling',
     kind: 'plugin',
     group: 'Betalen en bank',
@@ -469,7 +469,7 @@ export const MODULES: SiteModule[] = [
       { label: 'Kosten', value: 'Inbegrepen' },
       { label: 'Werkt met', value: 'Nederlandse banken via GoCardless' },
     ],
-    related: ['bank', 'facturen', 'jaarcijfers'],
+    related: ['bank', 'invoices', 'reports'],
   },
 ];
 
